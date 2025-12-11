@@ -169,7 +169,7 @@ namespace MyTool
         }
 
         // 获取编译器版本描述
-        public static string GetCompilerVersionDescription(byte majorVersion, byte minorVersion)
+        public static string GetCompilerVersionDescription(byte majorVersion, byte minorVersion, bool isNetAssembly = false)
         {
             // 编译器版本信息通常可以从链接器版本推断
             string compilerInfo;
@@ -212,7 +212,9 @@ namespace MyTool
                     compilerInfo = "Microsoft Visual C++ ???";
                     break;
                 default:
-                    if (majorVersion > 15)
+                    if (isNetAssembly)
+                        compilerInfo = "Microsoft .NET Compiler";
+                    else if (majorVersion > 15)
                         compilerInfo = $"Microsoft Visual C++ (较新版本)";
                     else
                         compilerInfo = $"Microsoft Visual C++ (未知版本)";

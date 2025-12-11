@@ -48,6 +48,9 @@ namespace MyTool
             // 解析证书信息
             PEResourceParserCertificate.ParseCertificateInfo(fs, reader, peInfo);
 
+            // 解析CLR运行时头信息
+            PEParserCLR.ParseCLRHeaderInfo(fs, reader, peInfo);
+
             // 解析图标信息
             PEResourceParserIcon.ParseIconInfo(fs, reader, peInfo);
 

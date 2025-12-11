@@ -15,6 +15,7 @@ namespace MyTool
         public List<ExportFunctionInfo> ExportFunctions { get; set; } = [];
         public List<DependencyInfo> Dependencies { get; set; } = [];
         public List<IconInfo> Icons { get; set; } = [];
+        public CLRInfo? CLRInfo { get; set; } = null;
         public PEAdditionalInfo AdditionalInfo { get; set; } = new PEAdditionalInfo();
     }
 
@@ -33,6 +34,15 @@ namespace MyTool
         public string LegalTrademarks { get; set; } = string.Empty;
         public bool IsSigned { get; set; } = false;
         public string CertificateInfo { get; set; } = string.Empty;
+        
+        // 翻译信息（来自VarFileInfo）
+        public string TranslationInfo { get; set; } = string.Empty;
+        
+        // 是否已解析StringTable
+        public bool StringTableParsed { get; set; } = false;
+        
+        // StringTable结束位置
+        public long StringTableEndPosition { get; set; } = 0;
     }
 
     // 导入函数信息

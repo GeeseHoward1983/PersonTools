@@ -51,7 +51,7 @@ namespace MyTool
                     };
 
                     // 检查资源ID是否匹配
-                    if ((entry.NameOrId & 0xFFFF) == resourceId)
+                    if ((entry.NameOrId & 0xFFFF) == (resourceId & 0xFFFF))
                     {
                         // 处理语言子目录
                         if ((entry.OffsetToData & 0x80000000) != 0)

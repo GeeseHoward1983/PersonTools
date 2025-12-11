@@ -113,7 +113,7 @@ namespace MyTool
             {
                 { "魔数", $"0x{currentPEInfo.OptionalHeader.Magic:X4} ({(currentPEInfo.OptionalHeader.Magic == 0x10b ? "PE32" : currentPEInfo.OptionalHeader.Magic == 0x20b ? "PE32+" : "Unknown")})" },
                 { "链接器版本", $"{PEParser.GetLinkerVersionDescription(currentPEInfo.OptionalHeader.MajorLinkerVersion, currentPEInfo.OptionalHeader.MinorLinkerVersion)}" },
-                { "编译器版本", $"{PEParser.GetCompilerVersionDescription(currentPEInfo.OptionalHeader.MajorLinkerVersion, currentPEInfo.OptionalHeader.MinorLinkerVersion)}" },
+                { "编译器版本", $"{PEParser.GetCompilerVersionDescription(currentPEInfo.OptionalHeader.MajorLinkerVersion, currentPEInfo.OptionalHeader.MinorLinkerVersion, currentPEInfo.CLRInfo != null)}" },
                 { "代码大小", $"0x{currentPEInfo.OptionalHeader.SizeOfCode:X8}" },
                 { "已初始化数据大小", $"0x{currentPEInfo.OptionalHeader.SizeOfInitializedData:X8}" },
                 { "未初始化数据大小", $"0x{currentPEInfo.OptionalHeader.SizeOfUninitializedData:X8}" },
@@ -137,6 +137,20 @@ namespace MyTool
                 { "堆提交大小", $"0x{currentPEInfo.OptionalHeader.SizeOfHeapCommit:X8}" },
                 { "数据目录数量", $"0x{currentPEInfo.OptionalHeader.NumberOfRvaAndSizes:X8}" }
             });
+
+            // 显示CLR信息（如果是.NET程序集）
+            if (currentPEInfo.CLRInfo != null)
+            {
+                AddHeaderInfo(".NET CLR信息", new Dictionary<string, string>
+                {
+                    { "运行时版本", $"v{currentPEInfo.CLRInfo.RuntimeVersion}" },
+                    { "标志位", string.Join(", ", currentPEInfo.CLRInfo.FlagDescriptions) },
+                    { "入口点", $"0x{currentPEInfo.CLRInfo.EntryPointTokenOrRva:X8}" },
+                    { "包含元数据", currentPEInfo.CLRInfo.HasMetaData ? "是" : "否" },
+                    { "包含资源", currentPEInfo.CLRInfo.HasResources ? "是" : "否" },
+                    { "强名称签名", currentPEInfo.CLRInfo.HasStrongNameSignature ? "是" : "否" }
+                });
+            }
 
             // 显示节信息
             var sectionDict = CreateSectionInfo();
@@ -197,6 +211,15 @@ namespace MyTool
                 { "是否签名", currentPEInfo.AdditionalInfo.IsSigned ? "是" : "否" },
                 { "证书详情", currentPEInfo.AdditionalInfo.CertificateInfo }
             });
+            
+            // 显示翻译信息（来自VarFileInfo）
+            if (!string.IsNullOrEmpty(currentPEInfo.AdditionalInfo.TranslationInfo))
+            {
+                AddAdditionalInfo("翻译信息", new Dictionary<string, string>
+                {
+                    { "语言和代码页", currentPEInfo.AdditionalInfo.TranslationInfo }
+                });
+            }
         }
 
         private void DisplayIcons()
@@ -209,7 +232,12 @@ namespace MyTool
                 {
                     try
                     {
+                        // 检查图标数据是否有效
                         if (icon.Data == null || icon.Data.Length == 0)
+                            continue;
+
+                        // 验证图标尺寸，避免添加无效图标
+                        if (icon.Width <= 0 || icon.Height <= 0)
                             continue;
 
                         var iconViewModel = new IconViewModel
@@ -223,13 +251,22 @@ namespace MyTool
                         // 从字节数组创建位图
                         using (var stream = new MemoryStream(icon.Data))
                         {
-                            var bitmap = new BitmapImage();
-                            bitmap.BeginInit();
-                            bitmap.StreamSource = stream;
-                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                            bitmap.EndInit();
-                            bitmap.Freeze(); // 提高性能
-                            iconViewModel.ImageSource = bitmap;
+                            try
+                            {
+                                var bitmap = new BitmapImage();
+                                bitmap.BeginInit();
+                                bitmap.StreamSource = stream;
+                                bitmap.CacheOption = BitmapCacheOption.OnLoad; // 提高性能并确保图像加载完成
+                                bitmap.EndInit();
+                                bitmap.Freeze(); // 提高性能
+                                iconViewModel.ImageSource = bitmap;
+                            }
+                            catch (Exception ex)
+                            {
+                                // 如果图像解码失败，记录日志但不中断其他图标显示
+                                Console.WriteLine($"图标解码失败: {ex.Message}");
+                                continue;
+                            }
                         }
 
                         iconViewModels.Add(iconViewModel);
@@ -321,7 +358,22 @@ namespace MyTool
             ImportFunctionsGrid.ItemsSource = currentPEInfo?.ImportFunctions;
 
             // 显示导出函数
-            ExportFunctionsGrid.ItemsSource = currentPEInfo?.ExportFunctions;
+            // 对于.NET程序集，导出函数实际上可能是公开的类型
+            var exportItems = new List<object>();
+            
+            if (currentPEInfo != null)
+            {
+                // 添加传统的导出函数
+                exportItems.AddRange(currentPEInfo.ExportFunctions);
+                
+                // 如果是.NET程序集，添加额外的导出信息
+                if (currentPEInfo.CLRInfo != null)
+                {
+                    // 可以在这里添加额外的.NET特定信息
+                }
+            }
+            
+            ExportFunctionsGrid.ItemsSource = exportItems;
         }
 
         private void DependencyTree_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
