@@ -37,8 +37,8 @@ namespace MyTool
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"图标信息解析错误: {ex.Message}");
                 // 图标信息解析错误不中断程序执行
-                Console.WriteLine($"图标解析错误: {ex.Message}");
             }
         }
 
@@ -93,7 +93,7 @@ namespace MyTool
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"图标资源目录解析错误: {ex.Message}");
+                Console.WriteLine($"解析资源目录以查找图标信息错误: {ex.Message}");
             }
         }
 
@@ -157,7 +157,7 @@ namespace MyTool
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"组图标资源解析错误: {ex.Message}");
+                Console.WriteLine($"解析组图标资源错误: {ex.Message}");
             }
         }
 
@@ -235,9 +235,6 @@ namespace MyTool
                     // 为每个图标目录项解析实际的图标数据
                     foreach (var entry in iconDirEntries)
                     {
-#if DEBUG
-                        Console.WriteLine($"Processing icon entry - Width: {entry.Width}, Height: {entry.Height}, BitCount: {entry.BitCount}, BytesInRes: {entry.BytesInRes}, ImageOffset (resource ID): {entry.ImageOffset}");
-#endif
                         // 查找对应ID的RT_ICON资源
                         long iconDataOffset = PEResourceParserIconHelpers.FindIconDataByResourceId(fs, reader, peInfo, entry.ImageOffset, resourceBaseOffset);
                         if (iconDataOffset != -1)
@@ -249,10 +246,6 @@ namespace MyTool
                                 BitsPerPixel = entry.BitCount,
                                 Size = (int)entry.BytesInRes
                             };
-
-#if DEBUG
-                            Console.WriteLine($"IconInfo created - Width: {iconInfo.Width}, Height: {iconInfo.Height}, BitsPerPixel: {iconInfo.BitsPerPixel}, Size: {iconInfo.Size}");
-#endif
 
                             // 构建完整的ICO文件数据
                             // ICO文件结构: 6字节文件头 + 16字节目录项 + 图像数据
@@ -284,9 +277,6 @@ namespace MyTool
                                 // 读取并写入图像数据
                                 if (entry.BytesInRes > 0 && entry.BytesInRes <= fs.Length && iconDataOffset + entry.BytesInRes <= fs.Length)
                                 {
-#if DEBUG
-                                    Console.WriteLine($"Reading {entry.BytesInRes} bytes from offset 0x{iconDataOffset:X8}");
-#endif
                                     fs.Position = iconDataOffset;
                                     byte[] imageData = reader.ReadBytes((int)entry.BytesInRes);
                                     Array.Copy(imageData, 0, fullIconData, 6 + 16, imageData.Length);
@@ -298,33 +288,16 @@ namespace MyTool
                                     long remainingBytes = fs.Length - iconDataOffset;
                                     if (remainingBytes > 0 && iconDataOffset < fs.Length)
                                     {
-#if DEBUG
-                                        Console.WriteLine($"Reading {Math.Min(remainingBytes, entry.BytesInRes)} bytes from offset 0x{iconDataOffset:X8} (partial read)");
-#endif
                                         fs.Position = iconDataOffset;
                                         byte[] imageData = reader.ReadBytes((int)Math.Min(remainingBytes, entry.BytesInRes));
                                         Array.Copy(imageData, 0, fullIconData, 6 + 16, imageData.Length);
                                         iconInfo.Data = fullIconData;
                                     }
                                 }
-#if DEBUG
-                                else
-                                {
-                                    Console.WriteLine($"Skipping icon data read due to size constraints - BytesInRes: {entry.BytesInRes}, FileLength: {fs.Length}, IconDataOffset: 0x{iconDataOffset:X8}");
-                                }
-                                
-                                Console.WriteLine($"Icon data actually read: {iconInfo.Data.Length} bytes");
-#endif
 
                                 peInfo.Icons.Add(iconInfo);
                             }
                         }
-#if DEBUG
-                        else
-                        {
-                            Console.WriteLine($"Failed to find icon data for resource ID: {entry.ImageOffset}");
-                        }
-#endif
                     }
                 }
 
@@ -332,7 +305,7 @@ namespace MyTool
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"组图标数据项解析错误: {ex.Message}");
+                Console.WriteLine($"解析组图标数据项错误: {ex.Message}");
             }
         }
     }

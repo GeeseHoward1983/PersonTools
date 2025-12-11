@@ -21,9 +21,6 @@ namespace MyTool
         /// <returns>图标数据偏移量</returns>
         internal static long FindSpecificIconData(FileStream fs, BinaryReader reader, PEInfo peInfo, long directoryOffset, long resourceBaseOffset, uint resourceId)
         {
-#if DEBUG
-            Console.WriteLine($"FindSpecificIconData called with directoryOffset: 0x{directoryOffset:X8}, resourceId: {resourceId}");
-#endif
             try
             {
                 long originalPosition = fs.Position;
@@ -40,10 +37,6 @@ namespace MyTool
                     NumberOfIdEntries = reader.ReadUInt16()
                 };
 
-#if DEBUG
-                Console.WriteLine($"Directory - Named entries: {directory.NumberOfNamedEntries}, ID entries: {directory.NumberOfIdEntries}");
-#endif
-
                 int totalEntries = directory.NumberOfNamedEntries + directory.NumberOfIdEntries;
 
                 // 查找指定ID的资源
@@ -57,22 +50,12 @@ namespace MyTool
                         OffsetToData = reader.ReadUInt32()
                     };
 
-#if DEBUG
-                    Console.WriteLine($"Specific entry {i} - NameOrId: 0x{entry.NameOrId:X8}, OffsetToData: 0x{entry.OffsetToData:X8}");
-#endif
-
                     // 检查资源ID是否匹配
                     if ((entry.NameOrId & 0xFFFF) == resourceId)
                     {
-#if DEBUG
-                        Console.WriteLine($"Found matching resource ID: {resourceId}");
-#endif
                         // 处理语言子目录
                         if ((entry.OffsetToData & 0x80000000) != 0)
                         {
-#if DEBUG
-                            Console.WriteLine("Following to language subdirectory");
-#endif
                             long nextLevelOffset = resourceBaseOffset + (entry.OffsetToData & 0x7FFFFFFF);
                             long dataOffset = FindIconDataInLanguageDirectory(fs, reader, peInfo, nextLevelOffset, resourceBaseOffset);
                             fs.Position = originalPosition;
@@ -80,9 +63,6 @@ namespace MyTool
                         }
                         else
                         {
-#if DEBUG
-                            Console.WriteLine("Direct data entry");
-#endif
                             long dataEntryOffset = resourceBaseOffset + entry.OffsetToData;
                             long dataOffset = GetIconDataFromEntry(fs, reader, peInfo, dataEntryOffset);
                             fs.Position = originalPosition;
@@ -92,16 +72,10 @@ namespace MyTool
                 }
 
                 fs.Position = originalPosition;
-#if DEBUG
-                Console.WriteLine("Matching resource ID not found");
-#endif
                 return -1;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-#if DEBUG
-                Console.WriteLine($"Exception in FindSpecificIconData: {ex.Message}");
-#endif
                 return -1;
             }
         }
@@ -223,9 +197,6 @@ namespace MyTool
         /// <returns>图标数据偏移量</returns>
         internal static long FindIconDataByResourceId(FileStream fs, BinaryReader reader, PEInfo peInfo, uint resourceId, long resourceBaseOffset)
         {
-#if DEBUG
-            Console.WriteLine($"FindIconDataByResourceId called with resourceId: {resourceId}");
-#endif
             try
             {
                 // 图标数据在RT_ICON资源类型中 (ID = 3)
@@ -236,9 +207,6 @@ namespace MyTool
                 if (peInfo.OptionalHeader.DataDirectory.Length <= RESOURCE_DIRECTORY_INDEX ||
                     peInfo.OptionalHeader.DataDirectory[RESOURCE_DIRECTORY_INDEX].VirtualAddress == 0)
                 {
-#if DEBUG
-                    Console.WriteLine("Resource directory not found or invalid");
-#endif
                     return -1;
                 }
 
@@ -246,15 +214,8 @@ namespace MyTool
                 long resourceOffset = PEResourceParserCore.RvaToOffset(resourceRVA, peInfo.SectionHeaders);
                 if (resourceOffset == -1 || resourceOffset >= fs.Length)
                 {
-#if DEBUG
-                    Console.WriteLine($"Invalid resource offset: {resourceOffset}, file length: {fs.Length}");
-#endif
                     return -1;
                 }
-
-#if DEBUG
-                Console.WriteLine($"Resource RVA: 0x{resourceRVA:X8}, Resource offset: 0x{resourceOffset:X8}");
-#endif
 
                 long originalPosition = fs.Position;
                 fs.Position = resourceOffset;
@@ -270,10 +231,6 @@ namespace MyTool
                     NumberOfIdEntries = reader.ReadUInt16()
                 };
 
-#if DEBUG
-                Console.WriteLine($"Root directory - Named entries: {rootDirectory.NumberOfNamedEntries}, ID entries: {rootDirectory.NumberOfIdEntries}");
-#endif
-
                 int totalEntries = rootDirectory.NumberOfNamedEntries + rootDirectory.NumberOfIdEntries;
 
                 // 查找RT_ICON资源类型
@@ -287,36 +244,20 @@ namespace MyTool
                         OffsetToData = reader.ReadUInt32()
                     };
 
-#if DEBUG
-                    Console.WriteLine($"Entry {i} - NameOrId: 0x{entry.NameOrId:X8}, OffsetToData: 0x{entry.OffsetToData:X8}");
-#endif
-
                     if ((entry.NameOrId & 0xFFFF) == RT_ICON_TYPE)
                     {
-#if DEBUG
-                        Console.WriteLine($"Found RT_ICON entry, following to next level");
-#endif
                         long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
                         long iconDataOffset = FindSpecificIconData(fs, reader, peInfo, nextLevelOffset, resourceBaseOffset, resourceId);
                         fs.Position = originalPosition;
-#if DEBUG
-                        Console.WriteLine($"Icon data offset found: 0x{iconDataOffset:X8}");
-#endif
                         return iconDataOffset;
                     }
                 }
 
                 fs.Position = originalPosition;
-#if DEBUG
-                Console.WriteLine("RT_ICON type not found");
-#endif
                 return -1;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-#if DEBUG
-                Console.WriteLine($"Exception in FindIconDataByResourceId: {ex.Message}");
-#endif
                 return -1;
             }
         }
