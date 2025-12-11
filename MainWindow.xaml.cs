@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 
 namespace MyTool
@@ -55,6 +57,7 @@ namespace MyTool
                 DisplayDependencies();
                 DisplayImportExportFunctions();
                 DisplayAdditionalInfo(); // 添加显示附加信息的调用
+                DisplayIcons(); // 添加显示图标信息的调用
             }
             catch (Exception ex)
             {
@@ -237,6 +240,79 @@ namespace MyTool
                 { "是否签名", currentPEInfo.AdditionalInfo.IsSigned ? "是" : "否" },
                 { "证书详情", currentPEInfo.AdditionalInfo.CertificateInfo }
             });
+        }
+
+        private void DisplayIcons()
+        {
+            IconsPanel.Children.Clear();
+
+            if (currentPEInfo?.Icons == null || currentPEInfo.Icons.Count == 0)
+            {
+                var textBlock = new TextBlock
+                {
+                    Text = "未找到图标信息",
+                    VerticalAlignment = System.Windows.VerticalAlignment.Center,
+                    HorizontalAlignment = System.Windows.HorizontalAlignment.Center
+                };
+                IconsPanel.Children.Add(textBlock);
+                return;
+            }
+
+            foreach (var icon in currentPEInfo.Icons)
+            {
+                try
+                {
+                    if (icon.Data == null || icon.Data.Length == 0)
+                        continue;
+
+                    var iconContainer = new StackPanel
+                    {
+                        Margin = new Thickness(10),
+                        Orientation = Orientation.Vertical
+                    };
+
+                    // 创建图像控件
+                    var image = new Image
+                    {
+                        Width = icon.Width,
+                        Height = icon.Height,
+                        Stretch = System.Windows.Media.Stretch.None
+                    };
+
+                    // 从字节数组创建位图
+                    using (var stream = new MemoryStream(icon.Data))
+                    {
+                        var bitmap = new BitmapImage();
+                        bitmap.BeginInit();
+                        bitmap.StreamSource = stream;
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmap.EndInit();
+                        bitmap.Freeze(); // 提高性能
+                        image.Source = bitmap;
+                    }
+
+                    // 创建图标信息文本
+                    var infoText = new TextBlock
+                    {
+                        Text = $"{icon.Width}x{icon.Height}x{icon.BitsPerPixel}bpp\nSize: {icon.Size} bytes",
+                        HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                        Margin = new Thickness(0, 5, 0, 0)
+                    };
+
+                    iconContainer.Children.Add(image);
+                    iconContainer.Children.Add(infoText);
+                    IconsPanel.Children.Add(iconContainer);
+                }
+                catch (Exception ex)
+                {
+                    var errorText = new TextBlock
+                    {
+                        Text = $"图标加载失败: {ex.Message}",
+                        Foreground = System.Windows.Media.Brushes.Red
+                    };
+                    IconsPanel.Children.Add(errorText);
+                }
+            }
         }
 
         private void AddHeaderInfo(string title, Dictionary<string, string> info)

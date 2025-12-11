@@ -57,11 +57,12 @@
                 </GroupBox>
             </Grid>
 
-            <!-- 右侧：导入/导出函数 -->
+            <!-- 右侧：导入/导出函数和图标 -->
             <Grid Grid.Column="2" Margin="5">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="200"/> <!-- 图标显示区域 -->
                 </Grid.RowDefinitions>
 
                 <!-- 导入函数 -->
@@ -98,6 +99,13 @@
                             <DataGridTextColumn Header="RVA" Binding="{Binding RVA, StringFormat=0x\{0:X8\}}" Width="100"/>
                         </DataGrid.Columns>
                     </DataGrid>
+                </GroupBox>
+
+                <!-- 图标显示区域 -->
+                <GroupBox Grid.Row="2" Header="图标信息">
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Name="IconsPanel" Orientation="Horizontal"/>
+                    </ScrollViewer>
                 </GroupBox>
             </Grid>
         </Grid>

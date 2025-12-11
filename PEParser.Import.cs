@@ -28,7 +28,7 @@ namespace MyTool
                     peInfo.OptionalHeader.DataDirectory[IMPORT_DIRECTORY_INDEX].VirtualAddress != 0)
                 {
                     uint importRVA = peInfo.OptionalHeader.DataDirectory[IMPORT_DIRECTORY_INDEX].VirtualAddress;
-                    long importOffset = PEResourceParser.RvaToOffset(importRVA, peInfo.SectionHeaders);
+                    long importOffset = PEResourceParserCore.RvaToOffset(importRVA, peInfo.SectionHeaders);
 
                     if (importOffset != -1 && importOffset < fs.Length)
                     {
@@ -58,7 +58,7 @@ namespace MyTool
                             }
 
                             // 获取DLL名称
-                            long nameOffset = PEResourceParser.RvaToOffset(importDesc.Name, peInfo.SectionHeaders);
+                            long nameOffset = PEResourceParserCore.RvaToOffset(importDesc.Name, peInfo.SectionHeaders);
                             if (nameOffset != -1 && nameOffset < fs.Length)
                             {
                                 long tempPosition = fs.Position;
@@ -124,7 +124,7 @@ namespace MyTool
             {
                 // 使用OriginalFirstThunk或FirstThunk来获取导入地址表
                 uint thunkRVA = importDesc.OriginalFirstThunk != 0 ? importDesc.OriginalFirstThunk : importDesc.FirstThunk;
-                long thunkOffset = PEResourceParser.RvaToOffset(thunkRVA, peInfo.SectionHeaders);
+                long thunkOffset = PEResourceParserCore.RvaToOffset(thunkRVA, peInfo.SectionHeaders);
 
                 if (thunkOffset != -1 && thunkOffset < fs.Length)
                 {
@@ -159,7 +159,7 @@ namespace MyTool
                         {
                             // 通过Hint/Name表获取函数名称
                             uint nameRVA = (uint)thunkValue;
-                            long nameOffset = PEResourceParser.RvaToOffset(nameRVA, peInfo.SectionHeaders);
+                            long nameOffset = PEResourceParserCore.RvaToOffset(nameRVA, peInfo.SectionHeaders);
 
                             if (nameOffset != -1 && nameOffset < fs.Length)
                             {
@@ -211,7 +211,7 @@ namespace MyTool
                 peInfo.OptionalHeader.DataDirectory[DELAY_LOAD_IMPORT_INDEX].VirtualAddress != 0)
             {
                 uint delayLoadImportRVA = peInfo.OptionalHeader.DataDirectory[DELAY_LOAD_IMPORT_INDEX].VirtualAddress;
-                long delayLoadImportOffset = PEResourceParser.RvaToOffset(delayLoadImportRVA, peInfo.SectionHeaders);
+                long delayLoadImportOffset = PEResourceParserCore.RvaToOffset(delayLoadImportRVA, peInfo.SectionHeaders);
 
                 if (delayLoadImportOffset != -1 && delayLoadImportOffset < fs.Length)
                 {
@@ -250,7 +250,7 @@ namespace MyTool
                         string dllName = "";
                         if (delayLoadDesc.DllNameRVA != 0)
                         {
-                            long nameOffset = PEResourceParser.RvaToOffset(delayLoadDesc.DllNameRVA, peInfo.SectionHeaders);
+                            long nameOffset = PEResourceParserCore.RvaToOffset(delayLoadDesc.DllNameRVA, peInfo.SectionHeaders);
                             if (nameOffset != -1 && nameOffset < fs.Length)
                             {
                                 // 检查是否有足够的空间读取名称
@@ -292,7 +292,7 @@ namespace MyTool
                         // 解析延迟加载导入函数 - 使用ImportNameTableRVA
                         if (delayLoadDesc.ImportNameTableRVA != 0)
                         {
-                            long nameTableOffset = PEResourceParser.RvaToOffset(delayLoadDesc.ImportNameTableRVA, peInfo.SectionHeaders);
+                            long nameTableOffset = PEResourceParserCore.RvaToOffset(delayLoadDesc.ImportNameTableRVA, peInfo.SectionHeaders);
                             if (nameTableOffset != -1 && nameTableOffset < fs.Length)
                             {
                                 long nameTableStartPos = nameTableOffset;
@@ -331,7 +331,7 @@ namespace MyTool
                                     else
                                     {
                                         // 按名称导入
-                                        long nameOffset = PEResourceParser.RvaToOffset((uint)thunkRva, peInfo.SectionHeaders);
+                                        long nameOffset = PEResourceParserCore.RvaToOffset((uint)thunkRva, peInfo.SectionHeaders);
                                         if (nameOffset != -1 && nameOffset < fs.Length)
                                         {
                                             try

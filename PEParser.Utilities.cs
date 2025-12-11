@@ -468,10 +468,10 @@ namespace MyTool
         private static void ParseAdditionalInfo(FileStream fs, BinaryReader reader, PEInfo peInfo)
         {
             // 解析资源节中的版本信息
-            PEResourceParser.ParseVersionInfo(fs, reader, peInfo);
+            PEResourceParserVersion.ParseVersionInfo(fs, reader, peInfo);
 
             // 解析证书信息
-            PEResourceParser.ParseCertificateInfo(fs, reader, peInfo);
+            PEResourceParserCertificate.ParseCertificateInfo(fs, reader, peInfo);
         }
     }
 }

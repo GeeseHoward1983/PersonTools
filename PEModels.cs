@@ -13,6 +13,7 @@ namespace MyTool
         public List<ImportFunctionInfo> ImportFunctions { get; set; } = [];
         public List<ExportFunctionInfo> ExportFunctions { get; set; } = [];
         public List<DependencyInfo> Dependencies { get; set; } = [];
+        public List<IconInfo> Icons { get; set; } = [];
         public PEAdditionalInfo AdditionalInfo { get; set; } = new PEAdditionalInfo();
     }
 
@@ -64,5 +65,36 @@ namespace MyTool
         public string ForwardedTo { get; set; } = string.Empty;
         public bool IsForwarded { get; set; }
         public List<DependencyInfo> Dependencies { get; set; } = [];
+    }
+
+    // 图标目录头
+    public struct ICON_DIR_HEADER
+    {
+        public ushort Reserved;
+        public ushort Type;
+        public ushort Count;
+    }
+
+    // 图标目录项
+    public struct ICON_DIR_ENTRY
+    {
+        public byte Width;
+        public byte Height;
+        public byte ColorCount;
+        public byte Reserved;
+        public ushort Planes;
+        public ushort BitCount;
+        public uint BytesInRes;
+        public uint ImageOffset;
+    }
+
+    // 图标信息
+    public class IconInfo
+    {
+        public int Width { get; set; }
+        public int Height { get; set; }
+        public int BitsPerPixel { get; set; }
+        public int Size { get; set; }
+        public byte[] Data { get; set; } = [];
     }
 }

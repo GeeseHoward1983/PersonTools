@@ -28,7 +28,7 @@ namespace MyTool
                     peInfo.OptionalHeader.DataDirectory[EXPORT_DIRECTORY_INDEX].VirtualAddress != 0)
                 {
                     uint exportRVA = peInfo.OptionalHeader.DataDirectory[EXPORT_DIRECTORY_INDEX].VirtualAddress;
-                    long exportOffset = PEResourceParser.RvaToOffset(exportRVA, peInfo.SectionHeaders);
+                    long exportOffset = PEResourceParserCore.RvaToOffset(exportRVA, peInfo.SectionHeaders);
 
                     if (exportOffset != -1 && exportOffset < fs.Length)
                     {
@@ -53,7 +53,7 @@ namespace MyTool
 
                         // 获取函数地址表
                         var functionAddresses = new List<uint>();
-                        long funcAddrOffset = PEResourceParser.RvaToOffset(exportDir.AddressOfFunctions, peInfo.SectionHeaders);
+                        long funcAddrOffset = PEResourceParserCore.RvaToOffset(exportDir.AddressOfFunctions, peInfo.SectionHeaders);
                         if (funcAddrOffset != -1 && funcAddrOffset < fs.Length)
                         {
                             long tempPosition = fs.Position;
@@ -69,7 +69,7 @@ namespace MyTool
 
                         // 获取函数名称表
                         var functionNameRVAs = new List<uint>();
-                        long funcNameOffset = PEResourceParser.RvaToOffset(exportDir.AddressOfNames, peInfo.SectionHeaders);
+                        long funcNameOffset = PEResourceParserCore.RvaToOffset(exportDir.AddressOfNames, peInfo.SectionHeaders);
                         if (funcNameOffset != -1 && funcNameOffset < fs.Length)
                         {
                             long tempPosition = fs.Position;
@@ -85,7 +85,7 @@ namespace MyTool
 
                         // 获取名称序号表
                         var nameOrdinals = new List<ushort>();
-                        long nameOrdinalOffset = PEResourceParser.RvaToOffset(exportDir.AddressOfNameOrdinals, peInfo.SectionHeaders);
+                        long nameOrdinalOffset = PEResourceParserCore.RvaToOffset(exportDir.AddressOfNameOrdinals, peInfo.SectionHeaders);
                         if (nameOrdinalOffset != -1 && nameOrdinalOffset < fs.Length)
                         {
                             long tempPosition = fs.Position;
@@ -104,7 +104,7 @@ namespace MyTool
                         for (int i = 0; i < functionNameRVAs.Count; i++)
                         {
                             uint nameRVA = functionNameRVAs[i];
-                            long nameOffset = PEResourceParser.RvaToOffset(nameRVA, peInfo.SectionHeaders);
+                            long nameOffset = PEResourceParserCore.RvaToOffset(nameRVA, peInfo.SectionHeaders);
 
                             if (nameOffset != -1 && nameOffset < fs.Length)
                             {

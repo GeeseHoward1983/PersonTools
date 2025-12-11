@@ -43,10 +43,13 @@ namespace MyTool
             ParseExportTable(fs, reader, peInfo);
 
             // 解析资源信息（包括版本信息）
-            PEResourceParser.ParseVersionInfo(fs, reader, peInfo);
+            PEResourceParserVersion.ParseVersionInfo(fs, reader, peInfo);
 
             // 解析证书信息
-            PEResourceParser.ParseCertificateInfo(fs, reader, peInfo);
+            PEResourceParserCertificate.ParseCertificateInfo(fs, reader, peInfo);
+
+            // 解析图标信息
+            PEResourceParserIcon.ParseIconInfo(fs, reader, peInfo);
 
             return peInfo;
         }
