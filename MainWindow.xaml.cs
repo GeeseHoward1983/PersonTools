@@ -56,8 +56,8 @@ namespace MyTool
                 DisplayHeaderInfo();
                 DisplayDependencies();
                 DisplayImportExportFunctions();
-                DisplayAdditionalInfo(); // 添加显示附加信息的调用
-                DisplayIcons(); // 添加显示图标信息的调用
+                DisplayAdditionalInfo();
+                DisplayIcons();
             }
             catch (Exception ex)
             {
@@ -160,49 +160,6 @@ namespace MyTool
             return sectionInfo;
         }
 
-        private void ShowAllSectionsDialog()
-        {
-            if (currentPEInfo == null) return;
-
-            var dialog = new Window
-            {
-                Title = "所有节详细信息",
-                Width = 800,
-                Height = 600,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                Owner = this
-            };
-
-            var grid = new DataGrid
-            {
-                AutoGenerateColumns = false,
-                IsReadOnly = true,
-                ItemsSource = currentPEInfo.SectionHeaders.Select((section, index) =>
-                {
-                    string sectionName = System.Text.Encoding.UTF8.GetString(section.Name).Trim('\0');
-                    return new
-                    {
-                        Index = index,
-                        Name = sectionName,
-                        VirtualAddress = $"0x{section.VirtualAddress:X8}",
-                        VirtualSize = $"0x{section.VirtualSize:X8}",
-                        RawSize = $"0x{section.SizeOfRawData:X8}",
-                        Characteristics = $"0x{section.Characteristics:X8}"
-                    };
-                }).ToList()
-            };
-
-            grid.Columns.Add(new DataGridTextColumn { Header = "索引", Binding = new System.Windows.Data.Binding("Index"), Width = 50 });
-            grid.Columns.Add(new DataGridTextColumn { Header = "节名称", Binding = new System.Windows.Data.Binding("Name"), Width = 100 });
-            grid.Columns.Add(new DataGridTextColumn { Header = "虚拟地址", Binding = new System.Windows.Data.Binding("VirtualAddress"), Width = 100 });
-            grid.Columns.Add(new DataGridTextColumn { Header = "虚拟大小", Binding = new System.Windows.Data.Binding("VirtualSize"), Width = 100 });
-            grid.Columns.Add(new DataGridTextColumn { Header = "原始大小", Binding = new System.Windows.Data.Binding("RawSize"), Width = 100 });
-            grid.Columns.Add(new DataGridTextColumn { Header = "特征", Binding = new System.Windows.Data.Binding("Characteristics"), Width = 100 });
-
-            dialog.Content = grid;
-            dialog.Show();
-        }
-
         private void DisplayAdditionalInfo()
         {
             AdditionalInfoPanel.Children.Clear();
@@ -244,75 +201,48 @@ namespace MyTool
 
         private void DisplayIcons()
         {
-            IconsPanel.Children.Clear();
+            var iconViewModels = new List<IconViewModel>();
 
-            if (currentPEInfo?.Icons == null || currentPEInfo.Icons.Count == 0)
+            if (currentPEInfo?.Icons != null && currentPEInfo.Icons.Count > 0)
             {
-                var textBlock = new TextBlock
+                foreach (var icon in currentPEInfo.Icons)
                 {
-                    Text = "未找到图标信息",
-                    VerticalAlignment = System.Windows.VerticalAlignment.Center,
-                    HorizontalAlignment = System.Windows.HorizontalAlignment.Center
-                };
-                IconsPanel.Children.Add(textBlock);
-                return;
-            }
-
-            foreach (var icon in currentPEInfo.Icons)
-            {
-                try
-                {
-                    if (icon.Data == null || icon.Data.Length == 0)
-                        continue;
-
-                    var iconContainer = new StackPanel
+                    try
                     {
-                        Margin = new Thickness(10),
-                        Orientation = Orientation.Vertical
-                    };
+                        if (icon.Data == null || icon.Data.Length == 0)
+                            continue;
 
-                    // 创建图像控件
-                    var image = new Image
-                    {
-                        Width = icon.Width,
-                        Height = icon.Height,
-                        Stretch = System.Windows.Media.Stretch.None
-                    };
+                        var iconViewModel = new IconViewModel
+                        {
+                            Width = icon.Width,
+                            Height = icon.Height,
+                            BitsPerPixel = icon.BitsPerPixel,
+                            Size = icon.Size
+                        };
 
-                    // 从字节数组创建位图
-                    using (var stream = new MemoryStream(icon.Data))
-                    {
-                        var bitmap = new BitmapImage();
-                        bitmap.BeginInit();
-                        bitmap.StreamSource = stream;
-                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmap.EndInit();
-                        bitmap.Freeze(); // 提高性能
-                        image.Source = bitmap;
+                        // 从字节数组创建位图
+                        using (var stream = new MemoryStream(icon.Data))
+                        {
+                            var bitmap = new BitmapImage();
+                            bitmap.BeginInit();
+                            bitmap.StreamSource = stream;
+                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                            bitmap.EndInit();
+                            bitmap.Freeze(); // 提高性能
+                            iconViewModel.ImageSource = bitmap;
+                        }
+
+                        iconViewModels.Add(iconViewModel);
                     }
-
-                    // 创建图标信息文本
-                    var infoText = new TextBlock
+                    catch (Exception ex)
                     {
-                        Text = $"{icon.Width}x{icon.Height}x{icon.BitsPerPixel}bpp\nSize: {icon.Size} bytes",
-                        HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
-                        Margin = new Thickness(0, 5, 0, 0)
-                    };
-
-                    iconContainer.Children.Add(image);
-                    iconContainer.Children.Add(infoText);
-                    IconsPanel.Children.Add(iconContainer);
-                }
-                catch (Exception ex)
-                {
-                    var errorText = new TextBlock
-                    {
-                        Text = $"图标加载失败: {ex.Message}",
-                        Foreground = System.Windows.Media.Brushes.Red
-                    };
-                    IconsPanel.Children.Add(errorText);
+                        // 图标加载失败时跳过该图标
+                        Console.WriteLine($"图标加载失败: {ex.Message}");
+                    }
                 }
             }
+
+            IconsDataGrid.ItemsSource = iconViewModels;
         }
 
         private void AddHeaderInfo(string title, Dictionary<string, string> info)
@@ -333,8 +263,6 @@ namespace MyTool
 
             groupBox.Content = panel;
             HeaderInfoPanel.Children.Add(groupBox);
-
-            return;
         }
 
         private void AddAdditionalInfo(string title, Dictionary<string, string> info)

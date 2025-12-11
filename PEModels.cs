@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Windows.Media.Imaging;
 
 namespace MyTool
 {
@@ -96,5 +97,15 @@ namespace MyTool
         public int BitsPerPixel { get; set; }
         public int Size { get; set; }
         public byte[] Data { get; set; } = [];
+    }
+    
+    // 图标视图模型，用于在DataGrid中显示图标
+    public class IconViewModel
+    {
+        public BitmapSource? ImageSource { get; set; }
+        public int Width { get; set; }
+        public int Height { get; set; }
+        public int BitsPerPixel { get; set; }
+        public int Size { get; set; }
     }
 }
