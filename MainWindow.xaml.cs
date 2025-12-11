@@ -76,8 +76,8 @@ namespace MyTool
             {
                 { "文件路径", currentPEInfo.FilePath },
                 { "文件类型", PEParser.GetDetailedFileType(currentPEInfo.NtHeaders.FileHeader.Characteristics, currentPEInfo.OptionalHeader.Subsystem) },
-                { "架构", PEParser.GetMachineTypeDescription(currentPEInfo.NtHeaders.FileHeader.Machine) },
-                { "位数", PEParser.Is64Bit(currentPEInfo.OptionalHeader) ? "64位" : "32位" }
+                { "架构", GetArchitectureInfo() },
+                { "位数", GetBitInfo() }
             };
 
             // 只有在是驱动程序时才添加驱动程序类型信息
@@ -144,6 +144,7 @@ namespace MyTool
                 AddHeaderInfo(".NET CLR信息", new Dictionary<string, string>
                 {
                     { "运行时版本", $"v{currentPEInfo.CLRInfo.RuntimeVersion}" },
+                    { "架构类型", currentPEInfo.CLRInfo.Architecture },
                     { "标志位", string.Join(", ", currentPEInfo.CLRInfo.FlagDescriptions) },
                     { "入口点", $"0x{currentPEInfo.CLRInfo.EntryPointTokenOrRva:X8}" },
                     { "包含元数据", currentPEInfo.CLRInfo.HasMetaData ? "是" : "否" },
@@ -389,6 +390,44 @@ namespace MyTool
         {
             var dt = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
             return dt.AddSeconds(unixTimeStamp).ToLocalTime();
+        }
+
+        private string GetArchitectureInfo()
+        {
+            if (currentPEInfo == null) 
+                return "Unknown";
+                
+            // 对于.NET程序，显示PE头架构和.NET架构信息
+            if (currentPEInfo.CLRInfo != null)
+            {
+                return $"{PEParser.GetMachineTypeDescription(currentPEInfo.NtHeaders.FileHeader.Machine)} (.NET: {currentPEInfo.CLRInfo.Architecture})";
+            }
+            
+            // 对于非.NET程序，只显示PE头架构
+            return PEParser.GetMachineTypeDescription(currentPEInfo.NtHeaders.FileHeader.Machine);
+        }
+
+        private string GetBitInfo()
+        {
+            if (currentPEInfo == null) 
+                return "Unknown";
+                
+            // 对于.NET程序，根据.NET架构判断位数
+            if (currentPEInfo.CLRInfo != null)
+            {
+                string arch = currentPEInfo.CLRInfo.Architecture;
+                if (arch == "x86")
+                    return "32位";
+                else if (arch == "Any CPU")
+                    return "Any CPU";
+                else if (arch == "x64" || arch == "ARM64")
+                    return "64位";
+                else
+                    return "未知";
+            }
+            
+            // 对于非.NET程序，根据PE头判断位数
+            return PEParser.Is64Bit(currentPEInfo.OptionalHeader) ? "64位" : "32位";
         }
     }
 }
