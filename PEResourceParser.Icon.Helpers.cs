@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 
 namespace MyTool
 {
@@ -143,7 +144,6 @@ namespace MyTool
         /// <param name="reader">二进制读取器</param>
         /// <param name="peInfo">PE文件信息</param>
         /// <param name="dataEntryOffset">数据条目偏移</param>
-        /// <param name="resourceBaseOffset">资源基址偏移</param>
         /// <returns>图标数据偏移量</returns>
         internal static long GetIconDataFromEntry(FileStream fs, BinaryReader reader, PEInfo peInfo, long dataEntryOffset)
         {
@@ -259,6 +259,47 @@ namespace MyTool
             catch (Exception)
             {
                 return -1;
+            }
+        }
+
+        /// <summary>
+        /// 读取资源名称
+        /// </summary>
+        /// <param name="fs">文件流</param>
+        /// <param name="reader">二进制读取器</param>
+        /// <param name="nameOffset">名称偏移</param>
+        /// <returns>资源名称</returns>
+        internal static string ReadResourceName(FileStream fs, BinaryReader reader, long nameOffset)
+        {
+            try
+            {
+                long originalPosition = fs.Position;
+                fs.Position = nameOffset;
+
+                // 读取名称长度（Unicode字符数）
+                if (fs.Position + 2 > fs.Length)
+                {
+                    fs.Position = originalPosition;
+                    return string.Empty;
+                }
+
+                ushort nameLength = reader.ReadUInt16();
+                if (nameLength == 0 || fs.Position + nameLength * 2 > fs.Length)
+                {
+                    fs.Position = originalPosition;
+                    return string.Empty;
+                }
+
+                // 读取名称（Unicode字符串）
+                byte[] nameBytes = reader.ReadBytes(nameLength * 2);
+                string resourceName = Encoding.Unicode.GetString(nameBytes);
+                
+                fs.Position = originalPosition;
+                return resourceName;
+            }
+            catch
+            {
+                return string.Empty;
             }
         }
     }

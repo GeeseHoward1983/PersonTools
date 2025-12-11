@@ -33,13 +33,13 @@ namespace MyTool
                 e_cs = reader.ReadUInt16(),
                 e_lfarlc = reader.ReadUInt16(),
                 e_ovno = reader.ReadUInt16(),
-                e_res1 = new ushort[4] { reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16() },
+                e_res1 = [reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16()],
                 e_oemid = reader.ReadUInt16(),
                 e_oeminfo = reader.ReadUInt16(),
-                e_res2 = new ushort[10] {
+                e_res2 = [
                     reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16(),
                     reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16()
-                },
+                ],
                 e_lfanew = reader.ReadUInt32()
             };
         }
@@ -77,17 +77,18 @@ namespace MyTool
         /// <returns>可选头结构</returns>
         internal static IMAGE_OPTIONAL_HEADER ParseOptionalHeader(BinaryReader reader, ushort sizeOfOptionalHeader)
         {
-            var optionalHeader = new IMAGE_OPTIONAL_HEADER();
-
-            // 读取通用部分
-            optionalHeader.Magic = reader.ReadUInt16();
-            optionalHeader.MajorLinkerVersion = reader.ReadByte();
-            optionalHeader.MinorLinkerVersion = reader.ReadByte();
-            optionalHeader.SizeOfCode = reader.ReadUInt32();
-            optionalHeader.SizeOfInitializedData = reader.ReadUInt32();
-            optionalHeader.SizeOfUninitializedData = reader.ReadUInt32();
-            optionalHeader.AddressOfEntryPoint = reader.ReadUInt32();
-            optionalHeader.BaseOfCode = reader.ReadUInt32();
+            var optionalHeader = new IMAGE_OPTIONAL_HEADER
+            {
+                // 读取通用部分
+                Magic = reader.ReadUInt16(),
+                MajorLinkerVersion = reader.ReadByte(),
+                MinorLinkerVersion = reader.ReadByte(),
+                SizeOfCode = reader.ReadUInt32(),
+                SizeOfInitializedData = reader.ReadUInt32(),
+                SizeOfUninitializedData = reader.ReadUInt32(),
+                AddressOfEntryPoint = reader.ReadUInt32(),
+                BaseOfCode = reader.ReadUInt32()
+            };
 
             bool is32Bit = optionalHeader.Magic == 0x10b;
             bool is64Bit = optionalHeader.Magic == 0x20b;
