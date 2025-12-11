@@ -244,7 +244,7 @@ namespace MyTool
                                 Width = entry.Width == 0 ? 256 : entry.Width,
                                 Height = entry.Height == 0 ? 256 : entry.Height,
                                 BitsPerPixel = entry.BitCount,
-                                Size = (int)entry.BytesInRes
+                                Size = 6 + 16 + (int)entry.BytesInRes  // ICO文件头(6字节) + 目录项(16字节) + 图像数据
                             };
 
                             // 构建完整的ICO文件数据
