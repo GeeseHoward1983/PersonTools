@@ -10,7 +10,7 @@ namespace MyTool
         // Windows errno 查询按钮点击事件
         private void WindowsErrnoQuery_Click(object sender, RoutedEventArgs e)
         {
-            QueryErrorCode(WindowsErrnoInput.Text, ConstString.WindowsErrnoMap, WindowsErrnoResult);
+            QueryErrorCode(WindowsErrnoInput.Text, ConstString.WindowsStandardErrnoMap, WindowsErrnoResult);
         }
 
         // Linux errno 查询按钮点击事件
