@@ -4,8 +4,72 @@ namespace MyTool
 {
     public static partial class ConstString
     {
-        // SQL Server 错误码
-        public static readonly Dictionary<int, string> SqlServerErrorsMap = new Dictionary<int, string>
+        // SQL Server 错误码 - 英文
+        private static readonly Dictionary<long, string> SqlServerErrorsMapEnglish = new()
+        {
+            { 100, "Return warning information" },
+            { 150, "Foreign key reference occurs when attempting CREATE TABLE or ALTER TABLE" },
+            { 170, "Row size too large" },
+            { 201, "Procedure or function requires parameter" },
+            { 207, "Invalid column name" },
+            { 208, "Invalid object name" },
+            { 245, "Conversion failed when converting the varchar value to data type int" },
+            { 266, "Error during transaction execution" },
+            { 297, "User account lacks sufficient permissions" },
+            { 310, "Too many parameters" },
+            { 403, "Specified type mismatch" },
+            { 421, "Unable to schedule parallel execution of query" },
+            { 512, "Subquery returned more than one value" },
+            { 515, "Cannot insert the value NULL into column" },
+            { 517, "Invalid length or precision value specified for column" },
+            { 547, "Statement conflicts with column reference constraint" },
+            { 550, "Attempt to perform unauthorized operation on table" },
+            { 615, "Procedure or function not found" },
+            { 814, "Stored procedure not found" },
+            { 911, "Invalid database" },
+            { 948, "Database version incompatible" },
+            { 1007, "Database already exists" },
+            { 1205, "Deadlock" },
+            { 1511, "Cannot delete clustered index" },
+            { 1563, "Cannot create constraint" },
+            { 1742, "Procedure requires parameter" },
+            { 1750, "Cannot create constraint" },
+            { 1801, "Database already exists" },
+            { 1807, "Timeout acquiring database lock" },
+            { 1834, "Device is being used by an existing resource" },
+            { 18456, "Login failed" },
+            { 2601, "Duplicate key" },
+            { 2627, "Violation of unique constraint condition" },
+            { 2714, "Object name already exists" },
+            { 3701, "Object does not exist" },
+            { 3902, "Transaction not committed" },
+            { 3903, "Transaction rolled back" },
+            { 4060, "Cannot open database" },
+            { 5028, "Log scan inconsistent" },
+            { 5123, "CREATE FILE encountered operating system error" },
+            { 5172, "File header incorrect" },
+            { 7915, "Table or index fragmentation" },
+            { 8623, "Internal query processor limit" },
+            { 8642, "Internal query processor error" },
+            { 8651, "Out of memory" },
+            { 9001, "Insufficient log disk space" },
+            { 9002, "Transaction log full" },
+            { 10053, "Network connection interrupted" },
+            { 10054, "Existing connection forcibly closed by remote host" },
+            { 10060, "Connection timeout" },
+            { 10061, "Target computer actively refused connection" },
+            { 11001, "Hostname not found" },
+            { 11011, "Replication table has no primary key" },
+            { 14001, "DLL required by application is missing" },
+            { 15601, "Cannot start service" },
+            { 17187, "SQL Server not configured to accept remote connections" },
+            { 18452, "Cannot use Windows authentication" },
+            { 23294, "Object is being used by another process" },
+            { 26024, "Failed to start service" }
+        };
+
+        // SQL Server 错误码 - 简体中文
+        private static readonly Dictionary<long, string> SqlServerErrorsMapSimplifiedChinese = new()
         {
             { 100, "返回警告信息" },
             { 150, "在尝试 CREATE TABLE 或 ALTER TABLE 时出现外键引用" },
@@ -67,5 +131,83 @@ namespace MyTool
             { 23294, "对象正被另一进程使用" },
             { 26024, "启动服务失败" }
         };
+
+        // SQL Server 错误码 - 繁体中文
+        private static readonly Dictionary<long, string> SqlServerErrorsMapTraditionalChinese = new()
+        {
+            { 100, "返回警告資訊" },
+            { 150, "在嘗試 CREATE TABLE 或 ALTER TABLE 時出現外鍵引用" },
+            { 170, "行大小過大" },
+            { 201, "過程或函數需要參數" },
+            { 207, "列名無效" },
+            { 208, "物件名無效" },
+            { 245, "將 varchar 值轉換為資料類型 int 時出錯" },
+            { 266, "執行事務過程中的錯誤" },
+            { 297, "用戶帳戶權限不足" },
+            { 310, "參數過多" },
+            { 403, "指定的類型不匹配" },
+            { 421, "無法安排查詢的並行執行" },
+            { 512, "子查詢返回的值多於一個" },
+            { 515, "不能將值 NULL 插入列" },
+            { 517, "為列指定了無效的長度或精確度值" },
+            { 547, "語句與列引用約束衝突" },
+            { 550, "試圖對錶執行未經允許的操作" },
+            { 615, "找不到過程或函數" },
+            { 814, "找不到存儲過程" },
+            { 911, "資料庫無效" },
+            { 948, "資料庫版本不相容" },
+            { 1007, "資料庫已存在" },
+            { 1205, "死鎖" },
+            { 1511, "無法刪除聚集索引" },
+            { 1563, "無法建立約束" },
+            { 1742, "過程需要參數" },
+            { 1750, "無法建立約束" },
+            { 1801, "資料庫已存在" },
+            { 1807, "獲取資料庫鎖時逾時" },
+            { 1834, "設備正由某個現有資源使用" },
+            { 18456, "登入失敗" },
+            { 2601, "重複鍵" },
+            { 2627, "違反唯一約束條件" },
+            { 2714, "物件名已存在" },
+            { 3701, "物件不存在" },
+            { 3902, "事務未提交" },
+            { 3903, "事務已回滾" },
+            { 4060, "無法打開資料庫" },
+            { 5028, "日誌掃描不一致" },
+            { 5123, "CREATE FILE遇到作業系統錯誤" },
+            { 5172, "檔頭不正確" },
+            { 7915, "錶或索引碎片" },
+            { 8623, "內部查詢處理器限制" },
+            { 8642, "內部查詢處理器錯誤" },
+            { 8651, "記憶體不足" },
+            { 9001, "日誌磁碟空間不足" },
+            { 9002, "事務日誌已滿" },
+            { 10053, "網路連線中斷" },
+            { 10054, "現有連線被遠程主機強制關閉" },
+            { 10060, "連線逾時" },
+            { 10061, "目標計算機積極拒絕連線" },
+            { 11001, "找不到主機名" },
+            { 11011, "複製錶沒有主鍵" },
+            { 14001, "應用程式依賴的DLL缺失" },
+            { 15601, "無法啟動服務" },
+            { 17187, "SQL Server尚未配置為接受遠程連接" },
+            { 18452, "無法使用 Windows 身份驗證" },
+            { 23294, "物件正被另一進程使用" },
+            { 26024, "啟動服務失敗" }
+        };
+
+        // SQL Server 错误码
+        public static Dictionary<long, string> SqlServerErrorsMap
+        {
+            get
+            {
+                return GlobalState.CurrentLanguageType switch
+                {
+                    LanguageType.SimplifiedChinese => SqlServerErrorsMapSimplifiedChinese,
+                    LanguageType.TraditionalChinese => SqlServerErrorsMapTraditionalChinese,
+                    _ => SqlServerErrorsMapEnglish
+                };
+            }
+        }
     }
 }

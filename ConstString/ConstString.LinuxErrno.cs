@@ -5,7 +5,7 @@ namespace MyTool
     public static partial class ConstString
     {
         // Linux errno 错误码
-        public static readonly Dictionary<int, string> LinuxErrnoMap = new Dictionary<int, string>
+        public static readonly Dictionary<long, string> LinuxErrnoMap = new()
         {
             { 0, "Success" },
             { 1, "Operation not permitted" },

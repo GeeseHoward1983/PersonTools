@@ -58,11 +58,11 @@ namespace MyTool
         // Windows 系统错误码查询按钮点击事件
         private void WindowsSystemErrorQuery_Click(object sender, RoutedEventArgs e)
         {
-            QueryErrorCode(WindowsSystemErrorInput.Text, ConstString.WindowsSystemErrorsMap, WindowsSystemErrorResult);
+            QueryErrorCode(WindowsSystemErrorInput.Text, ConstString.WindowsSystemErrorsMapEnglish, WindowsSystemErrorResult);
         }
 
         // 通用错误码查询方法
-        private void QueryErrorCode(string input, Dictionary<int, string> errorCodeMap, TextBlock resultTextBlock)
+        private static void QueryErrorCode(string input, Dictionary<long, string> errorCodeMap, TextBlock resultTextBlock)
         {
             if (string.IsNullOrWhiteSpace(input))
             {
@@ -70,10 +70,9 @@ namespace MyTool
                 return;
             }
 
-            if (int.TryParse(input.Trim(), out int errorCode))
+            if (uint.TryParse(input.Trim(), out uint errorCode))
             {
-                string? errorMessage;
-                if (errorCodeMap.TryGetValue(errorCode, out errorMessage))
+                if (errorCodeMap.TryGetValue(errorCode, out string? errorMessage))
                 {
                     resultTextBlock.Text = $"错误码: {errorCode}\n错误信息: {errorMessage}";
                 }

@@ -4,8 +4,8 @@ namespace MyTool
 {
     public static partial class ConstString
     {
-        // ODBC 错误码
-        public static readonly Dictionary<int, string> OdbcErrorsMap = new Dictionary<int, string>
+        // ODBC 错误码 - 英文
+        private static readonly Dictionary<long, string> OdbcErrorsMapEnglish = new()
         {
             { 0, "SQL_SUCCESS" },
             { 1, "SQL_SUCCESS_WITH_INFO" },
@@ -62,5 +62,137 @@ namespace MyTool
             { 244, "Invalid SQL routine body implementation specification definition declaration specification definition declaration" },
             { 245, "Invalid SQL routine body implementation specification definition declaration specification definition declaration specification" }
         };
+
+        // ODBC 错误码 - 简体中文
+        private static readonly Dictionary<long, string> OdbcErrorsMapSimplifiedChinese = new()
+        {
+            { 0, "SQL_SUCCESS" },
+            { 1, "SQL_SUCCESS_WITH_INFO" },
+            { -1, "SQL_ERROR" },
+            { -2, "SQL_INVALID_HANDLE" },
+            { 100, "SQL_NO_DATA" },
+            { 101, "SQL_STILL_EXECUTING" },
+            { 102, "SQL_NEED_DATA" },
+            { 110, "SQL_PARAM_DATA_AVAILABLE" },
+            { 200, "一般警告" },
+            { 201, "游标操作冲突" },
+            { 202, "不支持动态游标" },
+            { 203, "无效游标名称" },
+            { 204, "未找到连接" },
+            { 205, "无效连接字符串属性" },
+            { 206, "无效事务状态" },
+            { 207, "无效事务终止" },
+            { 208, "事务回滚" },
+            { 209, "事务解决方案未知" },
+            { 210, "授权违规" },
+            { 211, "无效授权规范" },
+            { 212, "无效目录名称" },
+            { 213, "无效模式名称" },
+            { 214, "无效角色规范" },
+            { 215, "无效事务启动" },
+            { 216, "无效定位器规范" },
+            { 217, "无效授予者" },
+            { 218, "无效授予操作" },
+            { 219, "无效撤销操作" },
+            { 220, "无效权限规范" },
+            { 221, "无效目标类型规范" },
+            { 222, "无效角色名称" },
+            { 223, "无效转换组名称规范" },
+            { 224, "无效转换组规范" },
+            { 225, "无效SQL调用名称" },
+            { 226, "无效SQL例程名称" },
+            { 227, "无效SQL例程规范" },
+            { 228, "SQL例程体包含无效SQL语句" },
+            { 229, "SQL例程体中的SQL语句无效" },
+            { 230, "SQL例程体中的SQL语句重复无效" },
+            { 231, "SQL例程体中的SQL语句序列无效" },
+            { 232, "无效SQL例程体" },
+            { 233, "无效SQL例程体定义" },
+            { 234, "无效SQL例程体规范" },
+            { 235, "无效SQL例程体声明" },
+            { 236, "无效SQL例程体实现" },
+            { 237, "无效SQL例程体实现规范" },
+            { 238, "无效SQL例程体实现定义" },
+            { 239, "无效SQL例程体实现声明" },
+            { 240, "无效SQL例程体实现规范定义" },
+            { 241, "无效SQL例程体实现规范定义声明" },
+            { 242, "无效SQL例程体实现规范定义声明规范" },
+            { 243, "无效SQL例程体实现规范定义声明规范定义" },
+            { 244, "无效SQL例程体实现规范定义声明规范定义声明" },
+            { 245, "无效SQL例程体实现规范定义声明规范定义声明规范" }
+        };
+
+        // ODBC 错误码 - 繁体中文
+        private static readonly Dictionary<long, string> OdbcErrorsMapTraditionalChinese = new()
+        {
+            { 0, "SQL_SUCCESS" },
+            { 1, "SQL_SUCCESS_WITH_INFO" },
+            { -1, "SQL_ERROR" },
+            { -2, "SQL_INVALID_HANDLE" },
+            { 100, "SQL_NO_DATA" },
+            { 101, "SQL_STILL_EXECUTING" },
+            { 102, "SQL_NEED_DATA" },
+            { 110, "SQL_PARAM_DATA_AVAILABLE" },
+            { 200, "一般警告" },
+            { 201, "游標操作衝突" },
+            { 202, "不支援動態游標" },
+            { 203, "無效游標名稱" },
+            { 204, "未找到連接" },
+            { 205, "無效連接字符串屬性" },
+            { 206, "無效事務狀態" },
+            { 207, "無效事務終止" },
+            { 208, "事務回滾" },
+            { 209, "事務解決方案未知" },
+            { 210, "授權違規" },
+            { 211, "無效授權規範" },
+            { 212, "無效目錄名稱" },
+            { 213, "無效模式名稱" },
+            { 214, "無效角色規範" },
+            { 215, "無效事務啟動" },
+            { 216, "無效定位器規範" },
+            { 217, "無效授予者" },
+            { 218, "無效授予操作" },
+            { 219, "無效撤銷操作" },
+            { 220, "無效權限規範" },
+            { 221, "無效目標類型規範" },
+            { 222, "無效角色名稱" },
+            { 223, "無效轉換組名稱規範" },
+            { 224, "無效轉換組規範" },
+            { 225, "無效SQL調用名稱" },
+            { 226, "無效SQL例程名稱" },
+            { 227, "無效SQL例程規範" },
+            { 228, "SQL例程體包含無效SQL語句" },
+            { 229, "SQL例程體中的SQL語句無效" },
+            { 230, "SQL例程體中的SQL語句重複無效" },
+            { 231, "SQL例程體中的SQL語句序列無效" },
+            { 232, "無效SQL例程體" },
+            { 233, "無效SQL例程體定義" },
+            { 234, "無效SQL例程體規範" },
+            { 235, "無效SQL例程體聲明" },
+            { 236, "無效SQL例程體實現" },
+            { 237, "無效SQL例程體實現規範" },
+            { 238, "無效SQL例程體實現定義" },
+            { 239, "無效SQL例程體實現聲明" },
+            { 240, "無效SQL例程體實現規範定義" },
+            { 241, "無效SQL例程體實現規範定義聲明" },
+            { 242, "無效SQL例程體實現規範定義聲明規範" },
+            { 243, "無效SQL例程體實現規範定義聲明規範定義" },
+            { 244, "無效SQL例程體實現規範定義聲明規範定義聲明" },
+            { 245, "無效SQL例程體實現規範定義聲明規範定義聲明規範" }
+        };
+
+        // ODBC 错误码
+        public static Dictionary<long, string> OdbcErrorsMap
+        {
+            get
+            {
+                return GlobalState.CurrentLanguageType switch
+                {
+                    LanguageType.SimplifiedChinese => OdbcErrorsMapSimplifiedChinese,
+                    LanguageType.TraditionalChinese => OdbcErrorsMapTraditionalChinese,
+                    _ => OdbcErrorsMapEnglish
+                };
+            }
+        }
     }
 }
