@@ -1,7 +1,3 @@
-using System.Collections.Generic;
-using System.Diagnostics.Metrics;
-using System.Runtime.Intrinsics.X86;
-
 namespace MyTool
 {
     public static partial class ConstString
@@ -126,31 +122,18 @@ namespace MyTool
             { 117, "Structure needs cleaning"},
             { 118, "Not a XENIX named type file"},
             { 119, "No XENIX semaphores available"},
-            { 120, "Is a named type file"},
             { 120, "Didn't find key on read or update"},
-            { 121, "Remote I/O error"},
             { 121, "Duplicate key on write or update"},
-            { 122, "Disk quota exceeded"},
             { 122, "Internal(unspecified) error in handler"},
-            { 123, "No medium found"},
             { 123, "Someone has changed the row since it was read (while the table was locked to prevent it)"},
-            { 124, "Wrong medium type"},
             { 124, "Wrong index given to function"},
-            { 125, "Operation canceled"},
             { 125, "Undefined handler error 125"},
-            { 126, "Required key not available"},
             { 126, "Index file is crashed"},
-            { 127, "Key has expired"},
             { 127, "Record file is crashed"},
-            { 128, "Key has been revoked"},
             { 128, "Out of memory in engine"},
-            { 129, "Key was rejected by service"},
             { 129, "Undefined handler error 129"},
-            { 130, "Owner died"},
             { 130, "Incorrect file format"},
-            { 131, "State not recoverable"},
             { 131, "Command not supported by database"},
-            { 132, "Operation not possible due to RF-kill"},
             { 132, "Old database file"},
             { 133, "No record read before update"},
             { 134, "Record was already deleted (or record file crashed)"},
