@@ -1,0 +1,163 @@
+using System.Collections.Generic;
+
+namespace MyTool
+{
+    public static partial class ConstString
+    {
+        // Linux errno 错误码 - 繁体中文
+        private static readonly Dictionary<long, string> LinuxErrnoMapTraditionalChinese = new()
+        {
+            { 0, "成功" },
+            { 1, "操作不被允許" }, /* EPERM */
+            { 2, "沒有這個文件或目錄" }, /* ENOENT */
+            { 3, "沒有這個進程" }, /* ESRCH */
+            { 4, "系統調用被中斷" }, /* EINTR */
+            { 5, "輸入/輸出錯誤" }, /* EIO */
+            { 6, "沒有這個設備或地址" }, /* ENXIO */
+            { 7, "參數列表過長" }, /* E2BIG */
+            { 8, "執行格式錯誤" }, /* ENOEXEC */
+            { 9, "錯誤的文件描述符" }, /* EBADF */
+            { 10, "沒有子進程" }, /* ECHILD */
+            { 11, "再試一次" }, /* EAGAIN or EWOULDBLOCK */
+            { 12, "內存不足" }, /* ENOMEM */
+            { 13, "權限被拒絕" }, /* EACCES */
+            { 14, "錯誤地址" }, /* EFAULT */
+            { 15, "需要塊設備" }, /* ENOTBLK */
+            { 16, "設備或資源忙" }, /* EBUSY */
+            { 17, "文件已存在" }, /* EEXIST */
+            { 18, "跨設備鏈接" }, /* EXDEV */
+            { 19, "沒有這個設備" }, /* ENODEV */
+            { 20, "不是目錄" }, /* ENOTDIR */
+            { 21, "是一個目錄" }, /* EISDIR */
+            { 22, "無效參數" }, /* EINVAL */
+            { 23, "文件表溢出" }, /* ENFILE */
+            { 24, "打開文件過多" }, /* EMFILE */
+            { 25, "不是打字機" }, /* ENOTTY */
+            { 26, "文本文件忙" }, /* ETXTBSY */
+            { 27, "文件太大" }, /* EFBIG */
+            { 28, "設備上沒有剩餘空間" }, /* ENOSPC */
+            { 29, "非法查找" }, /* ESPIPE */
+            { 30, "只讀文件系統" }, /* EROFS */
+            { 31, "鏈接數過多" }, /* EMLINK */
+            { 32, "管道已斷開" }, /* EPIPE */
+            { 33, "數學參數超出定義域" }, /* EDOM */
+            { 34, "數學結果無法表示" }, /* ERANGE */
+            { 35, "會發生資源死鎖" }, /* EDEADLK */
+            { 36, "文件名過長" }, /* ENAMETOOLONG */
+            { 37, "沒有可用的記錄鎖" }, /* ENOLCK */
+            { 38, "無效的系統調用號" }, /* ENOSYS */
+            { 39, "目錄非空" }, /* ENOTEMPTY */
+            { 40, "遇到過多符號鏈接" }, /* ELOOP */
+            { 42, "沒有所需類型的消息" }, /* ENOMSG */
+            { 43, "標識符已移除" }, /* EIDRM */
+            { 44, "通道號超出範圍" }, /* ECHRNG */
+            { 45, "第二級未同步" }, /* EL2NSYNC */
+            { 46, "第三級已停止" }, /* EL3HLT */
+            { 47, "第三級已重置" }, /* EL3RST */
+            { 48, "鏈接號超出範圍" }, /* ELNRNG */
+            { 49, "協議驅動未連接" }, /* EUNATCH */
+            { 50, "沒有可用的CSI結構" }, /* ENOCSI */
+            { 51, "第二級已停止" }, /* EL2HLT */
+            { 52, "無效交換" }, /* EBADE */
+            { 53, "無效請求描述符" }, /* EBADR */
+            { 54, "交換區已滿" }, /* EXFULL */
+            { 55, "沒有anode" }, /* ENOANO */
+            { 56, "無效請求代碼" }, /* EBADRQC */
+            { 57, "無效插槽" }, /* EBADSLT */
+            { 59, "錯誤的字體文件格式" }, /* EBFONT */
+            { 60, "設備不是流" }, /* ENOSTR */
+            { 61, "沒有可用數據" }, /* ENODATA */
+            { 62, "計時器已過期" }, /* ETIME */
+            { 63, "流資源不足" }, /* ENOSR */
+            { 64, "計算機不在網絡上" }, /* ENONET */
+            { 65, "軟件包未安裝" }, /* ENOPKG */
+            { 66, "對象是遠程的" }, /* EREMOTE */
+            { 67, "鏈接已被切斷" }, /* ENOLINK */
+            { 68, "廣告錯誤" }, /* EADV */
+            { 69, "Srmount錯誤" }, /* ESRMNT */
+            { 70, "發送時通信錯誤" }, /* ECOMM */
+            { 71, "協議錯誤" }, /* EPROTO */
+            { 72, "嘗試多跳" }, /* EMULTIHOP */
+            { 73, "RFS特定錯誤" }, /* EDOTDOT */
+            { 74, "不是數據消息" }, /* EBADMSG */
+            { 75, "值對於定義的數據類型太大" }, /* EOVERFLOW */
+            { 76, "名稱在網絡上不唯一" }, /* ENOTUNIQ */
+            { 77, "文件描述符狀態錯誤" }, /* EBADFD */
+            { 78, "遠程地址已更改" }, /* EREMCHG */
+            { 79, "無法訪問所需的共享庫" }, /* ELIBACC */
+            { 80, "訪問損壞的共享庫" }, /* ELIBBAD */
+            { 81, "a.out中的.lib節損壞" }, /* ELIBSCN */
+            { 82, "嘗試鏈接過多共享庫" }, /* ELIBMAX */
+            { 83, "無法直接執行共享庫" }, /* ELIBEXEC */
+            { 84, "非法字節序列" }, /* EILSEQ */
+            { 85, "應重啟被中斷的系統調用" }, /* ERESTART */
+            { 86, "流管道錯誤" }, /* ESTRPIPE */
+            { 87, "用戶過多" }, /* EUSERS */
+            { 88, "對非套接字執行套接字操作" }, /* ENOTSOCK */
+            { 89, "需要目標地址" }, /* EDESTADDRREQ */
+            { 90, "消息太長" }, /* EMSGSIZE */
+            { 91, "協議類型錯誤" }, /* EPROTOTYPE */
+            { 92, "協議不可用" }, /* ENOPROTOOPT */
+            { 93, "協議不支持" }, /* EPROTONOSUPPORT */
+            { 94, "套接字類型不支持" }, /* ESOCKTNOSUPPORT */
+            { 95, "傳輸端點上不支持該操作" }, /* EOPNOTSUPP */
+            { 96, "協議族不支持" }, /* EPFNOSUPPORT */
+            { 97, "協議不支持地址族" }, /* EAFNOSUPPORT */
+            { 98, "地址已在使用" }, /* EADDRINUSE */
+            { 99, "無法分配請求的地址" }, /* EADDRNOTAVAIL */
+            { 100, "網絡已關閉" }, /* ENETDOWN */
+            { 101, "網絡不可達" }, /* ENETUNREACH */
+            { 102, "網絡因重置而斷開連接" }, /* ENETRESET */
+            { 103, "軟件導致連接中止" }, /* ECONNABORTED */
+            { 104, "連接被對等方重置" }, /* ECONNRESET */
+            { 105, "沒有可用的緩沖區空間" }, /* ENOBUFS */
+            { 106, "傳輸端點已連接" }, /* EISCONN */
+            { 107, "傳輸端點未連接" }, /* ENOTCONN */
+            { 108, "傳輸端點關閉後無法發送" }, /* ESHUTDOWN */
+            { 109, "引用過多：無法拼接" }, /* ETOOMANYREFS */
+            { 110, "連接超時" }, /* ETIMEDOUT */
+            { 111, "連接被拒絕" }, /* ECONNREFUSED */
+            { 112, "主機已關閉" }, /* EHOSTDOWN */
+            { 113, "沒有到主機的路由" }, /* EHOSTUNREACH */
+            { 114, "操作已在進行中" }, /* EALREADY */
+            { 115, "操作現在進行中" }, /* EINPROGRESS */
+            { 116, "陳舊的文件句柄" }, /* ESTALE */
+            { 117, "結構需要清理" }, /* EUCLEAN */
+            { 118, "不是XENIX命名類型文件" }, /* ENOTNAM */
+            { 119, "沒有XENIX信號量可用" }, /* ENAVAIL */
+            { 120, "是命名類型文件" }, /* EISNAM */
+            { 121, "遠程I/O錯誤" }, /* EREMOTEIO */
+            { 122, "超出配額" }, /* EDQUOT */
+            { 123, "未找到介質" }, /* ENOMEDIUM */
+            { 124, "介質類型錯誤" }, /* EMEDIUMTYPE */
+            { 125, "操作已取消" }, /* ECANCELED */
+            { 126, "所需密鑰不可用" }, /* ENOKEY */
+            { 127, "密鑰已過期" }, /* EKEYEXPIRED */
+            { 128, "密鑰已被撤銷" }, /* EKEYREVOKED */
+            { 129, "密鑰被服務拒絕" }, /* EKEYREJECTED */
+            { 130, "所有者已死亡" }, /* EOWNERDEAD */
+            { 131, "狀態不可恢復" }, /* ENOTRECOVERABLE */
+            { 132, "由於RF-kill導致操作不可能" }, /* ERFKILL */
+            { 133, "內存頁有硬件錯誤" }, /* EHWPOISON */
+            { 512, "ERESTARTSYS" },
+            { 513, "ERESTARTNOINTR" },
+            { 514, "如果沒有處理程序則重啟.." }, /* ERESTARTNOHAND */
+            { 515, "沒有ioctl命令" }, /* ENOIOCTLCMD */
+            { 516, "通過調用sys_restart_syscall重啟" }, /* ERESTART_RESTARTBLOCK */
+            { 517, "驅動程序請求探針重試" }, /* EPROBE_DEFER */
+            { 518, "open發現了一個過時的目錄項" }, /* EOPENSTALE */
+            { 519, "參數不支持" }, /* ENOPARAM */
+            { 521, "非法NFS文件句柄" }, /* EBADHANDLE */
+            { 522, "更新同步不匹配" }, /* ENOTSYNC */
+            { 523, "Cookie已過期" }, /* EBADCOOKIE */
+            { 524, "操作不被支持" }, /* ENOTSUPP */
+            { 525, "緩沖區或請求太小" }, /* ETOOSMALL */
+            { 526, "發生不可翻譯的錯誤" }, /* ESERVERFAULT */
+            { 527, "服務器不支持的類型" }, /* EBADTYPE */
+            { 528, "請求已啟動，但在超時前無法完成" }, /* EJUKEBOX */
+            { 529, "iocb已排隊，將收到完成事件" }, /* EIOCBQUEUED */
+            { 530, "與召回狀態沖突" }, /* ERECALLCONFLICT */
+            { 531, "NFS文件鎖回收被拒絕" }, /* ENOGRACE */
+        };
+    }
+}

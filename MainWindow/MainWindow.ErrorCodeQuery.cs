@@ -58,7 +58,7 @@ namespace MyTool
         // Windows 系统错误码查询按钮点击事件
         private void WindowsSystemErrorQuery_Click(object sender, RoutedEventArgs e)
         {
-            QueryErrorCode(WindowsSystemErrorInput.Text, ConstString.WindowsSystemErrorsMapEnglish, WindowsSystemErrorResult);
+            QueryErrorCode(WindowsSystemErrorInput.Text, ConstString.WindowsSystemErrorsMap, WindowsSystemErrorResult);
         }
 
         // 通用错误码查询方法
@@ -82,9 +82,28 @@ namespace MyTool
                 }
             }
             else
-                {
+            {
                 resultTextBlock.Text = "输入的不是有效的数字";
             }
         }
+
+        private static void QueryErrorCode(string input, Dictionary<string, string> errorCodeMap, TextBlock resultTextBlock)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                resultTextBlock.Text = "请输入错误码";
+                return;
+            }
+
+            if (errorCodeMap.TryGetValue(input, out string? errorMessage))
+            {
+                resultTextBlock.Text = $"错误码: {input}\n错误信息: {errorMessage}";
+            }
+            else
+            {
+                resultTextBlock.Text = $"未找到错误码 {input} 的相关信息";
+            }
+        }
+
     }
 }
