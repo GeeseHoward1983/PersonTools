@@ -7144,7 +7144,6 @@ namespace MyTool
             {3374841858, "The transform was cleaned up because it is no longer applicable."},
             {3374841859, "The transform was cleaned up because the system state changed unexpectedly."},
             {3374841860, "An event in the transform does not have a digest for the algorithm selected in the system."},
-
         };
     }
 }
