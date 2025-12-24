@@ -5,15 +5,20 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MyTool"
         mc:Ignorable="d"
-        Title="常用工具集" Height="800" Width="1200" AllowDrop="True" Drop="MainWindow_Drop" WindowStartupLocation="CenterScreen">
+        Title="常用工具集" Height="1040" Width="1600" AllowDrop="True" Drop="MainWindow_Drop" WindowStartupLocation="CenterScreen">
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="929*"/>
+            <ColumnDefinition Width="59*"/>
+            <ColumnDefinition Width="413*"/>
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <!-- 主内容区域 -->
-        <TabControl Grid.Row="1" Margin="5">
+        <TabControl Grid.Row="1" Margin="5,5,5,10" Grid.ColumnSpan="3">
             <!-- PE文件分析器标签页 -->
             <TabItem Header="PE文件分析器">
                 <Grid>
@@ -21,7 +26,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    
+
                     <!-- 菜单栏 -->
                     <Menu Grid.Row="0">
                         <MenuItem Header="文件">
@@ -30,31 +35,31 @@
                             <MenuItem Header="退出" Click="Exit_Click"/>
                         </MenuItem>
                     </Menu>
-                    
+
                     <!-- PE分析内容 -->
                     <TabControl Grid.Row="1" Margin="5">
                         <!-- 文件信息和图标标签页 -->
                         <TabItem Header="文件信息">
                             <Grid>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="*" MinHeight="300"/>
-                                    <RowDefinition Height="200" MinHeight="150"/>
+                                    <RowDefinition Height="*" MinHeight="350"/>
+                                    <RowDefinition Height="250" MinHeight="150"/>
                                 </Grid.RowDefinitions>
-                                
+
                                 <!-- 上方：PE头基本信息和附加信息 -->
                                 <Grid Grid.Row="0">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" MinWidth="300"/>
                                         <ColumnDefinition Width="*" MinWidth="300"/>
                                     </Grid.ColumnDefinitions>
-                                    
+
                                     <!-- 左侧：PE头基本信息 -->
                                     <GroupBox Grid.Column="0" Header="PE头信息" Margin="5">
                                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                                             <StackPanel Name="HeaderInfoPanel" Margin="5"/>
                                         </ScrollViewer>
                                     </GroupBox>
-                                    
+
                                     <!-- 右侧：附加信息 -->
                                     <GroupBox Grid.Column="1" Header="附加信息" Margin="5">
                                         <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -62,7 +67,7 @@
                                         </ScrollViewer>
                                     </GroupBox>
                                 </Grid>
-                                
+
                                 <!-- 下方：图标信息 -->
                                 <GroupBox Grid.Row="1" Header="图标信息" Margin="5">
                                     <DataGrid Name="IconsDataGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
@@ -83,7 +88,7 @@
                                 </GroupBox>
                             </Grid>
                         </TabItem>
-                        
+
                         <!-- 依赖和函数信息标签页 -->
                         <TabItem Header="依赖和函数">
                             <Grid>
@@ -91,19 +96,19 @@
                                     <ColumnDefinition Width="*" MinWidth="200"/>
                                     <ColumnDefinition Width="2*" MinWidth="400"/>
                                 </Grid.ColumnDefinitions>
-                                
+
                                 <!-- 左侧：依赖信息 -->
                                 <GroupBox Grid.Column="0" Header="动态库依赖" Margin="5">
                                     <TreeView Name="DependencyTree" MouseDoubleClick="DependencyTree_MouseDoubleClick"/>
                                 </GroupBox>
-                                
+
                                 <!-- 右侧：导入和导出函数 -->
                                 <Grid Grid.Column="1">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="*" MinHeight="200"/>
                                         <RowDefinition Height="*" MinHeight="200"/>
                                     </Grid.RowDefinitions>
-                                    
+
                                     <!-- 右上：导入函数 -->
                                     <GroupBox Grid.Row="0" Header="导入函数列表" Margin="5">
                                         <DataGrid Name="ImportFunctionsGrid" AutoGenerateColumns="False" IsReadOnly="True">
@@ -122,7 +127,7 @@
                                             </DataGrid.Columns>
                                         </DataGrid>
                                     </GroupBox>
-                                    
+
                                     <!-- 右下：导出函数 -->
                                     <GroupBox Grid.Row="1" Header="导出函数列表" Margin="5">
                                         <DataGrid Name="ExportFunctionsGrid" AutoGenerateColumns="False" IsReadOnly="True">
@@ -145,21 +150,21 @@
                     </TabControl>
                 </Grid>
             </TabItem>
-            
+
             <!-- ELF文件分析器标签页 -->
             <TabItem Header="ELF文件分析器">
                 <Grid>
                     <TextBlock Text="ELF文件分析器功能待实现" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
                 </Grid>
             </TabItem>
-            
+
             <!-- Mach-O文件分析器标签页 -->
             <TabItem Header="Mach-O文件分析器">
                 <Grid>
                     <TextBlock Text="Mach-O文件分析器功能待实现" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
                 </Grid>
             </TabItem>
-            
+
             <!-- 常用错误码对应错误信息查看器标签页 -->
             <TabItem Header="常用错误码对应错误信息查看器">
                 <Grid>
@@ -171,12 +176,12 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                
+
                                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
                                     <TextBox Name="WindowsErrnoInput" Width="100" Margin="0,0,10,0" VerticalContentAlignment="Center"/>
                                     <Button Content="查询" Click="WindowsErrnoQuery_Click" Padding="10,0"/>
                                 </StackPanel>
-                                
+
                                 <GroupBox Grid.Row="1" Header="错误信息" Padding="10">
                                     <ScrollViewer>
                                         <TextBlock Name="WindowsErrnoResult" TextWrapping="Wrap" />
@@ -184,7 +189,7 @@
                                 </GroupBox>
                             </Grid>
                         </TabItem>
-                        
+
                         <!-- Linux errno查询 -->
                         <TabItem Header="Linux errno">
                             <Grid Margin="10">
@@ -192,12 +197,12 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                
+
                                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
                                     <TextBox Name="LinuxErrnoInput" Width="100" Margin="0,0,10,0" VerticalContentAlignment="Center"/>
                                     <Button Content="查询" Click="LinuxErrnoQuery_Click" Padding="10,0"/>
                                 </StackPanel>
-                                
+
                                 <GroupBox Grid.Row="1" Header="错误信息" Padding="10">
                                     <ScrollViewer>
                                         <TextBlock Name="LinuxErrnoResult" TextWrapping="Wrap" />
@@ -205,7 +210,7 @@
                                 </GroupBox>
                             </Grid>
                         </TabItem>
-                        
+
                         <!-- Mac errno查询 -->
                         <TabItem Header="Mac errno">
                             <Grid Margin="10">
@@ -213,12 +218,12 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                
+
                                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
                                     <TextBox Name="MacErrnoInput" Width="100" Margin="0,0,10,0" VerticalContentAlignment="Center"/>
                                     <Button Content="查询" Click="MacErrnoQuery_Click" Padding="10,0"/>
                                 </StackPanel>
-                                
+
                                 <GroupBox Grid.Row="1" Header="错误信息" Padding="10">
                                     <ScrollViewer>
                                         <TextBlock Name="MacErrnoResult" TextWrapping="Wrap" />
@@ -226,7 +231,7 @@
                                 </GroupBox>
                             </Grid>
                         </TabItem>
-                        
+
                         <!-- HTTP状态码查询 -->
                         <TabItem Header="HTTP状态码">
                             <Grid Margin="10">
@@ -234,12 +239,12 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                
+
                                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
                                     <TextBox Name="HttpStatusCodeInput" Width="100" Margin="0,0,10,0" VerticalContentAlignment="Center"/>
                                     <Button Content="查询" Click="HttpStatusCodeQuery_Click" Padding="10,0"/>
                                 </StackPanel>
-                                
+
                                 <GroupBox Grid.Row="1" Header="状态信息" Padding="10">
                                     <ScrollViewer>
                                         <TextBlock Name="HttpStatusCodeResult" TextWrapping="Wrap" />
@@ -247,7 +252,7 @@
                                 </GroupBox>
                             </Grid>
                         </TabItem>
-                        
+
                         <!-- SQL Server错误码查询 -->
                         <TabItem Header="SQL Server">
                             <Grid Margin="10">
@@ -255,12 +260,12 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                
+
                                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
                                     <TextBox Name="SqlServerErrorInput" Width="100" Margin="0,0,10,0" VerticalContentAlignment="Center"/>
                                     <Button Content="查询" Click="SqlServerErrorQuery_Click" Padding="10,0"/>
                                 </StackPanel>
-                                
+
                                 <GroupBox Grid.Row="1" Header="错误信息" Padding="10">
                                     <ScrollViewer>
                                         <TextBlock Name="SqlServerErrorResult" TextWrapping="Wrap" />
@@ -268,7 +273,7 @@
                                 </GroupBox>
                             </Grid>
                         </TabItem>
-                        
+
                         <!-- MySQL错误码查询 -->
                         <TabItem Header="MySQL">
                             <Grid Margin="10">
@@ -276,12 +281,12 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                
+
                                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
                                     <TextBox Name="MySqlErrorInput" Width="100" Margin="0,0,10,0" VerticalContentAlignment="Center"/>
                                     <Button Content="查询" Click="MySqlErrorQuery_Click" Padding="10,0"/>
                                 </StackPanel>
-                                
+
                                 <GroupBox Grid.Row="1" Header="错误信息" Padding="10">
                                     <ScrollViewer>
                                         <TextBlock Name="MySqlErrorResult" TextWrapping="Wrap" />
@@ -289,7 +294,7 @@
                                 </GroupBox>
                             </Grid>
                         </TabItem>
-                        
+
                         <!-- Oracle SQLCODE查询 -->
                         <TabItem Header="Oracle">
                             <Grid Margin="10">
@@ -297,12 +302,12 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                
+
                                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
                                     <TextBox Name="OracleSqlCodeInput" Width="100" Margin="0,0,10,0" VerticalContentAlignment="Center"/>
                                     <Button Content="查询" Click="OracleSqlCodeQuery_Click" Padding="10,0"/>
                                 </StackPanel>
-                                
+
                                 <GroupBox Grid.Row="1" Header="错误信息" Padding="10">
                                     <ScrollViewer>
                                         <TextBlock Name="OracleSqlCodeResult" TextWrapping="Wrap" />
@@ -310,7 +315,7 @@
                                 </GroupBox>
                             </Grid>
                         </TabItem>
-                        
+
                         <!-- ODBC错误码查询 -->
                         <TabItem Header="ODBC">
                             <Grid Margin="10">
@@ -318,12 +323,12 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                
+
                                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
                                     <TextBox Name="OdbcErrorInput" Width="100" Margin="0,0,10,0" VerticalContentAlignment="Center"/>
                                     <Button Content="查询" Click="OdbcErrorQuery_Click" Padding="10,0"/>
                                 </StackPanel>
-                                
+
                                 <GroupBox Grid.Row="1" Header="错误信息" Padding="10">
                                     <ScrollViewer>
                                         <TextBlock Name="OdbcErrorResult" TextWrapping="Wrap" />
@@ -331,7 +336,7 @@
                                 </GroupBox>
                             </Grid>
                         </TabItem>
-                        
+
                         <!-- Windows系统错误码查询 -->
                         <TabItem Header="Windows系统错误码">
                             <Grid Margin="10">
@@ -339,12 +344,12 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                
+
                                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
                                     <TextBox Name="WindowsSystemErrorInput" Width="100" Margin="0,0,10,0" VerticalContentAlignment="Center"/>
                                     <Button Content="查询" Click="WindowsSystemErrorQuery_Click" Padding="10,0"/>
                                 </StackPanel>
-                                
+
                                 <GroupBox Grid.Row="1" Header="错误信息" Padding="10">
                                     <ScrollViewer>
                                         <TextBlock Name="WindowsSystemErrorResult" TextWrapping="Wrap" />
@@ -355,12 +360,470 @@
                     </TabControl>
                 </Grid>
             </TabItem>
-            
+
+            <!-- HASH值计算标签页 -->
+            <TabItem Header="HASH值计算">
+                <ScrollViewer Margin="10" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <!-- 第一行：MD5和SHA1并排显示 -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- MD5计算 -->
+                            <GroupBox Grid.Column="0" Header="MD5计算" Margin="0,0,5,0">
+                                <Grid Margin="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="输入要计算MD5的值：" Margin="0,0,0,5"/>
+
+                                    <TextBox Grid.Row="1" Name="MD5InputTextBox" Margin="0,0,0,10" Height="25"/>
+
+                                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
+                                        <RadioButton Name="MD5StringInputRadio" Content="普通字符串" GroupName="MD5InputType" IsChecked="True" Margin="0,0,10,0"/>
+                                        <RadioButton Name="MD5HexInputRadio" Content="Hex字符串" GroupName="MD5InputType" Margin="0,0,10,0"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,10">
+                                        <Button Content="计算MD5" Click="CalculateMD5_Click" Padding="10,3" Margin="0,0,5,0"/>
+                                        <Button Content="清空" Click="ClearMD5_Click" Padding="10,3" Margin="0,0,5,0"/>
+                                    </StackPanel>
+
+                                    <Grid Grid.Row="4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="MD5结果：" Margin="0,0,5,0" VerticalAlignment="Top"/>
+                                        <Label Grid.Column="1" Name="MD5ResultLabel" Content="等待计算..." Padding="5" 
+                                               Background="White" BorderBrush="Gray" BorderThickness="1" 
+                                               HorizontalContentAlignment="Left"/>
+                                    </Grid>
+                                </Grid>
+                            </GroupBox>
+
+                            <!-- SHA1计算 -->
+                            <GroupBox Grid.Column="1" Header="SHA1计算" Margin="5,0,0,0">
+                                <Grid Margin="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="输入要计算SHA1的值：" Margin="0,0,0,5"/>
+
+                                    <TextBox Grid.Row="1" Name="SHA1InputTextBox" Margin="0,0,0,10" Height="25"/>
+
+                                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
+                                        <RadioButton Name="SHA1StringInputRadio" Content="普通字符串" GroupName="SHA1InputType" IsChecked="True" Margin="0,0,10,0"/>
+                                        <RadioButton Name="SHA1HexInputRadio" Content="Hex字符串" GroupName="SHA1InputType" Margin="0,0,10,0"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,10">
+                                        <Button Content="计算SHA1" Click="CalculateSHA1_Click" Padding="10,3" Margin="0,0,5,0"/>
+                                        <Button Content="清空" Click="ClearSHA1_Click" Padding="10,3" Margin="0,0,5,0"/>
+                                    </StackPanel>
+
+                                    <Grid Grid.Row="4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="SHA1结果：" Margin="0,0,5,0" VerticalAlignment="Top"/>
+                                        <Label Grid.Column="1" Name="SHA1ResultLabel" Content="等待计算..." Padding="5" 
+                                               Background="White" BorderBrush="Gray" BorderThickness="1" 
+                                               HorizontalContentAlignment="Left"/>
+                                    </Grid>
+                                </Grid>
+                            </GroupBox>
+                        </Grid>
+
+                        <!-- 第二行：SHA224和SHA256并排显示 -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- SHA224计算 -->
+                            <GroupBox Grid.Column="0" Header="SHA224计算" Margin="0,0,5,0">
+                                <Grid Margin="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="输入要计算SHA224的值：" Margin="0,0,0,5"/>
+
+                                    <TextBox Grid.Row="1" Name="SHA224InputTextBox" Margin="0,0,0,10" Height="25"/>
+
+                                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
+                                        <RadioButton Name="SHA224StringInputRadio" Content="普通字符串" GroupName="SHA224InputType" IsChecked="True" Margin="0,0,10,0"/>
+                                        <RadioButton Name="SHA224HexInputRadio" Content="Hex字符串" GroupName="SHA224InputType" Margin="0,0,10,0"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,10">
+                                        <Button Content="计算SHA224" Click="CalculateSHA224_Click" Padding="10,3" Margin="0,0,5,0"/>
+                                        <Button Content="清空" Click="ClearSHA224_Click" Padding="10,3" Margin="0,0,5,0"/>
+                                    </StackPanel>
+
+                                    <Grid Grid.Row="4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="SHA224结果：" Margin="0,0,5,0" VerticalAlignment="Top"/>
+                                        <Label Grid.Column="1" Name="SHA224ResultLabel" Content="等待计算..." Padding="5" 
+                                               Background="White" BorderBrush="Gray" BorderThickness="1" 
+                                               HorizontalContentAlignment="Left"/>
+                                    </Grid>
+                                </Grid>
+                            </GroupBox>
+
+                            <!-- SHA256计算 -->
+                            <GroupBox Grid.Column="1" Header="SHA256计算" Margin="5,0,0,0">
+                                <Grid Margin="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="输入要计算SHA256的值：" Margin="0,0,0,5"/>
+
+                                    <TextBox Grid.Row="1" Name="SHA256InputTextBox" Margin="0,0,0,10" Height="25"/>
+
+                                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
+                                        <RadioButton Name="SHA256StringInputRadio" Content="普通字符串" GroupName="SHA256InputType" IsChecked="True" Margin="0,0,10,0"/>
+                                        <RadioButton Name="SHA256HexInputRadio" Content="Hex字符串" GroupName="SHA256InputType" Margin="0,0,10,0"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,10">
+                                        <Button Content="计算SHA256" Click="CalculateSHA256_Click" Padding="10,3" Margin="0,0,5,0"/>
+                                        <Button Content="清空" Click="ClearSHA256_Click" Padding="10,3" Margin="0,0,5,0"/>
+                                    </StackPanel>
+
+                                    <Grid Grid.Row="4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="SHA256结果：" Margin="0,0,5,0" VerticalAlignment="Top"/>
+                                        <Label Grid.Column="1" Name="SHA256ResultLabel" Content="等待计算..." Padding="5" 
+                                               Background="White" BorderBrush="Gray" BorderThickness="1" 
+                                               HorizontalContentAlignment="Left"/>
+                                    </Grid>
+                                </Grid>
+                            </GroupBox>
+                        </Grid>
+
+                        <!-- SHA384计算 - 独占一行 -->
+                        <GroupBox Header="SHA384计算" Margin="0,0,0,10" MinWidth="600">
+                            <Grid Margin="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Text="输入要计算SHA384的值：" Margin="0,0,0,5"/>
+
+                                <TextBox Grid.Row="1" Name="SHA384InputTextBox" Margin="0,0,0,10" Height="25"/>
+
+                                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
+                                    <RadioButton Name="SHA384StringInputRadio" Content="普通字符串" GroupName="SHA384InputType" IsChecked="True" Margin="0,0,10,0"/>
+                                    <RadioButton Name="SHA384HexInputRadio" Content="Hex字符串" GroupName="SHA384InputType" Margin="0,0,10,0"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,10">
+                                    <Button Content="计算SHA384" Click="CalculateSHA384_Click" Padding="10,3" Margin="0,0,5,0"/>
+                                    <Button Content="清空" Click="ClearSHA384_Click" Padding="10,3" Margin="0,0,5,0"/>
+                                </StackPanel>
+
+                                <Grid Grid.Row="4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="SHA384结果：" Margin="0,0,5,0" VerticalAlignment="Top"/>
+                                    <Label Grid.Column="1" Name="SHA384ResultLabel" Content="等待计算..." Padding="5" 
+                                           Background="White" BorderBrush="Gray" BorderThickness="1" 
+                                           HorizontalContentAlignment="Left"/>
+                                </Grid>
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- SHA512计算 - 独占一行 -->
+                        <GroupBox Header="SHA512计算" Margin="0,0,0,10" MinWidth="600">
+                            <Grid Margin="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Text="输入要计算SHA512的值：" Margin="0,0,0,5"/>
+
+                                <TextBox Grid.Row="1" Name="SHA512InputTextBox" Margin="0,0,0,10" Height="25"/>
+
+                                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
+                                    <RadioButton Name="SHA512StringInputRadio" Content="普通字符串" GroupName="SHA512InputType" IsChecked="True" Margin="0,0,10,0"/>
+                                    <RadioButton Name="SHA512HexInputRadio" Content="Hex字符串" GroupName="SHA512InputType" Margin="0,0,10,0"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,10">
+                                    <Button Content="计算SHA512" Click="CalculateSHA512_Click" Padding="10,3" Margin="0,0,5,0"/>
+                                    <Button Content="清空" Click="ClearSHA512_Click" Padding="10,3" Margin="0,0,5,0"/>
+                                </StackPanel>
+
+                                <Grid Grid.Row="4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="SHA512结果：" Margin="0,0,5,0" VerticalAlignment="Top"/>
+                                    <Label Grid.Column="1" Name="SHA512ResultLabel" Content="等待计算..." Padding="5" 
+                                           Background="White" BorderBrush="Gray" BorderThickness="1" 
+                                           HorizontalContentAlignment="Left"/>
+                                </Grid>
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- SHA3计算 - 独占一行 -->
+                        <GroupBox Header="SHA3计算" Margin="0,0,0,10" MinWidth="600">
+                            <Grid Margin="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Text="输入要计算SHA3的值：" Margin="0,0,0,5"/>
+
+                                <TextBox Grid.Row="1" Name="SHA3InputTextBox" Margin="0,0,0,10" Height="25"/>
+
+                                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
+                                    <RadioButton Name="SHA3StringInputRadio" Content="普通字符串" GroupName="SHA3InputType" IsChecked="True" Margin="0,0,10,0"/>
+                                    <RadioButton Name="SHA3HexInputRadio" Content="Hex字符串" GroupName="SHA3InputType" Margin="0,0,10,0"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,10">
+                                    <Button Content="计算SHA3" Click="CalculateSHA3_Click" Padding="10,3" Margin="0,0,5,0"/>
+                                    <Button Content="清空" Click="ClearSHA3_Click" Padding="10,3" Margin="0,0,5,0"/>
+                                </StackPanel>
+
+                                <Grid Grid.Row="4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="SHA3结果：" Margin="0,0,5,0" VerticalAlignment="Top"/>
+                                    <Label Grid.Column="1" Name="SHA3ResultLabel" Content="等待计算..." Padding="5" 
+                                           Background="White" BorderBrush="Gray" BorderThickness="1" 
+                                           HorizontalContentAlignment="Left"/>
+                                </Grid>
+                            </Grid>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- CRC计算标签页 -->
+            <TabItem Header="CRC计算">
+                <ScrollViewer Margin="10" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <GroupBox Header="CRC计算" Margin="0,0,0,10" MinWidth="600">
+                            <Grid Margin="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Text="输入要计算CRC的值：" Margin="0,0,0,5"/>
+
+                                <TextBox Grid.Row="1" Name="CRCInputTextBox" Margin="0,0,0,10" Height="25"/>
+
+                                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
+                                    <RadioButton Name="CRCStringInputRadio" Content="普通字符串" GroupName="CRCInputType" IsChecked="True" Margin="0,0,10,0"/>
+                                    <RadioButton Name="CRCHexInputRadio" Content="Hex字符串" GroupName="CRCInputType" Margin="0,0,10,0"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,10">
+                                    <ComboBox Name="CRCAlgorithmComboBox" Width="200" Margin="0,0,10,0" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                    <Button Content="计算CRC" Click="CalculateCRC_Click" Padding="10,3" Margin="0,0,5,0"/>
+                                    <Button Content="清空" Click="ClearCRC_Click" Padding="10,3" Margin="0,0,5,0"/>
+                                </StackPanel>
+
+                                <Grid Grid.Row="4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="CRC结果：" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                    <Label Grid.Column="1" Name="CRCResultLabel" Content="等待计算..." Padding="5" 
+                                           Background="White" BorderBrush="Gray" BorderThickness="1" 
+                                           HorizontalContentAlignment="Left"/>
+                                </Grid>
+                            </Grid>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
             <!-- 常用编解码/加解密转换器标签页 -->
             <TabItem Header="常用编解码/加解密转换器">
-                <Grid>
-                    <TextBlock Text="常用编解码/加解密转换器功能待实现" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
-                </Grid>
+                <ScrollViewer Margin="10" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <!-- 第一行：编码转换 -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <GroupBox Grid.Column="0" Header="Base64编解码" Margin="0,0,5,0">
+                                <Grid Margin="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="Base64编解密功能待实现" Margin="0,10" HorizontalAlignment="Center"/>
+                                    <Button Grid.Row="1" Content="编码/解码" Padding="10,3" Margin="0,10" IsEnabled="False"/>
+                                    <Button Grid.Row="2" Content="清空" Padding="10,3" Margin="0,10" IsEnabled="False"/>
+                                </Grid>
+                            </GroupBox>
+
+                            <GroupBox Grid.Column="1" Header="Base24编解码" Margin="0,0,5,0">
+                                <Grid Margin="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="Base24编解密功能待实现" Margin="0,10" HorizontalAlignment="Center"/>
+                                    <Button Grid.Row="1" Content="编码/解码" Padding="10,3" Margin="0,10" IsEnabled="False"/>
+                                    <Button Grid.Row="2" Content="清空" Padding="10,3" Margin="0,10" IsEnabled="False"/>
+                                </Grid>
+                            </GroupBox>
+
+                            <GroupBox Grid.Column="2" Header="Base36编解码" Margin="0,0,5,0">
+                                <Grid Margin="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="Base36编解密功能待实现" Margin="0,10" HorizontalAlignment="Center"/>
+                                    <Button Grid.Row="1" Content="编码/解码" Padding="10,3" Margin="0,10" IsEnabled="False"/>
+                                    <Button Grid.Row="2" Content="清空" Padding="10,3" Margin="0,10" IsEnabled="False"/>
+                                </Grid>
+                            </GroupBox>
+
+                            <GroupBox Grid.Column="3" Header="URL编解码" Margin="0,0,0,0">
+                                <Grid Margin="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="URL编解密功能待实现" Margin="0,10" HorizontalAlignment="Center"/>
+                                    <Button Grid.Row="1" Content="编码/解码" Padding="10,3" Margin="0,10" IsEnabled="False"/>
+                                    <Button Grid.Row="2" Content="清空" Padding="10,3" Margin="0,10" IsEnabled="False"/>
+                                </Grid>
+                            </GroupBox>
+                        </Grid>
+
+                        <!-- 第二行：加密算法 -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <GroupBox Grid.Column="0" Header="AES加解密" Margin="0,0,5,0">
+                                <Grid Margin="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="AES加解密功能待实现" Margin="0,10" HorizontalAlignment="Center"/>
+                                    <Button Grid.Row="1" Content="加密/解密" Padding="10,3" Margin="0,10" IsEnabled="False"/>
+                                    <Button Grid.Row="2" Content="清空" Padding="10,3" Margin="0,10" IsEnabled="False"/>
+                                </Grid>
+                            </GroupBox>
+
+                            <GroupBox Grid.Column="1" Header="RSA加解密" Margin="0,0,0,0">
+                                <Grid Margin="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="RSA加解密功能待实现" Margin="0,10" HorizontalAlignment="Center"/>
+                                    <Button Grid.Row="1" Content="加密/解密" Padding="10,3" Margin="0,10" IsEnabled="False"/>
+                                    <Button Grid.Row="2" Content="清空" Padding="10,3" Margin="0,10" IsEnabled="False"/>
+                                </Grid>
+                            </GroupBox>
+                        </Grid>
+
+                        <!-- 第三行：进制转换 -->
+                        <GroupBox Header="2/8/10/16进制互转" Margin="0,0,0,10">
+                            <Grid Margin="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="进制互转功能待实现" Margin="0,10" HorizontalAlignment="Center"/>
+                                <Button Grid.Row="1" Content="转换" Padding="10,3" Margin="0,10" IsEnabled="False"/>
+                                <Button Grid.Row="2" Content="清空" Padding="10,3" Margin="0,10" IsEnabled="False"/>
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- 第四行：ASCII与字符串转换 -->
+                        <GroupBox Header="ASCII与字符串互转" Margin="0,0,0,10">
+                            <Grid Margin="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="ASCII与字符串互转功能待实现" Margin="0,10" HorizontalAlignment="Center"/>
+                                <Button Grid.Row="1" Content="转换" Padding="10,3" Margin="0,10" IsEnabled="False"/>
+                                <Button Grid.Row="2" Content="清空" Padding="10,3" Margin="0,10" IsEnabled="False"/>
+                            </Grid>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
         </TabControl>
     </Grid>

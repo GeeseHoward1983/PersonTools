@@ -7,15 +7,18 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>88524ce5e9c852_Icon.ico</ApplicationIcon>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="ConstString\winerror.h" />
-    <None Remove="ConstString\winerror.txt" />
+    <Content Include="88524ce5e9c852_Icon.ico" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="88524ce5e9c852_Icon.ico" />
+    <Page Include="MainWindow\MainWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
   <ItemGroup>

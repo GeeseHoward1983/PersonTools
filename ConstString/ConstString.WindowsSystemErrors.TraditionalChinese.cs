@@ -6919,7 +6919,6 @@ namespace MyTool
             {2276392987, "來自sqlite3_log()的通知"},
             {2276393060, "sqlite3_step()有另一行準備就緒"},
             {2276393061, "sqlite3_step()已完成執行"},
-            {2276393061, "sqlite3_step()已完成執行"},
             {2276393226, "SQLITE_IOERR_READ"},
             {2276393482, "SQLITE_IOERR_SHORT_READ"},
             {2276393738, "SQLITE_IOERR_WRITE"},
