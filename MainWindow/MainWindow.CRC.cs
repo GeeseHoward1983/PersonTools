@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace MyTool
@@ -20,9 +17,18 @@ namespace MyTool
             public bool ReverseOutput { get; set; }
         }
 
-        // CRC算法定义
-        public static readonly List<CRCAlgorithm> CRCAlgorithms = new List<CRCAlgorithm>
+        // 初始化CRC算法下拉框
+        private void InitializeCRCAlgorithmComboBox()
         {
+            // 绑定算法列表到下拉框
+            CRCAlgorithmComboBox.ItemsSource = CRCAlgorithms;
+            CRCAlgorithmComboBox.DisplayMemberPath = "Name";
+            CRCAlgorithmComboBox.SelectedIndex = 0;
+        }
+
+        // CRC算法定义
+        public static readonly List<CRCAlgorithm> CRCAlgorithms =
+        [
             new CRCAlgorithm { Name = "CRC-8", PolynomialFormula = "x8 + x2 + x + 1", Width = 8, Polynomial = 0x07, InitialValue = 0x00, FinalXor = 0x00, ReverseInput = false, ReverseOutput = false },
             new CRCAlgorithm { Name = "CRC-8/ITU", PolynomialFormula = "x8 + x2 + x + 1", Width = 8, Polynomial = 0x07, InitialValue = 0x00, FinalXor = 0x55, ReverseInput = false, ReverseOutput = false },
             new CRCAlgorithm { Name = "CRC-8/ROHC", PolynomialFormula = "x8 + x2 + x + 1", Width = 8, Polynomial = 0x07, InitialValue = 0xFF, FinalXor = 0x00, ReverseInput = true, ReverseOutput = true },
@@ -38,17 +44,12 @@ namespace MyTool
             new CRCAlgorithm { Name = "CRC-16/DNP", PolynomialFormula = "x16 + x13 + x12 + x11 + x10 + x8 + x6 + x5 + x2 + 1", Width = 16, Polynomial = 0x3D65, InitialValue = 0x0000, FinalXor = 0xFFFF, ReverseInput = true, ReverseOutput = true },
             new CRCAlgorithm { Name = "CRC-32", PolynomialFormula = "x32 + x26 + x23 + x22 + x16 + x12 + x11 + x10 + x8 + x7 + x5 + x4 + x2 + x + 1", Width = 32, Polynomial = 0x04C11DB7, InitialValue = 0xFFFFFFFF, FinalXor = 0xFFFFFFFF, ReverseInput = true, ReverseOutput = true },
             new CRCAlgorithm { Name = "CRC-32/MPEG-2", PolynomialFormula = "x32 + x26 + x23 + x22 + x16 + x12 + x11 + x10 + x8 + x7 + x5 + x4 + x2 + x + 1", Width = 32, Polynomial = 0x04C11DB7, InitialValue = 0xFFFFFFFF, FinalXor = 0x00000000, ReverseInput = false, ReverseOutput = false }
-        };
+        ];
 
         // CRC计算器
-        public class CRCCalculator
+        public class CRCCalculator(MainWindow.CRCAlgorithm algorithm)
         {
-            private readonly CRCAlgorithm _algorithm;
-
-            public CRCCalculator(CRCAlgorithm algorithm)
-            {
-                _algorithm = algorithm;
-            }
+            private readonly CRCAlgorithm _algorithm = algorithm;
 
             public uint Compute(byte[] data)
             {
@@ -58,7 +59,7 @@ namespace MyTool
 
                 for (int i = 0; i < data.Length; i++)
                 {
-                    byte value = (byte)(_algorithm.ReverseInput ? ReverseBits(data[i], 8) : data[i]);
+                    byte value = (byte)(_algorithm.ReverseInput ? Utils.ReverseBits(data[i], 8) : data[i]);
                     crc ^= (uint)(value << (_algorithm.Width - 8));
 
                     for (int j = 0; j < 8; j++)
@@ -77,7 +78,7 @@ namespace MyTool
 
                 if (_algorithm.ReverseOutput)
                 {
-                    crc = ReverseBits(crc, _algorithm.Width);
+                    crc = Utils.ReverseBits(crc, _algorithm.Width);
                 }
 
                 crc ^= _algorithm.FinalXor;
@@ -86,17 +87,6 @@ namespace MyTool
                 return crc;
             }
 
-            private uint ReverseBits(uint value, int width)
-            {
-                uint result = 0;
-                for (int i = 0; i < width; i++)
-                {
-                    result <<= 1;
-                    result |= value & 1;
-                    value >>= 1;
-                }
-                return result;
-            }
         }
 
         // CRC计算功能

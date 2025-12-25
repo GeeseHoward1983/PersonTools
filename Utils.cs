@@ -26,5 +26,23 @@ namespace MyTool
             }
             return bytes;
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="width"></param>
+        /// <returns></returns>
+        public static uint ReverseBits(uint value, int width)
+        {
+            uint result = 0;
+            for (int i = 0; i < width; i++)
+            {
+                result <<= 1;
+                result |= value & 1;
+                value >>= 1;
+            }
+            return result;
+        }
     }
 }
