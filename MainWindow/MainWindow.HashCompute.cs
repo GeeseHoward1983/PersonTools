@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
 
@@ -392,6 +393,84 @@ namespace MyTool
         {
             SHA3InputTextBox.Clear();
             SHA3ResultLabel.Content = "等待计算...";
+        }
+
+                // 处理文件拖放事件
+        private void HashTab_Drop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (files != null && files.Length > 0)
+                {
+                    string filePath = files[0]; // 只处理第一个文件
+                    ProcessFileForHashCalculation(filePath);
+                }
+            }
+        }
+        
+        // 处理文件哈希计算
+        private void ProcessFileForHashCalculation(string filePath)
+        {
+            try
+            {
+                byte[] fileBytes;
+                
+                // 读取文件内容
+                using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                {
+                    fileBytes = new byte[fileStream.Length];
+                    fileStream.Read(fileBytes, 0, fileBytes.Length);
+                }
+                
+                // 计算除SHA3外的所有哈希值
+                CalculateAndDisplayHashValues(fileBytes);
+                
+                // 将文件内容转换为hex字符串显示在SHA3输入框中
+                string hexString = BitConverter.ToString(fileBytes).Replace("-", "");
+                SHA3InputTextBox.Text = hexString;
+                
+                // 设置SHA3为hex输入模式
+                SHA3HexInputRadio.IsChecked = true;
+                
+                // 更新提示文本
+                FileDropHint.Text = $"已加载文件: {Path.GetFileName(filePath)}，请在下方选择SHA3算法类型并计算";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        
+        // 计算并显示各种哈希值
+        private void CalculateAndDisplayHashValues(byte[] data)
+        {
+            // 计算MD5
+            byte[] hash = MD5.HashData(data);
+            MD5ResultLabel.Content = BitConverter.ToString(hash).Replace("-", "").ToLower();
+
+            // 计算SHA1
+            hash = SHA1.HashData(data);
+            SHA1ResultLabel.Content = BitConverter.ToString(hash).Replace("-", "").ToLower();
+
+            // 计算SHA224
+            hash = SHA256.HashData(data);
+            byte[] sha224Bytes = new byte[28];
+            Array.Copy(hash, sha224Bytes, 28);
+
+            SHA224ResultLabel.Content = BitConverter.ToString(sha224Bytes).Replace("-", "").ToLower();
+
+            // 计算SHA256
+            hash = SHA256.HashData(data);
+            SHA256ResultLabel.Content = BitConverter.ToString(hash).Replace("-", "").ToLower();
+
+            // 计算SHA384
+            hash = SHA384.HashData(data);
+            SHA384ResultLabel.Content = BitConverter.ToString(hash).Replace("-", "").ToLower();
+
+            // 计算SHA512
+            hash = SHA512.HashData(data);
+            SHA512ResultLabel.Content = BitConverter.ToString(hash).Replace("-", "").ToLower();
         }
     }
 }

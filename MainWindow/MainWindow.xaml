@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MyTool"
         mc:Ignorable="d"
-        Title="常用工具集" Height="820" Width="1400" AllowDrop="True" Drop="MainWindow_Drop" WindowStartupLocation="CenterScreen">
+        Title="常用工具集" Height="900" Width="1440" AllowDrop="True" WindowStartupLocation="CenterScreen">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -16,7 +16,7 @@
         <TabControl Grid.Row="1" Margin="5,5,5,10">
             <!-- PE文件分析器标签页 -->
             <TabItem Header="PE文件分析器">
-                <Grid>
+                <Grid AllowDrop="True" Drop="MainWindow_Drop">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
@@ -358,7 +358,7 @@
 
             <!-- HASH值计算标签页 -->
             <TabItem Header="HASH值计算">
-                <ScrollViewer Margin="10" VerticalScrollBarVisibility="Auto">
+                <ScrollViewer Margin="10" VerticalScrollBarVisibility="Auto" AllowDrop="True" Drop="HashTab_Drop">
                     <StackPanel>
                         <!-- 第一行：MD5和SHA1并排显示 -->
                         <Grid Margin="0,0,0,10">
@@ -379,7 +379,7 @@
 
                                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,5">
                                         <TextBlock Text="输入要计算MD5的值：" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                        <TextBox Name="MD5InputTextBox" Height="25" VerticalAlignment="Center" Width="513"/>
+                                        <TextBox Name="MD5InputTextBox" Height="25" VerticalAlignment="Center" Width="527"/>
                                     </StackPanel>
 
                                     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
@@ -413,7 +413,7 @@
 
                                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,5">
                                         <TextBlock Text="输入要计算SHA1的值：" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                        <TextBox Name="SHA1InputTextBox" Height="25" VerticalAlignment="Center" Width="513"/>
+                                        <TextBox Name="SHA1InputTextBox" Height="25" VerticalAlignment="Center" Width="526"/>
                                     </StackPanel>
 
                                     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
@@ -455,7 +455,7 @@
 
                                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,5">
                                         <TextBlock Text="输入要计算SHA224的值：" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                        <TextBox Name="SHA224InputTextBox" Height="25" VerticalAlignment="Center" Width="499"/>
+                                        <TextBox Name="SHA224InputTextBox" Height="25" VerticalAlignment="Center" Width="481"/>
                                     </StackPanel>
 
                                     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
@@ -489,7 +489,7 @@
 
                                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,5">
                                         <TextBlock Text="输入要计算SHA256的值：" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                        <TextBox Name="SHA256InputTextBox" Width="497" Height="25" VerticalAlignment="Center"/>
+                                        <TextBox Name="SHA256InputTextBox" Width="483" Height="25" VerticalAlignment="Center"/>
                                     </StackPanel>
 
                                     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
@@ -615,6 +615,14 @@
                                 </Grid>
                             </Grid>
                         </GroupBox>
+                        
+                        <TextBlock Text="将文件拖放到此标签页以计算哈希值" 
+                                   HorizontalAlignment="Center" 
+                                   VerticalAlignment="Center" 
+                                   FontSize="14" 
+                                   Foreground="Gray" 
+                                   Margin="0,20,0,0" 
+                                   Name="FileDropHint"/>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -660,136 +668,56 @@
                 </ScrollViewer>
             </TabItem>
 
-            <!-- 常用编解码/加解密转换器标签页 -->
-            <TabItem Header="常用编解码/加解密转换器">
-                <ScrollViewer Margin="10" VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                        <!-- 第一行：编码转换 -->
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <GroupBox Grid.Column="0" Header="Base64编解码" Margin="0,0,5,0">
-                                <Grid Margin="10">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    <TextBlock Grid.Row="0" Text="Base64编解密功能待实现" Margin="0,10" HorizontalAlignment="Center"/>
-                                    <Button Grid.Row="1" Content="编码/解码" Padding="10,3" Margin="0,10" IsEnabled="False"/>
-                                    <Button Grid.Row="2" Content="清空" Padding="10,3" Margin="0,10" IsEnabled="False"/>
-                                </Grid>
-                            </GroupBox>
-
-                            <GroupBox Grid.Column="1" Header="Base24编解码" Margin="0,0,5,0">
-                                <Grid Margin="10">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    <TextBlock Grid.Row="0" Text="Base24编解密功能待实现" Margin="0,10" HorizontalAlignment="Center"/>
-                                    <Button Grid.Row="1" Content="编码/解码" Padding="10,3" Margin="0,10" IsEnabled="False"/>
-                                    <Button Grid.Row="2" Content="清空" Padding="10,3" Margin="0,10" IsEnabled="False"/>
-                                </Grid>
-                            </GroupBox>
-
-                            <GroupBox Grid.Column="2" Header="Base36编解码" Margin="0,0,5,0">
-                                <Grid Margin="10">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    <TextBlock Grid.Row="0" Text="Base36编解密功能待实现" Margin="0,10" HorizontalAlignment="Center"/>
-                                    <Button Grid.Row="1" Content="编码/解码" Padding="10,3" Margin="0,10" IsEnabled="False"/>
-                                    <Button Grid.Row="2" Content="清空" Padding="10,3" Margin="0,10" IsEnabled="False"/>
-                                </Grid>
-                            </GroupBox>
-
-                            <GroupBox Grid.Column="3" Header="URL编解码" Margin="0,0,0,0">
-                                <Grid Margin="10">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    <TextBlock Grid.Row="0" Text="URL编解密功能待实现" Margin="0,10" HorizontalAlignment="Center"/>
-                                    <Button Grid.Row="1" Content="编码/解码" Padding="10,3" Margin="0,10" IsEnabled="False"/>
-                                    <Button Grid.Row="2" Content="清空" Padding="10,3" Margin="0,10" IsEnabled="False"/>
-                                </Grid>
-                            </GroupBox>
-                        </Grid>
-
-                        <!-- 第二行：加密算法 -->
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <GroupBox Grid.Column="0" Header="AES加解密" Margin="0,0,5,0">
-                                <Grid Margin="10">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    <TextBlock Grid.Row="0" Text="AES加解密功能待实现" Margin="0,10" HorizontalAlignment="Center"/>
-                                    <Button Grid.Row="1" Content="加密/解密" Padding="10,3" Margin="0,10" IsEnabled="False"/>
-                                    <Button Grid.Row="2" Content="清空" Padding="10,3" Margin="0,10" IsEnabled="False"/>
-                                </Grid>
-                            </GroupBox>
-
-                            <GroupBox Grid.Column="1" Header="RSA加解密" Margin="0,0,0,0">
-                                <Grid Margin="10">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    <TextBlock Grid.Row="0" Text="RSA加解密功能待实现" Margin="0,10" HorizontalAlignment="Center"/>
-                                    <Button Grid.Row="1" Content="加密/解密" Padding="10,3" Margin="0,10" IsEnabled="False"/>
-                                    <Button Grid.Row="2" Content="清空" Padding="10,3" Margin="0,10" IsEnabled="False"/>
-                                </Grid>
-                            </GroupBox>
-                        </Grid>
-
-                        <!-- 第三行：进制转换 -->
-                        <GroupBox Header="2/8/10/16进制互转" Margin="0,0,0,10">
-                            <Grid Margin="10">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Text="进制互转功能待实现" Margin="0,10" HorizontalAlignment="Center"/>
-                                <Button Grid.Row="1" Content="转换" Padding="10,3" Margin="0,10" IsEnabled="False"/>
-                                <Button Grid.Row="2" Content="清空" Padding="10,3" Margin="0,10" IsEnabled="False"/>
-                            </Grid>
-                        </GroupBox>
-
-                        <!-- 第四行：ASCII与字符串转换 -->
-                        <GroupBox Header="ASCII与字符串互转" Margin="0,0,0,10">
-                            <Grid Margin="10">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Text="ASCII与字符串互转功能待实现" Margin="0,10" HorizontalAlignment="Center"/>
-                                <Button Grid.Row="1" Content="转换" Padding="10,3" Margin="0,10" IsEnabled="False"/>
-                                <Button Grid.Row="2" Content="清空" Padding="10,3" Margin="0,10" IsEnabled="False"/>
-                            </Grid>
-                        </GroupBox>
+            <!-- Base64编解码标签页 -->
+            <TabItem Header="Base64编解码">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <GroupBox Grid.Row="0" Header="待编码文本" Margin="0,0,0,5">
+                        <TextBox Name="Base64Input" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Margin="5"/>
+                    </GroupBox>
+                    
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5">
+                        <Button Content="编码" Click="Base64Encode_Click" Padding="15,5" Margin="5"/>
+                        <Button Content="解码" Click="Base64Decode_Click" Padding="15,5" Margin="5"/>
+                        <Button Content="清空" Click="Base64Clear_Click" Padding="15,5" Margin="5"/>
                     </StackPanel>
-                </ScrollViewer>
+                    
+                    <GroupBox Grid.Row="2" Header="编码结果/待解码文本" Margin="0,5,0,0">
+                        <TextBox Name="Base64Result" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Margin="5"/>
+                    </GroupBox>
+                </Grid>
             </TabItem>
+            
+            <!-- URL编解码标签页 -->
+            <TabItem Header="URL编解码">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <GroupBox Grid.Row="0" Header="待编码文本" Margin="0,0,0,5">
+                        <TextBox Name="UrlInput" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Margin="5"/>
+                    </GroupBox>
+                    
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5">
+                        <Button Content="编码" Click="UrlEncode_Click" Padding="15,5" Margin="5"/>
+                        <Button Content="解码" Click="UrlDecode_Click" Padding="15,5" Margin="5"/>
+                        <Button Content="清空" Click="UrlClear_Click" Padding="15,5" Margin="5"/>
+                    </StackPanel>
+                    
+                    <GroupBox Grid.Row="2" Header="编码结果/待解码文本" Margin="0,5,0,0">
+                        <TextBox Name="UrlResult" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Margin="5"/>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+            
         </TabControl>
     </Grid>
 </Window>
