@@ -1,8 +1,9 @@
+using MyTool.PEAnalyzer.Models;
 using System;
 using System.IO;
 using System.Text;
 
-namespace MyTool
+namespace MyTool.PEAnalyzer.Resources
 {
     /// <summary>
     /// PE资源解析器核心功能
@@ -16,7 +17,7 @@ namespace MyTool
         /// <param name="rva">相对虚拟地址</param>
         /// <param name="sections">节头列表</param>
         /// <returns>文件偏移量</returns>
-        public static long RvaToOffset(uint rva, System.Collections.Generic.List<IMAGE_SECTION_HEADER> sections)
+        public static long RvaToOffset(uint rva, List<IMAGE_SECTION_HEADER> sections)
         {
             // 添加对RVA的基本验证
             if (rva == 0)
@@ -42,7 +43,7 @@ namespace MyTool
                         return -1;
                     
                     // 确保计算结果不会溢出
-                    long offset = (long)(section.PointerToRawData + relativeOffset);
+                    long offset = section.PointerToRawData + relativeOffset;
                     // 确保offset不为负数且在合理范围内
                     if (offset >= 0)
                         return offset;

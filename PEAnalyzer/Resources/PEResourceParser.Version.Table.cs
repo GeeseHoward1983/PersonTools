@@ -1,8 +1,9 @@
+using MyTool.PEAnalyzer.Models;
 using System;
 using System.IO;
 using System.Text;
 
-namespace MyTool
+namespace MyTool.PEAnalyzer.Resources
 {
     /// <summary>
     /// PE资源解析器版本信息表解析辅助模块
@@ -37,7 +38,7 @@ namespace MyTool
                 // 计算Strings的位置
                 long keyLengthInBytes = (langId.Length + 1) * 2; // Unicode字符串长度 + null终止符
                 long afterLangIdPosition = startPosition + 6 + keyLengthInBytes;
-                long stringsPosition = (afterLangIdPosition + 3) & ~3; // 对齐到4字节边界
+                long stringsPosition = afterLangIdPosition + 3 & ~3; // 对齐到4字节边界
 
                 if (stringsPosition >= fs.Length || stringsPosition >= endPosition)
                     return;
@@ -116,7 +117,7 @@ namespace MyTool
 
                 // 跳过可能的额外null字符并对齐到4字节边界
                 long currentPosition = fs.Position;
-                long valuePosition = (currentPosition + 3) & ~3;
+                long valuePosition = currentPosition + 3 & ~3;
 
                 // 确保valuePosition不超过边界
                 if (valuePosition >= endPosition || valuePosition >= fs.Length)
@@ -173,7 +174,7 @@ namespace MyTool
                 }
 
                 // 移动到下一个字符串对
-                fs.Position = (startPosition + wLength + 3) & ~3;
+                fs.Position = startPosition + wLength + 3 & ~3;
 
                 // 确保不超出边界
                 if (fs.Position > endPosition)

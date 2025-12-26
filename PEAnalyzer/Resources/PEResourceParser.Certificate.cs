@@ -1,7 +1,8 @@
+using MyTool.PEAnalyzer.Models;
 using System;
 using System.IO;
 
-namespace MyTool
+namespace MyTool.PEAnalyzer.Resources
 {
     /// <summary>
     /// PE资源解析器证书信息解析模块

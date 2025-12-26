@@ -1,3 +1,5 @@
+using MyTool.Enums;
+
 namespace MyTool
 {
     /// <summary>

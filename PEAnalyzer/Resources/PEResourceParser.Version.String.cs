@@ -1,8 +1,9 @@
+using MyTool.PEAnalyzer.Models;
 using System;
 using System.IO;
 using System.Text;
 
-namespace MyTool
+namespace MyTool.PEAnalyzer.Resources
 {
     /// <summary>
     /// PE资源解析器版本信息字符串解析辅助模块
@@ -39,7 +40,7 @@ namespace MyTool
                     // 计算StringTable的位置
                     long keyLengthInBytes = (key.Length + 1) * 2; // Unicode字符串长度 + null终止符
                     long afterKeyPosition = startPosition + 6 + keyLengthInBytes; // 6是头部大小
-                    long stringTablePosition = (afterKeyPosition + 3) & ~3; // 对齐到4字节边界
+                    long stringTablePosition = afterKeyPosition + 3 & ~3; // 对齐到4字节边界
 
                     long stringFileInfoEndPosition = Math.Min(startPosition + wLength, endPosition);
 
@@ -55,7 +56,7 @@ namespace MyTool
                 }
                 
                 // 确保位置正确前进到下一个兄弟节点
-                long nextPosition = (startPosition + wLength + 3) & ~3;
+                long nextPosition = startPosition + wLength + 3 & ~3;
                 if (nextPosition < endPosition && nextPosition > fs.Position)
                 {
                     fs.Position = nextPosition;

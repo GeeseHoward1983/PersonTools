@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -8,6 +8,8 @@
     <UseWPF>true</UseWPF>
     <ApplicationIcon>88524ce5e9c852_Icon.ico</ApplicationIcon>
     <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <AnalysisLevel>6.0-minimum</AnalysisLevel>
+    <NeutralLanguage>zh-CN</NeutralLanguage>
   </PropertyGroup>
 
   <ItemGroup>

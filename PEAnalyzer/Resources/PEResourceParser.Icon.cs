@@ -1,8 +1,9 @@
+using MyTool.PEAnalyzer.Models;
 using System;
 using System.IO;
 using System.Text;
 
-namespace MyTool
+namespace MyTool.PEAnalyzer.Resources
 {
     /// <summary>
     /// PE资源解析器图标信息解析模块

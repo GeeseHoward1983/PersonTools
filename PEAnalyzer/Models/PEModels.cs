@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Windows.Media.Imaging;
 
-namespace MyTool
+namespace MyTool.PEAnalyzer.Models
 {
     // PE信息类
     public class PEInfo

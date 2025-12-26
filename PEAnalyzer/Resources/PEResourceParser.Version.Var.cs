@@ -1,7 +1,8 @@
+using MyTool.PEAnalyzer.Models;
 using System;
 using System.IO;
 
-namespace MyTool
+namespace MyTool.PEAnalyzer.Resources
 {
     /// <summary>
     /// PE资源解析器版本信息变量解析辅助模块
@@ -38,7 +39,7 @@ namespace MyTool
                     // 计算Var结构的位置
                     long keyLengthInBytes = (key.Length + 1) * 2; // Unicode字符串长度 + null终止符
                     long afterKeyPosition = startPosition + 6 + keyLengthInBytes; // 6是头部大小
-                    long varPosition = (afterKeyPosition + 3) & ~3; // 对齐到4字节边界
+                    long varPosition = afterKeyPosition + 3 & ~3; // 对齐到4字节边界
 
                     long varFileInfoEndPosition = Math.Min(startPosition + wLength, endPosition);
 
@@ -50,7 +51,7 @@ namespace MyTool
                 }
                 
                 // 确保位置正确前进到下一个兄弟节点
-                long nextPosition = (startPosition + wLength + 3) & ~3;
+                long nextPosition = startPosition + wLength + 3 & ~3;
                 if (nextPosition < endPosition && nextPosition > fs.Position)
                 {
                     fs.Position = nextPosition;
@@ -90,7 +91,7 @@ namespace MyTool
                 // 计算值的位置
                 long keyLengthInBytes = (varName.Length + 1) * 2; // Unicode字符串长度 + null终止符
                 long afterVarNamePosition = startPosition + 6 + keyLengthInBytes;
-                long valuePosition = (afterVarNamePosition + 3) & ~3; // 对齐到4字节边界
+                long valuePosition = afterVarNamePosition + 3 & ~3; // 对齐到4字节边界
 
                 if (valuePosition >= fs.Length || valuePosition >= endPosition)
                     return;
@@ -106,7 +107,7 @@ namespace MyTool
                         // 读取第一个DWORD对（语言ID和代码页）
                         uint translation = reader.ReadUInt32();
                         uint languageId = translation & 0xFFFF;
-                        uint codePage = (translation >> 16) & 0xFFFF;
+                        uint codePage = translation >> 16 & 0xFFFF;
                         
                         // 存储翻译信息（转换为可读格式）
                         peInfo.AdditionalInfo.TranslationInfo = PEResourceParserVersionLanguage.GetReadableTranslationInfo(languageId, codePage);
@@ -114,7 +115,7 @@ namespace MyTool
                 }
 
                 // 移动到下一个Var（如果有）
-                long nextPosition = (startPosition + wLength + 3) & ~3;
+                long nextPosition = startPosition + wLength + 3 & ~3;
                 if (nextPosition < endPosition && nextPosition < fs.Length)
                 {
                     fs.Position = nextPosition;

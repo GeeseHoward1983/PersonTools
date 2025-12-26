@@ -1,9 +1,10 @@
+using MyTool.PEAnalyzer.Models;
 using System;
 using System.Globalization;
 using System.IO;
 using System.Text;
 
-namespace MyTool
+namespace MyTool.PEAnalyzer.Resources
 {
     /// <summary>
     /// PE资源解析器版本信息解析辅助模块
@@ -43,7 +44,7 @@ namespace MyTool
                         return;
 
                     // 对齐到4字节边界
-                    long alignedPosition = (fs.Position + 3) & ~3;
+                    long alignedPosition = fs.Position + 3 & ~3;
 
                     // 检查是否有足够的空间读取VS_FIXEDFILEINFO
                     // VS_FIXEDFILEINFO大小为52字节，但我们需要检查wValueLength是否有效
@@ -72,15 +73,15 @@ namespace MyTool
                         // 验证签名
                         if (fixedFileInfo.dwSignature == 0xFEEF04BD) // VS_VERSIONINFO签名
                         {
-                            uint fileVersionMajor = (fixedFileInfo.dwFileVersionMS >> 16) & 0xFFFF;
+                            uint fileVersionMajor = fixedFileInfo.dwFileVersionMS >> 16 & 0xFFFF;
                             uint fileVersionMinor = fixedFileInfo.dwFileVersionMS & 0xFFFF;
-                            uint fileVersionBuild = (fixedFileInfo.dwFileVersionLS >> 16) & 0xFFFF;
+                            uint fileVersionBuild = fixedFileInfo.dwFileVersionLS >> 16 & 0xFFFF;
                             uint fileVersionRev = fixedFileInfo.dwFileVersionLS & 0xFFFF;
                             peInfo.AdditionalInfo.FileVersion = $"{fileVersionMajor}.{fileVersionMinor}.{fileVersionBuild}.{fileVersionRev}";
 
-                            uint productVersionMajor = (fixedFileInfo.dwProductVersionMS >> 16) & 0xFFFF;
+                            uint productVersionMajor = fixedFileInfo.dwProductVersionMS >> 16 & 0xFFFF;
                             uint productVersionMinor = fixedFileInfo.dwProductVersionMS & 0xFFFF;
-                            uint productVersionBuild = (fixedFileInfo.dwProductVersionLS >> 16) & 0xFFFF;
+                            uint productVersionBuild = fixedFileInfo.dwProductVersionLS >> 16 & 0xFFFF;
                             uint productVersionRev = fixedFileInfo.dwProductVersionLS & 0xFFFF;
                             peInfo.AdditionalInfo.ProductVersion = $"{productVersionMajor}.{productVersionMinor}.{productVersionBuild}.{productVersionRev}";
                         }
@@ -93,7 +94,7 @@ namespace MyTool
                         // 继续解析StringFileInfo和VarFileInfo部分
                         // 它们都紧跟在VS_FIXEDFILEINFO之后
                         long childrenStartPos = alignedPosition + 52; // 跳过FIXEDFILEINFO
-                        childrenStartPos = (childrenStartPos + 3) & ~3; // 对齐到4字节边界
+                        childrenStartPos = childrenStartPos + 3 & ~3; // 对齐到4字节边界
 
                         if (childrenStartPos < fs.Length && childrenStartPos < startPosition + wLength)
                         {
@@ -155,7 +156,7 @@ namespace MyTool
                     }
                     
                     // 移动到下一个子项
-                    long nextChildPos = (childStartPos + wLength + 3) & ~3;
+                    long nextChildPos = childStartPos + wLength + 3 & ~3;
                     if (nextChildPos >= endPosition || nextChildPos < fs.Position)
                         break;
                     

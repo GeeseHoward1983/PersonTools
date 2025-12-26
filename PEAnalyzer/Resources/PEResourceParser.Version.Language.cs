@@ -1,7 +1,8 @@
+using MyTool.Enums;
 using System;
 using System.Globalization;
 
-namespace MyTool
+namespace MyTool.PEAnalyzer.Resources
 {
     /// <summary>
     /// PE资源解析器版本信息语言解析辅助模块
@@ -11,7 +12,7 @@ namespace MyTool
     {
         
         // 语言名称数组，按枚举类型索引
-        private static readonly string[] englishLanguageNames = {
+        private static readonly string[] englishLanguageNames = [
             "Process Default Language",
             "Arabic (Saudi Arabia)",
             "Bulgarian",
@@ -245,9 +246,9 @@ namespace MyTool
             "Spanish (Venezuela)",
             "French (North Africa)",
             "Unknown Language (0x{0:X4})"
-        };
+        ];
         
-        private static readonly string[] simplifiedChineseLanguageNames = {
+        private static readonly string[] simplifiedChineseLanguageNames = [
             "进程默认语言",
             "阿拉伯语（沙特阿拉伯）",
             "保加利亚语",
@@ -481,9 +482,9 @@ namespace MyTool
             "西班牙语（委内瑞拉）",
             "法语（北非）",
             "未知语言 (0x{0:X4})"
-        };
+        ];
         
-        private static readonly string[] traditionalChineseLanguageNames = {
+        private static readonly string[] traditionalChineseLanguageNames = [
             "進程默認語言",
             "阿拉伯語（沙特阿拉伯）",
             "保加利亞語",
@@ -717,10 +718,10 @@ namespace MyTool
             "西班牙語（委內瑞拉）",
             "法語（北非）",
             "未知語言 (0x{0:X4})"
-        };
+        ];
         
         // 代码页名称数组，按枚举类型索引
-        private static readonly string[] englishCodePageNames = {
+        private static readonly string[] englishCodePageNames = [
             "Default Code Page",
             "IBM EBCDIC US-Canada",
             "OEM United States",
@@ -793,9 +794,9 @@ namespace MyTool
             "UTF-7",
             "UTF-8",
             "Unknown Code Page ({0})"
-        };
+        ];
         
-        private static readonly string[] simplifiedChineseCodePageNames = {
+        private static readonly string[] simplifiedChineseCodePageNames = [
             "默认代码页",
             "IBM EBCDIC 美国/加拿大",
             "OEM 美国",
@@ -868,9 +869,9 @@ namespace MyTool
             "UTF-7",
             "UTF-8",
             "未知代码页 ({0})"
-        };
+        ];
         
-        private static readonly string[] traditionalChineseCodePageNames = {
+        private static readonly string[] traditionalChineseCodePageNames = [
             "默認代碼頁",
             "IBM EBCDIC 美國/加拿大",
             "OEM 美國",
@@ -943,7 +944,7 @@ namespace MyTool
             "UTF-7",
             "UTF-8",
             "未知代碼頁 ({0})"
-        };
+        ];
 
         /// <summary>
         /// 将语言ID和代码页转换为可读的文本信息

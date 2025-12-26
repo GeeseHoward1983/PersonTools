@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Text;
+using MyTool.PEAnalyzer.Resources;
+using MyTool.PEAnalyzer.Models;
 
 namespace MyTool
 {
@@ -186,7 +188,7 @@ namespace MyTool
             try
             {
                 // 计算String堆的偏移
-                long stringHeapOffset = CalculateStringHeapOffset(fs, tablesOffset, heapSizes, maskValid, rowCounts);
+                long stringHeapOffset = CalculateStringHeapOffset(tablesOffset, heapSizes, maskValid, rowCounts);
                 
                 // TypeDef表结构:
                 // Flags (4 bytes)

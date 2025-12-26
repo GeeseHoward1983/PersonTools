@@ -20,7 +20,7 @@ namespace MyTool
         /// <param name="maskValid">有效表掩码</param>
         /// <param name="rowCounts">行数数组</param>
         /// <returns>String堆的偏移</returns>
-        private static long CalculateStringHeapOffset(FileStream fs, long tablesOffset, byte heapSizes, ulong maskValid, uint[] rowCounts)
+        private static long CalculateStringHeapOffset(long tablesOffset, byte heapSizes, ulong maskValid, uint[] rowCounts)
         {
             try
             {
@@ -68,27 +68,26 @@ namespace MyTool
         private static int GetTableRowSize(int tableIndex, byte heapSizes, ulong maskValid, uint[] rowCounts)
         {
             // 简化的行大小计算，实际实现需要根据ECMA-335规范
-            switch (tableIndex)
+            return tableIndex switch
             {
-                case 0: // Module
-                    return 2 + (IsSmallIndex(heapSizes, 1) ? 2 : 4) + 
-                           (IsSmallIndex(heapSizes, 2) ? 2 : 4) + 
-                           (IsSmallIndex(heapSizes, 0) ? 2 : 4) + 
-                           (IsSmallIndex(heapSizes, 0) ? 2 : 4);
-                case 1: // TypeRef
-                    return (IsSmallIndex(heapSizes, 1) ? 2 : 4) + 
-                           (IsSmallIndex(heapSizes, 2) ? 2 : 4) + 
-                           (IsSmallIndex(heapSizes, 2) ? 2 : 4);
-                case 2: // TypeDef
-                    return 4 + (IsSmallIndex(heapSizes, 2) ? 2 : 4) + 
-                           (IsSmallIndex(heapSizes, 2) ? 2 : 4) + 
-                           GetCodedIndexSize(1, maskValid, rowCounts) + // Extends coded index
-                           GetCodedIndexSize(2, maskValid, rowCounts) + // FieldList coded index
-                           GetCodedIndexSize(2, maskValid, rowCounts);  // MethodList coded index
-                // 其他表...
-                default:
-                    return 16; // 默认大小
-            }
+                // Module
+                0 => 2 + (IsSmallIndex(heapSizes, 1) ? 2 : 4) +
+                                           (IsSmallIndex(heapSizes, 2) ? 2 : 4) +
+                                           (IsSmallIndex(heapSizes, 0) ? 2 : 4) +
+                                           (IsSmallIndex(heapSizes, 0) ? 2 : 4),
+                // TypeRef
+                1 => (IsSmallIndex(heapSizes, 1) ? 2 : 4) +
+                                           (IsSmallIndex(heapSizes, 2) ? 2 : 4) +
+                                           (IsSmallIndex(heapSizes, 2) ? 2 : 4),
+                // TypeDef
+                2 => 4 + (IsSmallIndex(heapSizes, 2) ? 2 : 4) +
+                                           (IsSmallIndex(heapSizes, 2) ? 2 : 4) +
+                                           GetCodedIndexSize(1, maskValid, rowCounts) + // Extends coded index
+                                           GetCodedIndexSize(2, maskValid, rowCounts) + // FieldList coded index
+                                           GetCodedIndexSize(2, maskValid, rowCounts),// MethodList coded index
+                                                                                      // 其他表...
+                _ => 16,// 默认大小
+            };
         }
         
         /// <summary>
