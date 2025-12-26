@@ -11,6 +11,7 @@ namespace MyTool
             InitializeComponent();
             InitializeCRCAlgorithmComboBox();
             InitializeSHA3AlgorithmComboBox();
+            InitializeAesComboBoxes(); // 初始化AES下拉框
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
         }
     }

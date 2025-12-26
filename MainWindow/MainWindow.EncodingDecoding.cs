@@ -1,5 +1,6 @@
 using System.IO;
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
 
@@ -77,7 +78,7 @@ namespace MyTool
         }
 
         // 检查字节数组是否包含不可见字符
-        private bool ContainsInvisibleCharacters(byte[] bytes)
+        private static bool ContainsInvisibleCharacters(byte[] bytes)
         {
             foreach (byte b in bytes)
             {
@@ -188,6 +189,5 @@ namespace MyTool
             UrlInput.Clear();
             UrlResult.Clear();
         }
-
     }
 }
