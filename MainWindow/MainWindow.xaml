@@ -656,7 +656,7 @@
 
             <!-- Base64编解码标签页 -->
             <TabItem Header="Base64编解码">
-                <Grid Margin="10">
+                <Grid Margin="10" AllowDrop="True" Drop="Base64Tab_Drop" PreviewDragOver="Grid_PreviewDragOver">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
@@ -674,7 +674,7 @@
                         <Button Content="解码" Click="Base64Decode_Click" Padding="15,5" Margin="5"/>
                         <Button Content="清空" Click="Base64Clear_Click" Padding="15,5" Margin="5"/>
                     </StackPanel>
-                    
+
                     <GroupBox Grid.Row="2" Header="编码结果/待解码文本" Margin="0,5,0,0">
                         <TextBox Name="Base64Result" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Margin="5"/>
                     </GroupBox>
