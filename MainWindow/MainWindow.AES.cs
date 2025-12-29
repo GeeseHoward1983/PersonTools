@@ -1,9 +1,7 @@
-using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
-using System.Windows.Controls;
 
 namespace MyTool
 {
@@ -75,7 +73,7 @@ namespace MyTool
 
                 // 对于CBC和CFB等模式，需要IV向量
                 AesModeOption selectedMode = (AesModeOption)AesModeComboBox.SelectedItem;
-                if (selectedMode.Mode == CipherMode.CBC || selectedMode.Mode == CipherMode.CFB || 
+                if (selectedMode.Mode == CipherMode.CBC || selectedMode.Mode == CipherMode.CFB ||
                     selectedMode.Mode == CipherMode.OFB)
                 {
                     if (string.IsNullOrEmpty(ivInput))
@@ -140,7 +138,7 @@ namespace MyTool
 
                 // 对于CBC和CFB等模式，需要IV向量
                 AesModeOption selectedMode = (AesModeOption)AesModeComboBox.SelectedItem;
-                if (selectedMode.Mode == CipherMode.CBC || selectedMode.Mode == CipherMode.CFB || 
+                if (selectedMode.Mode == CipherMode.CBC || selectedMode.Mode == CipherMode.CFB ||
                     selectedMode.Mode == CipherMode.OFB)
                 {
                     if (string.IsNullOrEmpty(ivInput))
@@ -223,7 +221,7 @@ namespace MyTool
         private string AesDecryptString(string input, byte[] key, byte[]? iv, CipherMode mode)
         {
             AesPaddingOption selectedPadding = (AesPaddingOption)AesPaddingComboBox.SelectedItem;
-            
+
             // 将输入的十六进制字符串转换为字节数组
             byte[] encryptedBytes = Utils.HexStringToByteArray(input);
 

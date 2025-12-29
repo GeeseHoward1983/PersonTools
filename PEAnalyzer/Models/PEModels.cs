@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Windows.Media.Imaging;
 
 namespace MyTool.PEAnalyzer.Models
@@ -34,13 +33,13 @@ namespace MyTool.PEAnalyzer.Models
         public string LegalTrademarks { get; set; } = string.Empty;
         public bool IsSigned { get; set; } = false;
         public string CertificateInfo { get; set; } = string.Empty;
-        
+
         // 翻译信息（来自VarFileInfo）
         public string TranslationInfo { get; set; } = string.Empty;
-        
+
         // 是否已解析StringTable
         public bool StringTableParsed { get; set; } = false;
-        
+
         // StringTable结束位置
         public long StringTableEndPosition { get; set; } = 0;
     }
@@ -53,7 +52,7 @@ namespace MyTool.PEAnalyzer.Models
         public int Ordinal { get; set; }
         public bool IsOrdinalImport { get; set; } = false;
         public bool IsDelayLoaded { get; set; } = false;  // 添加延迟加载标记
-        
+
         // 添加序号显示属性，同时显示十进制和十六进制
         public string OrdinalDisplay => $"{Ordinal} (0x{Ordinal:X8})";
     }
@@ -64,7 +63,7 @@ namespace MyTool.PEAnalyzer.Models
         public string Name { get; set; } = string.Empty;
         public int Ordinal { get; set; }
         public uint RVA { get; set; }
-        
+
         // 添加序号显示属性，同时显示十进制和十六进制
         public string OrdinalDisplay => $"{Ordinal} (0x{Ordinal:X8})";
     }
@@ -108,7 +107,7 @@ namespace MyTool.PEAnalyzer.Models
         public int Size { get; set; }
         public byte[] Data { get; set; } = [];
     }
-    
+
     // 图标视图模型，用于在DataGrid中显示图标
     public class IconViewModel
     {
@@ -154,13 +153,13 @@ namespace MyTool.PEAnalyzer.Models
         public bool Is32BitRequired { get; set; }
         public bool Is32BitPreferred { get; set; }
         public bool IsStrongNameSigned { get; set; }
-        
+
         // 保存PE头中的Machine字段，用于更准确地判断架构
         public ushort PEMachineType { get; set; }
-        
+
         // 获取运行时版本描述
         public string RuntimeVersion => $"{MajorRuntimeVersion}.{MinorRuntimeVersion}";
-        
+
         /// <summary>
         /// 获取.NET程序的架构类型
         /// </summary>
@@ -181,11 +180,11 @@ namespace MyTool.PEAnalyzer.Models
                 {
                     return "Any CPU"; // 可以在任何CPU架构上运行
                 }
-                
+
                 return "Unknown"; // 无法确定的架构
             }
         }
-        
+
         // 获取标志位描述
         public List<string> FlagDescriptions
         {

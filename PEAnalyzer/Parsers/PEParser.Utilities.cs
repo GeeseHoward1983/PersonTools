@@ -1,7 +1,5 @@
 using MyTool.PEAnalyzer.Models;
 using MyTool.PEAnalyzer.Resources;
-using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -116,11 +114,11 @@ namespace MyTool
             string linkerName;
             switch (majorVersion)
             {
-                case 1: 
-                case 2: 
-                case 3: 
-                case 4: 
-                case 5: 
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                case 5:
                     linkerName = "Microsoft Linker (早期版本)";
                     break;
                 case 6:
@@ -166,7 +164,7 @@ namespace MyTool
                         linkerName = $"Microsoft Linker {majorVersion}.{minorVersion} (未知版本)";
                     break;
             }
-            
+
             return $"{linkerName} [{majorVersion}.{minorVersion}]";
         }
 
@@ -222,7 +220,7 @@ namespace MyTool
                         compilerInfo = $"Microsoft Visual C++ (未知版本)";
                     break;
             }
-            
+
             return $"{compilerInfo} [{majorVersion}.{minorVersion}]";
         }
 
@@ -257,7 +255,7 @@ namespace MyTool
                     osDescription = $"Windows NT {majorVersion}.{minorVersion}";
                     break;
             }
-            
+
             return $"{osDescription} [{majorVersion}.{minorVersion}]";
         }
 
@@ -293,7 +291,7 @@ namespace MyTool
                     subsystemDescription = $"Windows NT {majorVersion}.{minorVersion}";
                     break;
             }
-            
+
             return $"{subsystemDescription} [{majorVersion}.{minorVersion}]";
         }
 
@@ -337,7 +335,7 @@ namespace MyTool
         public static string GetDetailedFileType(ushort characteristics, ushort subsystem)
         {
             string fileType;
-            
+
             // 根据特征值判断基本类型
             if ((characteristics & 0x1000) != 0) // 系统文件标志
             {
@@ -355,7 +353,7 @@ namespace MyTool
             {
                 fileType = "Object File";
             }
-            
+
             // 根据子系统进一步细化
             string subsystemDetail;
             switch (subsystem)
@@ -403,7 +401,7 @@ namespace MyTool
                     subsystemDetail = $" (Unknown Subsystem: {subsystem})";
                     break;
             }
-            
+
             return $"{fileType}{subsystemDetail} (Characteristics: 0x{characteristics:X4}, Subsystem: 0x{subsystem:X4})";
         }
 
@@ -415,7 +413,7 @@ namespace MyTool
                 return string.Empty; // 不是系统文件，不是驱动程序
 
             string driverType = "Windows Driver";
-            
+
             // 根据子系统类型进一步分类
             switch (subsystem)
             {
@@ -432,7 +430,7 @@ namespace MyTool
                     driverType = "Windows Boot Driver/Application";
                     break;
             }
-            
+
             // 检查DLL特征以获取更多信息
             if ((dllCharacteristics & 0x0020) != 0) // IMAGE_DLLCHARACTERISTICS_WDM_DRIVER
                 driverType += " (WDM)";

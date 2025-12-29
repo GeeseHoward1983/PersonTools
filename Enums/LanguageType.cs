@@ -9,12 +9,12 @@ namespace MyTool.Enums
         /// 英文
         /// </summary>
         English = 0,
-        
+
         /// <summary>
         /// 简体中文
         /// </summary>
         SimplifiedChinese = 1,
-        
+
         /// <summary>
         /// 繁体中文
         /// </summary>

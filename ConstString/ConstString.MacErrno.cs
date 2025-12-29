@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace MyTool
 {
     public static partial class ConstString

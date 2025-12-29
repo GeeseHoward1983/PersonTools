@@ -1,6 +1,4 @@
 using MyTool.PEAnalyzer.Models;
-using System;
-using System.Collections.Generic;
 using System.IO;
 
 namespace MyTool

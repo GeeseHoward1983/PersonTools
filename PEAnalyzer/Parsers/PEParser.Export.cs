@@ -1,7 +1,5 @@
 using MyTool.PEAnalyzer.Models;
 using MyTool.PEAnalyzer.Resources;
-using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 

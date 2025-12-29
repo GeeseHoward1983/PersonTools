@@ -1,12 +1,9 @@
-using System;
-using System.Collections.Generic;
+using Microsoft.Win32;
+using MyTool.PEAnalyzer.Models;
 using System.IO;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
-using Microsoft.Win32;
-using MyTool.PEAnalyzer.Models;
 
 namespace MyTool
 {
@@ -155,7 +152,7 @@ namespace MyTool
         private Dictionary<string, string> CreateSectionInfo()
         {
             var sectionInfo = new Dictionary<string, string>();
-            
+
             // 显示所有节信息，不再限制数量
             for (int i = 0; i < currentPEInfo?.SectionHeaders.Count; i++)
             {
@@ -163,9 +160,9 @@ namespace MyTool
                 string sectionName = System.Text.Encoding.UTF8.GetString(section.Name).Trim('\0');
                 sectionInfo[$"节 {i} ({sectionName})"] = $"RVA: 0x{section.VirtualAddress:X8}, 大小: 0x{section.VirtualSize:X8}, Raw大小: 0x{section.SizeOfRawData:X8}, 特征: 0x{section.Characteristics:X8}";
             }
-            
+
             sectionInfo[$"总计"] = $"{currentPEInfo?.SectionHeaders.Count} 个节";
-            
+
             return sectionInfo;
         }
 
@@ -206,7 +203,7 @@ namespace MyTool
                 { "是否签名", currentPEInfo.AdditionalInfo.IsSigned ? "是" : "否" },
                 { "证书详情", currentPEInfo.AdditionalInfo.CertificateInfo }
             });
-            
+
             // 显示翻译信息（来自VarFileInfo）
             if (!string.IsNullOrEmpty(currentPEInfo.AdditionalInfo.TranslationInfo))
             {
@@ -299,19 +296,19 @@ namespace MyTool
             // 显示导出函数
             // 对于.NET程序集，导出函数实际上可能是公开的类型
             var exportItems = new List<object>();
-            
+
             if (currentPEInfo != null)
             {
                 // 添加传统的导出函数
                 exportItems.AddRange(currentPEInfo.ExportFunctions);
-                
+
                 // 如果是.NET程序集，添加额外的导出信息
                 if (currentPEInfo.CLRInfo != null)
                 {
                     // 可以在这里添加额外的.NET特定信息
                 }
             }
-            
+
             ExportFunctionsGrid.ItemsSource = exportItems;
         }
 
@@ -332,24 +329,24 @@ namespace MyTool
 
         private string GetArchitectureInfo()
         {
-            if (currentPEInfo == null) 
+            if (currentPEInfo == null)
                 return "Unknown";
-                
+
             // 对于.NET程序，显示PE头架构和.NET架构信息
             if (currentPEInfo.CLRInfo != null)
             {
                 return $"{PEParser.GetMachineTypeDescription(currentPEInfo.NtHeaders.FileHeader.Machine)} (.NET: {currentPEInfo.CLRInfo.Architecture})";
             }
-            
+
             // 对于非.NET程序，只显示PE头架构
             return PEParser.GetMachineTypeDescription(currentPEInfo.NtHeaders.FileHeader.Machine);
         }
 
         private string GetBitInfo()
         {
-            if (currentPEInfo == null) 
+            if (currentPEInfo == null)
                 return "Unknown";
-                
+
             // 对于.NET程序，根据.NET架构判断位数
             if (currentPEInfo.CLRInfo != null)
             {
@@ -363,7 +360,7 @@ namespace MyTool
                 else
                     return "未知";
             }
-            
+
             // 对于非.NET程序，根据PE头判断位数
             return PEParser.Is64Bit(currentPEInfo.OptionalHeader) ? "64位" : "32位";
         }

@@ -141,7 +141,7 @@ namespace MyTool
             CRCInputTextBox.Clear();
             CRCResultLabel.Content = "等待计算...";
         }
-        
+
         // 处理CRC标签页的文件拖放事件
         private void CrcTab_Drop(object sender, System.Windows.DragEventArgs e)
         {
@@ -155,34 +155,34 @@ namespace MyTool
                 }
             }
         }
-        
+
         // 预览拖拽事件，确保拖拽事件不被子控件拦截
         private void Grid_PreviewDragOver(object sender, System.Windows.DragEventArgs e)
         {
             e.Handled = true;
         }
-        
+
         // 处理文件CRC计算
         private void ProcessFileForCrcCalculation(string filePath)
         {
             try
             {
                 byte[] fileBytes;
-                
+
                 // 读取文件内容
                 using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
                 {
                     fileBytes = new byte[fileStream.Length];
                     fileStream.Read(fileBytes, 0, fileBytes.Length);
                 }
-                
+
                 // 将文件内容转换为hex字符串显示在输入框中
                 string hexString = BitConverter.ToString(fileBytes).Replace("-", "");
                 CRCInputTextBox.Text = hexString;
-                
+
                 // 设置为hex输入模式
                 CRCHexInputRadio.IsChecked = true;
-                
+
             }
             catch (Exception ex)
             {

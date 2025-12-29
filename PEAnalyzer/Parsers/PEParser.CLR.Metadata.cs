@@ -1,9 +1,7 @@
-using System;
-using System.IO;
-using System.Collections.Generic;
-using System.Text;
-using MyTool.PEAnalyzer.Resources;
 using MyTool.PEAnalyzer.Models;
+using MyTool.PEAnalyzer.Resources;
+using System.IO;
+using System.Text;
 
 namespace MyTool
 {
@@ -189,7 +187,7 @@ namespace MyTool
             {
                 // 计算String堆的偏移
                 long stringHeapOffset = CalculateStringHeapOffset(tablesOffset, heapSizes, maskValid, rowCounts);
-                
+
                 // TypeDef表结构:
                 // Flags (4 bytes)
                 // TypeName (index into String heap)
@@ -215,12 +213,12 @@ namespace MyTool
                     {
                         // 这是一个公开类型，获取类型名称
                         string typeName = ReadStringFromHeap(fs, reader, stringHeapOffset, typeNameIndex);
-                        
+
                         // 获取命名空间名称
                         string namespaceName = ReadStringFromHeap(fs, reader, stringHeapOffset, typeNamespaceIndex);
-                        
+
                         string fullName = string.IsNullOrEmpty(namespaceName) ? typeName : $"{namespaceName}.{typeName}";
-                        
+
                         var exportFunc = new ExportFunctionInfo
                         {
                             Name = fullName,

@@ -395,7 +395,7 @@ namespace MyTool
             SHA3ResultLabel.Content = "等待计算...";
         }
 
-                // 处理文件拖放事件
+        // 处理文件拖放事件
         private void HashTab_Drop(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -408,31 +408,31 @@ namespace MyTool
                 }
             }
         }
-        
+
         // 处理文件哈希计算
         private void ProcessFileForHashCalculation(string filePath)
         {
             try
             {
                 byte[] fileBytes;
-                
+
                 // 读取文件内容
                 using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
                 {
                     fileBytes = new byte[fileStream.Length];
                     fileStream.Read(fileBytes, 0, fileBytes.Length);
                 }
-                
+
                 // 计算除SHA3外的所有哈希值
                 CalculateAndDisplayHashValues(fileBytes);
-                
+
                 // 将文件内容转换为hex字符串显示在SHA3输入框中
                 string hexString = BitConverter.ToString(fileBytes).Replace("-", "");
                 SHA3InputTextBox.Text = hexString;
-                
+
                 // 设置SHA3为hex输入模式
                 SHA3HexInputRadio.IsChecked = true;
-                
+
                 // 更新提示文本
                 FileDropHint.Text = $"已加载文件: {Path.GetFileName(filePath)}，请在下方选择SHA3算法类型并计算";
             }
@@ -441,7 +441,7 @@ namespace MyTool
                 MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-        
+
         // 计算并显示各种哈希值
         private void CalculateAndDisplayHashValues(byte[] data)
         {

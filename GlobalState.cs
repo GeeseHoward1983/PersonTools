@@ -13,7 +13,7 @@ namespace MyTool
         /// 在程序启动时初始化
         /// </summary>
         public static LanguageType CurrentLanguageType { get; set; } = GetCurrentLanguageType();
-        
+
         /// <summary>
         /// 获取当前系统的语言类型
         /// </summary>

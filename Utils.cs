@@ -1,5 +1,3 @@
-using System;
-
 namespace MyTool
 {
     public static class Utils

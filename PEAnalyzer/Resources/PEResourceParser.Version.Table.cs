@@ -1,5 +1,4 @@
 using MyTool.PEAnalyzer.Models;
-using System;
 using System.IO;
 using System.Text;
 
@@ -54,7 +53,7 @@ namespace MyTool.PEAnalyzer.Resources
 
                     // 先读取头部信息判断长度
                     if (fs.Position + 6 > fs.Length) break;
-                    
+
                     ushort strLength = reader.ReadUInt16();
                     ushort strValueLength = reader.ReadUInt16();
                     ushort strType = reader.ReadUInt16();

@@ -1,5 +1,4 @@
 using MyTool.PEAnalyzer.Models;
-using System;
 using System.IO;
 
 namespace MyTool.PEAnalyzer.Resources
@@ -156,10 +155,10 @@ namespace MyTool.PEAnalyzer.Resources
                             // 验证图标尺寸，避免添加无效图标
                             int width = entry.Width == 0 ? 256 : entry.Width;
                             int height = entry.Height == 0 ? 256 : entry.Height;
-                            
+
                             if (width <= 0 || height <= 0)
                                 continue;
-                                
+
                             var iconInfo = new IconInfo
                             {
                                 Width = width,
@@ -174,7 +173,7 @@ namespace MyTool.PEAnalyzer.Resources
                             if (fullIconDataSize > 0 && fullIconDataSize < 10 * 1024 * 1024) // 限制最大10MB
                             {
                                 byte[] fullIconData = new byte[fullIconDataSize];
-                                
+
                                 // 写入ICO文件头 (6字节)
                                 fullIconData[0] = 0x00; // Reserved
                                 fullIconData[1] = 0x00; // Reserved
@@ -182,7 +181,7 @@ namespace MyTool.PEAnalyzer.Resources
                                 fullIconData[3] = 0x00; // Type
                                 fullIconData[4] = 0x01; // Count (1个图标)
                                 fullIconData[5] = 0x00; // Count
-                            
+
                                 // 写入目录项 (16字节)
                                 fullIconData[6] = entry.Width;
                                 fullIconData[7] = entry.Height;
@@ -194,7 +193,7 @@ namespace MyTool.PEAnalyzer.Resources
                                 // 图像数据偏移量 (从文件开始到图像数据的偏移量)
                                 uint imageDataOffset = 6 + 16; // 文件头 + 目录项
                                 BitConverter.GetBytes(imageDataOffset).CopyTo(fullIconData, 18);
-                            
+
                                 // 读取并写入图像数据
                                 if (entry.BytesInRes > 0 && entry.BytesInRes <= fs.Length && iconDataOffset + entry.BytesInRes <= fs.Length)
                                 {

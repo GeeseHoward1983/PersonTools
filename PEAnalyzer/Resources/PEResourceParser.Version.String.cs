@@ -1,7 +1,5 @@
 using MyTool.PEAnalyzer.Models;
-using System;
 using System.IO;
-using System.Text;
 
 namespace MyTool.PEAnalyzer.Resources
 {
@@ -49,12 +47,12 @@ namespace MyTool.PEAnalyzer.Resources
                         fs.Position = stringTablePosition;
                         PEResourceParserVersionTable.ParseStringTable(fs, reader, peInfo, stringFileInfoEndPosition);
                     }
-                    
+
                     // 记录StringTable解析完成的位置，便于后续处理
                     peInfo.AdditionalInfo.StringTableParsed = true;
                     peInfo.AdditionalInfo.StringTableEndPosition = stringFileInfoEndPosition;
                 }
-                
+
                 // 确保位置正确前进到下一个兄弟节点
                 long nextPosition = startPosition + wLength + 3 & ~3;
                 if (nextPosition < endPosition && nextPosition > fs.Position)

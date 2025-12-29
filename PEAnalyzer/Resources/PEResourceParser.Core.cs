@@ -1,5 +1,4 @@
 using MyTool.PEAnalyzer.Models;
-using System;
 using System.IO;
 using System.Text;
 
@@ -36,12 +35,12 @@ namespace MyTool.PEAnalyzer.Resources
                 {
                     // 计算相对于节起始地址的偏移量
                     uint relativeOffset = rva - section.VirtualAddress;
-                    
+
                     // 如果偏移量超出了文件中节的大小，则返回-1
                     // 这种情况常见于未初始化数据节(.bss等)
                     if (relativeOffset >= section.SizeOfRawData)
                         return -1;
-                    
+
                     // 确保计算结果不会溢出
                     long offset = section.PointerToRawData + relativeOffset;
                     // 确保offset不为负数且在合理范围内

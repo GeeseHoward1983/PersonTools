@@ -1,5 +1,4 @@
 using MyTool.PEAnalyzer.Models;
-using System;
 using System.IO;
 using System.Text;
 
@@ -170,14 +169,14 @@ namespace MyTool.PEAnalyzer.Resources
 
                 // 计算实际数据偏移
                 long dataOffset = PEResourceParserCore.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
-                
+
                 // 验证数据偏移和大小的有效性
                 if (dataOffset == -1 || dataOffset >= fs.Length || dataEntry.Size == 0)
                 {
                     fs.Position = originalPosition;
                     return -1;
                 }
-                
+
                 fs.Position = originalPosition;
                 return dataOffset;
             }
@@ -202,7 +201,7 @@ namespace MyTool.PEAnalyzer.Resources
             {
                 // 图标数据在RT_ICON资源类型中 (ID = 3)
                 const int RT_ICON_TYPE = 3;
-                
+
                 // 获取资源目录的RVA
                 const int RESOURCE_DIRECTORY_INDEX = 2;
                 if (peInfo.OptionalHeader.DataDirectory.Length <= RESOURCE_DIRECTORY_INDEX ||
@@ -294,7 +293,7 @@ namespace MyTool.PEAnalyzer.Resources
                 // 读取名称（Unicode字符串）
                 byte[] nameBytes = reader.ReadBytes(nameLength * 2);
                 string resourceName = Encoding.Unicode.GetString(nameBytes);
-                
+
                 fs.Position = originalPosition;
                 return resourceName;
             }

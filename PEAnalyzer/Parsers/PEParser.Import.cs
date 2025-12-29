@@ -1,9 +1,6 @@
 using MyTool.PEAnalyzer.Models;
 using MyTool.PEAnalyzer.Resources;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace MyTool
 {
@@ -99,7 +96,7 @@ namespace MyTool
                         fs.Position = originalPosition;
                     }
                 }
-                
+
                 // 解析延迟加载导入表
                 var delayLoadedImports = ParseDelayLoadImportTable(fs, reader, peInfo);
                 // 将延迟加载的导入函数添加到主列表中
@@ -167,11 +164,11 @@ namespace MyTool
                             {
                                 long tempPosition = fs.Position;
                                 fs.Position = nameOffset;
-                                
+
                                 // 读取Hint字段（2字节），Hint就是函数的序号
                                 ushort hint = reader.ReadUInt16();
                                 importFunc.Ordinal = hint;
-                                
+
                                 importFunc.FunctionName = ReadNullTerminatedString(reader);
                                 fs.Position = tempPosition;
                             }

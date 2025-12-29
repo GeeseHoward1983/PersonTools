@@ -766,7 +766,7 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     
-                    <GroupBox Grid.Row="0" Header="待加密文本" Margin="0,0,0,5">
+                    <GroupBox Grid.Row="0" Header="待加密文本/待验签数据" Margin="0,0,0,5">
                         <TextBox Name="RsaInput" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Margin="5"/>
                     </GroupBox>
                     
@@ -784,13 +784,21 @@
                         </StackPanel>
                         
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,5">
+                            <TextBlock Text="密钥长度:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                            <ComboBox Name="RsaKeySizeComboBox" Width="120" Margin="0,0,20,0" VerticalAlignment="Center" DisplayMemberPath="Name"/>
+                            
                             <Button Content="加密" Click="RsaEncrypt_Click" Padding="15,5" Margin="5,0"/>
                             <Button Content="解密" Click="RsaDecrypt_Click" Padding="15,5" Margin="0,0,5,0"/>
+                            <Button Content="签名" Click="RsaSign_Click" Padding="15,5" Margin="0,0,5,0"/>
+                            <Button Content="验签" Click="RsaVerify_Click" Padding="15,5" Margin="0,0,5,0"/>
+                            <Button Content="生成密钥对" Click="RsaGenerateKeyPair_Click" Padding="15,5" Margin="0,0,5,0"/>
+                            <Button Content="导入公钥" Click="RsaImportPublicKey_Click" Padding="15,5" Margin="0,0,5,0"/>
+                            <Button Content="导入私钥" Click="RsaImportPrivateKey_Click" Padding="15,5" Margin="0,0,5,0"/>
                             <Button Content="清空" Click="RsaClear_Click" Padding="15,5" Margin="0,0,5,0"/>
                         </StackPanel>
                     </StackPanel>
 
-                    <GroupBox Grid.Row="3" Header="加密结果/待解密文本" Margin="0,5,0,0">
+                    <GroupBox Grid.Row="3" Header="加密结果/签名结果" Margin="0,5,0,0">
                         <TextBox Name="RsaResult" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Margin="5"/>
                     </GroupBox>
                 </Grid>

@@ -1,8 +1,5 @@
 using MyTool.PEAnalyzer.Models;
-using System;
-using System.Globalization;
 using System.IO;
-using System.Text;
 
 namespace MyTool.PEAnalyzer.Resources
 {
@@ -38,7 +35,7 @@ namespace MyTool.PEAnalyzer.Resources
 
                     // 读取szKey (UNICODE字符串 "VS_VERSION_INFO")
                     string vsVersionInfoKey = PEResourceParserCore.ReadUnicodeStringWithMaxLength(reader, wLength);
-                    
+
                     // 验证键名
                     if (!vsVersionInfoKey.Equals("VS_VERSION_INFO", StringComparison.OrdinalIgnoreCase))
                         return;
@@ -130,21 +127,21 @@ namespace MyTool.PEAnalyzer.Resources
                 while (fs.Position < endPosition && fs.Position + 6 <= fs.Length)
                 {
                     long childStartPos = fs.Position;
-                    
+
                     // 读取子项头部
                     ushort wLength = reader.ReadUInt16();
                     ushort wValueLength = reader.ReadUInt16();
                     ushort wType = reader.ReadUInt16();
-                    
+
                     if (wLength == 0)
                         break;
-                    
+
                     // 读取键名
                     string key = PEResourceParserCore.ReadUnicodeStringWithMaxLength(reader, wLength);
-                    
+
                     // 重置位置以便正确解析
                     fs.Position = childStartPos;
-                    
+
                     // 根据键名决定如何处理
                     if (key.Equals("StringFileInfo", StringComparison.OrdinalIgnoreCase))
                     {
@@ -154,12 +151,12 @@ namespace MyTool.PEAnalyzer.Resources
                     {
                         PEResourceParserVersionVar.ParseVarFileInfo(fs, reader, peInfo, endPosition);
                     }
-                    
+
                     // 移动到下一个子项
                     long nextChildPos = childStartPos + wLength + 3 & ~3;
                     if (nextChildPos >= endPosition || nextChildPos < fs.Position)
                         break;
-                    
+
                     fs.Position = nextChildPos;
                 }
             }

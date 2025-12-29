@@ -1,7 +1,4 @@
 using MyTool.PEAnalyzer.Models;
-using System;
-using System.IO;
-using System.Text;
 
 namespace MyTool.PEAnalyzer.Resources
 {
@@ -21,7 +18,7 @@ namespace MyTool.PEAnalyzer.Resources
             try
             {
                 // 检查是否已经是完整的ICO文件
-                if (iconData.Length >= 4 && 
+                if (iconData.Length >= 4 &&
                     iconData[0] == 0x00 && iconData[1] == 0x00 && // Reserved
                     iconData[2] == 0x01 && iconData[3] == 0x00)   // Type (1 = ICO)
                 {
@@ -42,7 +39,7 @@ namespace MyTool.PEAnalyzer.Resources
                         byte width = iconData[6];
                         byte height = iconData[7];
                         ushort bitCount = BitConverter.ToUInt16(iconData, 12);
-                        
+
                         iconInfo.Width = width == 0 ? 256 : width;
                         iconInfo.Height = height == 0 ? 256 : height;
                         iconInfo.BitsPerPixel = bitCount;
@@ -85,16 +82,16 @@ namespace MyTool.PEAnalyzer.Resources
                 int height = BitConverter.ToInt32(dibData, 8);
                 // 高度是实际高度的两倍（包含遮罩）
                 height /= 2;
-                
+
                 // 从BITMAPINFOHEADER中提取色深
                 ushort bitCount = BitConverter.ToUInt16(dibData, 14);
-                
+
                 // 构建完整的ICO文件数据
                 int fullIconDataSize = 6 + 16 + dibData.Length;
                 if (fullIconDataSize > 0 && fullIconDataSize < 10 * 1024 * 1024) // 限制最大10MB
                 {
                     byte[] fullIconData = new byte[fullIconDataSize];
-                    
+
                     // 写入ICO文件头 (6字节)
                     fullIconData[0] = 0x00; // Reserved
                     fullIconData[1] = 0x00; // Reserved
@@ -102,7 +99,7 @@ namespace MyTool.PEAnalyzer.Resources
                     fullIconData[3] = 0x00; // Type
                     fullIconData[4] = 0x01; // Count (1个图标)
                     fullIconData[5] = 0x00; // Count
-                
+
                     // 写入目录项 (16字节)
                     fullIconData[6] = (byte)(width & 0xFF);  // Width
                     fullIconData[7] = (byte)(height & 0xFF); // Height
@@ -114,10 +111,10 @@ namespace MyTool.PEAnalyzer.Resources
                     // 图像数据偏移量 (从文件开始到图像数据的偏移量)
                     uint imageDataOffset = 6 + 16; // 文件头 + 目录项
                     BitConverter.GetBytes(imageDataOffset).CopyTo(fullIconData, 18);
-                    
+
                     // 复制图像数据
                     Array.Copy(dibData, 0, fullIconData, 6 + 16, dibData.Length);
-                    
+
                     var iconInfo = new IconInfo
                     {
                         Width = width,
@@ -149,7 +146,7 @@ namespace MyTool.PEAnalyzer.Resources
                     return false;
 
                 // 检查是否是ICO文件头
-                if (data.Length >= 4 && 
+                if (data.Length >= 4 &&
                     data[0] == 0x00 && data[1] == 0x00 && // Reserved
                     data[2] == 0x01 && data[3] == 0x00)   // Type (1 = ICO)
                 {

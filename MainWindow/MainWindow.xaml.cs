@@ -13,6 +13,7 @@ namespace MyTool
             InitializeCRCAlgorithmComboBox();
             InitializeSHA3AlgorithmComboBox();
             InitializeAesComboBoxes(); // 初始化AES下拉框
+            InitializeRsaComboBoxes();
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
         }
     }

@@ -1,7 +1,5 @@
 using MyTool.PEAnalyzer.Models;
-using System;
 using System.IO;
-using System.Text;
 
 namespace MyTool.PEAnalyzer.Resources
 {
@@ -85,7 +83,7 @@ namespace MyTool.PEAnalyzer.Resources
                 // 获取资源RVA并转换为文件偏移
                 uint resourceRVA = peInfo.OptionalHeader.DataDirectory[2].VirtualAddress; // IMAGE_DIRECTORY_ENTRY_RESOURCE
                 long resourceOffset = PEResourceParserCore.RvaToOffset(resourceRVA, peInfo.SectionHeaders);
-                
+
                 if (resourceOffset != -1 && resourceOffset < fs.Length)
                 {
                     // 尝试查找命名资源（WPF程序通常将图标存储为命名资源）
@@ -168,7 +166,7 @@ namespace MyTool.PEAnalyzer.Resources
                             PEResourceParserIconDirect.ParseDirectIconResource(fs, reader, peInfo, nextLevelOffset, resourceOffset);
                         }
                     }
-                    
+
                     // 尝试查找命名资源（WPF和其他.NET程序可能将图标存储为命名资源）
                     for (int i = 0; i < rootDirectory.NumberOfNamedEntries; i++)
                     {

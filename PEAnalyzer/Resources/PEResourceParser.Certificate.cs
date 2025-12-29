@@ -1,5 +1,4 @@
 using MyTool.PEAnalyzer.Models;
-using System;
 using System.IO;
 
 namespace MyTool.PEAnalyzer.Resources

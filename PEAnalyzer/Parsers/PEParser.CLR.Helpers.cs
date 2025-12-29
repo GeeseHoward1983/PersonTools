@@ -1,6 +1,4 @@
-using System;
 using System.IO;
-using System.Collections.Generic;
 using System.Text;
 
 namespace MyTool
@@ -26,7 +24,7 @@ namespace MyTool
             {
                 // 计算所有表的大小
                 long position = tablesOffset + 24; // 跳过表头(24字节)
-                
+
                 // 跳过行数数组
                 for (int i = 0; i < 64; i++)
                 {
@@ -35,20 +33,20 @@ namespace MyTool
                         position += 4;
                     }
                 }
-                
+
                 // 跳过所有表的数据
                 for (int i = 0; i < 64; i++)
                 {
                     if ((maskValid & ((ulong)1 << i)) != 0)
                     {
                         uint rowCount = rowCounts[i];
-                        
+
                         // 根据表类型计算表大小
                         int rowSize = GetTableRowSize(i, heapSizes, maskValid, rowCounts);
                         position += (long)rowCount * rowSize;
                     }
                 }
-                
+
                 return position;
             }
             catch
@@ -56,7 +54,7 @@ namespace MyTool
                 return -1;
             }
         }
-        
+
         /// <summary>
         /// 获取表行大小
         /// </summary>
@@ -89,7 +87,7 @@ namespace MyTool
                 _ => 16,// 默认大小
             };
         }
-        
+
         /// <summary>
         /// 获取编码索引大小
         /// </summary>
@@ -108,11 +106,11 @@ namespace MyTool
                     maxRowCount = Math.Max(maxRowCount, rowCounts[i]);
                 }
             }
-            
+
             // 如果最大行数小于2^(16-tagBits)，则使用2字节；否则使用4字节
             return (maxRowCount < (1 << (16 - tagBits))) ? 2 : 4;
         }
-        
+
         /// <summary>
         /// 检查是否使用小索引
         /// </summary>
@@ -123,7 +121,7 @@ namespace MyTool
         {
             return (heapSizes & (1 << heapIndex)) == 0;
         }
-        
+
         /// <summary>
         /// 从堆中读取字符串
         /// </summary>
@@ -138,10 +136,10 @@ namespace MyTool
             {
                 if (heapOffset == -1 || index == 0)
                     return string.Empty;
-                
+
                 long originalPosition = fs.Position;
                 fs.Position = heapOffset + index;
-                
+
                 // 读取以null结尾的字符串
                 var sb = new StringBuilder();
                 byte b;
@@ -151,7 +149,7 @@ namespace MyTool
                     if (fs.Position >= fs.Length)
                         break;
                 }
-                
+
                 fs.Position = originalPosition;
                 return sb.ToString();
             }

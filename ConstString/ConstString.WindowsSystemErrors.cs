@@ -1,5 +1,4 @@
 using MyTool.Enums;
-using System.Collections.Generic;
 
 namespace MyTool
 {

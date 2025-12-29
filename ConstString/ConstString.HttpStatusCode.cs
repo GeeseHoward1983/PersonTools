@@ -1,5 +1,4 @@
 using MyTool.Enums;
-using System.Collections.Generic;
 
 namespace MyTool
 {
@@ -75,7 +74,7 @@ namespace MyTool
         };
 
         // 简体中文 HTTP 状态码描述
-        private static readonly Dictionary<long, string> HttpStatusMapSimplifiedChinese = new ()
+        private static readonly Dictionary<long, string> HttpStatusMapSimplifiedChinese = new()
         {
             { 100, "继续" },
             { 101, "切换协议" },

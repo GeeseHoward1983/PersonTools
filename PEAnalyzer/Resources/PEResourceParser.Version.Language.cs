@@ -1,6 +1,4 @@
 using MyTool.Enums;
-using System;
-using System.Globalization;
 
 namespace MyTool.PEAnalyzer.Resources
 {
@@ -10,7 +8,7 @@ namespace MyTool.PEAnalyzer.Resources
     /// </summary>
     internal static class PEResourceParserVersionLanguage
     {
-        
+
         // 语言名称数组，按枚举类型索引
         private static readonly string[] englishLanguageNames = [
             "Process Default Language",
@@ -247,7 +245,7 @@ namespace MyTool.PEAnalyzer.Resources
             "French (North Africa)",
             "Unknown Language (0x{0:X4})"
         ];
-        
+
         private static readonly string[] simplifiedChineseLanguageNames = [
             "进程默认语言",
             "阿拉伯语（沙特阿拉伯）",
@@ -483,7 +481,7 @@ namespace MyTool.PEAnalyzer.Resources
             "法语（北非）",
             "未知语言 (0x{0:X4})"
         ];
-        
+
         private static readonly string[] traditionalChineseLanguageNames = [
             "進程默認語言",
             "阿拉伯語（沙特阿拉伯）",
@@ -719,7 +717,7 @@ namespace MyTool.PEAnalyzer.Resources
             "法語（北非）",
             "未知語言 (0x{0:X4})"
         ];
-        
+
         // 代码页名称数组，按枚举类型索引
         private static readonly string[] englishCodePageNames = [
             "Default Code Page",
@@ -795,7 +793,7 @@ namespace MyTool.PEAnalyzer.Resources
             "UTF-8",
             "Unknown Code Page ({0})"
         ];
-        
+
         private static readonly string[] simplifiedChineseCodePageNames = [
             "默认代码页",
             "IBM EBCDIC 美国/加拿大",
@@ -870,7 +868,7 @@ namespace MyTool.PEAnalyzer.Resources
             "UTF-8",
             "未知代码页 ({0})"
         ];
-        
+
         private static readonly string[] traditionalChineseCodePageNames = [
             "默認代碼頁",
             "IBM EBCDIC 美國/加拿大",
@@ -956,10 +954,10 @@ namespace MyTool.PEAnalyzer.Resources
         {
             // 获取语言名称
             string languageName = GetLanguageName(languageId);
-            
+
             // 获取代码页名称
             string codePageName = GetCodePageName(codePage);
-            
+
             // 返回格式化的字符串
             return $"{languageName} (0x{languageId:X4}), {codePageName} ({codePage})";
         }

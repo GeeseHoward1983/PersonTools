@@ -1,6 +1,5 @@
 using System.IO;
 using System.Net;
-using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
 
@@ -21,7 +20,7 @@ namespace MyTool
                 }
 
                 byte[] bytes;
-                
+
                 if (Base64HexInputRadio.IsChecked == true)
                 {
                     // Hex字符串模式
@@ -55,10 +54,10 @@ namespace MyTool
                 }
 
                 byte[] bytes = Convert.FromBase64String(input);
-                
+
                 // 检查解码结果中是否包含不可见字符
                 string decodedString = Encoding.UTF8.GetString(bytes);
-                
+
                 if (ContainsInvisibleCharacters(bytes))
                 {
                     // 如果包含不可见字符，转换为Hex字符串显示
@@ -82,7 +81,7 @@ namespace MyTool
         {
             foreach (byte b in bytes)
             {
-                
+
                 // 检查是否为不可见字符（控制字符，除了常见的空格、制表符、换行符）
                 if (b < 32 && b != 9 && b != 10 && b != 13) // 9=Tab, 10=Line Feed, 13=Carriage Return
                 {
@@ -98,7 +97,7 @@ namespace MyTool
             Base64Input.Clear();
             Base64Result.Clear();
         }
-        
+
         // 处理Base64标签页的文件拖放事件
         private void Base64Tab_Drop(object sender, DragEventArgs e)
         {
@@ -112,28 +111,28 @@ namespace MyTool
                 }
             }
         }
-        
+
         // 处理文件Base64编码
         private void ProcessFileForBase64Encoding(string filePath)
         {
             try
             {
                 byte[] fileBytes;
-                
+
                 // 读取文件内容
                 using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
                 {
                     fileBytes = new byte[fileStream.Length];
                     fileStream.Read(fileBytes, 0, fileBytes.Length);
                 }
-                
+
                 // 将文件内容显示在输入框中
                 Base64Input.Text = BitConverter.ToString(fileBytes).Replace("-", "");
                 // 将文件内容转换为Base64字符串并显示在结果框中
                 Base64Result.Text = Convert.ToBase64String(fileBytes);
-                
+
                 Base64HexInputRadio.IsChecked = true;
-                
+
             }
             catch (Exception ex)
             {

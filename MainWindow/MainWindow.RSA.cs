@@ -4,11 +4,19 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using Microsoft.Win32;
 
 namespace MyTool
 {
     public partial class MainWindow : Window
     {
+        // RSA密钥长度选项类
+        public class RsaKeySizeOption
+        {
+            public required string Name { get; set; }
+            public int KeySize { get; set; }
+        }
+
         // RSA加密
         private void RsaEncrypt_Click(object sender, RoutedEventArgs e)
         {
@@ -81,6 +89,189 @@ namespace MyTool
             }
         }
 
+        // RSA签名
+        private void RsaSign_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string input = RsaInput.Text;
+                string privateKey = RsaPrivateKey.Text;
+
+                if (string.IsNullOrEmpty(input))
+                {
+                    MessageBox.Show("请输入要签名的数据", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(privateKey))
+                {
+                    MessageBox.Show("请输入私钥", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                try
+                {
+                    string result = RsaSignData(input, privateKey, RsaInputStringRadio.IsChecked == true);
+                    RsaResult.Text = result;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"RSA签名失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"RSA签名时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // RSA验签
+        private void RsaVerify_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string input = RsaInput.Text;      // 原始数据
+                string signature = RsaResult.Text; // 签名值
+                string publicKey = RsaPublicKey.Text;
+
+                if (string.IsNullOrEmpty(input))
+                {
+                    MessageBox.Show("请输入原始数据", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(signature))
+                {
+                    MessageBox.Show("请输入签名值", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(publicKey))
+                {
+                    MessageBox.Show("请输入公钥", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                try
+                {
+                    bool isValid = RsaVerifySignature(input, signature, publicKey, RsaInputStringRadio.IsChecked == true);
+                    if (isValid)
+                    {
+                        MessageBox.Show("验签成功！", "结果", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show("验签失败！", "结果", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"RSA验签失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"RSA验签时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // RSA生成密钥对
+        private void RsaGenerateKeyPair_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                RsaKeySizeOption? selectedOption = (RsaKeySizeOption?)RsaKeySizeComboBox.SelectedItem;
+                if (selectedOption == null)
+                {
+                    MessageBox.Show("请选择密钥长度", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                using RSA rsa = RSA.Create(selectedOption.KeySize); // 根据选择生成指定长度的密钥对
+                string publicKey = rsa.ExportRSAPublicKeyPem(); // 导出公钥PEM格式
+                string privateKey = rsa.ExportRSAPrivateKeyPem(); // 导出私钥PEM格式
+
+                RsaPublicKey.Text = publicKey;
+                RsaPrivateKey.Text = privateKey;
+
+                MessageBox.Show("密钥对生成成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"生成密钥对时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // RSA导入公钥
+        private void RsaImportPublicKey_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                OpenFileDialog openFileDialog = new()
+                {
+                    Filter = "PEM文件 (*.pem)|*.pem|文本文件 (*.txt)|*.txt|所有文件 (*.*)|*.*",
+                    Title = "选择公钥文件"
+                };
+
+                if (openFileDialog.ShowDialog() == true)
+                {
+                    string publicKey = File.ReadAllText(openFileDialog.FileName);
+                    
+                    // 验证是否是有效的公钥
+                    using RSA rsa = RSA.Create();
+                    try
+                    {
+                        rsa.ImportFromPem(publicKey);
+                        RsaPublicKey.Text = publicKey;
+                        MessageBox.Show("公钥导入成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    catch (Exception)
+                    {
+                        MessageBox.Show("选择的文件不是有效的公钥文件！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"导入公钥时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // RSA导入私钥
+        private void RsaImportPrivateKey_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                OpenFileDialog openFileDialog = new()
+                {
+                    Filter = "PEM文件 (*.pem)|*.pem|文本文件 (*.txt)|*.txt|所有文件 (*.*)|*.*",
+                    Title = "选择私钥文件"
+                };
+
+                if (openFileDialog.ShowDialog() == true)
+                {
+                    string privateKey = File.ReadAllText(openFileDialog.FileName);
+                    
+                    // 验证是否是有效的私钥
+                    using RSA rsa = RSA.Create();
+                    try
+                    {
+                        rsa.ImportFromPem(privateKey);
+                        RsaPrivateKey.Text = privateKey;
+                        MessageBox.Show("私钥导入成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    catch (Exception)
+                    {
+                        MessageBox.Show("选择的文件不是有效的私钥文件！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"导入私钥时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         // RSA清空
         private void RsaClear_Click(object sender, RoutedEventArgs e)
         {
@@ -150,6 +341,76 @@ namespace MyTool
             }
         }
 
+        // RSA签名数据
+        private static string RsaSignData(string input, string privateKey, bool isString)
+        {
+            using RSA rsa = RSA.Create();
+            
+            try
+            {
+                // 根据选择的类型处理输入文本
+                byte[] inputBytes;
+                if (isString)
+                {
+                    // 普通字符串模式
+                    inputBytes = Encoding.UTF8.GetBytes(input);
+                }
+                else
+                {
+                    // Hex字符串模式
+                    inputBytes = Utils.HexStringToByteArray(input);
+                }
+
+                // 导入私钥
+                rsa.ImportFromPem(privateKey);
+
+                // 使用SHA256作为哈希算法进行签名
+                byte[] signatureBytes = rsa.SignData(inputBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+                
+                // 返回十六进制字符串
+                return BitConverter.ToString(signatureBytes).Replace("-", "");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"导入私钥或签名失败: {ex.Message}");
+            }
+        }
+
+        // RSA验证签名
+        private static bool RsaVerifySignature(string input, string signature, string publicKey, bool isString)
+        {
+            using RSA rsa = RSA.Create();
+            
+            try
+            {
+                // 根据选择的类型处理输入文本
+                byte[] inputBytes;
+                if (isString)
+                {
+                    // 普通字符串模式
+                    inputBytes = Encoding.UTF8.GetBytes(input);
+                }
+                else
+                {
+                    // Hex字符串模式
+                    inputBytes = Utils.HexStringToByteArray(input);
+                }
+
+                // 将签名的十六进制字符串转换为字节数组
+                byte[] signatureBytes = Utils.HexStringToByteArray(signature);
+
+                // 导入公钥
+                rsa.ImportFromPem(publicKey);
+
+                // 使用SHA256作为哈希算法进行验签
+                return rsa.VerifyData(inputBytes, signatureBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         // 处理RSA标签页的文件拖放事件
         private void RsaTab_Drop(object sender, DragEventArgs e)
         {
@@ -189,134 +450,15 @@ namespace MyTool
             }
         }
 
-        // RSA生成密钥对
-        private void RsaGenerateKey_Click(object sender, RoutedEventArgs e)
+        private void InitializeRsaComboBoxes()
         {
-            try
-            {
-                using RSA rsa = RSA.Create(2048); // 使用2048位密钥长度
-                
-                // 导出公钥和私钥
-                string publicKey = rsa.ExportRSAPublicKeyPem();
-                string privateKey = rsa.ExportRSAPrivateKeyPem();
-
-                RsaPublicKey.Text = publicKey;
-                RsaPrivateKey.Text = privateKey;
-
-                MessageBox.Show("RSA密钥对生成成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"生成密钥对失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            RsaKeySizeComboBox.Items.Add(new RsaKeySizeOption { Name = "512 (不推荐)", KeySize = 512 });
+            RsaKeySizeComboBox.Items.Add(new RsaKeySizeOption { Name = "1024 (不推荐) ", KeySize = 1024 });
+            RsaKeySizeComboBox.Items.Add(new RsaKeySizeOption { Name = "2048 (推荐)", KeySize = 2048 });
+            RsaKeySizeComboBox.Items.Add(new RsaKeySizeOption { Name = "3072", KeySize = 3072 });
+            RsaKeySizeComboBox.Items.Add(new RsaKeySizeOption { Name = "4096", KeySize = 4096 });
+            RsaKeySizeComboBox.SelectedIndex = 2; // 默认选择2048
         }
 
-        // RSA导入公钥
-        private void RsaImportPublic_Click(object sender, RoutedEventArgs e)
-        {
-            Microsoft.Win32.OpenFileDialog openFileDialog = new()
-            {
-                Filter = "PEM文件|*.pem|文本文件|*.txt|所有文件|*.*",
-                Title = "导入公钥"
-            };
-
-            if (openFileDialog.ShowDialog() == true)
-            {
-                try
-                {
-                    string key = File.ReadAllText(openFileDialog.FileName);
-                    RsaPublicKey.Text = key;
-                    MessageBox.Show("公钥导入成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"导入公钥失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-        }
-
-        // RSA导出公钥
-        private void RsaExportPublic_Click(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrEmpty(RsaPublicKey.Text))
-            {
-                MessageBox.Show("当前没有公钥可导出", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            Microsoft.Win32.SaveFileDialog saveFileDialog = new()
-            {
-                Filter = "PEM文件|*.pem|文本文件|*.txt|所有文件|*.*",
-                Title = "导出公钥",
-                FileName = "public_key.pem"
-            };
-
-            if (saveFileDialog.ShowDialog() == true)
-            {
-                try
-                {
-                    File.WriteAllText(saveFileDialog.FileName, RsaPublicKey.Text);
-                    MessageBox.Show("公钥导出成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"导出公钥失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-        }
-
-        // RSA导入私钥
-        private void RsaImportPrivate_Click(object sender, RoutedEventArgs e)
-        {
-            Microsoft.Win32.OpenFileDialog openFileDialog = new()
-            {
-                Filter = "PEM文件|*.pem|文本文件|*.txt|所有文件|*.*",
-                Title = "导入私钥"
-            };
-
-            if (openFileDialog.ShowDialog() == true)
-            {
-                try
-                {
-                    string key = File.ReadAllText(openFileDialog.FileName);
-                    RsaPrivateKey.Text = key;
-                    MessageBox.Show("私钥导入成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"导入私钥失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-        }
-
-        // RSA导出私钥
-        private void RsaExportPrivate_Click(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrEmpty(RsaPrivateKey.Text))
-            {
-                MessageBox.Show("当前没有私钥可导出", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            Microsoft.Win32.SaveFileDialog saveFileDialog = new()
-            {
-                Filter = "PEM文件|*.pem|文本文件|*.txt|所有文件|*.*",
-                Title = "导出私钥",
-                FileName = "private_key.pem"
-            };
-
-            if (saveFileDialog.ShowDialog() == true)
-            {
-                try
-                {
-                    File.WriteAllText(saveFileDialog.FileName, RsaPrivateKey.Text);
-                    MessageBox.Show("私钥导出成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"导出私钥失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-        }
     }
 }

@@ -1,5 +1,4 @@
 using MyTool.PEAnalyzer.Models;
-using System;
 using System.IO;
 
 namespace MyTool.PEAnalyzer.Resources
@@ -49,7 +48,7 @@ namespace MyTool.PEAnalyzer.Resources
                         ParseVar(fs, reader, peInfo, varFileInfoEndPosition);
                     }
                 }
-                
+
                 // 确保位置正确前进到下一个兄弟节点
                 long nextPosition = startPosition + wLength + 3 & ~3;
                 if (nextPosition < endPosition && nextPosition > fs.Position)
@@ -108,7 +107,7 @@ namespace MyTool.PEAnalyzer.Resources
                         uint translation = reader.ReadUInt32();
                         uint languageId = translation & 0xFFFF;
                         uint codePage = translation >> 16 & 0xFFFF;
-                        
+
                         // 存储翻译信息（转换为可读格式）
                         peInfo.AdditionalInfo.TranslationInfo = PEResourceParserVersionLanguage.GetReadableTranslationInfo(languageId, codePage);
                     }
