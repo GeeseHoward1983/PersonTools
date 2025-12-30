@@ -110,9 +110,9 @@ namespace MyTool.ELFAnalyzer.Core
         {
             if (Enum.IsDefined(typeof(DynamicTag), dTag))
             {
-                return Enum.GetName(typeof(DynamicTag), dTag);
+                return Enum.GetName(typeof(DynamicTag), dTag)?.Replace("DT_", "");
             }
-            return "DT_UNKNOWN";
+            return "UNKNOWN";
         }
 
         public static string? GetDynamicFlagDescription(uint flags)
@@ -132,9 +132,9 @@ namespace MyTool.ELFAnalyzer.Core
         {
             if (Enum.IsDefined(typeof(ProgramHeaderType), pType))
             {
-                return Enum.GetName(typeof(ProgramHeaderType), pType);
+                return Enum.GetName(typeof(ProgramHeaderType), pType)?.Replace("PT_", "");
             }
-            return "PT_UNKNOWN";
+            return "UNKNOWN";
         }
 
         public static string? GetProgramHeaderFlags(uint pFlags)
@@ -152,9 +152,9 @@ namespace MyTool.ELFAnalyzer.Core
         {
             if (Enum.IsDefined(typeof(SectionType), shType))
             {
-                return Enum.GetName(typeof(SectionType), shType);
+                return Enum.GetName(typeof(SectionType), shType)?.Replace("SHT_", "");
             }
-            return "SHT_UNKNOWN";
+            return "UNKNOWN";
         }
 
         public static string? GetSectionFlags(ulong shFlags, bool is64Bit)

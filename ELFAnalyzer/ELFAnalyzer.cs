@@ -9,7 +9,7 @@ namespace MyTool.ELFAnalyzer
 {
     public partial class ELFAnalyzer
     {
-        private ELFParser _parser;
+        private readonly ELFParser _parser;
 
         public ELFAnalyzer(string filePath)
         {
@@ -20,6 +20,8 @@ namespace MyTool.ELFAnalyzer
         {
             _parser = new ELFParser(fileData);
         }
+
+        public ELFParser Parser => _parser;
 
         private string GetMagicString()
         {

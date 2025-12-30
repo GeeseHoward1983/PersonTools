@@ -16,7 +16,7 @@ namespace MyTool.ELFAnalyzer.Core
         private List<ELFSymbol64>? _symbols64;
         private List<ELFDynamic32>? _dynamicEntries32;
         private List<ELFDynamic64>? _dynamicEntries64;
-        private byte[] _fileData;
+        private readonly byte[] _fileData;
         private bool _is64Bit;
 
         public ELFHeader Header => _header;
@@ -28,6 +28,7 @@ namespace MyTool.ELFAnalyzer.Core
         public List<ELFSymbol64>? Symbols64 => _symbols64;
         public List<ELFDynamic32>? DynamicEntries32 => _dynamicEntries32;
         public List<ELFDynamic64>? DynamicEntries64 => _dynamicEntries64;
+        public byte[] FileData => _fileData;
 
         private ELFHeader _header;
 
@@ -65,7 +66,7 @@ namespace MyTool.ELFAnalyzer.Core
                 ReadDynamicEntries(reader);
                     }
 
-        private ELFHeader ReadELFHeader(BinaryReader reader)
+        private static ELFHeader ReadELFHeader(BinaryReader reader)
         {
             var header = new ELFHeader
             {
@@ -93,9 +94,9 @@ namespace MyTool.ELFAnalyzer.Core
                 header.e_type = ReadUInt16LE(reader);
                 header.e_machine = ReadUInt16LE(reader);
                 header.e_version = ReadUInt32LE(reader);
-                header.e_entry = _header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ReadUInt64LE(reader) : ReadUInt32LE(reader);
-                header.e_phoff = _header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ReadUInt64LE(reader) : ReadUInt32LE(reader);
-                header.e_shoff = _header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ReadUInt64LE(reader) : ReadUInt32LE(reader);
+                header.e_entry = header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ReadUInt64LE(reader) : ReadUInt32LE(reader);
+                header.e_phoff = header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ReadUInt64LE(reader) : ReadUInt32LE(reader);
+                header.e_shoff = header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ReadUInt64LE(reader) : ReadUInt32LE(reader);
                 header.e_flags = ReadUInt32LE(reader);
                 header.e_ehsize = ReadUInt16LE(reader);
                 header.e_phentsize = ReadUInt16LE(reader);
@@ -109,9 +110,9 @@ namespace MyTool.ELFAnalyzer.Core
                 header.e_type = ReadUInt16BE(reader);
                 header.e_machine = ReadUInt16BE(reader);
                 header.e_version = ReadUInt32BE(reader);
-                header.e_entry = _header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ReadUInt64BE(reader) : ReadUInt32BE(reader);
-                header.e_phoff = _header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ReadUInt64BE(reader) : ReadUInt32BE(reader);
-                header.e_shoff = _header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ReadUInt64BE(reader) : ReadUInt32BE(reader);
+                header.e_entry = header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ReadUInt64BE(reader) : ReadUInt32BE(reader);
+                header.e_phoff = header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ReadUInt64BE(reader) : ReadUInt32BE(reader);
+                header.e_shoff = header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ReadUInt64BE(reader) : ReadUInt32BE(reader);
                 header.e_flags = ReadUInt32BE(reader);
                 header.e_ehsize = ReadUInt16BE(reader);
                 header.e_phentsize = ReadUInt16BE(reader);

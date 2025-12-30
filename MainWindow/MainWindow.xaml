@@ -149,58 +149,73 @@
             <!-- ELF文件分析器标签页 -->
             <TabItem Header="ELF文件分析器">
                 <Grid AllowDrop="True" Drop="ELFAnalyzerTab_Drop" PreviewDragOver="Grid_PreviewDragOver">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="351*"/>
+                        <ColumnDefinition Width="1073*"/>
+                    </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
                     <!-- 菜单栏 -->
-                    <Menu Grid.Row="0">
+                    <Menu Grid.Row="0" Grid.ColumnSpan="2">
                         <MenuItem Header="文件">
-                            <MenuItem Header="打开" Click="OpenELFFile_Click"/>
+                            <MenuItem Name="OpenELFFile" Header="打开" Click="OpenELFFile_Click"/>
+                            <Separator/>
+                            <MenuItem Header="退出" Click="Exit_Click"/>
                         </MenuItem>
                     </Menu>
 
                     <!-- ELF分析内容 -->
-                    <TabControl Grid.Row="1" Margin="5">
+                    <TabControl Grid.Row="1" Margin="5,5,5,5" Grid.ColumnSpan="2">
                         <!-- ELF头信息标签页 -->
                         <TabItem Header="ELF头信息">
                             <ScrollViewer>
-                                <TextBlock Name="ELFHeaderInfoTextBlock" TextWrapping="Wrap" Margin="5"/>
+                                <TextBlock Name="ELFHeaderInfoTextBlock" TextWrapping="Wrap" />
                             </ScrollViewer>
                         </TabItem>
 
                         <!-- 程序头信息标签页 -->
                         <TabItem Header="程序头信息">
-                            <ScrollViewer>
-                                <TextBlock Name="ELFProgramHeaderInfoTextBlock" TextWrapping="Wrap" Margin="5"/>
-                            </ScrollViewer>
+                            <DataGrid Name="ELFProgramHeaderDataGrid" 
+                                      AutoGenerateColumns="True" 
+                                      IsReadOnly="True" 
+                                      HeadersVisibility="Column" 
+                                      GridLinesVisibility="All" 
+                                      Margin="5"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Auto"
+                                      CanUserAddRows="False"
+                                      CanUserDeleteRows="False"
+                                      CanUserReorderColumns="False"
+                                      CanUserResizeColumns="True"
+                                      CanUserSortColumns="True"/>
                         </TabItem>
 
                         <!-- 节头信息标签页 -->
                         <TabItem Header="节头信息">
                             <ScrollViewer>
-                                <TextBlock Name="ELFSectionHeaderInfoTextBlock" TextWrapping="Wrap" Margin="5"/>
+                                <TextBlock Name="ELFSectionHeaderInfoTextBlock" TextWrapping="Wrap" />
                             </ScrollViewer>
                         </TabItem>
 
                         <!-- 符号表信息标签页 -->
                         <TabItem Header="符号表信息">
                             <ScrollViewer>
-                                <TextBlock Name="ELFSymbolTableInfoTextBlock" TextWrapping="Wrap" Margin="5"/>
+                                <TextBlock Name="ELFSymbolTableInfoTextBlock" TextWrapping="Wrap" />
                             </ScrollViewer>
                         </TabItem>
 
                         <!-- 动态段信息标签页 -->
                         <TabItem Header="动态段信息">
                             <ScrollViewer>
-                                <TextBlock Name="ELFDynamicSectionInfoTextBlock" TextWrapping="Wrap" Margin="5"/>
+                                <TextBlock Name="ELFDynamicSectionInfoTextBlock" TextWrapping="Wrap" />
                             </ScrollViewer>
                         </TabItem>
                     </TabControl>
                 </Grid>
             </TabItem>
-
             <!-- Mach-O文件分析器标签页 -->
             <TabItem Header="Mach-O文件分析器">
                 <Grid>
@@ -683,11 +698,11 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    
+
                     <GroupBox Grid.Row="0" Header="待计算文本" Margin="0,0,0,5">
                         <TextBox Name="CRCInputTextBox" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Margin="5"/>
                     </GroupBox>
-                    
+
                     <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5">
                         <RadioButton Name="CRCStringInputRadio" Content="普通字符串" GroupName="CRCInputType" IsChecked="True" Margin="0,0,10,0" VerticalAlignment="Center"/>
                         <RadioButton Name="CRCHexInputRadio" Content="Hex字符串" GroupName="CRCInputType" Margin="0,0,10,0" VerticalAlignment="Center"/>
@@ -695,7 +710,7 @@
                         <Button Content="计算CRC" Click="CalculateCRC_Click" Padding="10,3" Margin="0,0,5,0" VerticalAlignment="Center"/>
                         <Button Content="清空" Click="ClearCRC_Click" Padding="10,3" Margin="0,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
-                    
+
                     <GroupBox Grid.Row="2" Header="计算结果" Margin="0,5,0,0">
                         <Label Name="CRCResultLabel" Content="等待计算..." Padding="5" Background="White" BorderBrush="Gray" BorderThickness="1" VerticalContentAlignment="Top" MinHeight="30"/>
                     </GroupBox>
@@ -710,11 +725,11 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    
+
                     <GroupBox Grid.Row="0" Header="待编码文本" Margin="0,0,0,5">
                         <TextBox Name="Base64Input" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Margin="5"/>
                     </GroupBox>
-                    
+
                     <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5">
                         <RadioButton Name="Base64StringInputRadio" Content="普通字符串" GroupName="Base64InputType" IsChecked="True" Margin="0,0,10,0" VerticalAlignment="Center"/>
                         <RadioButton Name="Base64HexInputRadio" Content="Hex字符串" GroupName="Base64InputType" Margin="0,0,10,0" VerticalAlignment="Center"/>
@@ -763,35 +778,35 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    
+
                     <GroupBox Grid.Row="0" Header="待加密文本" Margin="0,0,0,5">
                         <TextBox Name="AesInput" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Margin="5"/>
                     </GroupBox>
-                    
+
                     <StackPanel Grid.Row="1" Orientation="Vertical" Margin="0,5">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,5">
                             <TextBlock Text="输入类型:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                             <RadioButton Name="AesInputStringRadio" Content="字符串" GroupName="AesInputType" IsChecked="True" Margin="0,0,10,0" VerticalAlignment="Center"/>
                             <RadioButton Name="AesInputHexRadio" Content="Hex" GroupName="AesInputType" Margin="0,0,20,0" VerticalAlignment="Center"/>
-                            
+
                             <TextBlock Text="密钥:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                             <TextBox Name="AesKey" Width="120" Margin="0,0,5,0" VerticalAlignment="Center"/>
                             <RadioButton Name="AesKeyStringRadio" Content="字符串" GroupName="AesKeyInputType" IsChecked="True" Margin="0,0,5,0" VerticalAlignment="Center"/>
                             <RadioButton Name="AesKeyHexRadio" Content="Hex" GroupName="AesKeyInputType" Margin="0,0,20,0" VerticalAlignment="Center"/>
-                            
+
                             <TextBlock Text="IV:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                             <TextBox Name="AesIV" Width="100" Margin="0,0,5,0" VerticalAlignment="Center"/>
                             <RadioButton Name="AesIVStringRadio" Content="字符串" GroupName="AesIVInputType" IsChecked="True" Margin="0,0,5,0" VerticalAlignment="Center"/>
                             <RadioButton Name="AesIVHexRadio" Content="Hex" GroupName="AesIVInputType" Margin="0,0,20,0" VerticalAlignment="Center"/>
                         </StackPanel>
-                        
+
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,5">
                             <TextBlock Text="模式:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                             <ComboBox Name="AesModeComboBox" Width="80" Margin="0,0,20,0" VerticalAlignment="Center" DisplayMemberPath="Name"/>
-                            
+
                             <TextBlock Text="填充:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                             <ComboBox Name="AesPaddingComboBox" Width="130" Margin="0,0,20,0" VerticalAlignment="Center" DisplayMemberPath="Name"/>
-                            
+
                             <Button Content="加密" Click="AesEncrypt_Click" Padding="15,5" Margin="5,0"/>
                             <Button Content="解密" Click="AesDecrypt_Click" Padding="15,5" Margin="0,0,5,0"/>
                             <Button Content="清空" Click="AesClear_Click" Padding="15,5" Margin="0,0,5,0"/>
@@ -813,28 +828,28 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    
+
                     <GroupBox Grid.Row="0" Header="待加密文本/待验签数据" Margin="0,0,0,5">
                         <TextBox Name="RsaInput" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Margin="5"/>
                     </GroupBox>
-                    
+
                     <StackPanel Grid.Row="1" Orientation="Vertical" Margin="0,5">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,5">
                             <TextBlock Text="输入类型:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                             <RadioButton Name="RsaInputStringRadio" Content="字符串" GroupName="RsaInputType" IsChecked="True" Margin="0,0,10,0" VerticalAlignment="Center"/>
                             <RadioButton Name="RsaInputHexRadio" Content="Hex" GroupName="RsaInputType" Margin="0,0,20,0" VerticalAlignment="Center"/>
-                            
+
                             <TextBlock Text="公钥:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                             <TextBox Name="RsaPublicKey" Width="300" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                            
+
                             <TextBlock Text="私钥:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                             <TextBox Name="RsaPrivateKey" Width="300" Margin="0,0,5,0" VerticalAlignment="Center"/>
                         </StackPanel>
-                        
+
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,5">
                             <TextBlock Text="密钥长度:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                             <ComboBox Name="RsaKeySizeComboBox" Width="120" Margin="0,0,20,0" VerticalAlignment="Center" DisplayMemberPath="Name"/>
-                            
+
                             <Button Content="加密" Click="RsaEncrypt_Click" Padding="15,5" Margin="5,0"/>
                             <Button Content="解密" Click="RsaDecrypt_Click" Padding="15,5" Margin="0,0,5,0"/>
                             <Button Content="签名" Click="RsaSign_Click" Padding="15,5" Margin="0,0,5,0"/>

@@ -245,6 +245,7 @@ namespace MyTool.ELFAnalyzer.Models
         EM_GRAPHCORE_GCN = 248, // Graphcore GCN architecture
         EM_RISCV32 = 250, // RISC-V 32-bit
         EM_RISCV64 = 251, // RISC-V 64-bit
+        EM_LOONGARCH = 258, // LoongArch
         EM_COGEY = 303,   // Codeplay Software Ltd. COGEY
         EM_COFFEE = 304,  // Codeplay Software Ltd. COFFEE
         EM_CISCO_IOS = 305, // Cisco IOS

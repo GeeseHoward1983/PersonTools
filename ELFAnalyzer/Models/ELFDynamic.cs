@@ -57,7 +57,44 @@ namespace MyTool.ELFAnalyzer.Models
         DT_LOOS = 0x6000000D,           // Start of OS-specific
         DT_HIOS = 0x6ffff000,           // End of OS-specific
         DT_LOPROC = 0x70000000,         // Start of processor-specific
-        DT_HIPROC = 0x7fffffff          // End of processor-specific
+        DT_HIPROC = 0x7fffffff,         // End of processor-specific
+        
+        // GNU versioning entries
+        DT_VERSYM = 0x6ffffff0,         // Symbol versions
+        DT_RELACOUNT = 0x6ffffff9,      // Count of RELATIVE relocations
+        DT_RELCOUNT = 0x6ffffffa,       // Count of RELATIVE relocations
+        DT_FLAGS_1 = 0x6ffffffb,        // Flags for the object being loaded
+        DT_VERDEF = 0x6ffffffc,         // Version definition section
+        DT_VERDEFNUM = 0x6ffffffd,      // Number of version definitions
+        DT_VERNEED = 0x6ffffffe,        // Required version structure
+        DT_VERNEEDNUM = 0x6fffffff,     // Number of required versions
+        
+        // GNU-specific dynamic array tags
+        DT_GNU_HASH = 0x6ffffef5,       // GNU hash table
+        DT_GNU_CONFLICT = 0x6ffffef8,   // Start of conflict section
+        DT_GNU_LIBLIST = 0x6ffffef9,    // Library list
+        DT_CONFIG = 0x6ffffefa,         // Configuration information
+        DT_DEPAUDIT = 0x6ffffefb,       // Dependency auditing
+        DT_AUDIT = 0x6ffffefc,          // Object auditing
+        DT_PLTPAD = 0x6ffffefd,         // PLT padding
+        DT_MOVETAB = 0x6ffffefe,        // Move table
+        DT_SYMINFO = 0x6ffffeff,        // Syminfo table
+        
+        // GNU-specific additional tags
+        DT_GNU_PRELINKED = 0x6ffffdf5,  // Prelinking timestamp
+        DT_GNU_CONFLICTSZ = 0x6ffffdf6, // Size of conflict section
+        DT_GNU_LIBLISTSZ = 0x6ffffdf7,  // Size of library list
+        DT_CHECKSUM = 0x6ffffdf8,       // Checksum for the object
+        DT_PLTPADSZ = 0x6ffffdf9,       // Size of PLT padding
+        DT_MOVEENT = 0x6ffffdfa,        // Size of DT_MOVETAB entries
+        DT_MOVESZ = 0x6ffffdfb,         // Total size of the MOVETAB table
+        DT_FEATURE_1 = 0x6ffffdfc,      // Feature selection (DTF_)
+        DT_POSFLAG_1 = 0x6ffffdfd,      // Flags for DT_ entries, effecting
+        DT_SYMINSZ = 0x6ffffdfe,        // Size of syminfo table (in bytes)
+        DT_SYMINENT = 0x6ffffdff,       // Entry size of syminfo
+        
+        // Additional tags
+        DT_SYMTAB_SHNDX = 0x6ffffff5    // Address of SYMTAB_SHNDX section
     }
 
     [Flags]

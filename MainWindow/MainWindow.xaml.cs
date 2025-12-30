@@ -3,6 +3,7 @@ using System.Windows;
 using Microsoft.Win32;
 using System.IO;
 using MyTool.ELFAnalyzer;
+using MyTool.ELFAnalyzer.Models;
 
 namespace MyTool
 {
@@ -56,8 +57,9 @@ namespace MyTool
                 // 显示ELF头信息
                 ELFHeaderInfoTextBlock.Text = analyzer.GetFormattedELFHeaderInfo();
                 
-                // 显示程序头信息
-                ELFProgramHeaderInfoTextBlock.Text = analyzer.GetFormattedProgramHeadersInfo();
+                // 显示程序头信息 - 使用DataGrid
+                var programHeaders = analyzer.GetProgramHeaderInfoList();
+                ELFProgramHeaderDataGrid.ItemsSource = programHeaders;
                 
                 // 显示节头信息
                 ELFSectionHeaderInfoTextBlock.Text = analyzer.GetFormattedSectionHeadersInfo();

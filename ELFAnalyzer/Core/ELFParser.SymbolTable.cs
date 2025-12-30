@@ -148,9 +148,9 @@ namespace MyTool.ELFAnalyzer.Core
             byte type = (byte)(stInfo & 0x0F);
             if (Enum.IsDefined(typeof(SymbolType), type))
             {
-                return Enum.GetName(typeof(SymbolType), type);
+                return Enum.GetName(typeof(SymbolType), type)?.Replace("STT_", "");
             }
-            return "STT_UNKNOWN";
+            return "UNKNOWN";
         }
 
         public static string? GetSymbolBinding(byte stInfo)
@@ -158,9 +158,9 @@ namespace MyTool.ELFAnalyzer.Core
             byte binding = (byte)(stInfo >> 4);
             if (Enum.IsDefined(typeof(SymbolBinding), binding))
             {
-                return Enum.GetName(typeof(SymbolBinding), binding);
+                return Enum.GetName(typeof(SymbolBinding), binding)?.Replace("STB_", "");
             }
-            return "STB_UNKNOWN";
+            return "UNKNOWN";
         }
 
         public static string? GetSymbolVisibility(byte stOther)
@@ -168,9 +168,9 @@ namespace MyTool.ELFAnalyzer.Core
             byte visibility = (byte)(stOther & 0x03);
             if (Enum.IsDefined(typeof(SymbolVisibility), visibility))
             {
-                return Enum.GetName(typeof(SymbolVisibility), visibility);
+                return Enum.GetName(typeof(SymbolVisibility), visibility)?.Replace("STV_", "");
             }
-            return "STV_UNKNOWN";
+            return "UNKNOWN";
         }
     }
 }

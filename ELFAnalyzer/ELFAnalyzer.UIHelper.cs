@@ -53,9 +53,9 @@ namespace MyTool.ELFAnalyzer
                 return sb.ToString();
             }
 
-            // Calculate column widths
+            // Calculate column widths - use consistent format for both 32-bit and 64-bit
             string[] headers = ["Type", "Offset", "VirtAddr", "PhysAddr", "FileSize", "MemSize", "Flags", "Align"];
-            int[] widths = [12, 10, 12, 12, 10, 10, 7, 15];
+            int[] widths = [12, 12, 18, 18, 12, 12, 7, 15];
 
             // Print header
             sb.Append("  ");
@@ -73,8 +73,8 @@ namespace MyTool.ELFAnalyzer
                     sb.Append($"0x{ph.p_offset:x8}".PadRight(widths[1] + 2));
                     sb.Append($"0x{ph.p_vaddr:x8}".PadRight(widths[2] + 2));
                     sb.Append($"0x{ph.p_paddr:x8}".PadRight(widths[3] + 2));
-                    sb.Append($"{ph.p_filesz,8} ".PadRight(widths[4] + 2));
-                    sb.Append($"{ph.p_memsz,8} ".PadRight(widths[5] + 2));
+                    sb.Append($"{ph.p_filesz,10} ".PadRight(widths[4] + 2));
+                    sb.Append($"{ph.p_memsz,10} ".PadRight(widths[5] + 2));
                     sb.Append($"{ELFParser.GetProgramHeaderFlags(ph.p_flags)?.PadRight(widths[6] + 2)}");
                     sb.Append($"0x{ph.p_align:x}");
                     sb.AppendLine();
@@ -85,9 +85,9 @@ namespace MyTool.ELFAnalyzer
                 foreach (var ph in _parser.ProgramHeaders64)
                 {
                     sb.Append($"  {ELFParser.GetProgramHeaderType(ph.p_type)?.PadRight(widths[0] + 2)}");
-                    sb.Append($"0x{ph.p_offset:x8}".PadRight(widths[1] + 2));
-                    sb.Append($"0x{ph.p_vaddr:x10}".PadRight(widths[2] + 2));
-                    sb.Append($"0x{ph.p_paddr:x10}".PadRight(widths[3] + 2));
+                    sb.Append($"0x{ph.p_offset:x16}".PadRight(widths[1] + 2));
+                    sb.Append($"0x{ph.p_vaddr:x16}".PadRight(widths[2] + 2));
+                    sb.Append($"0x{ph.p_paddr:x16}".PadRight(widths[3] + 2));
                     sb.Append($"{ph.p_filesz,10} ".PadRight(widths[4] + 2));
                     sb.Append($"{ph.p_memsz,10} ".PadRight(widths[5] + 2));
                     sb.Append($"{ELFParser.GetProgramHeaderFlags(ph.p_flags)?.PadRight(widths[6] + 2)}");
@@ -284,12 +284,35 @@ namespace MyTool.ELFAnalyzer
                 {
                     var tag = ELFParser.GetDynamicTagDescription(entry.d_tag);
                     sb.Append($" 0x{entry.d_tag:x16} ");
-                    sb.Append($"{tag ?? string.Empty,-28} ");
+                    sb.Append($"{tag,-28} ");
+                    
+                    // Handle entries that refer to string table
+                    string? stringValue = null;
+                    if (IsStringTableEntry(entry.d_tag))
+                    {
+                        // Find the string table to resolve the name
+                        var strTabAddr = GetStringValueFromDynamicEntries(DynamicTag.DT_STRTAB);
+                        var strTabSize = GetStringValueFromDynamicEntries(DynamicTag.DT_STRSZ);
+                        
+                        if (strTabAddr != 0 && strTabSize != 0 && _parser.SectionHeaders32 != null)
+                        {
+                            // Find the section that contains the string table
+                            var stringTableSection = FindSectionByAddress(strTabAddr);
+                            if (stringTableSection != null)
+                            {
+                                stringValue = ReadStringFromSection(stringTableSection, (uint)entry.d_val);
+                            }
+                        }
+                    }
                     
                     if (entry.d_tag == (long)DynamicTag.DT_FLAGS)
                     {
                         var flagDesc = ELFParser.GetDynamicFlagDescription(entry.d_val);
                         sb.Append($"{flagDesc} ");
+                    }
+                    else if (stringValue != null)
+                    {
+                        sb.Append($"{stringValue} ");
                     }
                     else
                     {
@@ -305,12 +328,35 @@ namespace MyTool.ELFAnalyzer
                 {
                     var tag = ELFParser.GetDynamicTagDescription(entry.d_tag);
                     sb.Append($" 0x{entry.d_tag:x16} ");
-                    sb.Append($"{tag ?? string.Empty,-28} ");
+                    sb.Append($"{tag,-28} ");
+                    
+                    // Handle entries that refer to string table
+                    string? stringValue = null;
+                    if (IsStringTableEntry(entry.d_tag))
+                    {
+                        // Find the string table to resolve the name
+                        var strTabAddr = GetStringValueFromDynamicEntries64(DynamicTag.DT_STRTAB);
+                        var strTabSize = GetStringValueFromDynamicEntries64(DynamicTag.DT_STRSZ);
+                        
+                        if (strTabAddr != 0 && strTabSize != 0 && _parser.SectionHeaders64 != null)
+                        {
+                            // Find the section that contains the string table
+                            var stringTableSection = FindSectionByAddress64(strTabAddr);
+                            if (stringTableSection != null)
+                            {
+                                stringValue = ReadStringFromSection64(stringTableSection, (ulong)entry.d_val);
+                            }
+                        }
+                    }
                     
                     if (entry.d_tag == (long)DynamicTag.DT_FLAGS)
                     {
                         var flagDesc = ELFParser.GetDynamicFlagDescription((uint)entry.d_val);
                         sb.Append($"{flagDesc} ");
+                    }
+                    else if (stringValue != null)
+                    {
+                        sb.Append($"{stringValue} ");
                     }
                     else
                     {
@@ -327,6 +373,166 @@ namespace MyTool.ELFAnalyzer
             return sb.ToString();
         }
         
+        private static bool IsStringTableEntry(long tag)
+        {
+            return tag == (long)DynamicTag.DT_NEEDED || 
+                   tag == (long)DynamicTag.DT_SONAME || 
+                   tag == (long)DynamicTag.DT_RPATH || 
+                   tag == (long)DynamicTag.DT_RUNPATH;
+        }
+        
+        private uint GetStringValueFromDynamicEntries(DynamicTag tag)
+        {
+            if (_parser.DynamicEntries32 != null)
+            {
+                var entry = _parser.DynamicEntries32.FirstOrDefault(e => e.d_tag == (long)tag);
+                if (entry.d_tag != 0)
+                {
+                    return entry.d_val;
+                }
+            }
+            return 0;
+        }
+        
+        private ulong GetStringValueFromDynamicEntries64(DynamicTag tag)
+        {
+            if (_parser.DynamicEntries64 != null)
+            {
+                var entry = _parser.DynamicEntries64.FirstOrDefault(e => e.d_tag == (long)tag);
+                if (entry.d_tag != 0)
+                {
+                    return (ulong)entry.d_val;
+                }
+            }
+            return 0;
+        }
+        
+        private ELFSectionHeader32? FindSectionByAddress(ulong address)
+        {
+            if (_parser.SectionHeaders32 != null)
+            {
+                foreach (var section in _parser.SectionHeaders32)
+                {
+                    if (section.sh_addr == address)
+                    {
+                        return section;
+                    }
+                }
+            }
+            return null;
+        }
+        
+        private ELFSectionHeader64? FindSectionByAddress64(ulong address)
+        {
+            if (_parser.SectionHeaders64 != null)
+            {
+                foreach (var section in _parser.SectionHeaders64)
+                {
+                    if (section.sh_addr == address)
+                    {
+                        return section;
+                    }
+                }
+            }
+            return null;
+        }
+        
+        private string? ReadStringFromSection(ELFSectionHeader32? section, uint offset)
+        {
+            try
+            {
+                if (section != null && _parser.FileData != null && offset < _parser.FileData.Length && section.Value.sh_offset + offset < _parser.FileData.Length)
+                {
+                    var start = (int)(section.Value.sh_offset + offset);
+                    var end = start;
+                    while (end < _parser.FileData.Length && _parser.FileData[end] != 0)
+                    {
+                        end++;
+                    }
+                    
+                    if (end > start)
+                    {
+                        return Encoding.UTF8.GetString(_parser.FileData, start, end - start);
+                    }
+                }
+            }
+            catch
+            {
+                // If there's an error reading the string, return null
+            }
+            return null;
+        }
+        
+        private string? ReadStringFromSection64(ELFSectionHeader64? section, ulong offset)
+        {
+            try
+            {
+                if (section != null && _parser.FileData != null && 
+                    offset < (ulong)_parser.FileData.Length && 
+                    section.Value.sh_offset + offset < (ulong)_parser.FileData.Length)
+                {
+                    var start = (int)(section.Value.sh_offset + offset);
+                    var end = start;
+                    while (end < _parser.FileData.Length && _parser.FileData[end] != 0)
+                    {
+                        end++;
+                    }
+                    
+                    if (end > start)
+                    {
+                        return Encoding.UTF8.GetString(_parser.FileData, start, end - start);
+                    }
+                }
+            }
+            catch
+            {
+                // If there's an error reading the string, return null
+            }
+            return null;
+        }
+        
+        public List<ProgramHeaderInfo> GetProgramHeaderInfoList()
+        {
+            var result = new List<ProgramHeaderInfo>();
+
+            if (_parser.ProgramHeaders32 != null)
+            {
+                foreach (var ph in _parser.ProgramHeaders32)
+                {
+                    result.Add(new ProgramHeaderInfo
+                    {
+                        Type = ELFParser.GetProgramHeaderType(ph.p_type) ?? "PT_UNKNOWN",
+                        Offset = $"0x{ph.p_offset:x8}",
+                        VirtAddr = $"0x{ph.p_vaddr:x8}",
+                        PhysAddr = $"0x{ph.p_paddr:x8}",
+                        FileSize = $"{ph.p_filesz}",
+                        MemSize = $"{ph.p_memsz}",
+                        Flags = ELFParser.GetProgramHeaderFlags(ph.p_flags) ?? "",
+                        Align = $"0x{ph.p_align:x}"
+                    });
+                }
+            }
+            else if (_parser.ProgramHeaders64 != null)
+            {
+                foreach (var ph in _parser.ProgramHeaders64)
+                {
+                    result.Add(new ProgramHeaderInfo
+                    {
+                        Type = ELFParser.GetProgramHeaderType(ph.p_type) ?? "PT_UNKNOWN",
+                        Offset = $"0x{ph.p_offset:x16}",
+                        VirtAddr = $"0x{ph.p_vaddr:x16}",
+                        PhysAddr = $"0x{ph.p_paddr:x16}",
+                        FileSize = $"{ph.p_filesz}",
+                        MemSize = $"{ph.p_memsz}",
+                        Flags = ELFParser.GetProgramHeaderFlags(ph.p_flags) ?? "",
+                        Align = $"0x{ph.p_align:x}"
+                    });
+                }
+            }
+
+            return result;
+        }
+
         private List<string> GetSectionsInSegment(ELFProgramHeader32 ph)
         {
             var sections = new List<string>();

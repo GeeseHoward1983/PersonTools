@@ -12,36 +12,36 @@ namespace MyTool.ELFAnalyzer.Core
         {
             if (Enum.IsDefined(typeof(EMachine), _header.e_machine))
             {
-                return Enum.GetName(typeof(EMachine), _header.e_machine);
+                return Enum.GetName(typeof(EMachine), _header.e_machine)?.Replace("EM_", "");
             }
-            return "EM_UNKNOWN";
+            return "UNKNOWN";
         }
 
         public string? GetELFClassName()
         {
             if (Enum.IsDefined(typeof(ELFClass), _header.EI_CLASS))
             {
-                return Enum.GetName(typeof(ELFClass), _header.EI_CLASS);
+                return Enum.GetName(typeof(ELFClass), _header.EI_CLASS)?.Replace("ELFCLASS_", "");
             }
-            return "ELFCLASS_UNKNOWN";
+            return "UNKNOWN";
         }
 
         public string? GetELFDataName()
         {
             if (Enum.IsDefined(typeof(ELFData), _header.EI_DATA))
             {
-                return Enum.GetName(typeof(ELFData), _header.EI_DATA);
+                return Enum.GetName(typeof(ELFData), _header.EI_DATA)?.Replace("ELFDATA_", "");
             }
-            return "ELFDATA_UNKNOWN";
+            return "UNKNOWN";
         }
 
         public string? GetELFTypeName()
         {
             if (Enum.IsDefined(typeof(ELFType), _header.e_type))
             {
-                return Enum.GetName(typeof(ELFType), _header.e_type);
+                return Enum.GetName(typeof(ELFType), _header.e_type)?.Replace("ET_", "");
             }
-            return "ET_UNKNOWN";
+            return "UNKNOWN";
         }
 
         public string? GetOSABIName()
@@ -99,7 +99,9 @@ namespace MyTool.ELFAnalyzer.Core
                 (ushort)EMachine.EM_SPARC => "SPARC",
                 (ushort)EMachine.EM_IA_64 => "Intel IA-64",
                 (ushort)EMachine.EM_RISCV => "RISC-V",
-                _ => GetArchitectureName(),
+                (ushort)EMachine.EM_LOONGARCH => "LoongArch",
+                _ =>
+                    GetArchitectureName(),
             };
         }
 
