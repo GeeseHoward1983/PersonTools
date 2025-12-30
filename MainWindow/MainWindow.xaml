@@ -148,8 +148,56 @@
 
             <!-- ELF文件分析器标签页 -->
             <TabItem Header="ELF文件分析器">
-                <Grid>
-                    <TextBlock Text="ELF文件分析器功能待实现" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
+                <Grid AllowDrop="True" Drop="ELFAnalyzerTab_Drop" PreviewDragOver="Grid_PreviewDragOver">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- 菜单栏 -->
+                    <Menu Grid.Row="0">
+                        <MenuItem Header="文件">
+                            <MenuItem Header="打开" Click="OpenELFFile_Click"/>
+                        </MenuItem>
+                    </Menu>
+
+                    <!-- ELF分析内容 -->
+                    <TabControl Grid.Row="1" Margin="5">
+                        <!-- ELF头信息标签页 -->
+                        <TabItem Header="ELF头信息">
+                            <ScrollViewer>
+                                <TextBlock Name="ELFHeaderInfoTextBlock" TextWrapping="Wrap" Margin="5"/>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- 程序头信息标签页 -->
+                        <TabItem Header="程序头信息">
+                            <ScrollViewer>
+                                <TextBlock Name="ELFProgramHeaderInfoTextBlock" TextWrapping="Wrap" Margin="5"/>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- 节头信息标签页 -->
+                        <TabItem Header="节头信息">
+                            <ScrollViewer>
+                                <TextBlock Name="ELFSectionHeaderInfoTextBlock" TextWrapping="Wrap" Margin="5"/>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- 符号表信息标签页 -->
+                        <TabItem Header="符号表信息">
+                            <ScrollViewer>
+                                <TextBlock Name="ELFSymbolTableInfoTextBlock" TextWrapping="Wrap" Margin="5"/>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- 动态段信息标签页 -->
+                        <TabItem Header="动态段信息">
+                            <ScrollViewer>
+                                <TextBlock Name="ELFDynamicSectionInfoTextBlock" TextWrapping="Wrap" Margin="5"/>
+                            </ScrollViewer>
+                        </TabItem>
+                    </TabControl>
                 </Grid>
             </TabItem>
 
