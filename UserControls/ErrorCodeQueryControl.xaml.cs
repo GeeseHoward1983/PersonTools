@@ -1,10 +1,23 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace MyTool
+namespace MyTool.UserControls
 {
-    public partial class MainWindow : Window
+    /// <summary>
+    /// ErrorCodeQueryControl.xaml 的交互逻辑
+    /// </summary>
+    public partial class ErrorCodeQueryControl : UserControl
     {
+        public ErrorCodeQueryControl()
+        {
+            InitializeComponent();
+        }
+
+        private void Grid_PreviewDragOver(object sender, System.Windows.DragEventArgs e)
+        {
+            e.Handled = true;
+        }
+
         // Windows errno 查询按钮点击事件
         private void WindowsErrnoQuery_Click(object sender, RoutedEventArgs e)
         {
@@ -102,6 +115,5 @@ namespace MyTool
                 resultTextBlock.Text = $"未找到错误码 {input} 的相关信息";
             }
         }
-
     }
 }

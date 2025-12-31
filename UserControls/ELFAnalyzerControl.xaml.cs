@@ -1,15 +1,24 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Win32;
 using System.Windows;
+using System.Windows.Controls;
 
-namespace MyTool
+namespace MyTool.UserControls
 {
-    public partial class MainWindow : Window
+    /// <summary>
+    /// ELFAnalyzerControl.xaml 的交互逻辑
+    /// </summary>
+    public partial class ELFAnalyzerControl : UserControl
     {
+        public ELFAnalyzerControl()
+        {
+            InitializeComponent();
+        }
+
+        private void Grid_PreviewDragOver(object sender, System.Windows.DragEventArgs e)
+        {
+            e.Handled = true;
+        }
+
         private void OpenELFFile_Click(object sender, RoutedEventArgs e)
         {
             var openFileDialog = new OpenFileDialog
@@ -68,5 +77,7 @@ namespace MyTool
                 MessageBox.Show($"分析ELF文件时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+
     }
 }

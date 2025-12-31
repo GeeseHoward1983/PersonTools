@@ -1,0 +1,113 @@
+<UserControl x:Class="MyTool.UserControls.ELFAnalyzerControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:MyTool.UserControls"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="800" AllowDrop="True" Drop="ELFAnalyzerTab_Drop"  PreviewDragOver="Grid_PreviewDragOver">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 菜单栏 -->
+        <Menu Grid.Row="0">
+            <MenuItem Header="文件">
+                <MenuItem Header="打开" Click="OpenELFFile_Click"/>
+            </MenuItem>
+        </Menu>
+
+        <!-- ELF分析内容 -->
+        <TabControl Grid.Row="1" Margin="5,5,5,5">
+            <!-- ELF头信息标签页 -->
+            <TabItem Header="ELF头信息">
+                <GroupBox Header="ELF Header" Margin="5">
+                    <ScrollViewer>
+                        <TextBlock Name="ELFHeaderInfoTextBlock" TextWrapping="Wrap" Padding="10"/>
+                    </ScrollViewer>
+                </GroupBox>
+            </TabItem>
+
+            <!-- 程序头信息标签页 -->
+            <TabItem Header="程序头信息">
+                <GroupBox Header="程序头" Margin="5">
+                    <DataGrid Name="ELFProgramHeaderDataGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="5">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="类型" Binding="{Binding Type}" Width="*"/>
+                            <DataGridTextColumn Header="偏移" Binding="{Binding Offset}" Width="*"/>
+                            <DataGridTextColumn Header="虚拟地址" Binding="{Binding VirtAddr}" Width="*"/>
+                            <DataGridTextColumn Header="物理地址" Binding="{Binding PhysAddr}" Width="*"/>
+                            <DataGridTextColumn Header="文件大小" Binding="{Binding FileSize}" Width="*"/>
+                            <DataGridTextColumn Header="内存大小" Binding="{Binding MemSize}" Width="*"/>
+                            <DataGridTextColumn Header="标志" Binding="{Binding Flags}" Width="*"/>
+                            <DataGridTextColumn Header="对齐" Binding="{Binding Align}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </GroupBox>
+            </TabItem>
+
+            <!-- 节头信息标签页 -->
+            <TabItem Header="节头信息">
+                <GroupBox Header="节头" Margin="5">
+                    <DataGrid Name="ELFSectionHeaderDataGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="5">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="序号" Binding="{Binding Index}" Width="60"/>
+                            <DataGridTextColumn Header="名称" Binding="{Binding Name}" Width="*"/>
+                            <DataGridTextColumn Header="类型" Binding="{Binding Type}" Width="*"/>
+                            <DataGridTextColumn Header="地址" Binding="{Binding Address}" Width="*"/>
+                            <DataGridTextColumn Header="偏移" Binding="{Binding Offset}" Width="*"/>
+                            <DataGridTextColumn Header="大小" Binding="{Binding Size}" Width="*"/>
+                            <DataGridTextColumn Header="整体大小" Binding="{Binding EntSize}" Width="*"/>
+                            <DataGridTextColumn Header="标志" Binding="{Binding Flags}" Width="*"/>
+                            <DataGridTextColumn Header="链接" Binding="{Binding Link}" Width="60"/>
+                            <DataGridTextColumn Header="信息" Binding="{Binding Info}" Width="60"/>
+                            <DataGridTextColumn Header="对齐" Binding="{Binding Align}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </GroupBox>
+            </TabItem>
+
+            <!-- 节到段映射信息标签页 -->
+            <TabItem Header="节到段映射">
+                <GroupBox Header="Section to Segment Mapping" Margin="5">
+                    <ScrollViewer>
+                        <TextBlock Name="ELFSectionToSegmentInfoTextBlock" TextWrapping="Wrap" Padding="10"/>
+                    </ScrollViewer>
+                </GroupBox>
+            </TabItem>
+
+            <!-- 符号表信息标签页 -->
+            <TabItem Header="符号表信息">
+                <GroupBox Header="符号表" Margin="5">
+                    <DataGrid Name="ELFSymbolTableDataGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="5">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="序号" Binding="{Binding Number}" Width="60"/>
+                            <DataGridTextColumn Header="值" Binding="{Binding Value}" Width="*"/>
+                            <DataGridTextColumn Header="大小" Binding="{Binding Size}" Width="80"/>
+                            <DataGridTextColumn Header="类型" Binding="{Binding Type}" Width="*"/>
+                            <DataGridTextColumn Header="绑定" Binding="{Binding Bind}" Width="*"/>
+                            <DataGridTextColumn Header="可见性" Binding="{Binding Vis}" Width="*"/>
+                            <DataGridTextColumn Header="索引" Binding="{Binding Ndx}" Width="60"/>
+                            <DataGridTextColumn Header="名称" Binding="{Binding Name}" Width="2*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </GroupBox>
+            </TabItem>
+
+            <!-- 动态段信息标签页 -->
+            <TabItem Header="动态段信息">
+                <GroupBox Header="动态段" Margin="5">
+                    <DataGrid Name="ELFDynamicSectionDataGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="5">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="标签" Binding="{Binding Tag}" Width="*"/>
+                            <DataGridTextColumn Header="类型" Binding="{Binding Type}" Width="2*"/>
+                            <DataGridTextColumn Header="值" Binding="{Binding Value}" Width="2*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </GroupBox>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

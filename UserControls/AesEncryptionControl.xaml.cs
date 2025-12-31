@@ -2,11 +2,26 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
+using System.Windows.Controls;
 
-namespace MyTool
+namespace MyTool.UserControls
 {
-    public partial class MainWindow : Window
+    /// <summary>
+    /// AesEncryptionControl.xaml 的交互逻辑
+    /// </summary>
+    public partial class AesEncryptionControl : UserControl
     {
+        public AesEncryptionControl()
+        {
+            InitializeComponent();
+            InitializeAesComboBoxes(); // 初始化AES下拉框
+        }
+
+        private void Grid_PreviewDragOver(object sender, System.Windows.DragEventArgs e)
+        {
+            e.Handled = true;
+        }
+
         // AES加密模式选项类
         public class AesModeOption
         {
@@ -353,5 +368,6 @@ namespace MyTool
                 MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
     }
 }

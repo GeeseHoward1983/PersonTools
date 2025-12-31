@@ -1,12 +1,24 @@
 using System.IO;
-using System.Net;
 using System.Text;
 using System.Windows;
+using System.Windows.Controls;
 
-namespace MyTool
+namespace MyTool.UserControls
 {
-    public partial class MainWindow : Window
+    /// <summary>
+    /// Base64EncoderDecoderControl.xaml 的交互逻辑
+    /// </summary>
+    public partial class Base64EncoderDecoderControl : UserControl
     {
+        public Base64EncoderDecoderControl()
+        {
+            InitializeComponent();
+        }
+        private void Grid_PreviewDragOver(object sender, System.Windows.DragEventArgs e)
+        {
+            e.Handled = true;
+        }
+
         // Base64编码
         private void Base64Encode_Click(object sender, RoutedEventArgs e)
         {
@@ -138,55 +150,6 @@ namespace MyTool
             {
                 MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }
-
-        // URL编码
-        private void UrlEncode_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                string input = UrlInput.Text;
-                if (string.IsNullOrEmpty(input))
-                {
-                    MessageBox.Show("请输入要编码的文本", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
-
-                string result = WebUtility.UrlEncode(input);
-                UrlResult.Text = result;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"URL编码时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        // URL解码
-        private void UrlDecode_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                string input = UrlResult.Text;
-                if (string.IsNullOrEmpty(input))
-                {
-                    MessageBox.Show("请输入要解码的文本", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
-
-                string result = WebUtility.UrlDecode(input);
-                UrlInput.Text = result;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"URL解码时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        // URL清空
-        private void UrlClear_Click(object sender, RoutedEventArgs e)
-        {
-            UrlInput.Clear();
-            UrlResult.Clear();
         }
     }
 }

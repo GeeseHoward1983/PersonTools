@@ -1,10 +1,20 @@
 using System.IO;
 using System.Text;
+using System.Windows.Controls;
 
-namespace MyTool
+namespace MyTool.UserControls
 {
-    public partial class MainWindow : System.Windows.Window
+    /// <summary>
+    /// CrcComputeControl.xaml 的交互逻辑
+    /// </summary>
+    public partial class CrcComputeControl : UserControl
     {
+        public CrcComputeControl()
+        {
+            InitializeComponent();
+            InitializeCRCAlgorithmComboBox();
+        }
+
         // CRC算法参数模型
         public class CRCAlgorithm
         {
@@ -48,7 +58,7 @@ namespace MyTool
         ];
 
         // CRC计算器
-        public class CRCCalculator(MainWindow.CRCAlgorithm algorithm)
+        public class CRCCalculator(CRCAlgorithm algorithm)
         {
             private readonly CRCAlgorithm _algorithm = algorithm;
 
@@ -189,5 +199,6 @@ namespace MyTool
                 System.Windows.MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
+
     }
 }

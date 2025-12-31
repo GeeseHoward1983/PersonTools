@@ -1,11 +1,11 @@
-﻿using System.IO;
+using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
+using System.Windows.Controls;
 
-namespace MyTool
+namespace MyTool.UserControls
 {
-    // SHA3算法选项类
     public class SHA3AlgorithmOption(string name, int value)
     {
         public string Name { get; set; } = name;
@@ -17,8 +17,22 @@ namespace MyTool
         }
     }
 
-    public partial class MainWindow : Window
+    /// <summary>
+    /// HashComputeControl.xaml 的交互逻辑
+    /// </summary>
+    public partial class HashComputeControl : UserControl
     {
+        public HashComputeControl()
+        {
+            InitializeComponent();
+            InitializeSHA3AlgorithmComboBox();
+        }
+
+        private void Grid_PreviewDragOver(object sender, System.Windows.DragEventArgs e)
+        {
+            e.Handled = true;
+        }
+
         // 初始化SHA3算法下拉框
         private void InitializeSHA3AlgorithmComboBox()
         {

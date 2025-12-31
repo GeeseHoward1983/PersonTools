@@ -1,15 +1,28 @@
-using System;
+using Microsoft.Win32;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using Microsoft.Win32;
 
-namespace MyTool
+namespace MyTool.UserControls
 {
-    public partial class MainWindow : Window
+    /// <summary>
+    /// RsaEncryptionControl.xaml 的交互逻辑
+    /// </summary>
+    public partial class RsaEncryptionControl : UserControl
     {
+        public RsaEncryptionControl()
+        {
+            InitializeComponent();
+            InitializeRsaComboBoxes();
+        }
+
+        private void Grid_PreviewDragOver(object sender, System.Windows.DragEventArgs e)
+        {
+            e.Handled = true;
+        }
+
         // RSA密钥长度选项类
         public class RsaKeySizeOption
         {
@@ -216,7 +229,7 @@ namespace MyTool
                 if (openFileDialog.ShowDialog() == true)
                 {
                     string publicKey = File.ReadAllText(openFileDialog.FileName);
-                    
+
                     // 验证是否是有效的公钥
                     using RSA rsa = RSA.Create();
                     try
@@ -251,7 +264,7 @@ namespace MyTool
                 if (openFileDialog.ShowDialog() == true)
                 {
                     string privateKey = File.ReadAllText(openFileDialog.FileName);
-                    
+
                     // 验证是否是有效的私钥
                     using RSA rsa = RSA.Create();
                     try
@@ -285,7 +298,7 @@ namespace MyTool
         private static string RsaEncryptString(string input, string publicKey, bool isString)
         {
             using RSA rsa = RSA.Create();
-            
+
             try
             {
                 // 根据选择的类型处理输入文本
@@ -306,7 +319,7 @@ namespace MyTool
 
                 // 加密
                 byte[] encryptedBytes = rsa.Encrypt(inputBytes, RSAEncryptionPadding.Pkcs1);
-                
+
                 // 返回十六进制字符串
                 return BitConverter.ToString(encryptedBytes).Replace("-", "");
             }
@@ -320,7 +333,7 @@ namespace MyTool
         private static string RsaDecryptString(string input, string privateKey)
         {
             using RSA rsa = RSA.Create();
-            
+
             try
             {
                 // 将输入的十六进制字符串转换为字节数组
@@ -345,7 +358,7 @@ namespace MyTool
         private static string RsaSignData(string input, string privateKey, bool isString)
         {
             using RSA rsa = RSA.Create();
-            
+
             try
             {
                 // 根据选择的类型处理输入文本
@@ -366,7 +379,7 @@ namespace MyTool
 
                 // 使用SHA256作为哈希算法进行签名
                 byte[] signatureBytes = rsa.SignData(inputBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-                
+
                 // 返回十六进制字符串
                 return BitConverter.ToString(signatureBytes).Replace("-", "");
             }
@@ -380,7 +393,7 @@ namespace MyTool
         private static bool RsaVerifySignature(string input, string signature, string publicKey, bool isString)
         {
             using RSA rsa = RSA.Create();
-            
+
             try
             {
                 // 根据选择的类型处理输入文本
