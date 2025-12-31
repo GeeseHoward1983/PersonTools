@@ -21,7 +21,7 @@ namespace MyTool.ELFAnalyzer.Core
         {
             if (Enum.IsDefined(typeof(ELFClass), _header.EI_CLASS))
             {
-                return Enum.GetName(typeof(ELFClass), _header.EI_CLASS)?.Replace("ELFCLASS_", "");
+                return Enum.GetName(typeof(ELFClass), _header.EI_CLASS)?.Replace("CLASS", "");
             }
             return "UNKNOWN";
         }
@@ -30,7 +30,7 @@ namespace MyTool.ELFAnalyzer.Core
         {
             if (Enum.IsDefined(typeof(ELFData), _header.EI_DATA))
             {
-                return Enum.GetName(typeof(ELFData), _header.EI_DATA)?.Replace("ELFDATA_", "");
+                return Enum.GetName(typeof(ELFData), _header.EI_DATA)?.Replace("ELFDATA", "");
             }
             return "UNKNOWN";
         }

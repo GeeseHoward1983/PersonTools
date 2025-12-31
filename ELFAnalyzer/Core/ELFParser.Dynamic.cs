@@ -106,16 +106,17 @@ namespace MyTool.ELFAnalyzer.Core
             return BitConverter.ToInt32(bytes, 0);
         }
 
-        public static string? GetDynamicTagDescription(long dTag)
+        public static string GetDynamicTagDescription(long dTag)
         {
             if (Enum.IsDefined(typeof(DynamicTag), dTag))
             {
-                return Enum.GetName(typeof(DynamicTag), dTag)?.Replace("DT_", "");
+                string? ret = Enum.GetName(typeof(DynamicTag), dTag)?.Replace("DT_", "");
+                return ret ?? "UNKNOWN";
             }
             return "UNKNOWN";
         }
 
-        public static string? GetDynamicFlagDescription(uint flags)
+        public static string GetDynamicFlagDescription(uint flags)
         {
             var descriptions = new List<string>();
             

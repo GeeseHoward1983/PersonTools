@@ -68,6 +68,7 @@ namespace MyTool.ELFAnalyzer.Models
         DT_VERDEFNUM = 0x6ffffffd,      // Number of version definitions
         DT_VERNEED = 0x6ffffffe,        // Required version structure
         DT_VERNEEDNUM = 0x6fffffff,     // Number of required versions
+        DT_VERSTR = 0x6ffffef0,         // Version string table
         
         // GNU-specific dynamic array tags
         DT_GNU_HASH = 0x6ffffef5,       // GNU hash table

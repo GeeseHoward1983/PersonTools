@@ -64,7 +64,10 @@ namespace MyTool.ELFAnalyzer.Core
 
                 // Read dynamic entries if present
                 ReadDynamicEntries(reader);
-                    }
+                
+                // Read version information if present
+                ReadVersionInformation();
+        }
 
         private static ELFHeader ReadELFHeader(BinaryReader reader)
         {

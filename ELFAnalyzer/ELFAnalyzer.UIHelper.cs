@@ -13,24 +13,24 @@ namespace MyTool.ELFAnalyzer
             var sb = new StringBuilder();
             sb.AppendLine("ELF Header:");
             sb.AppendLine("================================================================================");
-            sb.AppendLine($"  Magic:   {GetMagicString()}");
-            sb.AppendLine($"  Class:   {_parser.GetELFClassName()} ({(_parser.Header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? "64-bit" : "32-bit")})");
-            sb.AppendLine($"  Data:    {_parser.GetELFDataName()} ({(_parser.Header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? "2's complement, little endian" : "2's complement, big endian")})");
-            sb.AppendLine($"  Version: {_parser.GetReadableVersion()} ({_parser.Header.EI_VERSION})");
-            sb.AppendLine($"  OS/ABI:  {_parser.GetOSABIName()} ({_parser.Header.EI_OSABI})");
-            sb.AppendLine($"  ABI Ver: {_parser.Header.EI_ABIVERSION}");
-            sb.AppendLine($"  Type:    {_parser.GetELFTypeName()} ({_parser.GetFileTypeDescription()})");
-            sb.AppendLine($"  Machine: {_parser.GetArchitectureName()} ({_parser.GetMachineDescription()})");
-            sb.AppendLine($"  Version: 0x{_parser.Header.e_version:X}");
-            sb.AppendLine($"  Entry point address: {_parser.GetEntryPointAddress()}");
-            sb.AppendLine($"  Start of program headers: {(long)_parser.Header.e_phoff} (bytes into file)");
-            sb.AppendLine($"  Start of section headers: {(long)_parser.Header.e_shoff} (bytes into file)");
-            sb.AppendLine($"  Flags: 0x{_parser.Header.e_flags:X}  {(IsPIC() ? "Position Independent Code" : "")}");
-            sb.AppendLine($"  Size of this header: {_parser.GetHeaderSize()}");
-            sb.AppendLine($"  Size of program headers: {_parser.Header.e_phentsize} (bytes)");
-            sb.AppendLine($"  Number of program headers: {_parser.Header.e_phnum}");
-            sb.AppendLine($"  Size of section headers: {_parser.Header.e_shentsize} (bytes)");
-            sb.AppendLine($"  Number of section headers: {_parser.Header.e_shnum}");
+            sb.AppendLine($"  Magic:                             {GetMagicString()}");
+            sb.AppendLine($"  Class:                             {_parser.GetELFClassName()} ({(_parser.Header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? "64-bit" : "32-bit")})");
+            sb.AppendLine($"  Data:                              {_parser.GetELFDataName()} ({(_parser.Header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? "2's complement, little endian" : "2's complement, big endian")})");
+            sb.AppendLine($"  Version:                           {_parser.GetReadableVersion()} ({_parser.Header.EI_VERSION})");
+            sb.AppendLine($"  OS/ABI:                            {_parser.GetOSABIName()} ({_parser.Header.EI_OSABI})");
+            sb.AppendLine($"  ABI Ver:                           {_parser.Header.EI_ABIVERSION}");
+            sb.AppendLine($"  Type:                              {_parser.GetELFTypeName()} ({_parser.GetFileTypeDescription()})");
+            sb.AppendLine($"  Machine:                           {_parser.GetArchitectureName()} ({_parser.GetMachineDescription()})");
+            sb.AppendLine($"  Version:                           0x{_parser.Header.e_version:X}");
+            sb.AppendLine($"  Entry point address:               {_parser.GetEntryPointAddress()}");
+            sb.AppendLine($"  Start of program headers:          {(long)_parser.Header.e_phoff} (bytes into file)");
+            sb.AppendLine($"  Start of section headers:          {(long)_parser.Header.e_shoff} (bytes into file)");
+            sb.AppendLine($"  Flags:                             0x{_parser.Header.e_flags:X}  {(IsPIC() ? "Position Independent Code" : "")}");
+            sb.AppendLine($"  Size of this header:               {_parser.GetHeaderSize()}");
+            sb.AppendLine($"  Size of program headers:           {_parser.Header.e_phentsize} (bytes)");
+            sb.AppendLine($"  Number of program headers:         {_parser.Header.e_phnum}");
+            sb.AppendLine($"  Size of section headers:           {_parser.Header.e_shentsize} (bytes)");
+            sb.AppendLine($"  Number of section headers:         {_parser.Header.e_shnum}");
             sb.AppendLine($"  Section header string table index: {_parser.Header.e_shstrndx}");
             return sb.ToString();
         }
@@ -41,62 +41,9 @@ namespace MyTool.ELFAnalyzer
             return _parser.Header.e_type == (ushort)ELFType.ET_DYN;
         }
 
-        public string GetFormattedProgramHeadersInfo()
+        public string GetSectionToSegmentMappingInfo()
         {
             var sb = new StringBuilder();
-            sb.AppendLine("Program Headers:");
-            sb.AppendLine("================================================================================");
-            
-            if (_parser.Header.e_phnum == 0)
-            {
-                sb.AppendLine("There are no program headers in this file.");
-                return sb.ToString();
-            }
-
-            // Calculate column widths - use consistent format for both 32-bit and 64-bit
-            string[] headers = ["Type", "Offset", "VirtAddr", "PhysAddr", "FileSize", "MemSize", "Flags", "Align"];
-            int[] widths = [12, 12, 18, 18, 12, 12, 7, 15];
-
-            // Print header
-            sb.Append("  ");
-            for (int i = 0; i < headers.Length; i++)
-            {
-                sb.Append(headers[i].PadRight(widths[i] + 2));
-            }
-            sb.AppendLine();
-
-            if (_parser.ProgramHeaders32 != null)
-            {
-                foreach (var ph in _parser.ProgramHeaders32)
-                {
-                    sb.Append($"  {ELFParser.GetProgramHeaderType(ph.p_type)?.PadRight(widths[0] + 2)}");
-                    sb.Append($"0x{ph.p_offset:x8}".PadRight(widths[1] + 2));
-                    sb.Append($"0x{ph.p_vaddr:x8}".PadRight(widths[2] + 2));
-                    sb.Append($"0x{ph.p_paddr:x8}".PadRight(widths[3] + 2));
-                    sb.Append($"{ph.p_filesz,10} ".PadRight(widths[4] + 2));
-                    sb.Append($"{ph.p_memsz,10} ".PadRight(widths[5] + 2));
-                    sb.Append($"{ELFParser.GetProgramHeaderFlags(ph.p_flags)?.PadRight(widths[6] + 2)}");
-                    sb.Append($"0x{ph.p_align:x}");
-                    sb.AppendLine();
-                }
-            }
-            else if (_parser.ProgramHeaders64 != null)
-            {
-                foreach (var ph in _parser.ProgramHeaders64)
-                {
-                    sb.Append($"  {ELFParser.GetProgramHeaderType(ph.p_type)?.PadRight(widths[0] + 2)}");
-                    sb.Append($"0x{ph.p_offset:x16}".PadRight(widths[1] + 2));
-                    sb.Append($"0x{ph.p_vaddr:x16}".PadRight(widths[2] + 2));
-                    sb.Append($"0x{ph.p_paddr:x16}".PadRight(widths[3] + 2));
-                    sb.Append($"{ph.p_filesz,10} ".PadRight(widths[4] + 2));
-                    sb.Append($"{ph.p_memsz,10} ".PadRight(widths[5] + 2));
-                    sb.Append($"{ELFParser.GetProgramHeaderFlags(ph.p_flags)?.PadRight(widths[6] + 2)}");
-                    sb.Append($"0x{ph.p_align:x}");
-                    sb.AppendLine();
-                }
-            }
-
-            sb.AppendLine();
             sb.AppendLine(" Section to Segment mapping:");
             sb.AppendLine("  Segment Sections...");
             
@@ -533,19 +480,234 @@ namespace MyTool.ELFAnalyzer
             return result;
         }
 
-        private List<string> GetSectionsInSegment(ELFProgramHeader32 ph)
+        public List<ELFSectionHeaderInfo> GetSectionHeaderInfoList()
         {
-            var sections = new List<string>();
+            var result = new List<ELFSectionHeaderInfo>();
+
             if (_parser.SectionHeaders32 != null)
             {
                 for (int i = 0; i < _parser.SectionHeaders32.Count; i++)
                 {
                     var sh = _parser.SectionHeaders32[i];
-                    if (sh.sh_addr >= ph.p_vaddr && sh.sh_addr < ph.p_vaddr + ph.p_memsz)
+                    result.Add(new ELFSectionHeaderInfo
+                    {
+                        Index = i,
+                        Name = _parser.GetSectionName(i) ?? string.Empty,
+                        Type = ELFParser.GetSectionType(sh.sh_type) ?? string.Empty,
+                        Address = $"0x{sh.sh_addr:x8}",
+                        Offset = $"0x{sh.sh_offset:x6}",
+                        Size = $"{sh.sh_size}",
+                        EntSize = $"{sh.sh_entsize}",
+                        Flags = ELFParser.GetSectionFlags(sh.sh_flags, false) ?? string.Empty,
+                        Link = $"{sh.sh_link}",
+                        Info = $"{sh.sh_info}",
+                        Align = $"0x{sh.sh_addralign:x}"
+                    });
+                }
+            }
+            else if (_parser.SectionHeaders64 != null)
+            {
+                for (int i = 0; i < _parser.SectionHeaders64.Count; i++)
+                {
+                    var sh = _parser.SectionHeaders64[i];
+                    result.Add(new ELFSectionHeaderInfo
+                    {
+                        Index = i,
+                        Name = _parser.GetSectionName(i) ?? string.Empty,
+                        Type = ELFParser.GetSectionType(sh.sh_type) ?? string.Empty,
+                        Address = $"0x{sh.sh_addr:x10}",
+                        Offset = $"0x{sh.sh_offset:x8}",
+                        Size = $"{sh.sh_size}",
+                        EntSize = $"{sh.sh_entsize}",
+                        Flags = ELFParser.GetSectionFlags(sh.sh_flags, true) ?? string.Empty,
+                        Link = $"{sh.sh_link}",
+                        Info = $"{sh.sh_info}",
+                        Align = $"0x{sh.sh_addralign:x}"
+                    });
+                }
+            }
+
+            return result;
+        }
+
+        public List<ELFSymbolTableInfo> GetSymbolTableInfoList()
+        {
+            var result = new List<ELFSymbolTableInfo>();
+
+            if (_parser.Symbols32 != null && _parser.Symbols32.Count > 0)
+            {
+                for (int i = 0; i < _parser.Symbols32.Count; i++)
+                {
+                    var sym = _parser.Symbols32[i];
+                    result.Add(new ELFSymbolTableInfo
+                    {
+                        Number = i,
+                        Value = $"0x{sym.st_value:x8}",
+                        Size = $"{sym.st_size}",
+                        Type = ELFParser.GetSymbolType(sym.st_info) ?? string.Empty,
+                        Bind = ELFParser.GetSymbolBinding(sym.st_info) ?? string.Empty,
+                        Vis = ELFParser.GetSymbolVisibility(sym.st_other) ?? string.Empty,
+                        Ndx = sym.st_shndx == 0 ? "UND" : $"{sym.st_shndx}",
+                        Name = _parser.GetSymbolName(sym) ?? string.Empty
+                    });
+                }
+            }
+            else if (_parser.Symbols64 != null && _parser.Symbols64.Count > 0)
+            {
+                for (int i = 0; i < _parser.Symbols64.Count; i++)
+                {
+                    var sym = _parser.Symbols64[i];
+                    result.Add(new ELFSymbolTableInfo
+                    {
+                        Number = i,
+                        Value = $"0x{sym.st_value:x12}",
+                        Size = $"{sym.st_size}",
+                        Type = ELFParser.GetSymbolType(sym.st_info) ?? string.Empty,
+                        Bind = ELFParser.GetSymbolBinding(sym.st_info) ?? string.Empty,
+                        Vis = ELFParser.GetSymbolVisibility(sym.st_other) ?? string.Empty,
+                        Ndx = sym.st_shndx == 0 ? "UND" : $"{sym.st_shndx}",
+                        Name = _parser.GetSymbolName(sym) ?? string.Empty
+                    });
+                }
+            }
+
+            return result;
+        }
+
+        public List<ELFDynamicSectionInfo> GetDynamicSectionInfoList()
+        {
+            var result = new List<ELFDynamicSectionInfo>();
+
+            if (_parser.DynamicEntries32 != null && _parser.DynamicEntries32.Count > 0)
+            {
+                foreach (var entry in _parser.DynamicEntries32)
+                {
+                    var tag = ELFParser.GetDynamicTagDescription(entry.d_tag);
+                    string value = string.Empty;
+
+                    // Handle entries that refer to string table
+                    if (IsStringTableEntry(entry.d_tag))
+                    {
+                        // Find the string table to resolve the name
+                        var strTabAddr = GetStringValueFromDynamicEntries(DynamicTag.DT_STRTAB);
+                        var strTabSize = GetStringValueFromDynamicEntries(DynamicTag.DT_STRSZ);
+
+                        if (strTabAddr != 0 && strTabSize != 0 && _parser.SectionHeaders32 != null)
+                        {
+                            // Find the section that contains the string table
+                            var stringTableSection = FindSectionByAddress(strTabAddr);
+                            if (stringTableSection != null)
+                            {
+                                value = ReadStringFromSection(stringTableSection, (uint)entry.d_val) ?? $"0x{entry.d_val:x}";
+                            }
+                        }
+                    }
+                    else if (entry.d_tag == (long)DynamicTag.DT_FLAGS)
+                    {
+                        value = ELFParser.GetDynamicFlagDescription(entry.d_val);
+                    }
+                    else
+                    {
+                        value = $"0x{entry.d_val:x}";
+                    }
+
+                    result.Add(new ELFDynamicSectionInfo
+                    {
+                        Tag = $"0x{entry.d_tag:x16}",
+                        Type = tag,
+                        Value = value
+                    });
+                }
+            }
+            else if (_parser.DynamicEntries64 != null && _parser.DynamicEntries64.Count > 0)
+            {
+                foreach (var entry in _parser.DynamicEntries64)
+                {
+                    var tag = ELFParser.GetDynamicTagDescription(entry.d_tag);
+                    string value = string.Empty;
+
+                    // Handle entries that refer to string table
+                    if (IsStringTableEntry(entry.d_tag))
+                    {
+                        // Find the string table to resolve the name
+                        var strTabAddr = GetStringValueFromDynamicEntries64(DynamicTag.DT_STRTAB);
+                        var strTabSize = GetStringValueFromDynamicEntries64(DynamicTag.DT_STRSZ);
+
+                        if (strTabAddr != 0 && strTabSize != 0 && _parser.SectionHeaders64 != null)
+                        {
+                            // Find the section that contains the string table
+                            var stringTableSection = FindSectionByAddress64(strTabAddr);
+                            if (stringTableSection != null)
+                            {
+                                value = ReadStringFromSection64(stringTableSection, (ulong)entry.d_val) ?? $"0x{entry.d_val:x}";
+                            }
+                        }
+                    }
+                    else if (entry.d_tag == (long)DynamicTag.DT_FLAGS)
+                    {
+                        value = ELFParser.GetDynamicFlagDescription((uint)entry.d_val);
+                    }
+                    else
+                    {
+                        value = $"0x{entry.d_val:x}";
+                    }
+
+                    result.Add(new ELFDynamicSectionInfo
+                    {
+                        Tag = $"0x{entry.d_tag:x16}",
+                        Type = tag,
+                        Value = value
+                    });
+                }
+            }
+
+            return result;
+        }
+
+        private List<string> GetSectionsInSegment(ELFProgramHeader32 ph)
+        {
+            var sections = new List<string>();
+            if (_parser.SectionHeaders32 != null)
+            {
+                // Determine if this is a loadable segment
+                bool isLoadableSegment = ph.p_type == (uint)ProgramHeaderType.PT_LOAD;
+                
+                // Calculate the end address of the segment based on memory size
+                ulong segEndAddr = ph.p_vaddr + ph.p_memsz;
+                
+                for (int i = 0; i < _parser.SectionHeaders32.Count; i++)
+                {
+                    var sh = _parser.SectionHeaders32[i];
+                    
+                    // Skip sections with zero size or invalid addresses
+                    if (sh.sh_size == 0 || string.IsNullOrEmpty(_parser.GetSectionName(i)))
+                        continue;
+                        
+                    // Calculate the end address of the section
+                    ulong secEndAddr = sh.sh_addr + sh.sh_size;
+                    
+                    // Check if section overlaps with segment in virtual memory space
+                    // Three cases of overlap:
+                    // 1. Section starts within segment: sh.sh_addr >= ph.p_vaddr && sh.sh_addr < segEndAddr
+                    // 2. Section ends within segment: secEndAddr > ph.p_vaddr && secEndAddr <= segEndAddr
+                    // 3. Section completely contains segment: sh.sh_addr <= ph.p_vaddr && secEndAddr >= segEndAddr
+                    bool overlapsInVirtualMemory = (sh.sh_addr >= ph.p_vaddr && sh.sh_addr < segEndAddr) || 
+                                                  (secEndAddr > ph.p_vaddr && secEndAddr <= segEndAddr) ||
+                                                  (sh.sh_addr <= ph.p_vaddr && secEndAddr >= segEndAddr);
+                    
+                    if (overlapsInVirtualMemory)
                     {
                         var sectionName = _parser.GetSectionName(i);
                         if (!string.IsNullOrEmpty(sectionName))
                         {
+                            // Skip certain sections for loadable segments to match readelf behavior
+                            if (isLoadableSegment && 
+                               (sectionName == ".comment" || sectionName == ".shstrtab"))
+                            {
+                                // Skip adding these sections to loadable segments
+                                continue;
+                            }
+                            
                             sections.Add(sectionName);
                         }
                     }
@@ -558,15 +720,35 @@ namespace MyTool.ELFAnalyzer
         {
             var sections = new List<string>();
             if (_parser.SectionHeaders64 != null)
-            {
+            {               
+                // Calculate the end address of the segment based on memory size
+                ulong segEndAddr = ph.p_vaddr + ph.p_memsz;
+                
                 for (int i = 0; i < _parser.SectionHeaders64.Count; i++)
                 {
                     var sh = _parser.SectionHeaders64[i];
-                    if (sh.sh_addr >= ph.p_vaddr && sh.sh_addr < ph.p_vaddr + ph.p_memsz)
+                    
+                    // Skip sections with zero size or invalid addresses
+                    if (sh.sh_size == 0 || string.IsNullOrEmpty(_parser.GetSectionName(i)))
+                        continue;
+                        
+                    // Calculate the end address of the section
+                    ulong secEndAddr = sh.sh_addr + sh.sh_size;
+                    
+                    // Check if section overlaps with segment in virtual memory space
+                    // Three cases of overlap:
+                    // 1. Section starts within segment: sh.sh_addr >= ph.p_vaddr && sh.sh_addr < segEndAddr
+                    // 2. Section ends within segment: secEndAddr > ph.p_vaddr && secEndAddr <= segEndAddr
+                    // 3. Section completely contains segment: sh.sh_addr <= ph.p_vaddr && secEndAddr >= segEndAddr
+                    bool overlapsInVirtualMemory = (sh.sh_addr >= ph.p_vaddr && sh.sh_addr < segEndAddr) || 
+                                                  (secEndAddr > ph.p_vaddr && secEndAddr <= segEndAddr) ||
+                                                  (sh.sh_addr <= ph.p_vaddr && secEndAddr >= segEndAddr);
+                    
+                    if (overlapsInVirtualMemory)
                     {
                         var sectionName = _parser.GetSectionName(i);
                         if (!string.IsNullOrEmpty(sectionName))
-                        {
+                        {                            
                             sections.Add(sectionName);
                         }
                     }

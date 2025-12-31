@@ -61,14 +61,20 @@ namespace MyTool
                 var programHeaders = analyzer.GetProgramHeaderInfoList();
                 ELFProgramHeaderDataGrid.ItemsSource = programHeaders;
                 
-                // 显示节头信息
-                ELFSectionHeaderInfoTextBlock.Text = analyzer.GetFormattedSectionHeadersInfo();
+                // 显示节头信息 - 使用DataGrid
+                var sectionHeaders = analyzer.GetSectionHeaderInfoList();
+                ELFSectionHeaderDataGrid.ItemsSource = sectionHeaders;
                 
-                // 显示符号表信息
-                ELFSymbolTableInfoTextBlock.Text = analyzer.GetFormattedSymbolTableInfo();
+                // 只显示Section to Segment mapping信息
+                ELFSectionToSegmentInfoTextBlock.Text = analyzer.GetSectionToSegmentMappingInfo();
                 
-                // 显示动态段信息
-                ELFDynamicSectionInfoTextBlock.Text = analyzer.GetFormattedDynamicSectionInfo();
+                // 显示符号表信息 - 使用DataGrid
+                var symbolTable = analyzer.GetSymbolTableInfoList();
+                ELFSymbolTableDataGrid.ItemsSource = symbolTable;
+                
+                // 显示动态段信息 - 使用DataGrid
+                var dynamicSection = analyzer.GetDynamicSectionInfoList();
+                ELFDynamicSectionDataGrid.ItemsSource = dynamicSection;
             }
             catch (Exception ex)
             {
@@ -77,5 +83,6 @@ namespace MyTool
         }
 
         #endregion
+
     }
 }
