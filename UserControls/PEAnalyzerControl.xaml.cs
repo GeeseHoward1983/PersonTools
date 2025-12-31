@@ -37,7 +37,7 @@ namespace MyTool.UserControls
             }
         }
 
-        private void MainWindow_Drop(object sender, DragEventArgs e)
+        private void PEAnalyzer_Drop(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {

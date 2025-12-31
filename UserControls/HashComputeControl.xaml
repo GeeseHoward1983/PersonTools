@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MyTool.UserControls"
              mc:Ignorable="d" 
-             d:DesignHeight="800" d:DesignWidth="1200" Margin="10" AllowDrop="True" Drop="Grid_PreviewDragOver" PreviewDragOver="Grid_PreviewDragOver">
+             d:DesignHeight="800" d:DesignWidth="1200" Margin="10" AllowDrop="True" Drop="HashTab_Drop" PreviewDragOver="Grid_PreviewDragOver">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel>
             <!-- 第一行：MD5和SHA1并排显示 -->
@@ -26,7 +26,7 @@
 
                         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,5">
                             <TextBlock Text="输入要计算MD5的值：" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                            <TextBox Name="MD5InputTextBox" Height="25" VerticalAlignment="Center"/>
+                            <TextBox Name="MD5InputTextBox" Height="25" VerticalAlignment="Center" Width="400"/>
                         </StackPanel>
 
                         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
@@ -60,7 +60,7 @@
 
                         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,5">
                             <TextBlock Text="输入要计算SHA1的值：" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                            <TextBox Name="SHA1InputTextBox" Height="25" VerticalAlignment="Center"/>
+                            <TextBox Name="SHA1InputTextBox" Height="25" VerticalAlignment="Center" Width="400"/>
                         </StackPanel>
 
                         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
@@ -102,7 +102,7 @@
 
                         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,5">
                             <TextBlock Text="输入要计算SHA224的值：" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                            <TextBox Name="SHA224InputTextBox" Height="25" VerticalAlignment="Center"/>
+                            <TextBox Name="SHA224InputTextBox" Height="25" VerticalAlignment="Center" Width="400"/>
                         </StackPanel>
 
                         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
@@ -136,7 +136,7 @@
 
                         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,5">
                             <TextBlock Text="输入要计算SHA256的值：" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                            <TextBox Name="SHA256InputTextBox" Height="25" VerticalAlignment="Center"/>
+                            <TextBox Name="SHA256InputTextBox" Height="25" VerticalAlignment="Center" Width="400"/>
                         </StackPanel>
 
                         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
@@ -171,7 +171,7 @@
 
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,5">
                         <TextBlock Text="输入要计算SHA384的值：" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                        <TextBox Name="SHA384InputTextBox" Height="25" VerticalAlignment="Center"/>
+                        <TextBox Name="SHA384InputTextBox" Height="25" VerticalAlignment="Center" Width="400"/>
                     </StackPanel>
 
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
@@ -205,7 +205,7 @@
 
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,5">
                         <TextBlock Text="输入要计算SHA512的值：" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                        <TextBox Name="SHA512InputTextBox" Height="25" VerticalAlignment="Center"/>
+                        <TextBox Name="SHA512InputTextBox" Height="25" VerticalAlignment="Center" Width="400"/>
                     </StackPanel>
 
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
@@ -239,7 +239,7 @@
 
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,5">
                         <TextBlock Text="输入要计算SHA3的值：" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                        <TextBox Name="SHA3InputTextBox" Height="25" VerticalAlignment="Center"/>
+                        <TextBox Name="SHA3InputTextBox" Height="25" VerticalAlignment="Center" Width="400"/>
                     </StackPanel>
 
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">

@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MyTool.UserControls"
              mc:Ignorable="d" 
-             d:DesignHeight="600" d:DesignWidth="800" Margin="10" AllowDrop="True" Drop="Grid_PreviewDragOver" PreviewDragOver="Grid_PreviewDragOver">
+             d:DesignHeight="600" d:DesignWidth="800" Margin="10" AllowDrop="True" Drop="RsaTab_Drop" PreviewDragOver="Grid_PreviewDragOver">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
