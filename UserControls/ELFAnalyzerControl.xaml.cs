@@ -1,12 +1,13 @@
-using Microsoft.Win32;
+using System;
+using System.Collections.Generic;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using Microsoft.Win32;
+using MyTool.ELFAnalyzer;
 
 namespace MyTool.UserControls
 {
-    /// <summary>
-    /// ELFAnalyzerControl.xaml 的交互逻辑
-    /// </summary>
     public partial class ELFAnalyzerControl : UserControl
     {
         public ELFAnalyzerControl()
@@ -71,13 +72,17 @@ namespace MyTool.UserControls
                 // 显示动态段信息 - 使用DataGrid
                 var dynamicSection = analyzer.GetDynamicSectionInfoList();
                 ELFDynamicSectionDataGrid.ItemsSource = dynamicSection;
+                
+                // 显示版本符号信息
+                ELFVersionSymbolInfoTextBlock.Text = analyzer.GetFormattedVersionSymbolInfo();
+                
+                // 显示版本依赖信息
+                ELFVersionDependencyInfoTextBlock.Text = analyzer.GetFormattedVersionDependencyInfo();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"分析ELF文件时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
-
     }
 }

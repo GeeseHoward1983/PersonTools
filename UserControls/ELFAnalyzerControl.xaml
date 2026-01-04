@@ -108,6 +108,24 @@
                     </DataGrid>
                 </GroupBox>
             </TabItem>
+
+            <!-- 版本符号信息标签页 -->
+            <TabItem Header="版本符号信息">
+                <GroupBox Header="版本符号信息" Margin="5">
+                    <ScrollViewer>
+                        <TextBlock Name="ELFVersionSymbolInfoTextBlock" TextWrapping="Wrap" Padding="10"/>
+                    </ScrollViewer>
+                </GroupBox>
+            </TabItem>
+
+            <!-- 版本依赖信息标签页 -->
+            <TabItem Header="版本依赖信息">
+                <GroupBox Header="版本依赖信息" Margin="5">
+                    <ScrollViewer>
+                        <TextBlock Name="ELFVersionDependencyInfoTextBlock" TextWrapping="Wrap" Padding="10"/>
+                    </ScrollViewer>
+                </GroupBox>
+            </TabItem>
         </TabControl>
     </Grid>
 </UserControl>

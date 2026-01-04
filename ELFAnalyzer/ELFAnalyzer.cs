@@ -36,5 +36,15 @@ namespace MyTool.ELFAnalyzer
             }
             return magic.ToString().Trim();
         }
+        
+        public string GetFormattedVersionSymbolInfo()
+        {
+            return _parser.GetFormattedVersionSymbolInfo();
+        }
+        
+        public string GetFormattedVersionDependencyInfo()
+        {
+            return _parser.GetFormattedVersionDependencyInfo();
+        }
     }
 }
