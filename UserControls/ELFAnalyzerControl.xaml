@@ -96,6 +96,23 @@
                 </GroupBox>
             </TabItem>
 
+            <TabItem Header="动态符号表信息">
+                <GroupBox Header="动态符号表" Margin="5">
+                    <DataGrid Name="ELFDynsymDataGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="5">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="序号" Binding="{Binding Number}" Width="60"/>
+                            <DataGridTextColumn Header="值" Binding="{Binding Value}" Width="*"/>
+                            <DataGridTextColumn Header="大小" Binding="{Binding Size}" Width="80"/>
+                            <DataGridTextColumn Header="类型" Binding="{Binding Type}" Width="*"/>
+                            <DataGridTextColumn Header="绑定" Binding="{Binding Bind}" Width="*"/>
+                            <DataGridTextColumn Header="可见性" Binding="{Binding Vis}" Width="*"/>
+                            <DataGridTextColumn Header="索引" Binding="{Binding Ndx}" Width="60"/>
+                            <DataGridTextColumn Header="名称" Binding="{Binding Name}" Width="2*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </GroupBox>
+            </TabItem>
+
             <!-- 动态段信息标签页 -->
             <TabItem Header="动态段信息">
                 <GroupBox Header="动态段" Margin="5">

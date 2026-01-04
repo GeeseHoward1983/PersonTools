@@ -21,8 +21,8 @@ namespace PersonalTools.ELFAnalyzer.Core
         public List<ELFProgramHeader64>? ProgramHeaders64 => _programHeaders64;
         public List<ELFSectionHeader32>? SectionHeaders32 => _sectionHeaders32;
         public List<ELFSectionHeader64>? SectionHeaders64 => _sectionHeaders64;
-        public List<ELFSymbol32>? Symbols32 => _symbols32;
-        public List<ELFSymbol64>? Symbols64 => _symbols64;
+        public Dictionary<SectionType, List<ELFSymbol32>?> Symbols32 = [];
+        public Dictionary<SectionType, List<ELFSymbol64>?> Symbols64 = [];
         public List<ELFDynamic32>? DynamicEntries32 => _dynamicEntries32;
         public List<ELFDynamic64>? DynamicEntries64 => _dynamicEntries64;
         public byte[] FileData => _fileData;

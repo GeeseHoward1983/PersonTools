@@ -33,9 +33,9 @@ namespace PersonalTools.ELFAnalyzer.Core
                             };
                             _symbols64.Add(symbol);
                         }
-                        
+                        Symbols64.Add((SectionType)section.sh_type, _symbols64);
                         // 记录符号表关联的字符串表索引
-                        _linkedStrTabIdx64 = (int)section.sh_link;
+                        _linkedStrTabIdx64.Add((SectionType)section.sh_type, section.sh_link);
                     }
                 }
             }
@@ -64,19 +64,18 @@ namespace PersonalTools.ELFAnalyzer.Core
                             };
                             _symbols32.Add(symbol);
                         }
-                        
+                        Symbols32.Add((SectionType)section.sh_type, _symbols32);
+
                         // 记录符号表关联的字符串表索引
-                        _linkedStrTabIdx32 = (int)section.sh_link;
+                        _linkedStrTabIdx32.Add((SectionType)section.sh_type, section.sh_link);
                     }
                 }
             }
         }
 
         // 添加字段记录符号表关联的字符串表索引
-        private int _linkedStrTabIdx32 = -1;
-        private int _linkedStrTabIdx64 = -1;
-
-        // 添加版本符号信息存储
+        private Dictionary<SectionType, uint> _linkedStrTabIdx32 = [];
+        private Dictionary<SectionType, uint> _linkedStrTabIdx64 = [];        // 添加版本符号信息存储
         private ushort[]? _versionSymbols32;
         private ushort[]? _versionSymbols64;
         private Dictionary<ushort, string>? _versionDefinitions;
@@ -535,12 +534,13 @@ namespace PersonalTools.ELFAnalyzer.Core
             }
         }
 
-        public string? GetSymbolName(ELFSymbol32 symbol)
+        public string? GetSymbolName(ELFSymbol32 symbol, SectionType sectionType)
         {
-            if (_sectionHeaders32 == null || _linkedStrTabIdx32 < 0 || _linkedStrTabIdx32 >= _sectionHeaders32.Count) 
+            var linkedStrTabIdx32 = _linkedStrTabIdx32.GetValueOrDefault(sectionType);
+            if (_sectionHeaders32 == null || linkedStrTabIdx32 >= _sectionHeaders32.Count) 
                 return string.Empty;
             
-            var strSection = _sectionHeaders32[_linkedStrTabIdx32];
+            var strSection = _sectionHeaders32[(int)linkedStrTabIdx32];
             if (strSection.sh_type != (uint)SectionType.SHT_STRTAB) 
                 return string.Empty;
                 
@@ -551,11 +551,12 @@ namespace PersonalTools.ELFAnalyzer.Core
             if (offset >= strData.Length) return string.Empty;
             
             string baseName = ExtractStringFromBytes(strData, offset) ?? string.Empty;
-            
+            if(baseName.Length == 0) return string.Empty;
             // 如果符号表是动态符号表(SHT_DYNSYM)，尝试获取版本信息
-            if (_symbols32 != null && _versionSymbols32 != null)
+            var symbols32 = Symbols32.GetValueOrDefault(sectionType);
+            if (symbols32 != null && _versionSymbols32 != null)
             {
-                int symbolIndex = _symbols32.IndexOf(symbol);
+                int symbolIndex = symbols32.IndexOf(symbol);
                 if (symbolIndex >= 0 && symbolIndex < _versionSymbols32.Length)
                 {
                     ushort versionIndex = (ushort)(_versionSymbols32[symbolIndex] & 0x7fff); // 去除隐藏标志
@@ -576,12 +577,14 @@ namespace PersonalTools.ELFAnalyzer.Core
             return baseName;
         }
 
-        public string? GetSymbolName(ELFSymbol64 symbol)
+        public string? GetSymbolName(ELFSymbol64 symbol, SectionType sectionType)
         {
-            if (_sectionHeaders64 == null || _linkedStrTabIdx64 < 0 || _linkedStrTabIdx64 >= _sectionHeaders64.Count) 
+            var linkedStrTabIdx64 = _linkedStrTabIdx64.GetValueOrDefault(sectionType);
+
+            if (_sectionHeaders64 == null || linkedStrTabIdx64 < 0 || linkedStrTabIdx64 >= _sectionHeaders64.Count) 
                 return string.Empty;
             
-            var strSection = _sectionHeaders64[_linkedStrTabIdx64];
+            var strSection = _sectionHeaders64[(int)linkedStrTabIdx64];
             if (strSection.sh_type != (uint)SectionType.SHT_STRTAB) 
                 return string.Empty;
                 
@@ -593,10 +596,12 @@ namespace PersonalTools.ELFAnalyzer.Core
             
             string baseName = ExtractStringFromBytes(strData, offset) ?? string.Empty;
             
+            if(baseName.Length == 0) return string.Empty;
             // 如果符号表是动态符号表(SHT_DYNSYM)，尝试获取版本信息
-            if (_symbols64 != null && _versionSymbols64 != null)
+            var symbols64 = Symbols64.GetValueOrDefault(sectionType);
+            if (symbols64 != null && _versionSymbols64 != null)
             {
-                int symbolIndex = _symbols64.IndexOf(symbol);
+                int symbolIndex = symbols64.IndexOf(symbol);
                 if (symbolIndex >= 0 && symbolIndex < _versionSymbols64.Length)
                 {
                     ushort versionIndex = (ushort)(_versionSymbols64[symbolIndex] & 0x7fff); // 去除隐藏标志

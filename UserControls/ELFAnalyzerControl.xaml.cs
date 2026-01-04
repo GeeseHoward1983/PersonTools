@@ -1,10 +1,11 @@
+using Microsoft.Win32;
+using PersonalTools.ELFAnalyzer;
+using PersonalTools.ELFAnalyzer.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using Microsoft.Win32;
-using PersonalTools.ELFAnalyzer;
 
 namespace PersonalTools.UserControls
 {
@@ -66,8 +67,13 @@ namespace PersonalTools.UserControls
                 ELFSectionToSegmentInfoTextBlock.Text = analyzer.GetSectionToSegmentMappingInfo();
 
                 // 显示符号表信息 - 使用DataGrid
-                var symbolTable = analyzer.GetSymbolTableInfoList();
+                var symbolTable = analyzer.GetSymbolTableInfoList(SectionType.SHT_SYMTAB);
                 ELFSymbolTableDataGrid.ItemsSource = symbolTable;
+
+                // 显示动态符号表信息 - 使用DataGrid
+                var dynsymTable = analyzer.GetSymbolTableInfoList(SectionType.SHT_DYNSYM);
+                ELFDynsymDataGrid.ItemsSource = dynsymTable;
+
 
                 // 显示动态段信息 - 使用DataGrid
                 var dynamicSection = analyzer.GetDynamicSectionInfoList();
