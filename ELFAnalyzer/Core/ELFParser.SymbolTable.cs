@@ -88,8 +88,8 @@ namespace MyTool.ELFAnalyzer.Core
         private void ReadVersionInformation()
         {
             // 初始化版本定义和依赖字典
-            _versionDefinitions = new Dictionary<ushort, string>();
-            _versionDependencies = new Dictionary<ushort, string>();
+            _versionDefinitions = [];
+            _versionDependencies = [];
             
             // 解析版本符号表
             ParseVersionSymbolTable();
@@ -220,7 +220,7 @@ namespace MyTool.ELFAnalyzer.Core
 
             if (verdefAddr > 0 && verdefNum > 0)
             {
-                _versionDefinitions = new Dictionary<ushort, string>();
+                _versionDefinitions = [];
                 
                 if (_is64Bit)
                 {
@@ -284,7 +284,7 @@ namespace MyTool.ELFAnalyzer.Core
 
             if (verneedAddr > 0 && verneedNum > 0)
             {
-                _versionDependencies = new Dictionary<ushort, string>();
+                _versionDependencies = [];
                 
                 if (_is64Bit)
                 {
@@ -351,11 +351,11 @@ namespace MyTool.ELFAnalyzer.Core
             while (processed < count && offset < _fileData.Length)
             {
                 // 读取版本定义结构
-                var vdVersion = BitConverter.ToUInt16(_fileData, (int)offset);
-                var vdFlags = BitConverter.ToUInt16(_fileData, (int)offset + 2);
+                //var vdVersion = BitConverter.ToUInt16(_fileData, (int)offset);
+                //var vdFlags = BitConverter.ToUInt16(_fileData, (int)offset + 2);
                 var vd_ndx = BitConverter.ToUInt16(_fileData, (int)offset + 4);
-                var vd_cnt = BitConverter.ToUInt16(_fileData, (int)offset + 6);
-                var vd_hash = BitConverter.ToUInt32(_fileData, (int)offset + 8);
+                //var vd_cnt = BitConverter.ToUInt16(_fileData, (int)offset + 6);
+                //var vd_hash = BitConverter.ToUInt32(_fileData, (int)offset + 8);
                 var vd_aux = BitConverter.ToUInt32(_fileData, (int)offset + 12);
                 var vd_next = BitConverter.ToUInt32(_fileData, (int)offset + 16);
                 
@@ -396,11 +396,11 @@ namespace MyTool.ELFAnalyzer.Core
             while (processed < count && offset < _fileData.Length)
             {
                 // 读取版本定义结构
-                var vdVersion = BitConverter.ToUInt16(_fileData, (int)offset);
-                var vdFlags = BitConverter.ToUInt16(_fileData, (int)offset + 2);
+                //var vdVersion = BitConverter.ToUInt16(_fileData, (int)offset);
+                //var vdFlags = BitConverter.ToUInt16(_fileData, (int)offset + 2);
                 var vd_ndx = BitConverter.ToUInt16(_fileData, (int)offset + 4);
-                var vd_cnt = BitConverter.ToUInt16(_fileData, (int)offset + 6);
-                var vd_hash = BitConverter.ToUInt32(_fileData, (int)offset + 8);
+                //var vd_cnt = BitConverter.ToUInt16(_fileData, (int)offset + 6);
+                //var vd_hash = BitConverter.ToUInt32(_fileData, (int)offset + 8);
                 var vd_aux = BitConverter.ToUInt32(_fileData, (int)offset + 12);
                 var vd_next = BitConverter.ToUInt32(_fileData, (int)offset + 16);
                 
@@ -441,15 +441,12 @@ namespace MyTool.ELFAnalyzer.Core
             while (processed < count && offset < _fileData.Length)
             {
                 // 读取版本需求结构
-                var vnVersion = BitConverter.ToUInt16(_fileData, (int)offset);
+                //var vnVersion = BitConverter.ToUInt16(_fileData, (int)offset);
                 var vn_cnt = BitConverter.ToUInt16(_fileData, (int)offset + 2);
-                var vn_file = BitConverter.ToUInt32(_fileData, (int)offset + 4);
+                //var vn_file = BitConverter.ToUInt32(_fileData, (int)offset + 4);
                 var vn_aux = BitConverter.ToUInt32(_fileData, (int)offset + 8);
                 var vn_next = BitConverter.ToUInt32(_fileData, (int)offset + 12);
-                
-                // 获取库名称
-                string libName = ExtractStringFromBytes(strTabData, (int)vn_file) ?? "unknown";
-                
+                                
                 long auxOffset = offset + vn_aux;
                 int auxProcessed = 0;
                 
@@ -497,15 +494,12 @@ namespace MyTool.ELFAnalyzer.Core
             while (processed < count && offset < _fileData.Length)
             {
                 // 读取版本需求结构
-                var vnVersion = BitConverter.ToUInt16(_fileData, (int)offset);
+                //var vnVersion = BitConverter.ToUInt16(_fileData, (int)offset);
                 var vn_cnt = BitConverter.ToUInt16(_fileData, (int)offset + 2);
-                var vn_file = BitConverter.ToUInt32(_fileData, (int)offset + 4);
+                //var vn_file = BitConverter.ToUInt32(_fileData, (int)offset + 4);
                 var vn_aux = BitConverter.ToUInt32(_fileData, (int)offset + 8);
                 var vn_next = BitConverter.ToUInt32(_fileData, (int)offset + 12);
-                
-                // 获取库名称
-                string libName = ExtractStringFromBytes(strTabData, (int)vn_file) ?? "unknown";
-                
+                               
                 long auxOffset = offset + vn_aux;
                 int auxProcessed = 0;
                 
