@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using MyTool.ELFAnalyzer.Models;
+using PersonalTools.ELFAnalyzer.Models;
 
 namespace MyTool.ELFAnalyzer.Core
 {
@@ -706,21 +707,6 @@ namespace MyTool.ELFAnalyzer.Core
             }
         }
 
-        private static string? ExtractStringFromBytes(byte[] data, int startOffset)
-        {
-            int endOffset = startOffset;
-            while (endOffset < data.Length && data[endOffset] != 0)
-            {
-                endOffset++;
-            }
-
-            if (endOffset > startOffset)
-            {
-                return Encoding.UTF8.GetString(data, startOffset, endOffset - startOffset);
-            }
-            return string.Empty;
-        }
-
         public string GetFormattedVersionSymbolInfo()
         {
             var sb = new StringBuilder();
@@ -955,8 +941,8 @@ namespace MyTool.ELFAnalyzer.Core
                     var nameOffset = BitConverter.ToUInt32(_fileData, (int)auxOffset + 8);
                     var flags = BitConverter.ToUInt16(_fileData, (int)auxOffset + 6);
                     var auxNext = BitConverter.ToUInt32(_fileData, (int)auxOffset + 12);
-                    string versionName = ExtractStringFromBytes(strTabData, (int)nameOffset) ?? "unknown";
-                    
+                    _ = ExtractStringFromBytes(strTabData, (int)nameOffset) ?? "unknown";
+
                     // 使用版本索引作为键来获取版本信息
                     ushort verIndex = (ushort)(flags & 0x7fff); // 去除隐藏标志
                     string actualVersionName = GetVersionInfoByIndex(verIndex);
@@ -1021,8 +1007,8 @@ namespace MyTool.ELFAnalyzer.Core
                     var nameOffset = BitConverter.ToUInt32(_fileData, (int)auxOffset + 8);
                     var flags = BitConverter.ToUInt16(_fileData, (int)auxOffset + 6);
                     var auxNext = BitConverter.ToUInt32(_fileData, (int)auxOffset + 12);
-                    string versionName = ExtractStringFromBytes(strTabData, (int)nameOffset) ?? "unknown";
-                    
+                    _ = ExtractStringFromBytes(strTabData, (int)nameOffset) ?? "unknown";
+
                     // 使用版本索引作为键来获取版本信息
                     ushort verIndex = (ushort)(flags & 0x7fff); // 去除隐藏标志
                     string actualVersionName = GetVersionInfoByIndex(verIndex);
@@ -1043,36 +1029,6 @@ namespace MyTool.ELFAnalyzer.Core
             {
                 sb.AppendLine("  No version dependencies found.");
             }
-        }
-
-        public static string? GetSymbolType(byte stInfo)
-        {
-            byte type = (byte)(stInfo & 0x0F);
-            if (Enum.IsDefined(typeof(SymbolType), type))
-            {
-                return Enum.GetName(typeof(SymbolType), type)?.Replace("STT_", "");
-            }
-            return "UNKNOWN";
-        }
-
-        public static string? GetSymbolBinding(byte stInfo)
-        {
-            byte binding = (byte)(stInfo >> 4);
-            if (Enum.IsDefined(typeof(SymbolBinding), binding))
-            {
-                return Enum.GetName(typeof(SymbolBinding), binding)?.Replace("STB_", "");
-            }
-            return "UNKNOWN";
-        }
-
-        public static string? GetSymbolVisibility(byte stOther)
-        {
-            byte visibility = (byte)(stOther & 0x03);
-            if (Enum.IsDefined(typeof(SymbolVisibility), visibility))
-            {
-                return Enum.GetName(typeof(SymbolVisibility), visibility)?.Replace("STV_", "");
-            }
-            return "UNKNOWN";
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using MyTool.ELFAnalyzer.Models;
+using PersonalTools.ELFAnalyzer.Models;
 
 namespace MyTool.ELFAnalyzer.Core
 {
