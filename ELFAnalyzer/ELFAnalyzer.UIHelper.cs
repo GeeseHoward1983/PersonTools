@@ -420,6 +420,9 @@ namespace MyTool.ELFAnalyzer
             var sections = new List<string>();
             if (_parser.SectionHeaders32 != null)
             {
+                // Determine if this is a loadable segment
+                bool isLoadableSegment = ph.p_type == (uint)ProgramHeaderType.PT_LOAD;
+                
                 // Calculate the end address of the segment based on memory size
                 ulong segEndAddr = ph.p_vaddr + ph.p_memsz;
                 
