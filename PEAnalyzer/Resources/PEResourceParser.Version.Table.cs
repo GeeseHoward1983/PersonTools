@@ -1,8 +1,8 @@
-using MyTool.PEAnalyzer.Models;
+using PersonalTools.PEAnalyzer.Models;
 using System.IO;
 using System.Text;
 
-namespace MyTool.PEAnalyzer.Resources
+namespace PersonalTools.PEAnalyzer.Resources
 {
     /// <summary>
     /// PE资源解析器版本信息表解析辅助模块

@@ -1,11 +1,12 @@
 using Microsoft.Win32;
+using PersonalTools;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace MyTool.UserControls
+namespace PersonalTools.UserControls
 {
     /// <summary>
     /// RsaEncryptionControl.xaml 的交互逻辑

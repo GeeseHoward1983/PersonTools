@@ -1,6 +1,6 @@
 using System.Windows.Media.Imaging;
 
-namespace MyTool.PEAnalyzer.Models
+namespace PersonalTools.PEAnalyzer.Models
 {
     // PE信息类
     public class PEInfo

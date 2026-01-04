@@ -1,9 +1,9 @@
-using MyTool.PEAnalyzer.Models;
-using MyTool.PEAnalyzer.Resources;
+using PersonalTools.PEAnalyzer.Models;
+using PersonalTools.PEAnalyzer.Resources;
 using System.IO;
 using System.Text;
 
-namespace MyTool
+namespace PersonalTools
 {
     public static partial class PEParser
     {

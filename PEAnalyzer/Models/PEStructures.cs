@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace MyTool.PEAnalyzer.Models
+namespace PersonalTools.PEAnalyzer.Models
 {
     // DOS头结构
     [StructLayout(LayoutKind.Sequential)]

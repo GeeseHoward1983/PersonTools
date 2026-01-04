@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace MyTool
+namespace PersonalTools
 {
     public partial class MainWindow : Window
     {

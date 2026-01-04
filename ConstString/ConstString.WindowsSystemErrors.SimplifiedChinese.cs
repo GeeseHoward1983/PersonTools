@@ -1,4 +1,4 @@
-namespace MyTool
+namespace PersonalTools
 {
     public static partial class ConstString
     {

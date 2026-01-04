@@ -4,9 +4,9 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
-using MyTool.ELFAnalyzer;
+using PersonalTools.ELFAnalyzer;
 
-namespace MyTool.UserControls
+namespace PersonalTools.UserControls
 {
     public partial class ELFAnalyzerControl : UserControl
     {
@@ -49,7 +49,7 @@ namespace MyTool.UserControls
         {
             try
             {
-                var analyzer = new MyTool.ELFAnalyzer.ELFAnalyzer(filePath);
+                var analyzer = new PersonalTools.ELFAnalyzer.ELFAnalyzer(filePath);
 
                 // 显示ELF头信息
                 ELFHeaderInfoTextBlock.Text = analyzer.GetFormattedELFHeaderInfo();

@@ -1,6 +1,7 @@
-using MyTool.Enums;
+using PersonalTools;
+using PersonalTools.Enums;
 
-namespace MyTool
+namespace PersonalTools
 {
     public static partial class ConstString
     {

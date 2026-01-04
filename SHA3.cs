@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace MyTool
+namespace PersonalTools
 {
     public class SHA3(int variant) : IDisposable
     {

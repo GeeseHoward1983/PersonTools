@@ -1,11 +1,11 @@
 using Microsoft.Win32;
-using MyTool.PEAnalyzer.Models;
+using PersonalTools.PEAnalyzer.Models;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 
-namespace MyTool.UserControls
+namespace PersonalTools.UserControls
 {
     /// <summary>
     /// PEAnalyzerControl.xaml 的交互逻辑

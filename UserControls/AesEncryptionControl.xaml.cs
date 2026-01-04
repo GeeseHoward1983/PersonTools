@@ -1,10 +1,11 @@
+using PersonalTools;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace MyTool.UserControls
+namespace PersonalTools.UserControls
 {
     /// <summary>
     /// AesEncryptionControl.xaml 的交互逻辑

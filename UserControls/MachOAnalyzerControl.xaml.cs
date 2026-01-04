@@ -1,6 +1,6 @@
 using System.Windows.Controls;
 
-namespace MyTool.UserControls
+namespace PersonalTools.UserControls
 {
     /// <summary>
     /// MachOAnalyzerControl.xaml 的交互逻辑

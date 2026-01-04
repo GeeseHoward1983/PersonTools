@@ -2,7 +2,7 @@ using System.Net;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace MyTool.UserControls
+namespace PersonalTools.UserControls
 {
     /// <summary>
     /// UrlEncoderDecoderControl.xaml 的交互逻辑

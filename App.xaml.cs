@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace MyTool
+namespace PersonalTools
 {
     /// <summary>
     /// Interaction logic for App.xaml

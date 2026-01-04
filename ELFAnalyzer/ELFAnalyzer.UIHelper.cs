@@ -1,11 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-using MyTool.ELFAnalyzer.Core;
-using MyTool.ELFAnalyzer.Models;
+using PersonalTools.ELFAnalyzer.Core;
 using PersonalTools.ELFAnalyzer.Models;
+using System.Text;
 
-namespace MyTool.ELFAnalyzer
+namespace PersonalTools.ELFAnalyzer
 {
     public partial class ELFAnalyzer
     {

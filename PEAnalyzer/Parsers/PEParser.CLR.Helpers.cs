@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text;
 
-namespace MyTool
+namespace PersonalTools
 {
     /// <summary>
     /// PE文件解析器CLR辅助函数模块

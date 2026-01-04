@@ -1,4 +1,4 @@
-namespace MyTool.Enums
+namespace PersonalTools.Enums
 {
     /// <summary>
     /// 语言类型枚举

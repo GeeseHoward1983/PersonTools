@@ -1,9 +1,9 @@
-using MyTool.PEAnalyzer.Models;
-using MyTool.PEAnalyzer.Resources;
+using PersonalTools.PEAnalyzer.Models;
+using PersonalTools.PEAnalyzer.Resources;
 using System.IO;
 using System.Text;
 
-namespace MyTool
+namespace PersonalTools
 {
     /// <summary>
     /// PE文件解析器CLR元数据解析模块

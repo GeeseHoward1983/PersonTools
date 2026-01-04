@@ -1,8 +1,9 @@
+using PersonalTools;
 using System.IO;
 using System.Text;
 using System.Windows.Controls;
 
-namespace MyTool.UserControls
+namespace PersonalTools.UserControls
 {
     /// <summary>
     /// CrcComputeControl.xaml 的交互逻辑

@@ -1,6 +1,6 @@
-using MyTool.PEAnalyzer.Models;
+using PersonalTools.PEAnalyzer.Models;
 
-namespace MyTool.PEAnalyzer.Resources
+namespace PersonalTools.PEAnalyzer.Resources
 {
     /// <summary>
     /// PE资源解析器图标数据处理模块

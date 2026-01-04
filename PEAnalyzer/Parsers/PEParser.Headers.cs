@@ -1,7 +1,7 @@
-using MyTool.PEAnalyzer.Models;
+using PersonalTools.PEAnalyzer.Models;
 using System.IO;
 
-namespace MyTool
+namespace PersonalTools
 {
     /// <summary>
     /// PE文件头解析器

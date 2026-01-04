@@ -1,10 +1,11 @@
+using PersonalTools;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace MyTool.UserControls
+namespace PersonalTools.UserControls
 {
     public class SHA3AlgorithmOption(string name, int value)
     {

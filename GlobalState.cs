@@ -1,6 +1,6 @@
-using MyTool.Enums;
+using PersonalTools.Enums;
 
-namespace MyTool
+namespace PersonalTools
 {
     /// <summary>
     /// 全局状态管理类
@@ -21,13 +21,13 @@ namespace MyTool
         private static LanguageType GetCurrentLanguageType()
         {
             var cultureName = System.Globalization.CultureInfo.CurrentCulture.Name;
-            if (cultureName.Equals("zh-CN", System.StringComparison.OrdinalIgnoreCase))
+            if (cultureName.Equals("zh-CN", StringComparison.OrdinalIgnoreCase))
             {
                 return LanguageType.SimplifiedChinese;
             }
-            else if (cultureName.Equals("zh-TW", System.StringComparison.OrdinalIgnoreCase) ||
-                     cultureName.Equals("zh-HK", System.StringComparison.OrdinalIgnoreCase) ||
-                     cultureName.Equals("zh-MO", System.StringComparison.OrdinalIgnoreCase))
+            else if (cultureName.Equals("zh-TW", StringComparison.OrdinalIgnoreCase) ||
+                     cultureName.Equals("zh-HK", StringComparison.OrdinalIgnoreCase) ||
+                     cultureName.Equals("zh-MO", StringComparison.OrdinalIgnoreCase))
             {
                 return LanguageType.TraditionalChinese;
             }

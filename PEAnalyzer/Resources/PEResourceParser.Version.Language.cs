@@ -1,6 +1,7 @@
-using MyTool.Enums;
+using PersonalTools;
+using PersonalTools.Enums;
 
-namespace MyTool.PEAnalyzer.Resources
+namespace PersonalTools.PEAnalyzer.Resources
 {
     /// <summary>
     /// PE资源解析器版本信息语言解析辅助模块

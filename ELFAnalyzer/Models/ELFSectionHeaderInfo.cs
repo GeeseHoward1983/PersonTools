@@ -1,7 +1,7 @@
 using System;
 using System.Text;
 
-namespace MyTool.ELFAnalyzer.Models
+namespace PersonalTools.ELFAnalyzer.Models
 {
     public class ELFSectionHeaderInfo
     {
