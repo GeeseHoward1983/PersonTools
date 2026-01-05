@@ -12,24 +12,24 @@ namespace PersonalTools.ELFAnalyzer
             sb.AppendLine("ELF Header:");
             sb.AppendLine("================================================================================");
             sb.AppendLine($"  Magic:            {GetMagicString()}");
-            sb.AppendLine($"  Àà±ð:             {_parser.GetELFClassName()} ({(_parser.Header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? "64-bit" : "32-bit")})");
-            sb.AppendLine($"  Êý¾Ý:             {_parser.GetELFDataName()} ({(_parser.Header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? "2's complement, little endian" : "2's complement, big endian")})");
-            sb.AppendLine($"  °æ±¾:             {_parser.GetReadableVersion()} ({_parser.Header.EI_VERSION})");
+            sb.AppendLine($"  ç±»åˆ«:             {_parser.GetELFClassName()} ({(_parser.Header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? "64-bit" : "32-bit")})");
+            sb.AppendLine($"  æ•°æ®:             {_parser.GetELFDataName()} ({(_parser.Header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? "2's complement, little endian" : "2's complement, big endian")})");
+            sb.AppendLine($"  ç‰ˆæœ¬:             {_parser.GetReadableVersion()} ({_parser.Header.EI_VERSION})");
             sb.AppendLine($"  OS/ABI:           {_parser.GetOSABIName()} ({_parser.Header.EI_OSABI})");
-            sb.AppendLine($"  ABI °æ±¾:         {_parser.Header.EI_ABIVERSION}");
-            sb.AppendLine($"  ÀàÐÍ:             {_parser.GetELFTypeName()} ({_parser.GetFileTypeDescription()})");
-            sb.AppendLine($"  ÏµÍ³¼Ü¹¹:         {_parser.GetArchitectureName()} ({_parser.GetMachineDescription()})");
-            sb.AppendLine($"  °æ±¾:             0x{_parser.Header.e_version:X}");
-            sb.AppendLine($"  Èë¿ÚµãµØÖ·:       {_parser.GetEntryPointAddress()}");
-            sb.AppendLine($"  ³ÌÐòÍ·Æðµã:       {(long)_parser.Header.e_phoff} (bytes into file)");
-            sb.AppendLine($"  ½ÚÍ·µÄÆðµã:       {(long)_parser.Header.e_shoff} (bytes into file)");
-            sb.AppendLine($"  ±êÖ¾:             0x{_parser.Header.e_flags:X}  {(IsPIC() ? "Position Independent Code" : "")}");
-            sb.AppendLine($"  ±¾Í·µÄ´óÐ¡:       {_parser.GetHeaderSize()}");
-            sb.AppendLine($"  ³ÌÐòÍ·µÄ´óÐ¡:     {_parser.Header.e_phentsize} (bytes)");
-            sb.AppendLine($"  ³ÌÐòÍ·ÊýÁ¿:       {_parser.Header.e_phnum}");
-            sb.AppendLine($"  ½ÚÍ·´óÐ¡:         {_parser.Header.e_shentsize} (bytes)");
-            sb.AppendLine($"  ½ÚÍ·ÊýÁ¿:         {_parser.Header.e_shnum}");
-            sb.AppendLine($"  ×Ö·û´®±íË÷Òý½ÚÍ·: {_parser.Header.e_shstrndx}");
+            sb.AppendLine($"  ABI ç‰ˆæœ¬:         {_parser.Header.EI_ABIVERSION}");
+            sb.AppendLine($"  ç±»åž‹:             {_parser.GetELFTypeName()} ({_parser.GetFileTypeDescription()})");
+            sb.AppendLine($"  ç³»ç»Ÿæž¶æž„:         {_parser.GetArchitectureName()} ({_parser.GetMachineDescription()})");
+            sb.AppendLine($"  ç‰ˆæœ¬:             0x{_parser.Header.e_version:X}");
+            sb.AppendLine($"  å…¥å£ç‚¹åœ°å€:       {_parser.GetEntryPointAddress()}");
+            sb.AppendLine($"  ç¨‹åºå¤´èµ·ç‚¹:       {(long)_parser.Header.e_phoff} (bytes into file)");
+            sb.AppendLine($"  èŠ‚å¤´çš„èµ·ç‚¹:       {(long)_parser.Header.e_shoff} (bytes into file)");
+            sb.AppendLine($"  æ ‡å¿—:             0x{_parser.Header.e_flags:X}  {(IsPIC() ? "Position Independent Code" : "")}");
+            sb.AppendLine($"  æœ¬å¤´çš„å¤§å°:       {_parser.GetHeaderSize()}");
+            sb.AppendLine($"  ç¨‹åºå¤´çš„å¤§å°:     {_parser.Header.e_phentsize} (bytes)");
+            sb.AppendLine($"  ç¨‹åºå¤´æ•°é‡:       {_parser.Header.e_phnum}");
+            sb.AppendLine($"  èŠ‚å¤´å¤§å°:         {_parser.Header.e_shentsize} (bytes)");
+            sb.AppendLine($"  èŠ‚å¤´æ•°é‡:         {_parser.Header.e_shnum}");
+            sb.AppendLine($"  å­—ç¬¦ä¸²è¡¨ç´¢å¼•èŠ‚å¤´: {_parser.Header.e_shstrndx}");
             return sb.ToString();
         }
 
@@ -43,7 +43,7 @@ namespace PersonalTools.ELFAnalyzer
         {
             var sb = new StringBuilder();
             sb.AppendLine(" Section to Segment mapping:");
-            sb.AppendLine("  ¶Î½Ú...");
+            sb.AppendLine("  æ®µèŠ‚...");
             
             if (_parser.ProgramHeaders32 != null)
             {
@@ -502,6 +502,52 @@ namespace PersonalTools.ELFAnalyzer
                 }
             }
             return sections;
+        }
+
+        public string? GetInterpreterInfo()
+        {
+            if (_parser.ProgramHeaders32 != null)
+            {
+                // Find the PT_INTERP segment in 32-bit headers
+                var interpHeader = _parser.ProgramHeaders32.FirstOrDefault(ph => ph.p_type == (uint)ProgramHeaderType.PT_INTERP);
+                if (interpHeader.p_type != 0)
+                {
+                    // Read the interpreter string from the file data
+                    var start = (int)interpHeader.p_offset;
+                    var end = start;
+                    while (end < _parser.FileData.Length && _parser.FileData[end] != 0 && (end - start) < interpHeader.p_filesz)
+                    {
+                        end++;
+                    }
+
+                    if (end > start)
+                    {
+                        return Encoding.UTF8.GetString(_parser.FileData, start, end - start);
+                    }
+                }
+            }
+            else if (_parser.ProgramHeaders64 != null)
+            {
+                // Find the PT_INTERP segment in 64-bit headers
+                var interpHeader = _parser.ProgramHeaders64.FirstOrDefault(ph => ph.p_type == (uint)ProgramHeaderType.PT_INTERP);
+                if (interpHeader.p_type != 0)
+                {
+                    // Read the interpreter string from the file data
+                    var start = (int)interpHeader.p_offset;
+                    var end = start;
+                    while (end < _parser.FileData.Length && _parser.FileData[end] != 0 && (ulong)(end - start) < interpHeader.p_filesz)
+                    {
+                        end++;
+                    }
+
+                    if (end > start)
+                    {
+                        return Encoding.UTF8.GetString(_parser.FileData, start, end - start);
+                    }
+                }
+            }
+
+            return null;
         }
     }
 }

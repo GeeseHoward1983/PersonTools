@@ -55,6 +55,13 @@ namespace PersonalTools.UserControls
                 // 显示ELF头信息
                 ELFHeaderInfoTextBlock.Text = analyzer.GetFormattedELFHeaderInfo();
 
+                // 获取并显示解释器信息（如果存在）
+                var interpreter = analyzer.GetInterpreterInfo();
+                if (!string.IsNullOrEmpty(interpreter))
+                {
+                    ELFHeaderInfoTextBlock.Text += $"\n\nInterpreter:\n{interpreter}\n";
+                }
+
                 // 显示程序头信息 - 使用DataGrid
                 var programHeaders = analyzer.GetProgramHeaderInfoList();
                 ELFProgramHeaderDataGrid.ItemsSource = programHeaders;
