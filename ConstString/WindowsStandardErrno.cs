@@ -1,9 +1,9 @@
 using PersonalTools;
 using PersonalTools.Enums;
 
-namespace PersonalTools
+namespace PersonalTools.ConstString
 {
-    public static partial class ConstString
+    public static partial class WindowsStandardErrno
     {
         // 英文 errno 错误描述
         private static readonly Dictionary<long, string> WindowsStandardErrnoMapEnglish = new()

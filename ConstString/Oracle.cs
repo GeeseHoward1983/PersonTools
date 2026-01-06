@@ -1,9 +1,9 @@
 using PersonalTools;
 using PersonalTools.Enums;
 
-namespace PersonalTools
+namespace PersonalTools.ConstString
 {
-    public static partial class ConstString
+    public static partial class OracleSqlCode
     {
         // Oracle SQLCODE - 英文
         private static readonly Dictionary<long, string> OracleSqlCodeMapEnglish = new()

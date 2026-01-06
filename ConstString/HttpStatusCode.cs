@@ -1,9 +1,9 @@
 using PersonalTools;
 using PersonalTools.Enums;
 
-namespace PersonalTools
+namespace PersonalTools.ConstString
 {
-    public static partial class ConstString
+    public static partial class HttpStatus
     {
         // 英文 HTTP 状态码描述
         private static readonly Dictionary<long, string> HttpStatusMapEnglish = new()

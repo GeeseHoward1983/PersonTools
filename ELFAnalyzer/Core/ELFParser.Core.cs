@@ -126,8 +126,10 @@ namespace PersonalTools.ELFAnalyzer.Core
             _programHeaders = [];
             for (ushort i = 0; i < _header.e_phnum; i++)
             {
-                var ph = new ELFProgramHeader();
-                ph.p_type = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader);
+                var ph = new ELFProgramHeader
+                {
+                    p_type = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader)
+                };
                 if (_is64Bit)
                 {
                     ph.p_flags = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader);

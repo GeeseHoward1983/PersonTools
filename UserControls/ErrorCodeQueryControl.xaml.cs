@@ -1,3 +1,4 @@
+using PersonalTools.ConstString;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -21,55 +22,55 @@ namespace PersonalTools.UserControls
         // Windows errno 查询按钮点击事件
         private void WindowsErrnoQuery_Click(object sender, RoutedEventArgs e)
         {
-            QueryErrorCode(WindowsErrnoInput.Text, ConstString.WindowsStandardErrnoMap, WindowsErrnoResult);
+            QueryErrorCode(WindowsErrnoInput.Text, WindowsStandardErrno.WindowsStandardErrnoMap, WindowsErrnoResult);
         }
 
         // Linux errno 查询按钮点击事件
         private void LinuxErrnoQuery_Click(object sender, RoutedEventArgs e)
         {
-            QueryErrorCode(LinuxErrnoInput.Text, ConstString.LinuxErrnoMap, LinuxErrnoResult);
+            QueryErrorCode(LinuxErrnoInput.Text, LinuxErrno.LinuxErrnoMap, LinuxErrnoResult);
         }
 
         // Mac errno 查询按钮点击事件
         private void MacErrnoQuery_Click(object sender, RoutedEventArgs e)
         {
-            QueryErrorCode(MacErrnoInput.Text, ConstString.MacErrnoMap, MacErrnoResult);
+            QueryErrorCode(MacErrnoInput.Text, MacErrno.MacErrnoMap, MacErrnoResult);
         }
 
         // HTTP 状态码查询按钮点击事件
         private void HttpStatusCodeQuery_Click(object sender, RoutedEventArgs e)
         {
-            QueryErrorCode(HttpStatusCodeInput.Text, ConstString.HttpStatusMap, HttpStatusCodeResult);
+            QueryErrorCode(HttpStatusCodeInput.Text, HttpStatus.HttpStatusMap, HttpStatusCodeResult);
         }
 
         // SQL Server 错误码查询按钮点击事件
         private void SqlServerErrorQuery_Click(object sender, RoutedEventArgs e)
         {
-            QueryErrorCode(SqlServerErrorInput.Text, ConstString.SqlServerErrorsMap, SqlServerErrorResult);
+            QueryErrorCode(SqlServerErrorInput.Text, SqlServerErrors.SqlServerErrorsMap, SqlServerErrorResult);
         }
 
         // MySQL 错误码查询按钮点击事件
         private void MySqlErrorQuery_Click(object sender, RoutedEventArgs e)
         {
-            QueryErrorCode(MySqlErrorInput.Text, ConstString.MySqlErrorsMap, MySqlErrorResult);
+            QueryErrorCode(MySqlErrorInput.Text, MySqlErrors.MySqlErrorsMap, MySqlErrorResult);
         }
 
         // Oracle SQLCODE 查询按钮点击事件
         private void OracleSqlCodeQuery_Click(object sender, RoutedEventArgs e)
         {
-            QueryErrorCode(OracleSqlCodeInput.Text, ConstString.OracleSqlCodeMap, OracleSqlCodeResult);
+            QueryErrorCode(OracleSqlCodeInput.Text, OracleSqlCode.OracleSqlCodeMap, OracleSqlCodeResult);
         }
 
         // ODBC 错误码查询按钮点击事件
         private void OdbcErrorQuery_Click(object sender, RoutedEventArgs e)
         {
-            QueryErrorCode(OdbcErrorInput.Text, ConstString.OdbcErrorsMap, OdbcErrorResult);
+            QueryErrorCode(OdbcErrorInput.Text, OdbcErrors.OdbcErrorsMap, OdbcErrorResult);
         }
 
         // Windows 系统错误码查询按钮点击事件
         private void WindowsSystemErrorQuery_Click(object sender, RoutedEventArgs e)
         {
-            QueryErrorCode(WindowsSystemErrorInput.Text, ConstString.WindowsSystemErrorsMap, WindowsSystemErrorResult);
+            QueryErrorCode(WindowsSystemErrorInput.Text, WindowsSystemErrors.WindowsSystemErrorsMap, WindowsSystemErrorResult);
         }
 
         // 通用错误码查询方法

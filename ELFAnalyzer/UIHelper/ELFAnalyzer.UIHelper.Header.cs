@@ -13,7 +13,7 @@ namespace PersonalTools.ELFAnalyzer
             sb.AppendLine("================================================================================");
             sb.AppendLine($"  Magic:            {GetMagicString()}");
             sb.AppendLine($"  类别:             {_parser.GetELFClassName()} ({(_parser.Header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? "64-bit" : "32-bit")})");
-            sb.AppendLine($"  数据:             {_parser.GetELFDataName()} ({(_parser.Header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? "2's complement, little endian" : "2's complement, big endian")})");
+            sb.AppendLine($"  数据:             {_parser.GetELFDataName()} ({(_parser.Header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? "2's complement, 小端" : "2's complement, 大端")})");
             sb.AppendLine($"  版本:             {_parser.GetReadableVersion()} ({_parser.Header.EI_VERSION})");
             sb.AppendLine($"  OS/ABI:           {_parser.GetOSABIName()} ({_parser.Header.EI_OSABI})");
             sb.AppendLine($"  ABI 版本:         {_parser.Header.EI_ABIVERSION}");

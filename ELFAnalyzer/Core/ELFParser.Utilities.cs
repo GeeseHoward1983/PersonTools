@@ -107,11 +107,11 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             return (ELFType)_header.e_type switch
             {
-                ELFType.ET_NONE => "No file type",
-                ELFType.ET_REL => "Relocatable file",
-                ELFType.ET_EXEC => "Executable file",
-                ELFType.ET_DYN => "Shared object file",
-                ELFType.ET_CORE => "Core file",
+                ELFType.ET_NONE => "未指定类型",
+                ELFType.ET_REL => "可重定位文件",
+                ELFType.ET_EXEC => "可执行文件",
+                ELFType.ET_DYN => "共享对象文件",
+                ELFType.ET_CORE => "核心转储文件",
                 _ => GetELFTypeName(),
             };
         }

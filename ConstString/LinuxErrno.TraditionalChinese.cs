@@ -1,6 +1,6 @@
-namespace PersonalTools
+namespace PersonalTools.ConstString
 {
-    public static partial class ConstString
+    public static partial class LinuxErrno
     {
         // Linux errno 错误码 - 繁体中文
         private static readonly Dictionary<long, string> LinuxErrnoMapTraditionalChinese = new()

@@ -19,8 +19,10 @@ namespace PersonalTools.ELFAnalyzer.Core
 
                     for (int j = 0; j < symbolCount; j++)
                     {
-                        var symbol = new ELFSymbol();
-                        symbol.st_name = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader);
+                        var symbol = new ELFSymbol
+                        {
+                            st_name = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader)
+                        };
                         if (_is64Bit)
                         {
                             symbol.st_info = reader.ReadByte();
@@ -28,7 +30,6 @@ namespace PersonalTools.ELFAnalyzer.Core
                             symbol.st_shndx = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt16LE(reader) : ReadUInt16BE(reader);
                             symbol.st_value = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt64LE(reader) : ReadUInt64BE(reader);
                             symbol.st_size = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt64LE(reader) : ReadUInt64BE(reader);
-
                         }
                         else
                         {

@@ -1,9 +1,9 @@
 using PersonalTools;
 using PersonalTools.Enums;
 
-namespace PersonalTools
+namespace PersonalTools.ConstString
 {
-    public static partial class ConstString
+    public static partial class LinuxErrno
     {
         // Linux errno 错误码访问接口
         public static Dictionary<long, string> LinuxErrnoMap
