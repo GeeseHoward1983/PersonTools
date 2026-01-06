@@ -38,6 +38,22 @@ namespace PersonalTools.ELFAnalyzer
                     {
                         value = ELFParser.GetDynamicFlagDescription((uint)entry.d_val);
                     }
+                    // Handle DT_PLTREL - should show REL or RELA
+                    else if (entry.d_tag == (long)DynamicTag.DT_PLTREL)
+                    {
+                        if (entry.d_val == (long)DynamicTag.DT_REL)
+                        {
+                            value = "REL";
+                        }
+                        else if (entry.d_val == (long)DynamicTag.DT_RELA)
+                        {
+                            value = "RELA";
+                        }
+                        else
+                        {
+                            value = $"0x{entry.d_val:x}"; // fallback to hex if unknown
+                        }
+                    }
                     else
                     {
                         value = $"0x{entry.d_val:x}";
