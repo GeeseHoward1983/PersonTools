@@ -4,22 +4,7 @@ using System.Runtime.InteropServices;
 namespace PersonalTools.ELFAnalyzer.Models
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct ELFSectionHeader32
-    {
-        public uint sh_name;      // Section name (index into string table)
-        public uint sh_type;      // Section type
-        public uint sh_flags;     // Section flags
-        public uint sh_addr;      // Section virtual address at execution
-        public uint sh_offset;    // Section file offset
-        public uint sh_size;      // Section size in bytes
-        public uint sh_link;      // Link to other section
-        public uint sh_info;      // Additional section information
-        public uint sh_addralign; // Section alignment
-        public uint sh_entsize;   // Entry size if section holds table
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct ELFSectionHeader64
+    public struct ELFSectionHeader
     {
         public uint sh_name;      // Section name (index into string table)
         public uint sh_type;      // Section type

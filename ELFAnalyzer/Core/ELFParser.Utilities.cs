@@ -126,30 +126,6 @@ namespace PersonalTools.ELFAnalyzer.Core
             return $"{_header.e_ehsize} (bytes)";
         }
 
-        public string? GetProgramHeaderInfo()
-        {
-            if (_is64Bit)
-            {
-                return $"Program Headers: {_header.e_phnum} entries, {FormatSize(_header.e_phentsize)} each";
-            }
-            else
-            {
-                return $"Program Headers: {_header.e_phnum} entries, {FormatSize(_header.e_phentsize)} each";
-            }
-        }
-
-        public string? GetSectionHeaderInfo()
-        {
-            if (_is64Bit)
-            {
-                return $"Section Headers: {_header.e_shnum} entries, {FormatSize(_header.e_shentsize)} each";
-            }
-            else
-            {
-                return $"Section Headers: {_header.e_shnum} entries, {FormatSize(_header.e_phentsize)} each";
-            }
-        }
-
         public static string? GetSymbolType(byte stInfo)
         {
             byte type = (byte)(stInfo & 0x0F);

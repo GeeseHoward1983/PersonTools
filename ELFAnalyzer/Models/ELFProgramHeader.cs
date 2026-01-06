@@ -1,23 +1,9 @@
-using System;
 using System.Runtime.InteropServices;
 
 namespace PersonalTools.ELFAnalyzer.Models
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct ELFProgramHeader32
-    {
-        public uint p_type;     // Segment type
-        public uint p_offset;   // Segment file offset
-        public uint p_vaddr;    // Segment virtual address
-        public uint p_paddr;    // Segment physical address
-        public uint p_filesz;   // Segment size in file
-        public uint p_memsz;    // Segment size in memory
-        public uint p_flags;    // Segment flags
-        public uint p_align;    // Segment alignment
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct ELFProgramHeader64
+    public struct ELFProgramHeader
     {
         public uint p_type;     // Segment type
         public uint p_flags;    // Segment flags
