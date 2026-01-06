@@ -292,5 +292,86 @@ namespace PersonalTools.ELFAnalyzer.Core
             return string.Empty;
         }
 
+        public string? GetFormattedELFFlags()
+        {
+            var descriptions = new List<string>();
+            uint flags = _header.e_flags;
+
+            // 根据架构类型解析不同的标志
+            switch (_header.e_machine)
+            {
+                case (ushort)EMachine.EM_MIPS:
+                    // 解析MIPS架构的标志
+                    if ((flags & 0x00000001) != 0) descriptions.Add("noreorder");
+                    if ((flags & 0x00000002) != 0) descriptions.Add("pic");
+                    if ((flags & 0x00000004) != 0) descriptions.Add("cpic");
+                    
+                    // MIPS ABI类型
+                    if ((flags & 0x00001000) != 0) descriptions.Add("o32");
+                    if ((flags & 0x00002000) != 0) descriptions.Add("o64");
+                    if ((flags & 0x00004000) != 0) descriptions.Add("n32");
+                    if ((flags & 0x00000010) != 0) descriptions.Add("nan2008");
+                    if ((flags & 0x00000020) != 0) descriptions.Add("nan2001");
+                    
+                    // MIPS架构类型 - 检查EF_MIPS_ARCH标志 (高4位)
+                    // 对于MIPS32和MIPS64架构，高4位表示架构版本
+                    uint arch = flags & 0xF0000000;
+                    switch (arch)
+                    {
+                        case 0x00000000: descriptions.Add("mips1"); break;
+                        case 0x10000000: descriptions.Add("mips2"); break;
+                        case 0x20000000: descriptions.Add("mips3"); break;
+                        case 0x30000000: descriptions.Add("mips4"); break;
+                        case 0x40000000: descriptions.Add("mips5"); break;
+                        case 0x50000000: descriptions.Add("mips32"); break;
+                        case 0x60000000: descriptions.Add("mips32r2"); break;  // MIPS32r2
+                        case 0x70000000: descriptions.Add("mips32r2"); break;  // MIPS32r2 with o32 ABI
+                        case 0x80000000: descriptions.Add("mips64"); break;
+                        case 0x90000000: descriptions.Add("mips64r2"); break;
+                    }
+                    break;
+
+                case (ushort)EMachine.EM_ARM:
+                    // 解析ARM架构的标志
+                    // 首先检查EABI版本 (高8位)
+                    uint abiVersion = (flags & 0xFF000000);
+                    if ((abiVersion & 0x05000000) != 0) descriptions.Add("Version5 EABI");
+                    else if ((abiVersion & 0x04000000) != 0) descriptions.Add("Version4 EABI");
+                    else if (abiVersion == 0) descriptions.Add("unknown");
+                    
+                    // 检查浮点ABI类型
+                    if ((flags & 0x00000400) != 0) descriptions.Add("hard-float ABI");
+                    else if ((flags & 0x00000200) != 0) descriptions.Add("soft-float ABI");
+                    
+                    // 检查其他ARM标志
+                    if ((flags & 0x00000002) != 0) descriptions.Add("has entry point");
+                    if ((flags & 0x00800000) != 0) descriptions.Add("BE8");
+                    if ((flags & 0x00400000) != 0) descriptions.Add("interworking enabled");
+                    break;
+
+                case (ushort)EMachine.EM_PPC:
+                case (ushort)EMachine.EM_PPC64:
+                    // 解析PowerPC架构的标志
+                    if ((flags & 0x00000001) != 0) descriptions.Add("ppc_elfv1_abi");
+                    if ((flags & 0x00000002) != 0) descriptions.Add("ppc_elfv2_abi");
+                    break;
+
+                case (ushort)EMachine.EM_SPARC:
+                case (ushort)EMachine.EM_SPARC32PLUS:
+                case (ushort)EMachine.EM_SPARCV9:
+                    // 解析SPARC架构的标志
+                    if ((flags & 0x00000001) != 0) descriptions.Add("sparc_ext");
+                    if ((flags & 0x00000002) != 0) descriptions.Add("sparc_32bit");
+                    if ((flags & 0x00000004) != 0) descriptions.Add("sparc_64bit");
+                    break;
+
+                default:
+                    // 对于其他架构，只显示十六进制值
+                    break;
+            }
+
+            return string.Join(", ", descriptions);
+        }
+
     }
 }

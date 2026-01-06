@@ -40,6 +40,8 @@ namespace PersonalTools.ELFAnalyzer.Models
         PT_LOOS = 0x60000000,  // OS-specific
         PT_HIOS = 0x6FFFFFFF,  // OS-specific
         PT_LOPROC = 0x70000000,// Processor-specific
+        PT_EXIDX = 0x70000001,
+        PT_EXTAB = 0x70000002,
         PT_HIPROC = 0x7FFFFFFF,// Processor-specific
         PT_GNU_EH_FRAME = 0x6474E550, // GCC .eh_frame_hdr segment
         PT_GNU_STACK = 0x6474E551,    // Indicates stack executability

@@ -23,7 +23,7 @@ namespace PersonalTools.ELFAnalyzer
             sb.AppendLine($"  入口点地址:       {_parser.GetEntryPointAddress()}");
             sb.AppendLine($"  程序头起点:       {(long)_parser.Header.e_phoff} (bytes into file)");
             sb.AppendLine($"  节头的起点:       {(long)_parser.Header.e_shoff} (bytes into file)");
-            sb.AppendLine($"  标志:             0x{_parser.Header.e_flags:X}  {(IsPIC() ? "Position Independent Code" : "")}");
+            sb.AppendLine($"  标志:             0x{_parser.Header.e_flags:X}  {_parser.GetFormattedELFFlags()}");
             sb.AppendLine($"  本头的大小:       {_parser.GetHeaderSize()}");
             sb.AppendLine($"  程序头的大小:     {_parser.Header.e_phentsize} (bytes)");
             sb.AppendLine($"  程序头数量:       {_parser.Header.e_phnum}");
