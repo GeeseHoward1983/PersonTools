@@ -9,7 +9,7 @@ namespace PersonalTools.ELFAnalyzer
         public string GetFormattedELFHeaderInfo()
         {
             var sb = new StringBuilder();
-            sb.AppendLine("ELF Header:");
+            sb.AppendLine("ELF 头:");
             sb.AppendLine("================================================================================");
             sb.AppendLine($"  Magic:            {GetMagicString()}");
             sb.AppendLine($"  类别:             {_parser.GetELFClassName()} ({(_parser.Header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? "64-bit" : "32-bit")})");
@@ -21,8 +21,8 @@ namespace PersonalTools.ELFAnalyzer
             sb.AppendLine($"  系统架构:         {_parser.GetArchitectureName()} ({_parser.GetMachineDescription()})");
             sb.AppendLine($"  版本:             0x{_parser.Header.e_version:X}");
             sb.AppendLine($"  入口点地址:       {_parser.GetEntryPointAddress()}");
-            sb.AppendLine($"  程序头起点:       {(long)_parser.Header.e_phoff} (bytes into file)");
-            sb.AppendLine($"  节头的起点:       {(long)_parser.Header.e_shoff} (bytes into file)");
+            sb.AppendLine($"  程序头起点:       {_parser.Header.e_phoff} (bytes into file)");
+            sb.AppendLine($"  节头的起点:       {_parser.Header.e_shoff} (bytes into file)");
             sb.AppendLine($"  标志:             0x{_parser.Header.e_flags:X}  {_parser.GetFormattedELFFlags()}");
             sb.AppendLine($"  本头的大小:       {_parser.GetHeaderSize()}");
             sb.AppendLine($"  程序头的大小:     {_parser.Header.e_phentsize} (bytes)");
@@ -31,12 +31,6 @@ namespace PersonalTools.ELFAnalyzer
             sb.AppendLine($"  节头数量:         {_parser.Header.e_shnum}");
             sb.AppendLine($"  字符串表索引节头: {_parser.Header.e_shstrndx}");
             return sb.ToString();
-        }
-
-        private bool IsPIC()
-        {
-            // Check if it's a shared object file with no relocations that would prevent PIC
-            return _parser.Header.e_type == (ushort)ELFType.ET_DYN;
         }
     }
 }
