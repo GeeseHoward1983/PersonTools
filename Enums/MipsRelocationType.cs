@@ -1,4 +1,4 @@
-namespace PersonalTools.ELFAnalyzer.Models
+namespace PersonalTools.Enums
 {
     /// <summary>
     /// MIPS架构的重定位类型枚举
@@ -59,64 +59,5 @@ namespace PersonalTools.ELFAnalyzer.Models
         R_MIPS_GLOB_DAT = 51,
         R_MIPS_COPY = 126,
         R_MIPS_JUMP_SLOT = 127
-    }
-
-    /// <summary>
-    /// LoongArch架构的重定位类型枚举
-    /// </summary>
-    public enum LoongArchRelocationType : uint
-    {
-        R_LARCH_NONE = 0,
-        R_LARCH_32 = 1,
-        R_LARCH_64 = 2,
-        R_LARCH_RELATIVE = 3,
-        R_LARCH_COPY = 4,
-        R_LARCH_JUMP_SLOT = 5,
-        R_LARCH_TLS_DTPMOD32 = 6,
-        R_LARCH_TLS_DTPMOD64 = 7,
-        R_LARCH_TLS_DTPREL32 = 8,
-        R_LARCH_TLS_DTPREL64 = 9,
-        R_LARCH_TLS_TPREL32 = 10,
-        R_LARCH_TLS_TPREL64 = 11,
-        R_LARCH_IRELATIVE = 12,
-        R_LARCH_MARK_LA = 20,
-        R_LARCH_MARK_PCREL = 21,
-        R_LARCH_SOP_PUSH_PCREL = 22,
-        R_LARCH_SOP_PUSH_ABSOLUTE = 23,
-        R_LARCH_SOP_PUSH_DUP = 24,
-        R_LARCH_SOP_PUSH_GPREL = 25,
-        R_LARCH_SOP_PUSH_TLS_TPREL = 26,
-        R_LARCH_SOP_PUSH_TLS_GOT = 27,
-        R_LARCH_SOP_PUSH_TLS_GD = 28,
-        R_LARCH_SOP_PUSH_PLT_PCREL = 29,
-        R_LARCH_SOP_ASSERT = 30,
-        R_LARCH_SOP_NOT = 31,
-        R_LARCH_SOP_SUB = 32,
-        R_LARCH_SOP_SL = 33,
-        R_LARCH_SOP_SR = 34,
-        R_LARCH_SOP_ADD = 35,
-        R_LARCH_SOP_AND = 36,
-        R_LARCH_SOP_IF_ELSE = 37,
-        R_LARCH_SOP_POP_32_S_10_5 = 38,
-        R_LARCH_SOP_POP_32_U_10_12 = 39,
-        R_LARCH_SOP_POP_32_S_10_12 = 40,
-        R_LARCH_SOP_POP_32_S_10_16 = 41,
-        R_LARCH_SOP_POP_32_S_10_16_S2 = 42,
-        R_LARCH_SOP_POP_32_S_5_20 = 43,
-        R_LARCH_SOP_POP_32_S_0_5_10_16_S2 = 44,
-        R_LARCH_SOP_POP_32_S_0_10_10_16_S2 = 45,
-        R_LARCH_SOP_POP_32_U = 46,
-        R_LARCH_ADD8 = 47,
-        R_LARCH_ADD16 = 48,
-        R_LARCH_ADD24 = 49,
-        R_LARCH_ADD32 = 50,
-        R_LARCH_ADD64 = 51,
-        R_LARCH_SUB8 = 52,
-        R_LARCH_SUB16 = 53,
-        R_LARCH_SUB24 = 54,
-        R_LARCH_SUB32 = 55,
-        R_LARCH_SUB64 = 56,
-        R_LARCH_GNU_VTINHERIT = 57,
-        R_LARCH_GNU_VTENTRY = 58,
     }
 }

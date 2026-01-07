@@ -1,4 +1,4 @@
-namespace PersonalTools.ELFAnalyzer.Models
+namespace PersonalTools.Enums
 {
     /// <summary>
     /// AArch64架构的重定位类型枚举

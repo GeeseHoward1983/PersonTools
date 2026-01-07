@@ -1,4 +1,5 @@
 using PersonalTools.ELFAnalyzer.Models;
+using PersonalTools.Enums;
 using System.IO;
 
 namespace PersonalTools.ELFAnalyzer.Core

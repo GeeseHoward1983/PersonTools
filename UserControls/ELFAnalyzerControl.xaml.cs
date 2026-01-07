@@ -1,6 +1,6 @@
 using Microsoft.Win32;
 using PersonalTools.ELFAnalyzer;
-using PersonalTools.ELFAnalyzer.Models;
+using PersonalTools.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;

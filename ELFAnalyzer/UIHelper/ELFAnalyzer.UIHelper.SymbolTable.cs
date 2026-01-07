@@ -1,5 +1,6 @@
 using PersonalTools.ELFAnalyzer.Core;
 using PersonalTools.ELFAnalyzer.Models;
+using PersonalTools.Enums;
 
 namespace PersonalTools.ELFAnalyzer
 {
