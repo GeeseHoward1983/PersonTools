@@ -1,7 +1,6 @@
 using PersonalTools.ELFAnalyzer.Core;
 using PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.Enums;
-using System.Text;
 
 namespace PersonalTools.ELFAnalyzer
 {
@@ -59,42 +58,26 @@ namespace PersonalTools.ELFAnalyzer
                             ELFSymbol symbol;
                             if (!_parser._is64Bit)
                             {
-                                // 32位符号
-                                uint st_name = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize);
-                                uint st_value = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize + 4);
-                                uint st_size = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize + 8);
-                                byte st_info = symTabData[symIdx * symEntrySize + 12];
-                                byte st_other = symTabData[symIdx * symEntrySize + 13];
-                                ushort st_shndx = BitConverter.ToUInt16(symTabData, symIdx * symEntrySize + 14);
-                                
                                 symbol = new ELFSymbol
                                 {
-                                    st_name = st_name,
-                                    st_value = st_value,
-                                    st_size = st_size,
-                                    st_info = st_info,
-                                    st_other = st_other,
-                                    st_shndx = st_shndx
+                                    st_name = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize),
+                                    st_value = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize + 4),
+                                    st_size = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize + 8),
+                                    st_info = symTabData[symIdx * symEntrySize + 12],
+                                    st_other = symTabData[symIdx * symEntrySize + 13],
+                                    st_shndx = BitConverter.ToUInt16(symTabData, symIdx * symEntrySize + 14)
                                 };
                             }
                             else
-                            {
-                                // 64位符号
-                                uint st_name = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize);
-                                byte st_info = symTabData[symIdx * symEntrySize + 4];
-                                byte st_other = symTabData[symIdx * symEntrySize + 5];
-                                ushort st_shndx = BitConverter.ToUInt16(symTabData, symIdx * symEntrySize + 6);
-                                ulong st_value = BitConverter.ToUInt64(symTabData, symIdx * symEntrySize + 8);
-                                ulong st_size = BitConverter.ToUInt64(symTabData, symIdx * symEntrySize + 16);
-                                
+                            {                                
                                 symbol = new ELFSymbol
                                 {
-                                    st_name = st_name,
-                                    st_value = st_value,
-                                    st_size = st_size,
-                                    st_info = st_info,
-                                    st_other = st_other,
-                                    st_shndx = st_shndx
+                                    st_name = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize),
+                                    st_value = BitConverter.ToUInt64(symTabData, symIdx * symEntrySize + 8),
+                                    st_size = BitConverter.ToUInt64(symTabData, symIdx * symEntrySize + 16),
+                                    st_info = symTabData[symIdx * symEntrySize + 4],
+                                    st_other = symTabData[symIdx * symEntrySize + 5],
+                                    st_shndx = BitConverter.ToUInt16(symTabData, symIdx * symEntrySize + 6)
                                 };
                             }
                             symbols.Add(symbol);
@@ -170,30 +153,6 @@ namespace PersonalTools.ELFAnalyzer
             }
             
             return result;
-        }
-
-        private static string? ReadStringFromBytes(byte[] data, int offset)
-        {
-            if (offset < 0 || offset >= data.Length) return null;
-            
-            int start = offset;
-            while (start < data.Length && data[start] == 0) start++; // 跳过开头的空字符
-            
-            if (start >= data.Length) return null;
-            
-            int end = start;
-            while (end < data.Length && data[end] != 0) end++;
-            
-            if (end <= start) return null;
-            
-            try
-            {
-                return Encoding.UTF8.GetString(data, start, end - start);
-            }
-            catch
-            {
-                return null;
-            }
         }
     }
 }

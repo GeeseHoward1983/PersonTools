@@ -5,14 +5,6 @@ namespace PersonalTools
 {
     public class SHA3(int variant) : IDisposable
     {
-        // SHA3算法变体枚举
-        public enum SHA3Variant
-        {
-            SHA3_256 = 256,
-            SHA3_384 = 384,
-            SHA3_512 = 512
-        }
-
         private readonly int _outputLengthBits = variant;
 
         public byte[] ComputeHash(byte[] input)
