@@ -76,12 +76,11 @@ namespace PersonalTools.UserControls
                 // 显示符号表信息 - 使用DataGrid
                 var symbolTable = analyzer.GetSymbolTableInfoList(SectionType.SHT_SYMTAB);
                 ELFSymbolTableDataGrid.ItemsSource = symbolTable;
-
+                
                 // 显示动态符号表信息 - 使用DataGrid
                 var dynsymTable = analyzer.GetSymbolTableInfoList(SectionType.SHT_DYNSYM);
                 ELFDynsymDataGrid.ItemsSource = dynsymTable;
-
-
+                
                 // 显示动态段信息 - 使用DataGrid
                 var dynamicSection = analyzer.GetDynamicSectionInfoList();
                 ELFDynamicSectionDataGrid.ItemsSource = dynamicSection;
@@ -91,6 +90,14 @@ namespace PersonalTools.UserControls
                 
                 // 显示版本依赖信息
                 ELFVersionDependencyInfoTextBlock.Text = analyzer.GetFormattedVersionDependencyInfo();
+                
+                // 显示重定位信息 - .rela.dyn节
+                var relaDynTable = analyzer.GetRelocationInfoForSpecificSection(".rela.dyn");
+                ELFRelaDynDataGrid.ItemsSource = relaDynTable;
+                
+                // 显示重定位信息 - .rela.plt节
+                var relaPltTable = analyzer.GetRelocationInfoForSpecificSection(".rela.plt");
+                ELFRelaPltDataGrid.ItemsSource = relaPltTable;
             }
             catch (Exception ex)
             {

@@ -1,23 +1,19 @@
 using PersonalTools.PEAnalyzer.Models;
-using PersonalTools.PEAnalyzer.Resources;
 using System.IO;
 using System.Text;
 
-namespace PersonalTools
+namespace PersonalTools.Parsers
 {
-    public static partial class PEParser
+    public static class Utilties
     {
-        private static string ReadNullTerminatedString(BinaryReader reader)
+        public static string ReadNullTerminatedString(BinaryReader reader)
         {
             var sb = new StringBuilder();
             try
             {
                 byte b;
-                // 限制字符串长度以防止死循环
-                int maxLength = 1024;
-                int currentLength = 0;
 
-                while (currentLength < maxLength && (b = reader.ReadByte()) != 0)
+                while ((b = reader.ReadByte()) != 0)
                 {
                     // 确保是有效的ASCII字符
                     if (b >= 32 && b <= 126)
@@ -34,7 +30,6 @@ namespace PersonalTools
                         // 其他字符用'?'替换
                         sb.Append('?');
                     }
-                    currentLength++;
                 }
             }
             catch (Exception)
@@ -436,44 +431,6 @@ namespace PersonalTools
                 driverType += " (WDM)";
 
             return driverType;
-        }
-
-        private static List<DependencyInfo> ParseDependencies(PEInfo peInfo)
-        {
-            var dependencies = new List<DependencyInfo>();
-
-            // 从导入函数中提取依赖DLL
-            var dllNames = new HashSet<string>();
-            foreach (var import in peInfo.ImportFunctions)
-            {
-                if (!string.IsNullOrEmpty(import.DllName) && !dllNames.Contains(import.DllName))
-                {
-                    dllNames.Add(import.DllName);
-                    dependencies.Add(new DependencyInfo
-                    {
-                        Name = import.DllName,
-                        IsForwarded = false,
-                        Dependencies = []
-                    });
-                }
-            }
-
-            return dependencies;
-        }
-
-        /// <summary>
-        /// 解析PE文件的附加信息，包括版权、版本和证书信息
-        /// </summary>
-        /// <param name="fs">文件流</param>
-        /// <param name="reader">二进制读取器</param>
-        /// <param name="peInfo">PE文件信息</param>
-        private static void ParseAdditionalInfo(FileStream fs, BinaryReader reader, PEInfo peInfo)
-        {
-            // 解析资源节中的版本信息
-            PEResourceParserVersion.ParseVersionInfo(fs, reader, peInfo);
-
-            // 解析证书信息
-            PEResourceParserCertificate.ParseCertificateInfo(fs, reader, peInfo);
         }
     }
 }

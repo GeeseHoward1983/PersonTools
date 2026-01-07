@@ -1,6 +1,3 @@
-using System;
-using System.Text;
-
 namespace PersonalTools.ELFAnalyzer.Models
 {
     public class ELFSectionHeaderInfo

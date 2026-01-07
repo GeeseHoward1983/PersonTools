@@ -10,7 +10,7 @@ namespace PersonalTools.ELFAnalyzer.Core
         private List<ELFSymbol>? _symbols;
         private List<ELFDynamic>? _dynamicEntries;
         private readonly byte[] _fileData;
-        private bool _is64Bit;
+        public bool _is64Bit;
 
         public ELFHeader Header => _header;
         public List<ELFProgramHeader>? ProgramHeaders => _programHeaders;

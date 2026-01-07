@@ -144,6 +144,40 @@
                     </ScrollViewer>
                 </GroupBox>
             </TabItem>
+            
+            <!-- 重定位信息标签页 -->
+            <TabItem Header="重定位信息">
+                <GroupBox Header=".rela.dyn 重定位表" Margin="5">
+                    <DataGrid Name="ELFRelaDynDataGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="5">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="偏移" Binding="{Binding Offset}" Width="*"/>
+                            <DataGridTextColumn Header="信息" Binding="{Binding Info}" Width="*"/>
+                            <DataGridTextColumn Header="类型" Binding="{Binding Type}" Width="*"/>
+                            <DataGridTextColumn Header="符号值" Binding="{Binding SymbolValue}" Width="*"/>
+                            <DataGridTextColumn Header="符号" Binding="{Binding Symbol}" Width="2*"/>
+                            <DataGridTextColumn Header="附加数" Binding="{Binding Addend}" Width="*"/>
+                            <DataGridTextColumn Header="节名称" Binding="{Binding SectionName}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </GroupBox>
+            </TabItem>
+            
+            <!-- PLT重定位信息标签页 -->
+            <TabItem Header="PLT重定位信息">
+                <GroupBox Header=".rela.plt 重定位表" Margin="5">
+                    <DataGrid Name="ELFRelaPltDataGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="5">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="偏移" Binding="{Binding Offset}" Width="*"/>
+                            <DataGridTextColumn Header="信息" Binding="{Binding Info}" Width="*"/>
+                            <DataGridTextColumn Header="类型" Binding="{Binding Type}" Width="*"/>
+                            <DataGridTextColumn Header="符号值" Binding="{Binding SymbolValue}" Width="*"/>
+                            <DataGridTextColumn Header="符号" Binding="{Binding Symbol}" Width="2*"/>
+                            <DataGridTextColumn Header="附加数" Binding="{Binding Addend}" Width="*"/>
+                            <DataGridTextColumn Header="节名称" Binding="{Binding SectionName}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </GroupBox>
+            </TabItem>
         </TabControl>
     </Grid>
 </UserControl>

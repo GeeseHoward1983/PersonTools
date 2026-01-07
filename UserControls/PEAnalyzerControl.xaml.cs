@@ -1,4 +1,5 @@
 using Microsoft.Win32;
+using PersonalTools.Parsers;
 using PersonalTools.PEAnalyzer.Models;
 using System.IO;
 using System.Windows;
@@ -81,13 +82,13 @@ namespace PersonalTools.UserControls
             var fileInfo = new Dictionary<string, string>
             {
                 { "文件路径", currentPEInfo.FilePath },
-                { "文件类型", PEParser.GetDetailedFileType(currentPEInfo.NtHeaders.FileHeader.Characteristics, currentPEInfo.OptionalHeader.Subsystem) },
+                { "文件类型", Utilties.GetDetailedFileType(currentPEInfo.NtHeaders.FileHeader.Characteristics, currentPEInfo.OptionalHeader.Subsystem) },
                 { "架构", GetArchitectureInfo() },
                 { "位数", GetBitInfo() }
             };
 
             // 只有在是驱动程序时才添加驱动程序类型信息
-            string driverType = PEParser.GetDriverType(currentPEInfo.NtHeaders.FileHeader.Characteristics, currentPEInfo.OptionalHeader.Subsystem, currentPEInfo.OptionalHeader.DllCharacteristics);
+            string driverType = Utilties.GetDriverType(currentPEInfo.NtHeaders.FileHeader.Characteristics, currentPEInfo.OptionalHeader.Subsystem, currentPEInfo.OptionalHeader.DllCharacteristics);
             if (!string.IsNullOrEmpty(driverType))
             {
                 fileInfo.Add("驱动程序类型", driverType);
@@ -107,7 +108,7 @@ namespace PersonalTools.UserControls
             AddHeaderInfo("NT头信息", new Dictionary<string, string>
             {
                 { "签名", $"0x{currentPEInfo.NtHeaders.Signature:X8}" },
-                { "机器类型", PEParser.GetMachineTypeDescription(currentPEInfo.NtHeaders.FileHeader.Machine) },
+                { "机器类型", Utilties.GetMachineTypeDescription(currentPEInfo.NtHeaders.FileHeader.Machine) },
                 { "节数量", $"0x{currentPEInfo.NtHeaders.FileHeader.NumberOfSections:X4}" },
                 { "时间戳", $"{currentPEInfo.NtHeaders.FileHeader.TimeDateStamp:X8} ({UnixTimeStampToDateTime(currentPEInfo.NtHeaders.FileHeader.TimeDateStamp):yyyy-MM-dd HH:mm:ss})" },
                 { "可选头大小", $"0x{currentPEInfo.NtHeaders.FileHeader.SizeOfOptionalHeader:X4}" },
@@ -118,24 +119,24 @@ namespace PersonalTools.UserControls
             AddHeaderInfo("可选头信息", new Dictionary<string, string>
             {
                 { "魔数", $"0x{currentPEInfo.OptionalHeader.Magic:X4} ({(currentPEInfo.OptionalHeader.Magic == 0x10b ? "PE32" : currentPEInfo.OptionalHeader.Magic == 0x20b ? "PE32+" : "Unknown")})" },
-                { "链接器版本", $"{PEParser.GetLinkerVersionDescription(currentPEInfo.OptionalHeader.MajorLinkerVersion, currentPEInfo.OptionalHeader.MinorLinkerVersion)}" },
-                { "编译器版本", $"{PEParser.GetCompilerVersionDescription(currentPEInfo.OptionalHeader.MajorLinkerVersion, currentPEInfo.OptionalHeader.MinorLinkerVersion, currentPEInfo.CLRInfo != null)}" },
+                { "链接器版本", $"{Utilties.GetLinkerVersionDescription(currentPEInfo.OptionalHeader.MajorLinkerVersion, currentPEInfo.OptionalHeader.MinorLinkerVersion)}" },
+                { "编译器版本", $"{Utilties.GetCompilerVersionDescription(currentPEInfo.OptionalHeader.MajorLinkerVersion, currentPEInfo.OptionalHeader.MinorLinkerVersion, currentPEInfo.CLRInfo != null)}" },
                 { "代码大小", $"0x{currentPEInfo.OptionalHeader.SizeOfCode:X8}" },
                 { "已初始化数据大小", $"0x{currentPEInfo.OptionalHeader.SizeOfInitializedData:X8}" },
                 { "未初始化数据大小", $"0x{currentPEInfo.OptionalHeader.SizeOfUninitializedData:X8}" },
                 { "入口点RVA", $"0x{currentPEInfo.OptionalHeader.AddressOfEntryPoint:X8}" },
                 { "代码基址", $"0x{currentPEInfo.OptionalHeader.BaseOfCode:X8}" },
-                { "数据基址", PEParser.Is64Bit(currentPEInfo.OptionalHeader) ? "N/A (PE32+)" : $"0x{currentPEInfo.OptionalHeader.BaseOfData:X8}" },
+                { "数据基址", Utilties.Is64Bit(currentPEInfo.OptionalHeader) ? "N/A (PE32+)" : $"0x{currentPEInfo.OptionalHeader.BaseOfData:X8}" },
                 { "镜像基址", $"0x{currentPEInfo.OptionalHeader.ImageBase:X8}" },
                 { "节对齐", $"0x{currentPEInfo.OptionalHeader.SectionAlignment:X8}" },
                 { "文件对齐", $"0x{currentPEInfo.OptionalHeader.FileAlignment:X8}" },
-                { "操作系统版本", PEParser.GetOperatingSystemVersionDescription(currentPEInfo.OptionalHeader.MajorOperatingSystemVersion, currentPEInfo.OptionalHeader.MinorOperatingSystemVersion) },
-                { "镜像版本", PEParser.GetImageVersionDescription(currentPEInfo.OptionalHeader.MajorImageVersion, currentPEInfo.OptionalHeader.MinorImageVersion) },
-                { "子系统版本", PEParser.GetSubsystemVersionDescription(currentPEInfo.OptionalHeader.MajorSubsystemVersion, currentPEInfo.OptionalHeader.MinorSubsystemVersion) },
+                { "操作系统版本", Utilties.GetOperatingSystemVersionDescription(currentPEInfo.OptionalHeader.MajorOperatingSystemVersion, currentPEInfo.OptionalHeader.MinorOperatingSystemVersion) },
+                { "镜像版本", Utilties.GetImageVersionDescription(currentPEInfo.OptionalHeader.MajorImageVersion, currentPEInfo.OptionalHeader.MinorImageVersion) },
+                { "子系统版本", Utilties.GetSubsystemVersionDescription(currentPEInfo.OptionalHeader.MajorSubsystemVersion, currentPEInfo.OptionalHeader.MinorSubsystemVersion) },
                 { "镜像大小", $"0x{currentPEInfo.OptionalHeader.SizeOfImage:X8}" },
                 { "头部大小", $"0x{currentPEInfo.OptionalHeader.SizeOfHeaders:X8}" },
                 { "校验和", $"0x{currentPEInfo.OptionalHeader.CheckSum:X8}" },
-                { "子系统", PEParser.GetSubsystemDescription(currentPEInfo.OptionalHeader.Subsystem) },
+                { "子系统", Utilties.GetSubsystemDescription(currentPEInfo.OptionalHeader.Subsystem) },
                 { "DLL特征", $"0x{currentPEInfo.OptionalHeader.DllCharacteristics:X4}" },
                 { "栈保留大小", $"0x{currentPEInfo.OptionalHeader.SizeOfStackReserve:X8}" },
                 { "栈提交大小", $"0x{currentPEInfo.OptionalHeader.SizeOfStackCommit:X8}" },
@@ -350,11 +351,11 @@ namespace PersonalTools.UserControls
             // 对于.NET程序，显示PE头架构和.NET架构信息
             if (currentPEInfo.CLRInfo != null)
             {
-                return $"{PEParser.GetMachineTypeDescription(currentPEInfo.NtHeaders.FileHeader.Machine)} (.NET: {currentPEInfo.CLRInfo.Architecture})";
+                return $"{Utilties.GetMachineTypeDescription(currentPEInfo.NtHeaders.FileHeader.Machine)} (.NET: {currentPEInfo.CLRInfo.Architecture})";
             }
 
             // 对于非.NET程序，只显示PE头架构
-            return PEParser.GetMachineTypeDescription(currentPEInfo.NtHeaders.FileHeader.Machine);
+            return Utilties.GetMachineTypeDescription(currentPEInfo.NtHeaders.FileHeader.Machine);
         }
 
         private string GetBitInfo()
@@ -377,7 +378,7 @@ namespace PersonalTools.UserControls
             }
 
             // 对于非.NET程序，根据PE头判断位数
-            return PEParser.Is64Bit(currentPEInfo.OptionalHeader) ? "64位" : "32位";
+            return Utilties.Is64Bit(currentPEInfo.OptionalHeader) ? "64位" : "32位";
         }
 
         private void AddHeaderInfo(string title, System.Collections.Generic.Dictionary<string, string> info)

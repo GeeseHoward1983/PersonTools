@@ -1,3 +1,4 @@
+using PersonalTools.Parsers;
 using PersonalTools.PEAnalyzer.Models;
 using PersonalTools.PEAnalyzer.Resources;
 using System.IO;
@@ -63,7 +64,7 @@ namespace PersonalTools
                                 long tempPosition = fs.Position;
                                 fs.Position = nameOffset;
 
-                                string dllName = ReadNullTerminatedString(reader);
+                                string dllName = Utilties.ReadNullTerminatedString(reader);
                                 fs.Position = tempPosition;
 
                                 // 添加到依赖信息列表
@@ -131,7 +132,7 @@ namespace PersonalTools
                     fs.Position = thunkOffset;
 
                     // 判断是32位还是64位
-                    bool is64Bit = Is64Bit(peInfo.OptionalHeader);
+                    bool is64Bit = Utilties.Is64Bit(peInfo.OptionalHeader);
                     int thunkSize = is64Bit ? 8 : 4;
 
                     while (fs.Position + thunkSize <= fs.Length)
@@ -169,7 +170,7 @@ namespace PersonalTools
                                 ushort hint = reader.ReadUInt16();
                                 importFunc.Ordinal = hint;
 
-                                importFunc.FunctionName = ReadNullTerminatedString(reader);
+                                importFunc.FunctionName = Utilties.ReadNullTerminatedString(reader);
                                 fs.Position = tempPosition;
                             }
                             else
@@ -258,7 +259,7 @@ namespace PersonalTools
                                 {
                                     long savePos = fs.Position;
                                     fs.Position = nameOffset;
-                                    dllName = ReadNullTerminatedString(reader);
+                                    dllName = Utilties.ReadNullTerminatedString(reader);
                                     fs.Position = savePos; // 恢复位置
                                 }
                             }
@@ -344,7 +345,7 @@ namespace PersonalTools
                                                     // 读取Hint字段（2字节）
                                                     ushort hint = reader.ReadUInt16();
                                                     // 读取函数名称
-                                                    string functionName = ReadNullTerminatedString(reader);
+                                                    string functionName = Utilties.ReadNullTerminatedString(reader);
                                                     fs.Position = savePos; // 恢复位置
 
                                                     if (!string.IsNullOrEmpty(functionName))

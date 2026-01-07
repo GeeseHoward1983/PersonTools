@@ -1,3 +1,4 @@
+using PersonalTools.Parsers;
 using PersonalTools.PEAnalyzer.Models;
 using PersonalTools.PEAnalyzer.Resources;
 using System.IO;
@@ -111,7 +112,7 @@ namespace PersonalTools
                                 long tempPosition = fs.Position;
                                 fs.Position = nameOffset;
 
-                                string functionName = ReadNullTerminatedString(reader);
+                                string functionName = Utilties.ReadNullTerminatedString(reader);
                                 functionNames[nameOrdinals[i]] = functionName;
 
                                 fs.Position = tempPosition;

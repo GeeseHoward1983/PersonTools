@@ -23,10 +23,10 @@ namespace PersonalTools.ELFAnalyzer.Core
             string baseName = ExtractStringFromBytes(strData, offset) ?? string.Empty;
             if(baseName.Length == 0) return string.Empty;
             // 如果符号表是动态符号表(SHT_DYNSYM)，尝试获取版本信息
-            var symbols32 = Symbols.GetValueOrDefault(sectionType);
-            if (symbols32 != null && _versionSymbols != null)
+            var symbols = Symbols.GetValueOrDefault(sectionType);
+            if (symbols != null && _versionSymbols != null)
             {
-                int symbolIndex = symbols32.IndexOf(symbol);
+                int symbolIndex = symbols.IndexOf(symbol);
                 if (symbolIndex >= 0 && symbolIndex < _versionSymbols.Length)
                 {
                     ushort versionIndex = (ushort)(_versionSymbols[symbolIndex] & 0x7fff); // 去除隐藏标志
