@@ -30,7 +30,7 @@ namespace PersonalTools.ELFAnalyzer
                 if (sectionIndex != -1)
                 {
                     var section = _parser.SectionHeaders[sectionIndex];
-                    if (section.sh_type == (uint)SectionType.SHT_RELA) // RELA类型节
+                    if (section.sh_type == (uint)SectionType.SHT_RELA || section.sh_type == (uint)SectionType.SHT_REL) // RELA/REL类型节
                     {
                         // 计算条目数
                         int entryCount = (int)(section.sh_size / section.sh_entsize);
@@ -87,7 +87,7 @@ namespace PersonalTools.ELFAnalyzer
                         {
                             ulong offset;
                             ulong info;
-                            long addend;
+                            long addend = -1;
                             uint sym;
                             uint type;
                             string symbolName = string.Empty;
@@ -95,11 +95,21 @@ namespace PersonalTools.ELFAnalyzer
                             
                             if (!_parser._is64Bit)
                             {
-                                // 读取32位RELA条目
-                                // r_offset (4 bytes), r_info (4 bytes), r_addend (4 bytes)
-                                offset = BitConverter.ToUInt32(data, j * 12);
-                                info = BitConverter.ToUInt32(data, j * 12 + 4);
-                                addend = BitConverter.ToInt32(data, j * 12 + 8);
+                                if (sectionName.Contains("rela"))
+                                {
+                                    // 读取32位RELA条目
+                                    // r_offset (4 bytes), r_info (4 bytes), r_addend (4 bytes)
+                                    offset = BitConverter.ToUInt32(data, j * 12);
+                                    info = BitConverter.ToUInt32(data, j * 12 + 4);
+                                    addend = BitConverter.ToInt32(data, j * 12 + 8);
+                                }
+                                else
+                                {
+                                    // 读取32位REL条目
+                                    // r_offset (4 bytes), r_info (4 bytes)
+                                    offset = BitConverter.ToUInt32(data, j * 8);
+                                    info = BitConverter.ToUInt32(data, j * 8 + 4);
+                                }
 
                                 // 解析info字段
                                 sym = (uint)(info >> 8); // 符号索引
@@ -115,11 +125,21 @@ namespace PersonalTools.ELFAnalyzer
                             }
                             else
                             {
-                                // 读取64位RELA条目
-                                // r_offset (8 bytes), r_info (8 bytes), r_addend (8 bytes)
-                                offset = BitConverter.ToUInt64(data, j * 24);
-                                info = BitConverter.ToUInt64(data, j * 24 + 8);
-                                addend = BitConverter.ToInt64(data, j * 24 + 16);
+                                if (sectionName.Contains("rela"))
+                                {
+                                    // 读取64位RELA条目
+                                    // r_offset (8 bytes), r_info (8 bytes), r_addend (8 bytes)
+                                    offset = BitConverter.ToUInt64(data, j * 24);
+                                    info = BitConverter.ToUInt64(data, j * 24 + 8);
+                                    addend = BitConverter.ToInt64(data, j * 24 + 16);
+                                }
+                                else
+                                {
+                                    // 读取64位REL条目
+                                    // r_offset (8 bytes), r_info (8 bytes)
+                                    offset = BitConverter.ToUInt64(data, j * 16);
+                                    info = BitConverter.ToUInt64(data, j * 16 + 8);
+                                }
 
                                 // 解析info字段
                                 sym = (uint)(info >> 32); // 符号索引
@@ -144,7 +164,7 @@ namespace PersonalTools.ELFAnalyzer
                                 Type = typeName ?? "",
                                 SymbolValue = symbolValue.PadLeft(16),
                                 Symbol = symbolName,
-                                Addend = addend.ToString(),
+                                Addend = sectionName.Contains("rela") ? addend.ToString() : "",
                                 SectionName = actualSectionName
                             });
                         }

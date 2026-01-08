@@ -1,9 +1,5 @@
 using Microsoft.Win32;
-using PersonalTools.ELFAnalyzer;
 using PersonalTools.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -16,7 +12,7 @@ namespace PersonalTools.UserControls
             InitializeComponent();
         }
 
-        private void Grid_PreviewDragOver(object sender, System.Windows.DragEventArgs e)
+        private void Grid_PreviewDragOver(object sender, DragEventArgs e)
         {
             e.Handled = true;
         }
@@ -50,7 +46,7 @@ namespace PersonalTools.UserControls
         {
             try
             {
-                var analyzer = new PersonalTools.ELFAnalyzer.ELFAnalyzer(filePath);
+                var analyzer = new ELFAnalyzer.ELFAnalyzer(filePath);
 
                 // 显示ELF头信息
                 ELFHeaderInfoTextBlock.Text = analyzer.GetFormattedELFHeaderInfo();
@@ -94,10 +90,19 @@ namespace PersonalTools.UserControls
                 // 显示重定位信息 - .rela.dyn节
                 var relaDynTable = analyzer.GetRelocationInfoForSpecificSection(".rela.dyn");
                 ELFRelaDynDataGrid.ItemsSource = relaDynTable;
-                
+
+                // 显示重定位信息 - .rela.dyn节
+                var relDynTable = analyzer.GetRelocationInfoForSpecificSection(".rel.dyn");
+                relaDynTable.AddRange(relDynTable);
+                //ELFRelaDynDataGrid.ItemsSource = relDynTable;
+
+
                 // 显示重定位信息 - .rela.plt节
                 var relaPltTable = analyzer.GetRelocationInfoForSpecificSection(".rela.plt");
                 ELFRelaPltDataGrid.ItemsSource = relaPltTable;
+                var relPltTable = analyzer.GetRelocationInfoForSpecificSection(".rel.plt");
+                relaPltTable.AddRange(relPltTable);
+
             }
             catch (Exception ex)
             {
