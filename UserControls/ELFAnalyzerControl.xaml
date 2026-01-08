@@ -22,7 +22,7 @@
         <!-- ELF分析内容 -->
         <TabControl Grid.Row="1" Margin="5,5,5,5">
             <!-- ELF头信息标签页 -->
-            <TabItem Header="ELF头信息">
+            <TabItem Name="ELFHeaderTabItem" Header="ELF头信息">
                 <GroupBox Header="ELF Header" Margin="5">
                     <ScrollViewer>
                         <TextBlock Name="ELFHeaderInfoTextBlock" TextWrapping="Wrap" Padding="10"/>
@@ -31,7 +31,7 @@
             </TabItem>
 
             <!-- 节头信息标签页 -->
-            <TabItem Header="节头信息">
+            <TabItem Name="ELFSectionHeaderTabItem" Header="节头信息">
                 <GroupBox Header="节头" Margin="5">
                     <DataGrid Name="ELFSectionHeaderDataGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="5">
                         <DataGrid.Columns>
@@ -52,7 +52,7 @@
             </TabItem>
             
             <!-- 程序头信息标签页 -->
-            <TabItem Header="程序头信息">
+            <TabItem Name="ELFProgramHeaderTabItem" Header="程序头信息">
                 <GroupBox Header="程序头" Margin="5">
                     <DataGrid Name="ELFProgramHeaderDataGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="5">
                         <DataGrid.Columns>
@@ -70,7 +70,7 @@
             </TabItem>
 
             <!-- 节到段映射信息标签页 -->
-            <TabItem Header="节到段映射">
+            <TabItem Name="ELFSectionToSegmentMappingTabItem"  Header="节到段映射">
                 <GroupBox Header="Section to Segment Mapping" Margin="5">
                     <ScrollViewer>
                         <TextBlock Name="ELFSectionToSegmentInfoTextBlock" TextWrapping="Wrap" Padding="10"/>
@@ -79,7 +79,7 @@
             </TabItem>
 
             <!-- 动态段信息标签页 -->
-            <TabItem Header="动态段信息">
+            <TabItem Name ="ELFDynamicSectionTabItem"  Header="动态段信息">
                 <GroupBox Header="动态段" Margin="5">
                     <DataGrid Name="ELFDynamicSectionDataGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="5">
                         <DataGrid.Columns>
@@ -92,7 +92,7 @@
             </TabItem>
 
             <!-- 符号表信息标签页 -->
-            <TabItem Header="符号表信息">
+            <TabItem Name="ELFSymbolTableTabItem" Header="符号表信息" Visibility="Collapsed">
                 <GroupBox Header="符号表" Margin="5">
                     <DataGrid Name="ELFSymbolTableDataGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="5">
                         <DataGrid.Columns>
@@ -110,7 +110,7 @@
             </TabItem>
 
             <!-- 动态符号表信息标签页 -->
-            <TabItem Header="动态符号表信息">
+            <TabItem Name="ELFDynsymTabItem" Header="动态符号表信息" Visibility="Collapsed">
                 <GroupBox Header="动态符号表" Margin="5">
                     <DataGrid Name="ELFDynsymDataGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="5">
                         <DataGrid.Columns>
@@ -128,7 +128,7 @@
             </TabItem>
 
             <!-- 版本符号信息标签页 -->
-            <TabItem Header="版本符号信息">
+            <TabItem Name="ELFVersionSymbolInfoTabItem" Header="版本符号信息">
                 <GroupBox Header="版本符号信息" Margin="5">
                     <ScrollViewer>
                         <TextBlock Name="ELFVersionSymbolInfoTextBlock" TextWrapping="Wrap" Padding="10"/>
@@ -137,7 +137,7 @@
             </TabItem>
 
             <!-- 版本依赖信息标签页 -->
-            <TabItem Header="版本依赖信息">
+            <TabItem Name = "ELFVersionDependencyInfoTabItem"  Header="版本依赖信息">
                 <GroupBox Header="版本依赖信息" Margin="5">
                     <ScrollViewer>
                         <TextBlock Name="ELFVersionDependencyInfoTextBlock" TextWrapping="Wrap" Padding="10"/>
@@ -146,7 +146,7 @@
             </TabItem>
             
             <!-- 重定位信息标签页 -->
-            <TabItem Header="重定位信息">
+            <TabItem Name="ELFRelaDynTabItem" Header="重定位信息"  Visibility="Collapsed">
                 <GroupBox Header=".rela.dyn 重定位表" Margin="5">
                     <DataGrid Name="ELFRelaDynDataGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="5">
                         <DataGrid.Columns>
@@ -163,7 +163,7 @@
             </TabItem>
             
             <!-- PLT重定位信息标签页 -->
-            <TabItem Header="PLT重定位信息">
+            <TabItem Name="ELFRelaPltTabItem" Header="PLT重定位信息"  Visibility="Collapsed">
                 <GroupBox Header=".rela.plt 重定位表" Margin="5">
                     <DataGrid Name="ELFRelaPltDataGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="5">
                         <DataGrid.Columns>

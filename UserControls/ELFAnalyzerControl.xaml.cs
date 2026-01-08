@@ -72,14 +72,38 @@ namespace PersonalTools.UserControls
                 // 显示符号表信息 - 使用DataGrid
                 var symbolTable = analyzer.GetSymbolTableInfoList(SectionType.SHT_SYMTAB);
                 ELFSymbolTableDataGrid.ItemsSource = symbolTable;
+                if(symbolTable.Count > 0)
+                {
+                    ELFSymbolTableTabItem.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    ELFSymbolTableTabItem.Visibility = Visibility.Collapsed;
+                }
                 
                 // 显示动态符号表信息 - 使用DataGrid
                 var dynsymTable = analyzer.GetSymbolTableInfoList(SectionType.SHT_DYNSYM);
                 ELFDynsymDataGrid.ItemsSource = dynsymTable;
-                
+                if(dynsymTable.Count > 0)
+                {
+                    ELFDynsymTabItem.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    ELFDynsymTabItem.Visibility = Visibility.Collapsed;
+                }
+
                 // 显示动态段信息 - 使用DataGrid
                 var dynamicSection = analyzer.GetDynamicSectionInfoList();
                 ELFDynamicSectionDataGrid.ItemsSource = dynamicSection;
+                if(dynamicSection.Count > 0)
+                {
+                    ELFDynamicSectionTabItem.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    ELFDynamicSectionTabItem.Visibility = Visibility.Collapsed;
+                }
                 
                 // 显示版本符号信息
                 ELFVersionSymbolInfoTextBlock.Text = analyzer.GetFormattedVersionSymbolInfo();
@@ -87,21 +111,25 @@ namespace PersonalTools.UserControls
                 // 显示版本依赖信息
                 ELFVersionDependencyInfoTextBlock.Text = analyzer.GetFormattedVersionDependencyInfo();
                 
-                // 显示重定位信息 - .rela.dyn节
+                // 显示重定位信息
                 var relaDynTable = analyzer.GetRelocationInfoForSpecificSection(".rela.dyn");
                 ELFRelaDynDataGrid.ItemsSource = relaDynTable;
-
-                // 显示重定位信息 - .rela.dyn节
                 var relDynTable = analyzer.GetRelocationInfoForSpecificSection(".rel.dyn");
                 relaDynTable.AddRange(relDynTable);
-                //ELFRelaDynDataGrid.ItemsSource = relDynTable;
+                if (relaDynTable.Count > 0)
+                    ELFRelaDynTabItem.Visibility = Visibility.Visible;
+                else
+                    ELFRelaDynTabItem.Visibility = Visibility.Collapsed;
 
-
-                // 显示重定位信息 - .rela.plt节
+                // 显示plt重定位信息
                 var relaPltTable = analyzer.GetRelocationInfoForSpecificSection(".rela.plt");
                 ELFRelaPltDataGrid.ItemsSource = relaPltTable;
                 var relPltTable = analyzer.GetRelocationInfoForSpecificSection(".rel.plt");
                 relaPltTable.AddRange(relPltTable);
+                if (relaPltTable.Count > 0)
+                    ELFRelaPltTabItem.Visibility = Visibility.Visible;
+                else
+                    ELFRelaPltTabItem.Visibility = Visibility.Collapsed;
 
             }
             catch (Exception ex)
