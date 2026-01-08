@@ -34,11 +34,11 @@ namespace PersonalTools.ELFAnalyzer.Core
             return "UNKNOWN";
         }
 
-        public string? GetELFTypeName()
+        public string GetELFTypeName()
         {
             if (Enum.IsDefined(typeof(ELFType), _header.e_type))
             {
-                return Enum.GetName(typeof(ELFType), _header.e_type)?.Replace("ET_", "");
+                return Enum.GetName(typeof(ELFType), _header.e_type)?.Replace("ET_", "") ?? "UNKNOWN";
             }
             return "UNKNOWN";
         }
@@ -104,7 +104,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             };
         }
 
-        public string? GetFileTypeDescription()
+        public string GetFileTypeDescription()
         {
             return (ELFType)_header.e_type switch
             {
@@ -117,48 +117,48 @@ namespace PersonalTools.ELFAnalyzer.Core
             };
         }
 
-        public string? GetEntryPointAddress()
+        public string GetEntryPointAddress()
         {
             return FormatAddress(_header.e_entry);
         }
 
-        public string? GetHeaderSize()
+        public string GetHeaderSize()
         {
             return $"{_header.e_ehsize} (bytes)";
         }
 
-        public static string? GetSymbolType(byte stInfo)
+        public static string GetSymbolType(byte stInfo)
         {
             byte type = (byte)(stInfo & 0x0F);
             if (Enum.IsDefined(typeof(SymbolType), type))
             {
-                return Enum.GetName(typeof(SymbolType), type)?.Replace("STT_", "");
+                return Enum.GetName(typeof(SymbolType), type)?.Replace("STT_", "") ?? "UNKNOWN";
             }
             return "UNKNOWN";
         }
 
-        public static string? GetSymbolBinding(byte stInfo)
+        public static string GetSymbolBinding(byte stInfo)
         {
             byte binding = (byte)(stInfo >> 4);
             if (Enum.IsDefined(typeof(SymbolBinding), binding))
             {
-                return Enum.GetName(typeof(SymbolBinding), binding)?.Replace("STB_", "");
+                return Enum.GetName(typeof(SymbolBinding), binding)?.Replace("STB_", "") ?? "UNKNOWN";
             }
             return "UNKNOWN";
         }
 
-        public static string? GetSymbolVisibility(byte stOther)
+        public static string GetSymbolVisibility(byte stOther)
         {
             byte visibility = (byte)(stOther & 0x03);
             if (Enum.IsDefined(typeof(SymbolVisibility), visibility))
             {
-                return Enum.GetName(typeof(SymbolVisibility), visibility)?.Replace("STV_", "");
+                return Enum.GetName(typeof(SymbolVisibility), visibility)?.Replace("STV_", "") ?? "UNKNOWN";
             }
             return "UNKNOWN";
         }
 
         // 添加重定位类型名称获取方法
-        public static string? GetRelocationTypeName(uint type, ushort machine)
+        public static string GetRelocationTypeName(uint type, ushort machine)
         {
             // 根据机器类型返回不同的重定位类型名称
             return machine switch
@@ -174,7 +174,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             };
         }
 
-        private static string? GetX86_64RelocationTypeName(uint type)
+        private static string GetX86_64RelocationTypeName(uint type)
         {
             if (Enum.IsDefined(typeof(X86_64RelocationType), type))
             {
@@ -184,7 +184,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             return $"R_X86_64_UNKNOWN({type})";
         }
 
-        private static string? GetX86RelocationTypeName(uint type)
+        private static string GetX86RelocationTypeName(uint type)
         {
             if (Enum.IsDefined(typeof(I386RelocationType), type))
             {
@@ -194,7 +194,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             return $"R_386_UNKNOWN({type})";
         }
 
-        private static string? GetArmRelocationTypeName(uint type)
+        private static string GetArmRelocationTypeName(uint type)
         {
             if (Enum.IsDefined(typeof(ARMRelocationType), type))
             {
@@ -204,7 +204,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             return $"R_ARM_UNKNOWN({type})";
         }
 
-        private static string? GetAArch64RelocationTypeName(uint type)
+        private static string GetAArch64RelocationTypeName(uint type)
         {
             if (Enum.IsDefined(typeof(AArch64RelocationType), type))
             {
@@ -214,7 +214,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             return $"R_AARCH64_UNKNOWN({type})";
         }
 
-        private static string? GetMipsRelocationTypeName(uint type)
+        private static string GetMipsRelocationTypeName(uint type)
         {
             if (Enum.IsDefined(typeof(MipsRelocationType), type))
             {
@@ -224,7 +224,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             return $"R_MIPS_UNKNOWN({type})";
         }
 
-        private static string? GetLoongArchRelocationTypeName(uint type)
+        private static string GetLoongArchRelocationTypeName(uint type)
         {
             if (Enum.IsDefined(typeof(LoongArchRelocationType), type))
             {
@@ -321,12 +321,12 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             if (Enum.IsDefined(typeof(ProgramHeaderType), pType))
             {
-                return Enum.GetName(typeof(ProgramHeaderType), pType)?.Replace("PT_", "");
+                return Enum.GetName(typeof(ProgramHeaderType), pType)?.Replace("PT_", "") ?? "UNKNOWN";
             }
             return "UNKNOWN";
         }
 
-        public static string? GetProgramHeaderFlags(uint pFlags)
+        public static string GetProgramHeaderFlags(uint pFlags)
         {
             var descriptions = new List<string>();
 
@@ -337,11 +337,11 @@ namespace PersonalTools.ELFAnalyzer.Core
             return string.Join("", descriptions);
         }
 
-        public static string? GetSectionType(uint shType)
+        public static string GetSectionType(uint shType)
         {
             if (Enum.IsDefined(typeof(SectionType), shType))
             {
-                return Enum.GetName(typeof(SectionType), shType)?.Replace("SHT_", "");
+                return Enum.GetName(typeof(SectionType), shType)?.Replace("SHT_", "") ?? "UNKNOWN";
             }
             return "UNKNOWN";
         }
@@ -383,7 +383,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             return string.Join("", descriptions);
         }
 
-        private static string? ExtractStringFromBytes(byte[] data, int startOffset)
+        private static string ExtractStringFromBytes(byte[] data, int startOffset)
         {
             int endOffset = startOffset;
             while (endOffset < data.Length && data[endOffset] != 0)
@@ -398,7 +398,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             return string.Empty;
         }
 
-        public string? GetFormattedELFFlags()
+        public string GetFormattedELFFlags()
         {
             var descriptions = new List<string>();
             uint flags = _header.e_flags;
