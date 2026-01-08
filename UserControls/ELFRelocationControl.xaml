@@ -1,0 +1,22 @@
+<UserControl x:Class="PersonalTools.UserControls.ELFRelocationControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:PersonalTools.UserControls"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <GroupBox Header=".rela.dyn 重定位表" Margin="5">
+        <DataGrid Name="ELFRelaDynDataGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="5">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="偏移" Binding="{Binding Offset}" Width="*"/>
+                <DataGridTextColumn Header="信息" Binding="{Binding Info}" Width="*"/>
+                <DataGridTextColumn Header="类型" Binding="{Binding Type}" Width="*"/>
+                <DataGridTextColumn Header="符号值" Binding="{Binding SymbolValue}" Width="*"/>
+                <DataGridTextColumn Header="符号" Binding="{Binding Symbol}" Width="2*"/>
+                <DataGridTextColumn Header="附加数" Binding="{Binding Addend}" Width="*"/>
+                <DataGridTextColumn Header="节名称" Binding="{Binding SectionName}" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </GroupBox>
+</UserControl>

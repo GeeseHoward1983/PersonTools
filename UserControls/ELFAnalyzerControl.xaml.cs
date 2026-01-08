@@ -48,89 +48,60 @@ namespace PersonalTools.UserControls
             {
                 var analyzer = new ELFAnalyzer.ELFAnalyzer(filePath);
 
-                // 显示ELF头信息
-                ELFHeaderInfoTextBlock.Text = analyzer.GetFormattedELFHeaderInfo();
-
-                // 获取并显示解释器信息（如果存在）
+                // 更新各控件的信息
+                ELFHeaderInfoControl.SetELFHeaderInfo(analyzer.GetFormattedELFHeaderInfo());
+                
                 var interpreter = analyzer.GetInterpreterInfo();
                 if (!string.IsNullOrEmpty(interpreter))
                 {
-                    ELFHeaderInfoTextBlock.Text += $"\n\nInterpreter:\n{interpreter}\n";
+                    ELFHeaderInfoControl.SetInterpreterInfo(interpreter);
                 }
 
-                // 显示程序头信息 - 使用DataGrid
+                // 显示程序头信息
                 var programHeaders = analyzer.GetProgramHeaderInfoList();
-                ELFProgramHeaderDataGrid.ItemsSource = programHeaders;
+                ELFProgramHeaderControl.SetProgramHeadersData(programHeaders);
 
-                // 显示节头信息 - 使用DataGrid
+                // 显示节头信息
                 var sectionHeaders = analyzer.GetSectionHeaderInfoList();
-                ELFSectionHeaderDataGrid.ItemsSource = sectionHeaders;
+                ELFSectionHeaderControl.SetSectionHeadersData(sectionHeaders);
 
-                // 只显示Section to Segment mapping信息
-                ELFSectionToSegmentInfoTextBlock.Text = analyzer.GetSectionToSegmentMappingInfo();
+                // 显示节到段映射信息
+                ELFSectionToSegmentMappingControl.SetSectionToSegmentInfo(analyzer.GetSectionToSegmentMappingInfo());
 
-                // 显示符号表信息 - 使用DataGrid
+                // 显示符号表信息
                 var symbolTable = analyzer.GetSymbolTableInfoList(SectionType.SHT_SYMTAB);
-                ELFSymbolTableDataGrid.ItemsSource = symbolTable;
-                if(symbolTable.Count > 0)
-                {
-                    ELFSymbolTableTabItem.Visibility = Visibility.Visible;
-                }
-                else
-                {
-                    ELFSymbolTableTabItem.Visibility = Visibility.Collapsed;
-                }
-                
-                // 显示动态符号表信息 - 使用DataGrid
-                var dynsymTable = analyzer.GetSymbolTableInfoList(SectionType.SHT_DYNSYM);
-                ELFDynsymDataGrid.ItemsSource = dynsymTable;
-                if(dynsymTable.Count > 0)
-                {
-                    ELFDynsymTabItem.Visibility = Visibility.Visible;
-                }
-                else
-                {
-                    ELFDynsymTabItem.Visibility = Visibility.Collapsed;
-                }
+                ELFSymbolTableControl.SetSymbolTableData(symbolTable);
+                ELFSymbolTableTabItem.Visibility = symbolTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
-                // 显示动态段信息 - 使用DataGrid
+                // 显示动态符号表信息
+                var dynsymTable = analyzer.GetSymbolTableInfoList(SectionType.SHT_DYNSYM);
+                ELFDynsymControl.SetDynsymData(dynsymTable);
+                ELFDynsymTabItem.Visibility = dynsymTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+                // 显示动态段信息
                 var dynamicSection = analyzer.GetDynamicSectionInfoList();
-                ELFDynamicSectionDataGrid.ItemsSource = dynamicSection;
-                if(dynamicSection.Count > 0)
-                {
-                    ELFDynamicSectionTabItem.Visibility = Visibility.Visible;
-                }
-                else
-                {
-                    ELFDynamicSectionTabItem.Visibility = Visibility.Collapsed;
-                }
-                
+                ELFDynamicSectionControl.SetDynamicSectionData(dynamicSection);
+                ELFDynamicSectionTabItem.Visibility = dynamicSection.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
                 // 显示版本符号信息
-                ELFVersionSymbolInfoTextBlock.Text = analyzer.GetFormattedVersionSymbolInfo();
-                
+                ELFVersionSymbolInfoControl.SetVersionSymbolInfo(analyzer.GetFormattedVersionSymbolInfo());
+
                 // 显示版本依赖信息
-                ELFVersionDependencyInfoTextBlock.Text = analyzer.GetFormattedVersionDependencyInfo();
-                
+                ELFVersionDependencyInfoControl.SetVersionDependencyInfo(analyzer.GetFormattedVersionDependencyInfo());
+
                 // 显示重定位信息
                 var relaDynTable = analyzer.GetRelocationInfoForSpecificSection(".rela.dyn");
-                ELFRelaDynDataGrid.ItemsSource = relaDynTable;
                 var relDynTable = analyzer.GetRelocationInfoForSpecificSection(".rel.dyn");
                 relaDynTable.AddRange(relDynTable);
-                if (relaDynTable.Count > 0)
-                    ELFRelaDynTabItem.Visibility = Visibility.Visible;
-                else
-                    ELFRelaDynTabItem.Visibility = Visibility.Collapsed;
+                ELFRelocationControl.SetRelaDynData(relaDynTable);
+                ELFRelaDynTabItem.Visibility = relaDynTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
                 // 显示plt重定位信息
                 var relaPltTable = analyzer.GetRelocationInfoForSpecificSection(".rela.plt");
-                ELFRelaPltDataGrid.ItemsSource = relaPltTable;
                 var relPltTable = analyzer.GetRelocationInfoForSpecificSection(".rel.plt");
                 relaPltTable.AddRange(relPltTable);
-                if (relaPltTable.Count > 0)
-                    ELFRelaPltTabItem.Visibility = Visibility.Visible;
-                else
-                    ELFRelaPltTabItem.Visibility = Visibility.Collapsed;
-
+                ELFPltRelocationControl.SetRelaPltData(relaPltTable);
+                ELFRelaPltTabItem.Visibility = relaPltTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
             }
             catch (Exception ex)
             {
