@@ -21,7 +21,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             int offset = (int)symbol.st_name;
             if (offset >= strData.Length) return string.Empty;
             
-            string baseName = ELFParserUtils.ExtractStringFromBytes(strData, offset) ?? string.Empty;
+            string baseName = ELFParserUtils.ExtractStringFromBytes(strData, offset);
             if(baseName.Length == 0) return string.Empty;
             // 如果符号表是动态符号表(SHT_DYNSYM)，尝试获取版本信息
             var symbols = Symbols.GetValueOrDefault(sectionType);

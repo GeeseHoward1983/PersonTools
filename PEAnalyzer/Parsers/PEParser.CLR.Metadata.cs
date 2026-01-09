@@ -48,8 +48,7 @@ namespace PersonalTools
                 string versionString = PEResourceParserCore.ReadUnicodeStringWithMaxLength(reader, (int)length);
 
                 // 跳过对齐填充
-                long currentPosition = fs.Position;
-                long alignedPosition = (currentPosition + 3) & ~3;
+                long alignedPosition = (fs.Position + 3) & ~3;
                 if (alignedPosition < fs.Length)
                 {
                     fs.Position = alignedPosition;
@@ -81,8 +80,7 @@ namespace PersonalTools
                     }
 
                     // 对齐到4字节边界
-                    currentPosition = fs.Position;
-                    alignedPosition = (currentPosition + 3) & ~3;
+                    alignedPosition = (fs.Position + 3) & ~3;
                     if (alignedPosition < fs.Length && alignedPosition > fs.Position)
                     {
                         fs.Position = alignedPosition;

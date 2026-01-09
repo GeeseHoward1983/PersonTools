@@ -31,7 +31,7 @@ namespace PersonalTools.ELFAnalyzer
                             var stringTableSection = FindSectionByAddress(strTabAddr);
                             if (stringTableSection != null)
                             {
-                                value = ReadStringFromSection64(stringTableSection, (ulong)entry.d_val) ?? $"0x{entry.d_val:x}";
+                                value = ReadStringFromSection64(stringTableSection, entry.d_val) ?? $"0x{entry.d_val:x}";
                             }
                         }
                     }

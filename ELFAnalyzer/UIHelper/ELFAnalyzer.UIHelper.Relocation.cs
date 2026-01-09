@@ -149,13 +149,13 @@ namespace PersonalTools.ELFAnalyzer
                                 if (sym < symbols.Count)
                                 {
                                     var symbol = symbols[(int)sym];
-                                    symbolName = _parser.GetSymbolName(symbol, SectionType.SHT_DYNSYM) ?? "Unknown";
+                                    symbolName = _parser.GetSymbolName(symbol, SectionType.SHT_DYNSYM);
                                     symbolValue = $"{symbol.st_value:x16}";
                                 }
                             }
                             
                             // 获取重定位类型名称
-                            string? typeName = ELFRelocation.GetRelocationTypeName(type, _parser.Header.e_machine);
+                            string typeName = ELFRelocation.GetRelocationTypeName(type, _parser.Header.e_machine);
 
                             result.Add(new ELFRelocationInfo
                             {

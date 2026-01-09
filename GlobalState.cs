@@ -1,4 +1,5 @@
 using PersonalTools.Enums;
+using System.Xml.Linq;
 
 namespace PersonalTools
 {
@@ -12,8 +13,10 @@ namespace PersonalTools
         /// 当前语言类型
         /// 在程序启动时初始化
         /// </summary>
-        public static LanguageType CurrentLanguageType { get; set; } = GetCurrentLanguageType();
-
+        public static LanguageType CurrentLanguageType
+        {
+            get => GetCurrentLanguageType();
+        }
         /// <summary>
         /// 获取当前系统的语言类型
         /// </summary>
@@ -21,20 +24,14 @@ namespace PersonalTools
         private static LanguageType GetCurrentLanguageType()
         {
             var cultureName = System.Globalization.CultureInfo.CurrentCulture.Name;
-            if (cultureName.Equals("zh-CN", StringComparison.OrdinalIgnoreCase))
+            return cultureName switch
             {
-                return LanguageType.SimplifiedChinese;
-            }
-            else if (cultureName.Equals("zh-TW", StringComparison.OrdinalIgnoreCase) ||
-                     cultureName.Equals("zh-HK", StringComparison.OrdinalIgnoreCase) ||
-                     cultureName.Equals("zh-MO", StringComparison.OrdinalIgnoreCase))
-            {
-                return LanguageType.TraditionalChinese;
-            }
-            else
-            {
-                return LanguageType.English;
-            }
+                "zh-CN" => LanguageType.SimplifiedChinese,
+                "zh-TW" => LanguageType.TraditionalChinese,
+                "zh-HK" => LanguageType.TraditionalChinese,
+                "zh-MO" => LanguageType.TraditionalChinese,
+                _ => LanguageType.English,
+            };
         }
     }
 }

@@ -8,13 +8,8 @@ namespace PersonalTools.UserControls
 {
     public class SHA3AlgorithmOption(string name, int value)
     {
-        public string Name { get; set; } = name;
-        public int Value { get; set; } = value;
-
-        public override string ToString()
-        {
-            return Name;
-        }
+        public string Name = name;
+        public int Value = value;
     }
 
     /// <summary>

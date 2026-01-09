@@ -66,24 +66,20 @@ namespace PersonalTools
         private static int GetTableRowSize(int tableIndex, byte heapSizes, ulong maskValid, uint[] rowCounts)
         {
             // 简化的行大小计算，实际实现需要根据ECMA-335规范
+            int heapSizes1 = IsSmallIndex(heapSizes, 1) ? 2 : 4;
+            int heapSizes0 = IsSmallIndex(heapSizes, 0) ? 2 : 4;
+            int heapSizes2 = IsSmallIndex(heapSizes, 0) ? 2 : 4;
+            int codeIndexSize1 = GetCodedIndexSize(1, maskValid, rowCounts);
+            int codeIndexSize2 = GetCodedIndexSize(1, maskValid, rowCounts);
+
             return tableIndex switch
             {
                 // Module
-                0 => 2 + (IsSmallIndex(heapSizes, 1) ? 2 : 4) +
-                                           (IsSmallIndex(heapSizes, 2) ? 2 : 4) +
-                                           (IsSmallIndex(heapSizes, 0) ? 2 : 4) +
-                                           (IsSmallIndex(heapSizes, 0) ? 2 : 4),
+                0 => 2 + heapSizes1 + heapSizes2 + heapSizes0 + heapSizes0,
                 // TypeRef
-                1 => (IsSmallIndex(heapSizes, 1) ? 2 : 4) +
-                                           (IsSmallIndex(heapSizes, 2) ? 2 : 4) +
-                                           (IsSmallIndex(heapSizes, 2) ? 2 : 4),
+                1 => heapSizes1 + heapSizes2 + heapSizes2,
                 // TypeDef
-                2 => 4 + (IsSmallIndex(heapSizes, 2) ? 2 : 4) +
-                                           (IsSmallIndex(heapSizes, 2) ? 2 : 4) +
-                                           GetCodedIndexSize(1, maskValid, rowCounts) + // Extends coded index
-                                           GetCodedIndexSize(2, maskValid, rowCounts) + // FieldList coded index
-                                           GetCodedIndexSize(2, maskValid, rowCounts),// MethodList coded index
-                                                                                      // 其他表...
+                2 => 4 + heapSizes2 + heapSizes2 + codeIndexSize1 + codeIndexSize2 + codeIndexSize2,
                 _ => 16,// 默认大小
             };
         }
