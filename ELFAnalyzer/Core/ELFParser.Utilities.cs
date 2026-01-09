@@ -342,7 +342,7 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             if (Enum.IsDefined(typeof(M32RRelocationType), type))
             {
-                return Enum.GetName(typeof(M32RRelocationType), type)?.Replace("R_M32R_", "") ?? $"R_M32R_UNKNOWN({type})";
+                return Enum.GetName(typeof(M32RRelocationType), type) ?? $"R_M32R_UNKNOWN({type})";
             }
             return $"R_M32R_UNKNOWN({type})";
         }
@@ -360,7 +360,7 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             if (Enum.IsDefined(typeof(Nios2RelocationType), type))
             {
-                return Enum.GetName(typeof(Nios2RelocationType), type)?.Replace("R_NIOS2_", "") ?? $"R_NIOS2_UNKNOWN({type})";
+                return Enum.GetName(typeof(Nios2RelocationType), type) ?? $"R_NIOS2_UNKNOWN({type})";
             }
             return $"R_NIOS2_UNKNOWN({type})";
         }
@@ -369,7 +369,7 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             if (Enum.IsDefined(typeof(TILEProRelocationType), type))
             {
-                return Enum.GetName(typeof(TILEProRelocationType), type)?.Replace("R_TILEPRO_", "") ?? $"R_TILEPRO_UNKNOWN({type})";
+                return Enum.GetName(typeof(TILEProRelocationType), type) ?? $"R_TILEPRO_UNKNOWN({type})";
             }
             return $"R_TILEPRO_UNKNOWN({type})";
         }
@@ -378,7 +378,7 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             if (Enum.IsDefined(typeof(TILEGxRelocationType), type))
             {
-                return Enum.GetName(typeof(TILEGxRelocationType), type)?.Replace("R_TILEGX_", "") ?? $"R_TILEGX_UNKNOWN({type})";
+                return Enum.GetName(typeof(TILEGxRelocationType), type) ?? $"R_TILEGX_UNKNOWN({type})";
             }
             return $"R_TILEGX_UNKNOWN({type})";
         }
