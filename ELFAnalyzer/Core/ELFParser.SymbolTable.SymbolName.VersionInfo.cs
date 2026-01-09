@@ -1,5 +1,3 @@
-using PersonalTools.ELFAnalyzer.Models;
-using System.IO;
 using System.Text;
 
 namespace PersonalTools.ELFAnalyzer.Core
@@ -11,7 +9,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             var sb = new StringBuilder();
 
             // 首先检查是否存在版本符号表
-            ELFSectionHeader? verSymSection = null;
+            Models.ELFSectionHeader? verSymSection = null;
 
             if (_sectionHeaders != null)
             {
@@ -64,7 +62,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             var sb = new StringBuilder();
 
             // 检查是否存在版本需求表
-            ELFSectionHeader? verNeedSection = null;
+            Models.ELFSectionHeader? verNeedSection = null;
 
             if (_sectionHeaders != null)
             {
@@ -117,7 +115,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             return $"VER_{versionIndex}";
         }
 
-        private void ParseAndAppendVersionNeeds(ELFSectionHeader section, StringBuilder sb)
+        private void ParseAndAppendVersionNeeds(Models.ELFSectionHeader section, StringBuilder sb)
         {
             if (_sectionHeaders == null) return;
 
@@ -143,7 +141,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 var vn_next = BitConverter.ToUInt32(_fileData, (int)offset + 12);
 
                 // 获取库名称
-                string libName = ExtractStringFromBytes(strTabData, (int)vn_file) ?? "unknown";
+                string libName = ELFParserUtils.ExtractStringFromBytes(strTabData, (int)vn_file);
 
                 // 计算该库的版本依赖数量
                 int versionCount = vn_cnt;
@@ -159,7 +157,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                     var nameOffset = BitConverter.ToUInt32(_fileData, (int)auxOffset + 8);
                     var flags = BitConverter.ToUInt16(_fileData, (int)auxOffset + 6);
                     var auxNext = BitConverter.ToUInt32(_fileData, (int)auxOffset + 12);
-                    _ = ExtractStringFromBytes(strTabData, (int)nameOffset) ?? "unknown";
+                    _ = ELFParserUtils.ExtractStringFromBytes(strTabData, (int)nameOffset);
 
                     // 使用版本索引作为键来获取版本信息
                     ushort verIndex = (ushort)(flags & 0x7fff); // 去除隐藏标志

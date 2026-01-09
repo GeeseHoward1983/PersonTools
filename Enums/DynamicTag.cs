@@ -1,4 +1,4 @@
-namespace PersonalTools.ELFAnalyzer.Models
+namespace PersonalTools.Enums
 {
     public enum DynamicTag : long
     {

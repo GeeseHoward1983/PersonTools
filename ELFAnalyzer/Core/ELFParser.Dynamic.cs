@@ -31,8 +31,8 @@ namespace PersonalTools.ELFAnalyzer.Core
                 {
                     var entry = new ELFDynamic
                     {
-                        d_tag = _is64Bit ? _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadInt64LE(reader) : ReadInt64BE(reader) : _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadInt32LE(reader) : ReadInt32BE(reader),
-                        d_val = _is64Bit ? _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt64LE(reader) : ReadUInt64BE(reader) : _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader)
+                        d_tag = _is64Bit ? _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadInt64LE(reader) : ELFParserUtils.ReadInt64BE(reader) : _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadInt32LE(reader) : ELFParserUtils.ReadInt32BE(reader),
+                        d_val = _is64Bit ? _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt64LE(reader) : ELFParserUtils.ReadUInt64BE(reader) : _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader)
                     };
                     _dynamicEntries.Add(entry);
                 }

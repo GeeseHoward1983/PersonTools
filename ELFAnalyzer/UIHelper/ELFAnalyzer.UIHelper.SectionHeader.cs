@@ -18,12 +18,12 @@ namespace PersonalTools.ELFAnalyzer
                     {
                         Index = i,
                         Name = _parser.GetSectionName(i) ?? string.Empty,
-                        Type = ELFParser.GetSectionType(sh.sh_type) ?? string.Empty,
+                        Type = Core.ELFSectionHeader.GetSectionType(sh.sh_type) ?? string.Empty,
                         Address = $"0x{sh.sh_addr:x10}",
                         Offset = $"0x{sh.sh_offset:x8}",
                         Size = $"{sh.sh_size}",
                         EntSize = $"{sh.sh_entsize}",
-                        Flags = ELFParser.GetSectionFlags(sh.sh_flags, true) ?? string.Empty,
+                        Flags = Core.ELFSectionHeader.GetSectionFlags(sh.sh_flags, true) ?? string.Empty,
                         Link = $"{sh.sh_link}",
                         Info = $"{sh.sh_info}",
                         Align = $"0x{sh.sh_addralign:x}"

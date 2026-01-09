@@ -17,13 +17,13 @@ namespace PersonalTools.ELFAnalyzer
                 {
                     result.Add(new ProgramHeaderInfo
                     {
-                        Type = ELFParser.GetProgramHeaderType(ph.p_type) ?? "UNKNOWN",
+                        Type = Core.ELFSectionHeader.GetProgramHeaderType(ph.p_type) ?? "UNKNOWN",
                         Offset = $"0x{ph.p_offset:x16}",
                         VirtAddr = $"0x{ph.p_vaddr:x16}",
                         PhysAddr = $"0x{ph.p_paddr:x16}",
                         FileSize = $"{ph.p_filesz}",
                         MemSize = $"{ph.p_memsz}",
-                        Flags = ELFParser.GetProgramHeaderFlags(ph.p_flags) ?? "",
+                        Flags = Core.ELFSectionHeader.GetProgramHeaderFlags(ph.p_flags) ?? "",
                         Align = $"0x{ph.p_align:x}"
                     });
                 }

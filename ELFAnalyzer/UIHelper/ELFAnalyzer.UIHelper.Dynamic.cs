@@ -1,5 +1,6 @@
 using PersonalTools.ELFAnalyzer.Core;
 using PersonalTools.ELFAnalyzer.Models;
+using PersonalTools.Enums;
 using System.Text;
 
 namespace PersonalTools.ELFAnalyzer
@@ -14,7 +15,7 @@ namespace PersonalTools.ELFAnalyzer
             {
                 foreach (var entry in _parser.DynamicEntries)
                 {
-                    var tag = ELFParser.GetDynamicTagDescription(entry.d_tag);
+                    var tag = ELF_DYNAMIC_INFO.GetDynamicTagDescription(entry.d_tag);
                     string value = string.Empty;
 
                     // Handle entries that refer to string table
@@ -36,11 +37,11 @@ namespace PersonalTools.ELFAnalyzer
                     }
                     else if (entry.d_tag == (long)DynamicTag.DT_FLAGS)
                     {
-                        value = ELFParser.GetDynamicFlagDescription((uint)entry.d_val);
+                        value = ELF_DYNAMIC_INFO.GetDynamicFlagDescription((uint)entry.d_val);
                     }
                     else if (entry.d_tag == (long)DynamicTag.DT_FLAGS_1)
                     {
-                        value = ELFParser.GetDynamicFlag1Description((uint)entry.d_val);
+                        value = ELF_DYNAMIC_INFO.GetDynamicFlag1Description((uint)entry.d_val);
                     }
                     // Handle DT_PLTREL - should show REL or RELA
                     else if (entry.d_tag == (long)DynamicTag.DT_PLTREL)
@@ -100,7 +101,7 @@ namespace PersonalTools.ELFAnalyzer
             return 0;
         }
                 
-        private ELFSectionHeader? FindSectionByAddress(ulong address)
+        private Models.ELFSectionHeader? FindSectionByAddress(ulong address)
         {
             if (_parser.SectionHeaders != null)
             {
@@ -115,7 +116,7 @@ namespace PersonalTools.ELFAnalyzer
             return null;
         }
                 
-        private string? ReadStringFromSection64(ELFSectionHeader? section, ulong offset)
+        private string? ReadStringFromSection64(Models.ELFSectionHeader? section, ulong offset)
         {
             try
             {

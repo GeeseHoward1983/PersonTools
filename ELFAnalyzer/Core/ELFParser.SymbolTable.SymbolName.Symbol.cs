@@ -5,7 +5,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 {
     public partial class ELFParser
     {
-        public string? GetSymbolName(ELFSymbol symbol, SectionType sectionType)
+        public string GetSymbolName(ELFSymbol symbol, SectionType sectionType)
         {
             var linkedStrTabIdx32 = _linkedStrTabIdx.GetValueOrDefault(sectionType);
             if (_sectionHeaders == null || linkedStrTabIdx32 >= _sectionHeaders.Count) 
@@ -21,7 +21,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             int offset = (int)symbol.st_name;
             if (offset >= strData.Length) return string.Empty;
             
-            string baseName = ExtractStringFromBytes(strData, offset) ?? string.Empty;
+            string baseName = ELFParserUtils.ExtractStringFromBytes(strData, offset) ?? string.Empty;
             if(baseName.Length == 0) return string.Empty;
             // 如果符号表是动态符号表(SHT_DYNSYM)，尝试获取版本信息
             var symbols = Symbols.GetValueOrDefault(sectionType);
@@ -101,7 +101,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             int offset = (int)section.sh_name;
             if (offset >= strData.Length) return string.Empty;
 
-            return ExtractStringFromBytes(strData, offset);
+            return ELFParserUtils.ExtractStringFromBytes(strData, offset);
         }
     }
 }

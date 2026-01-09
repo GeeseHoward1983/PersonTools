@@ -1,4 +1,4 @@
-using PersonalTools.ELFAnalyzer.Models;
+using PersonalTools.Enums;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
@@ -37,7 +37,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             }
         }
 
-        private void ParseVerDefEntries(ELFSectionHeader section, int count)
+        private void ParseVerDefEntries(Models.ELFSectionHeader section, int count)
         {
             if (_sectionHeaders == null || _versionDefinitions == null) return;
             
@@ -66,7 +66,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 // 获取版本名称
                 long nameOffset = offset + vd_aux;
                 var nameOffsetInStrTab = BitConverter.ToUInt32(_fileData, (int)nameOffset + 8);
-                string versionName = ExtractStringFromBytes(strTabData, (int)nameOffsetInStrTab) ?? "unknown";
+                string versionName = ELFParserUtils.ExtractStringFromBytes(strTabData, (int)nameOffsetInStrTab);
                 
                 // 存储版本定义
                 ushort index = (ushort)(vd_ndx & 0x7fff); // 去除隐藏标志

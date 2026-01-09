@@ -7,7 +7,7 @@ namespace PersonalTools.ELFAnalyzer.Core
     public partial class ELFParser
     {
         private List<ELFProgramHeader>? _programHeaders;
-        private List<ELFSectionHeader>? _sectionHeaders;
+        private List<Models.ELFSectionHeader>? _sectionHeaders;
         private List<ELFSymbol>? _symbols;
         private List<ELFDynamic>? _dynamicEntries;
         private readonly byte[] _fileData;
@@ -15,7 +15,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         public ELFHeader Header => _header;
         public List<ELFProgramHeader>? ProgramHeaders => _programHeaders;
-        public List<ELFSectionHeader>? SectionHeaders => _sectionHeaders;
+        public List<Models.ELFSectionHeader>? SectionHeaders => _sectionHeaders;
         public Dictionary<SectionType, List<ELFSymbol>?> Symbols = [];
         public List<ELFDynamic>? DynamicEntries => _dynamicEntries;
         public byte[] FileData => _fileData;
@@ -84,35 +84,35 @@ namespace PersonalTools.ELFAnalyzer.Core
             // Read the rest based on endianness
             if (header.EI_DATA == (byte)ELFData.ELFDATA2LSB)
             {
-                header.e_type = ReadUInt16LE(reader);
-                header.e_machine = ReadUInt16LE(reader);
-                header.e_version = ReadUInt32LE(reader);
-                header.e_entry = header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ReadUInt64LE(reader) : ReadUInt32LE(reader);
-                header.e_phoff = header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ReadUInt64LE(reader) : ReadUInt32LE(reader);
-                header.e_shoff = header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ReadUInt64LE(reader) : ReadUInt32LE(reader);
-                header.e_flags = ReadUInt32LE(reader);
-                header.e_ehsize = ReadUInt16LE(reader);
-                header.e_phentsize = ReadUInt16LE(reader);
-                header.e_phnum = ReadUInt16LE(reader);
-                header.e_shentsize = ReadUInt16LE(reader);
-                header.e_shnum = ReadUInt16LE(reader);
-                header.e_shstrndx = ReadUInt16LE(reader);
+                header.e_type = ELFParserUtils.ReadUInt16LE(reader);
+                header.e_machine = ELFParserUtils.ReadUInt16LE(reader);
+                header.e_version = ELFParserUtils.ReadUInt32LE(reader);
+                header.e_entry = header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ELFParserUtils.ReadUInt64LE(reader) : ELFParserUtils.ReadUInt32LE(reader);
+                header.e_phoff = header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ELFParserUtils.ReadUInt64LE(reader) : ELFParserUtils.ReadUInt32LE(reader);
+                header.e_shoff = header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ELFParserUtils.ReadUInt64LE(reader) : ELFParserUtils.ReadUInt32LE(reader);
+                header.e_flags = ELFParserUtils.ReadUInt32LE(reader);
+                header.e_ehsize = ELFParserUtils.ReadUInt16LE(reader);
+                header.e_phentsize = ELFParserUtils.ReadUInt16LE(reader);
+                header.e_phnum = ELFParserUtils.ReadUInt16LE(reader);
+                header.e_shentsize = ELFParserUtils.ReadUInt16LE(reader);
+                header.e_shnum = ELFParserUtils.ReadUInt16LE(reader);
+                header.e_shstrndx = ELFParserUtils.ReadUInt16LE(reader);
             }
             else // Big endian
             {
-                header.e_type = ReadUInt16BE(reader);
-                header.e_machine = ReadUInt16BE(reader);
-                header.e_version = ReadUInt32BE(reader);
-                header.e_entry = header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ReadUInt64BE(reader) : ReadUInt32BE(reader);
-                header.e_phoff = header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ReadUInt64BE(reader) : ReadUInt32BE(reader);
-                header.e_shoff = header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ReadUInt64BE(reader) : ReadUInt32BE(reader);
-                header.e_flags = ReadUInt32BE(reader);
-                header.e_ehsize = ReadUInt16BE(reader);
-                header.e_phentsize = ReadUInt16BE(reader);
-                header.e_phnum = ReadUInt16BE(reader);
-                header.e_shentsize = ReadUInt16BE(reader);
-                header.e_shnum = ReadUInt16BE(reader);
-                header.e_shstrndx = ReadUInt16BE(reader);
+                header.e_type = ELFParserUtils.ReadUInt16BE(reader);
+                header.e_machine = ELFParserUtils.ReadUInt16BE(reader);
+                header.e_version = ELFParserUtils.ReadUInt32BE(reader);
+                header.e_entry = header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ELFParserUtils.ReadUInt64BE(reader) : ELFParserUtils.ReadUInt32BE(reader);
+                header.e_phoff = header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ELFParserUtils.ReadUInt64BE(reader) : ELFParserUtils.ReadUInt32BE(reader);
+                header.e_shoff = header.EI_CLASS == (byte)ELFClass.ELFCLASS64 ? ELFParserUtils.ReadUInt64BE(reader) : ELFParserUtils.ReadUInt32BE(reader);
+                header.e_flags = ELFParserUtils.ReadUInt32BE(reader);
+                header.e_ehsize = ELFParserUtils.ReadUInt16BE(reader);
+                header.e_phentsize = ELFParserUtils.ReadUInt16BE(reader);
+                header.e_phnum = ELFParserUtils.ReadUInt16BE(reader);
+                header.e_shentsize = ELFParserUtils.ReadUInt16BE(reader);
+                header.e_shnum = ELFParserUtils.ReadUInt16BE(reader);
+                header.e_shstrndx = ELFParserUtils.ReadUInt16BE(reader);
             }
 
             return header;
@@ -129,27 +129,27 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 var ph = new ELFProgramHeader
                 {
-                    p_type = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader)
+                    p_type = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader)
                 };
                 if (_is64Bit)
                 {
-                    ph.p_flags = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader);
-                    ph.p_offset = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt64LE(reader) : ReadUInt64BE(reader);
-                    ph.p_vaddr = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt64LE(reader) : ReadUInt64BE(reader);
-                    ph.p_paddr = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt64LE(reader) : ReadUInt64BE(reader);
-                    ph.p_filesz = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt64LE(reader) : ReadUInt64BE(reader);
-                    ph.p_memsz = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt64LE(reader) : ReadUInt64BE(reader);
-                    ph.p_align = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt64LE(reader) : ReadUInt64BE(reader);
+                    ph.p_flags = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader);
+                    ph.p_offset = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt64LE(reader) : ELFParserUtils.ReadUInt64BE(reader);
+                    ph.p_vaddr = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt64LE(reader) : ELFParserUtils.ReadUInt64BE(reader);
+                    ph.p_paddr = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt64LE(reader) : ELFParserUtils.ReadUInt64BE(reader);
+                    ph.p_filesz = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt64LE(reader) : ELFParserUtils.ReadUInt64BE(reader);
+                    ph.p_memsz = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt64LE(reader) : ELFParserUtils.ReadUInt64BE(reader);
+                    ph.p_align = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt64LE(reader) : ELFParserUtils.ReadUInt64BE(reader);
                 }
                 else
                 {
-                    ph.p_offset = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader);
-                    ph.p_vaddr = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader);
-                    ph.p_paddr = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader);
-                    ph.p_filesz = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader);
-                    ph.p_memsz = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader);
-                    ph.p_flags = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader);
-                    ph.p_align = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader);
+                    ph.p_offset = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader);
+                    ph.p_vaddr = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader);
+                    ph.p_paddr = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader);
+                    ph.p_filesz = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader);
+                    ph.p_memsz = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader);
+                    ph.p_flags = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader);
+                    ph.p_align = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader);
                 }
                 _programHeaders.Add(ph);
             }
@@ -164,69 +164,21 @@ namespace PersonalTools.ELFAnalyzer.Core
             _sectionHeaders = [];
             for (int i = 0; i < _header.e_shnum; i++)
             {
-                var sh = new ELFSectionHeader
+                var sh = new Models.ELFSectionHeader
                 {
-                    sh_name = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader),
-                    sh_type = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader),
-                    sh_flags = _is64Bit ? _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt64LE(reader) : ReadUInt64BE(reader) : _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader),
-                    sh_addr = _is64Bit ? _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt64LE(reader) : ReadUInt64BE(reader) : _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader),
-                    sh_offset = _is64Bit ? _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt64LE(reader) : ReadUInt64BE(reader) : _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader),
-                    sh_size = _is64Bit ? _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt64LE(reader) : ReadUInt64BE(reader) : _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader),
-                    sh_link = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader),
-                    sh_info = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader),
-                    sh_addralign = _is64Bit ? _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt64LE(reader) : ReadUInt64BE(reader) : _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader),
-                    sh_entsize = _is64Bit ? _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt64LE(reader) : ReadUInt64BE(reader) : _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader)
+                    sh_name = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader),
+                    sh_type = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader),
+                    sh_flags = _is64Bit ? _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt64LE(reader) : ELFParserUtils.ReadUInt64BE(reader) : _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader),
+                    sh_addr = _is64Bit ? _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt64LE(reader) : ELFParserUtils.ReadUInt64BE(reader) : _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader),
+                    sh_offset = _is64Bit ? _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt64LE(reader) : ELFParserUtils.ReadUInt64BE(reader) : _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader),
+                    sh_size = _is64Bit ? _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt64LE(reader) : ELFParserUtils.ReadUInt64BE(reader) : _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader),
+                    sh_link = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader),
+                    sh_info = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader),
+                    sh_addralign = _is64Bit ? _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt64LE(reader) : ELFParserUtils.ReadUInt64BE(reader) : _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.    ReadUInt32BE(reader),
+                    sh_entsize = _is64Bit ? _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt64LE(reader) : ELFParserUtils.ReadUInt64BE(reader) : _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader)
                 };
                 _sectionHeaders.Add(sh);
             }
-        }
-
-        private static ushort ReadUInt16LE(BinaryReader reader)
-        {
-            var bytes = reader.ReadBytes(2);
-            if (BitConverter.IsLittleEndian) return BitConverter.ToUInt16(bytes, 0);
-            Array.Reverse(bytes);
-            return BitConverter.ToUInt16(bytes, 0);
-        }
-
-        private static ushort ReadUInt16BE(BinaryReader reader)
-        {
-            var bytes = reader.ReadBytes(2);
-            if (!BitConverter.IsLittleEndian) return BitConverter.ToUInt16(bytes, 0);
-            Array.Reverse(bytes);
-            return BitConverter.ToUInt16(bytes, 0);
-        }
-
-        private static uint ReadUInt32LE(BinaryReader reader)
-        {
-            var bytes = reader.ReadBytes(4);
-            if (BitConverter.IsLittleEndian) return BitConverter.ToUInt32(bytes, 0);
-            Array.Reverse(bytes);
-            return BitConverter.ToUInt32(bytes, 0);
-        }
-
-        private static uint ReadUInt32BE(BinaryReader reader)
-        {
-            var bytes = reader.ReadBytes(4);
-            if (!BitConverter.IsLittleEndian) return BitConverter.ToUInt32(bytes, 0);
-            Array.Reverse(bytes);
-            return BitConverter.ToUInt32(bytes, 0);
-        }
-
-        private static ulong ReadUInt64LE(BinaryReader reader)
-        {
-            var bytes = reader.ReadBytes(8);
-            if (BitConverter.IsLittleEndian) return BitConverter.ToUInt64(bytes, 0);
-            Array.Reverse(bytes);
-            return BitConverter.ToUInt64(bytes, 0);
-        }
-
-        private static ulong ReadUInt64BE(BinaryReader reader)
-        {
-            var bytes = reader.ReadBytes(8);
-            if (!BitConverter.IsLittleEndian) return BitConverter.ToUInt64(bytes, 0);
-            Array.Reverse(bytes);
-            return BitConverter.ToUInt64(bytes, 0);
         }
     }
 }

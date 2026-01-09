@@ -1,6 +1,4 @@
-using PersonalTools.ELFAnalyzer.Models;
-using System.IO;
-using System.Text;
+using PersonalTools.Enums;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
@@ -39,7 +37,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             }
         }
 
-        private ELFSectionHeader? FindSectionByAddress(ulong address)
+        private Models.ELFSectionHeader? FindSectionByAddress(ulong address)
         {
             if (_sectionHeaders == null) return null;
             
@@ -53,7 +51,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             return null;
         }
 
-        private void ParseVerNeedEntries(ELFSectionHeader section, int count)
+        private void ParseVerNeedEntries(Models.ELFSectionHeader section, int count)
         {
             if (_sectionHeaders == null || _versionDependencies == null) return;
             
@@ -78,7 +76,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 var vn_next = BitConverter.ToUInt32(_fileData, (int)offset + 12);
 
                 // 获取库名称
-                _ = ExtractStringFromBytes(strTabData, (int)vn_file) ?? "unknown";
+                _ = ELFParserUtils.ExtractStringFromBytes(strTabData, (int)vn_file);
 
                 long auxOffset = offset + vn_aux;
                 int auxProcessed = 0;
@@ -89,7 +87,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                     var nameOffset = BitConverter.ToUInt32(_fileData, (int)auxOffset + 8);
                     var flags = BitConverter.ToUInt16(_fileData, (int)auxOffset + 6);
                     var auxNext = BitConverter.ToUInt32(_fileData, (int)auxOffset + 12);
-                    string versionName = ExtractStringFromBytes(strTabData, (int)nameOffset) ?? "unknown";
+                    string versionName = ELFParserUtils.ExtractStringFromBytes(strTabData, (int)nameOffset);
                     
                     // 使用版本索引作为键，而不是顺序
                     ushort verIndex = (ushort)(flags & 0x7fff); // 去除隐藏标志

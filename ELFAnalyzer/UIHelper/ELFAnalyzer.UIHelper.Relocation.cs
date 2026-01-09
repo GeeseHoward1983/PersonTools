@@ -155,7 +155,7 @@ namespace PersonalTools.ELFAnalyzer
                             }
                             
                             // 获取重定位类型名称
-                            string? typeName = ELFParser.GetRelocationTypeName(type, _parser.Header.e_machine);
+                            string? typeName = ELFRelocation.GetRelocationTypeName(type, _parser.Header.e_machine);
 
                             result.Add(new ELFRelocationInfo
                             {

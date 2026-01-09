@@ -21,9 +21,9 @@ namespace PersonalTools.ELFAnalyzer
                         Number = i,
                         Value = $"0x{sym.st_value:x12}",
                         Size = $"{sym.st_size}",
-                        Type = ELFParser.GetSymbolType(sym.st_info) ?? string.Empty,
-                        Bind = ELFParser.GetSymbolBinding(sym.st_info) ?? string.Empty,
-                        Vis = ELFParser.GetSymbolVisibility(sym.st_other) ?? string.Empty,
+                        Type = ELFSymbolInfo.GetSymbolType(sym.st_info) ?? string.Empty,
+                        Bind = ELFSymbolInfo.GetSymbolBinding(sym.st_info) ?? string.Empty,
+                        Vis = ELFSymbolInfo.GetSymbolVisibility(sym.st_other) ?? string.Empty,
                         Ndx = sym.st_shndx == 0 ? "UND" : sym.st_shndx == 0xFFF1 ? "ABS" : sym.st_shndx == 0xFFF2 ? "COM" : $"{sym.st_shndx}",
                         Name = _parser.GetSymbolName(sym, sectionType) ?? string.Empty
                     });

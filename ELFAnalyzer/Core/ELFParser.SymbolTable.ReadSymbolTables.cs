@@ -22,24 +22,24 @@ namespace PersonalTools.ELFAnalyzer.Core
                     {
                         var symbol = new ELFSymbol
                         {
-                            st_name = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader)
+                            st_name = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader)
                         };
                         if (_is64Bit)
                         {
                             symbol.st_info = reader.ReadByte();
                             symbol.st_other = reader.ReadByte();
-                            symbol.st_shndx = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt16LE(reader) : ReadUInt16BE(reader);
-                            symbol.st_value = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt64LE(reader) : ReadUInt64BE(reader);
-                            symbol.st_size = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt64LE(reader) : ReadUInt64BE(reader);
+                            symbol.st_shndx = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt16LE(reader) : ELFParserUtils.ReadUInt16BE(reader);
+                            symbol.st_value = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt64LE(reader) : ELFParserUtils.ReadUInt64BE(reader);
+                            symbol.st_size = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt64LE(reader) : ELFParserUtils.ReadUInt64BE(reader);
                         }
                         else
                         {
 
-                            symbol.st_value = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader);
-                            symbol.st_size = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt32LE(reader) : ReadUInt32BE(reader);
+                            symbol.st_value = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader);
+                            symbol.st_size = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader);
                             symbol.st_info = reader.ReadByte();
                             symbol.st_other = reader.ReadByte();
-                            symbol.st_shndx = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ReadUInt16LE(reader) : ReadUInt16BE(reader);
+                            symbol.st_shndx = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt16LE(reader) : ELFParserUtils.ReadUInt16BE(reader);
                         }
                         
                         _symbols.Add(symbol);
