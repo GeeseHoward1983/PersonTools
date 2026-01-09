@@ -2,7 +2,7 @@ using PersonalTools.PEAnalyzer.Models;
 using System.IO;
 using System.Text;
 
-namespace PersonalTools.Parsers
+namespace PersonalTools.PEAnalyzer.Parsers
 {
     public static class Utilties
     {

@@ -1,6 +1,6 @@
 using Microsoft.Win32;
-using PersonalTools.Parsers;
 using PersonalTools.PEAnalyzer.Models;
+using PersonalTools.PEAnalyzer.Parsers;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;

@@ -44,24 +44,9 @@ namespace PersonalTools.ELFAnalyzer
                         value = ELF_DYNAMIC_INFO.GetDynamicFlag1Description((uint)entry.d_val);
                     }
                     // Handle DT_PLTREL - should show REL or RELA
-                    else if (entry.d_tag == (long)DynamicTag.DT_PLTREL)
-                    {
-                        if (entry.d_val == (long)DynamicTag.DT_REL)
-                        {
-                            value = "REL";
-                        }
-                        else if (entry.d_val == (long)DynamicTag.DT_RELA)
-                        {
-                            value = "RELA";
-                        }
-                        else
-                        {
-                            value = $"0x{entry.d_val:x}"; // fallback to hex if unknown
-                        }
-                    }
                     else
                     {
-                        value = $"0x{entry.d_val:x}";
+                        value = entry.d_tag == (long)DynamicTag.DT_PLTREL ? ELFParserUtils.GetTypeName(typeof(DynamicTag), entry.d_val, "") : $"0x{entry.d_val:x}";
                     }
 
                     result.Add(new ELFDynamicSectionInfo
@@ -70,7 +55,7 @@ namespace PersonalTools.ELFAnalyzer
                         Type = tag,
                         Value = value
                     });
-                    if(entry.d_tag == 0)
+                    if(entry.d_tag == (long)DynamicTag.DT_NULL)
                     {
                         break;
                     }

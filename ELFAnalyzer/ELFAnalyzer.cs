@@ -17,8 +17,6 @@ namespace PersonalTools.ELFAnalyzer
             _parser = new ELFParser(fileData);
         }
 
-        public ELFParser Parser => _parser;
-
         private string GetMagicString()
         {
             var magic = new StringBuilder();

@@ -6,7 +6,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 {
     public partial class ELFParser
     {
-        private void ReadSymbolTables(BinaryReader reader)
+        private void ReadSymbolTables(BinaryReader reader, bool isLittleEndian)
         {
             for (int i = 0; i < _sectionHeaders?.Count; i++)
             {
@@ -22,24 +22,24 @@ namespace PersonalTools.ELFAnalyzer.Core
                     {
                         var symbol = new ELFSymbol
                         {
-                            st_name = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader)
+                            st_name = ELFParserUtils.ReadUInt32(reader, isLittleEndian)
                         };
                         if (_is64Bit)
                         {
                             symbol.st_info = reader.ReadByte();
                             symbol.st_other = reader.ReadByte();
-                            symbol.st_shndx = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt16LE(reader) : ELFParserUtils.ReadUInt16BE(reader);
-                            symbol.st_value = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt64LE(reader) : ELFParserUtils.ReadUInt64BE(reader);
-                            symbol.st_size = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt64LE(reader) : ELFParserUtils.ReadUInt64BE(reader);
+                            symbol.st_shndx = ELFParserUtils.ReadUInt16(reader, isLittleEndian);
+                            symbol.st_value = ELFParserUtils.ReadUInt64(reader, isLittleEndian);
+                            symbol.st_size = ELFParserUtils.ReadUInt64(reader, isLittleEndian);
                         }
                         else
                         {
 
-                            symbol.st_value = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader);
-                            symbol.st_size = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader);
+                            symbol.st_value = ELFParserUtils.ReadUInt32(reader, isLittleEndian);
+                            symbol.st_size = ELFParserUtils.ReadUInt32(reader, isLittleEndian);
                             symbol.st_info = reader.ReadByte();
                             symbol.st_other = reader.ReadByte();
-                            symbol.st_shndx = _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt16LE(reader) : ELFParserUtils.ReadUInt16BE(reader);
+                            symbol.st_shndx = ELFParserUtils.ReadUInt16(reader, isLittleEndian);
                         }
                         
                         _symbols.Add(symbol);

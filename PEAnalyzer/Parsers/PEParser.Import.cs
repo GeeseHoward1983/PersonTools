@@ -1,5 +1,5 @@
-using PersonalTools.Parsers;
 using PersonalTools.PEAnalyzer.Models;
+using PersonalTools.PEAnalyzer.Parsers;
 using PersonalTools.PEAnalyzer.Resources;
 using System.IO;
 

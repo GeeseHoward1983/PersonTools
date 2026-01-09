@@ -8,38 +8,22 @@ namespace PersonalTools.ELFAnalyzer.Core
     {
         public static string GetArchitectureName(ELFHeader header)
         {
-            if (Enum.IsDefined(typeof(EMachine), header.e_machine))
-            {
-                return Enum.GetName(typeof(EMachine), header.e_machine)?.Replace("EM_", "") ?? "UNKNOWN";
-            }
-            return "UNKNOWN";
+            return ELFParserUtils.GetTypeName(typeof(EMachine), header.e_machine, "");
         }
 
         public static string GetELFClassName(ELFHeader header)
         {
-            if (Enum.IsDefined(typeof(ELFClass), header.EI_CLASS))
-            {
-                return Enum.GetName(typeof(ELFClass), header.EI_CLASS)?.Replace("CLASS", "") ?? "UNKNOWN";
-            }
-            return "UNKNOWN";
+            return ELFParserUtils.GetTypeName(typeof(ELFClass), header.EI_CLASS, "");
         }
 
         public static string GetELFDataName(ELFHeader header)
         {
-            if (Enum.IsDefined(typeof(ELFData), header.EI_DATA))
-            {
-                return Enum.GetName(typeof(ELFData), header.EI_DATA)?.Replace("ELFDATA", "") ?? "UNKNOWN";
-            }
-            return "UNKNOWN";
+            return ELFParserUtils.GetTypeName(typeof(ELFData), header.EI_DATA, "");
         }
 
         public static string GetELFTypeName(ELFHeader header)
         {
-            if (Enum.IsDefined(typeof(ELFType), header.e_type))
-            {
-                return Enum.GetName(typeof(ELFType), header.e_type)?.Replace("ET_", "") ?? "UNKNOWN";
-            }
-            return "UNKNOWN";
+            return ELFParserUtils.GetTypeName(typeof(ELFType), header.e_type, "");
         }
 
         public static string GetOSABIName(ELFHeader header)
@@ -297,6 +281,88 @@ namespace PersonalTools.ELFAnalyzer.Core
             return $"{header.e_ehsize} (bytes)";
         }
 
+        private static string GetMIPSArchitectureName(uint flags)
+        {
+            // MIPS架构类型 - 检查EF_MIPS_ARCH标志 (高4位)
+            // 对于MIPS32和MIPS64架构，高4位表示架构版本
+            uint arch = flags & 0xF0000000;
+            return arch switch
+            {
+                0x00000000 => "mips1",
+                0x10000000 => "mips2",
+                0x20000000 => "mips3",
+                0x30000000 => "mips4",
+                0x40000000 => "mips5",
+                0x50000000 => "mips32",
+                0x60000000 => "mips32r2",// MIPS32r2
+                0x70000000 => "mips32r2",// MIPS32r2 with o32 ABI
+                0x80000000 => "mips64",
+                0x90000000 => "mips64r2",
+                _ => "unknown",
+            };
+        }
+        private static List<string> GetMIPSFormattedELFFlags(uint flags)
+        {
+            var descriptions = new List<string>();
+
+            if ((flags & 0x00000001) != 0) descriptions.Add("noreorder");
+            if ((flags & 0x00000002) != 0) descriptions.Add("pic");
+            if ((flags & 0x00000004) != 0) descriptions.Add("cpic");
+
+            // MIPS ABI类型
+            if ((flags & 0x00001000) != 0) descriptions.Add("o32");
+            if ((flags & 0x00002000) != 0) descriptions.Add("o64");
+            if ((flags & 0x00004000) != 0) descriptions.Add("n32");
+            if ((flags & 0x00000010) != 0) descriptions.Add("nan2008");
+            if ((flags & 0x00000020) != 0) descriptions.Add("nan2001");
+
+            descriptions.Add(GetMIPSArchitectureName(flags));
+            return descriptions;
+        }
+
+        private static List<string> GetARMSFormattedELFFlags(uint flags)
+        {
+            var descriptions = new List<string>();
+            // 解析ARM架构的标志
+            // 首先检查EABI版本 (高8位)
+            uint abiVersion = (flags & 0xFF000000);
+            if ((abiVersion & 0x05000000) != 0) descriptions.Add("Version5 EABI");
+            else if ((abiVersion & 0x04000000) != 0) descriptions.Add("Version4 EABI");
+            else if (abiVersion == 0) descriptions.Add("unknown");
+
+            // 检查浮点ABI类型
+            if ((flags & 0x00000400) != 0) descriptions.Add("hard-float ABI");
+            else if ((flags & 0x00000200) != 0) descriptions.Add("soft-float ABI");
+
+            // 检查其他ARM标志
+            if ((flags & 0x00000002) != 0) descriptions.Add("has entry point");
+            if ((flags & 0x00800000) != 0) descriptions.Add("BE8");
+            if ((flags & 0x00400000) != 0) descriptions.Add("interworking enabled");
+
+            return descriptions;
+        }
+
+        private static List<string> GetPPCFormattedELFFlags(uint flags)
+        {
+            var descriptions = new List<string>();
+            // 解析PowerPC架构的标志
+            if ((flags & 0x00000001) != 0) descriptions.Add("ppc_elfv1_abi");
+            if ((flags & 0x00000002) != 0) descriptions.Add("ppc_elfv2_abi");
+
+            return descriptions;
+        }
+
+        private static List<string> GetSPARCFormattedELFFlags(uint flags)
+        {
+            var descriptions = new List<string>();
+            // 解析SPARC架构的标志
+            if ((flags & 0x00000001) != 0) descriptions.Add("sparc_ext");
+            if ((flags & 0x00000002) != 0) descriptions.Add("sparc_32bit");
+            if ((flags & 0x00000004) != 0) descriptions.Add("sparc_64bit");
+
+            return descriptions;
+        }
+
         public static string GetFormattedELFFlags(ELFHeader header)
         {
             var descriptions = new List<string>();
@@ -306,68 +372,22 @@ namespace PersonalTools.ELFAnalyzer.Core
             switch (header.e_machine)
             {
                 case (ushort)EMachine.EM_MIPS:
-                    // 解析MIPS架构的标志
-                    if ((flags & 0x00000001) != 0) descriptions.Add("noreorder");
-                    if ((flags & 0x00000002) != 0) descriptions.Add("pic");
-                    if ((flags & 0x00000004) != 0) descriptions.Add("cpic");
-                    
-                    // MIPS ABI类型
-                    if ((flags & 0x00001000) != 0) descriptions.Add("o32");
-                    if ((flags & 0x00002000) != 0) descriptions.Add("o64");
-                    if ((flags & 0x00004000) != 0) descriptions.Add("n32");
-                    if ((flags & 0x00000010) != 0) descriptions.Add("nan2008");
-                    if ((flags & 0x00000020) != 0) descriptions.Add("nan2001");
-                    
-                    // MIPS架构类型 - 检查EF_MIPS_ARCH标志 (高4位)
-                    // 对于MIPS32和MIPS64架构，高4位表示架构版本
-                    uint arch = flags & 0xF0000000;
-                    switch (arch)
-                    {
-                        case 0x00000000: descriptions.Add("mips1"); break;
-                        case 0x10000000: descriptions.Add("mips2"); break;
-                        case 0x20000000: descriptions.Add("mips3"); break;
-                        case 0x30000000: descriptions.Add("mips4"); break;
-                        case 0x40000000: descriptions.Add("mips5"); break;
-                        case 0x50000000: descriptions.Add("mips32"); break;
-                        case 0x60000000: descriptions.Add("mips32r2"); break;  // MIPS32r2
-                        case 0x70000000: descriptions.Add("mips32r2"); break;  // MIPS32r2 with o32 ABI
-                        case 0x80000000: descriptions.Add("mips64"); break;
-                        case 0x90000000: descriptions.Add("mips64r2"); break;
-                    }
+                    descriptions = GetMIPSFormattedELFFlags(flags);
                     break;
 
                 case (ushort)EMachine.EM_ARM:
-                    // 解析ARM架构的标志
-                    // 首先检查EABI版本 (高8位)
-                    uint abiVersion = (flags & 0xFF000000);
-                    if ((abiVersion & 0x05000000) != 0) descriptions.Add("Version5 EABI");
-                    else if ((abiVersion & 0x04000000) != 0) descriptions.Add("Version4 EABI");
-                    else if (abiVersion == 0) descriptions.Add("unknown");
-                    
-                    // 检查浮点ABI类型
-                    if ((flags & 0x00000400) != 0) descriptions.Add("hard-float ABI");
-                    else if ((flags & 0x00000200) != 0) descriptions.Add("soft-float ABI");
-                    
-                    // 检查其他ARM标志
-                    if ((flags & 0x00000002) != 0) descriptions.Add("has entry point");
-                    if ((flags & 0x00800000) != 0) descriptions.Add("BE8");
-                    if ((flags & 0x00400000) != 0) descriptions.Add("interworking enabled");
+                    descriptions = GetARMSFormattedELFFlags(flags);
                     break;
 
                 case (ushort)EMachine.EM_PPC:
                 case (ushort)EMachine.EM_PPC64:
-                    // 解析PowerPC架构的标志
-                    if ((flags & 0x00000001) != 0) descriptions.Add("ppc_elfv1_abi");
-                    if ((flags & 0x00000002) != 0) descriptions.Add("ppc_elfv2_abi");
+                    descriptions = GetPPCFormattedELFFlags(flags);
                     break;
 
                 case (ushort)EMachine.EM_SPARC:
                 case (ushort)EMachine.EM_SPARC32PLUS:
                 case (ushort)EMachine.EM_SPARCV9:
-                    // 解析SPARC架构的标志
-                    if ((flags & 0x00000001) != 0) descriptions.Add("sparc_ext");
-                    if ((flags & 0x00000002) != 0) descriptions.Add("sparc_32bit");
-                    if ((flags & 0x00000004) != 0) descriptions.Add("sparc_64bit");
+                    descriptions = GetSPARCFormattedELFFlags(flags);
                     break;
 
                 default:

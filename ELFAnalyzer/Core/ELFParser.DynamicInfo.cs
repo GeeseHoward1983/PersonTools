@@ -6,11 +6,7 @@ namespace PersonalTools.ELFAnalyzer.Core
     {
         public static string GetDynamicTagDescription(long dTag)
         {
-            if (Enum.IsDefined(typeof(DynamicTag), dTag))
-            {
-                return Enum.GetName(typeof(DynamicTag), dTag)?.Replace("DT_", "") ?? "UNKNOWN";
-            }
-            return "UNKNOWN";
+            return ELFParserUtils.GetTypeName(typeof(DynamicTag), dTag, "");
         }
 
         public static string GetDynamicFlagDescription(uint flags)

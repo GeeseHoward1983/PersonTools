@@ -1,4 +1,3 @@
-using PersonalTools.ELFAnalyzer.Core;
 using PersonalTools.ELFAnalyzer.Models;
 
 namespace PersonalTools.ELFAnalyzer
@@ -23,7 +22,7 @@ namespace PersonalTools.ELFAnalyzer
                         Offset = $"0x{sh.sh_offset:x8}",
                         Size = $"{sh.sh_size}",
                         EntSize = $"{sh.sh_entsize}",
-                        Flags = Core.ELFSectionHeader.GetSectionFlags(sh.sh_flags, true) ?? string.Empty,
+                        Flags = Core.ELFSectionHeader.GetSectionFlags(sh.sh_flags) ?? string.Empty,
                         Link = $"{sh.sh_link}",
                         Info = $"{sh.sh_info}",
                         Align = $"0x{sh.sh_addralign:x}"

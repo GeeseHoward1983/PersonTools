@@ -6,7 +6,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 {
     public partial class ELFParser
     {
-        private void ReadDynamicEntries(BinaryReader reader)
+        private void ReadDynamicEntries(BinaryReader reader, bool isLittleEndian)
         {
             // Find the dynamic section
             int dynamicSectionIndex = -1;
@@ -31,8 +31,8 @@ namespace PersonalTools.ELFAnalyzer.Core
                 {
                     var entry = new ELFDynamic
                     {
-                        d_tag = _is64Bit ? _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadInt64LE(reader) : ELFParserUtils.ReadInt64BE(reader) : _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadInt32LE(reader) : ELFParserUtils.ReadInt32BE(reader),
-                        d_val = _is64Bit ? _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt64LE(reader) : ELFParserUtils.ReadUInt64BE(reader) : _header.EI_DATA == (byte)ELFData.ELFDATA2LSB ? ELFParserUtils.ReadUInt32LE(reader) : ELFParserUtils.ReadUInt32BE(reader)
+                        d_tag = _is64Bit ? ELFParserUtils.ReadInt64(reader, isLittleEndian) : ELFParserUtils.ReadInt32(reader, isLittleEndian),
+                        d_val = _is64Bit ? ELFParserUtils.ReadUInt64(reader, isLittleEndian) : ELFParserUtils.ReadUInt32(reader, isLittleEndian)
                     };
                     _dynamicEntries.Add(entry);
                 }
