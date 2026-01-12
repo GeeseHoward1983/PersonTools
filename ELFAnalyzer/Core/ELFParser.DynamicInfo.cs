@@ -4,7 +4,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 {
     public static class ELF_DYNAMIC_INFO
     {
-        public static string GetDynamicTagDescription(long dTag)
+        public static string GetDynamicTagDescription(ulong dTag)
         {
             return ELFParserUtils.GetTypeName(typeof(DynamicTag), dTag, "");
         }

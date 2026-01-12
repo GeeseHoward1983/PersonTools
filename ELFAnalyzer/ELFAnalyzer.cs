@@ -40,5 +40,10 @@ namespace PersonalTools.ELFAnalyzer
         {
             return _parser.GetFormattedVersionDependencyInfo();
         }
+
+        public string GetFormattedVersionDefinitionInfo()
+        {
+            return _parser.GetFormattedVersionDefinitionInfo();
+        }
     }
 }

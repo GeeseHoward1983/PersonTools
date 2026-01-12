@@ -1,4 +1,5 @@
 using System.IO;
+using System.Windows;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
@@ -66,9 +67,16 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         public static string GetTypeName(Type T, object type, string prefix)
         {
-            if (Enum.IsDefined(T, type))
+            try
             {
-                return Enum.GetName(T, type) ?? $"{prefix}UNKNOWN({type})";
+                if (Enum.IsDefined(T, type))
+                {
+                    return Enum.GetName(T, type) ?? $"{prefix}UNKNOWN({type})";
+                }
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.ToString());
             }
             return $"{prefix}UNKNOWN({type})";
         }

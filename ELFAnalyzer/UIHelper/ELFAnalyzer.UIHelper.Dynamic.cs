@@ -15,7 +15,7 @@ namespace PersonalTools.ELFAnalyzer
             {
                 foreach (var entry in _parser.DynamicEntries)
                 {
-                    var tag = ELF_DYNAMIC_INFO.GetDynamicTagDescription(entry.d_tag);
+                    var tag = ELF_DYNAMIC_INFO.GetDynamicTagDescription((ulong)entry.d_tag);
                     string value = string.Empty;
 
                     // Handle entries that refer to string table
@@ -80,7 +80,7 @@ namespace PersonalTools.ELFAnalyzer
                 var entry = _parser.DynamicEntries.FirstOrDefault(e => e.d_tag == (long)tag);
                 if (entry.d_tag != 0)
                 {
-                    return (ulong)entry.d_val;
+                    return entry.d_val;
                 }
             }
             return 0;

@@ -87,7 +87,7 @@ namespace PersonalTools.UserControls
                 ELFVersionSymbolInfoControl.SetVersionSymbolInfo(analyzer.GetFormattedVersionSymbolInfo());
 
                 // 显示版本依赖信息
-                ELFVersionDependencyInfoControl.SetVersionDependencyInfo(analyzer.GetFormattedVersionDependencyInfo());
+                ELFVersionDependencyInfoControl.SetVersionDependencyInfo(analyzer.GetFormattedVersionDefinitionInfo() + "\n\n" + analyzer.GetFormattedVersionDependencyInfo());
 
                 // 显示重定位信息
                 var relaDynTable = analyzer.GetRelocationInfoForSpecificSection(".rela.dyn");

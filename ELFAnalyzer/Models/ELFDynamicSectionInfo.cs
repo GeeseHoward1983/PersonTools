@@ -8,8 +8,8 @@ namespace PersonalTools.ELFAnalyzer.Models
 {
     public class ELFDynamicSectionInfo
     {
-        public required string Tag;
-        public required string Type;
-        public required string Value;
+        public required string Tag { get; set; }
+        public required string Type { get; set; }
+        public required string Value { get; set; }
     }
 }

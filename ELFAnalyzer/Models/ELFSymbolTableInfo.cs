@@ -2,13 +2,13 @@ namespace PersonalTools.ELFAnalyzer.Models
 {
     public class ELFSymbolTableInfo
     {
-        public int Number;
-        public required string Value;
-        public required string Size;
-        public required string Type;
-        public required string Bind;
-        public required string Vis;
-        public required string Ndx;
-        public required string Name;
+        public int Number { get; set; }
+        public required string Value { get; set; }
+        public required string Size { get; set; }
+        public required string Type { get; set; }
+        public required string Bind { get; set; }
+        public required string Vis { get; set; }
+        public required string Ndx { get; set; }
+        public required string Name { get; set; }
     }
 }

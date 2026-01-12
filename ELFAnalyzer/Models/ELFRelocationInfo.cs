@@ -2,12 +2,12 @@ namespace PersonalTools.ELFAnalyzer.Models
 {
     public class ELFRelocationInfo
     {
-        public required string Offset;
-        public required string Info;
-        public required string Type;
-        public required string SymbolValue;
-        public required string Symbol;
-        public required string Addend;
-        public required string SectionName;
+        public required string Offset { get; set; }
+        public required string Info { get; set; }
+        public required string Type { get; set; }
+        public required string SymbolValue { get; set; }
+        public required string Symbol { get; set; }
+        public required string Addend { get; set; }
+        public required string SectionName { get; set; }
     }
 }
