@@ -12,7 +12,7 @@ namespace PersonalTools.ELFAnalyzer
 
             if (_parser.Symbols != null && _parser.Symbols.Count > 0)
             {
-                List<ELFSymbol>? symbols = _parser.Symbols?.GetValueOrDefault(sectionType);
+                List<ELFSymbol>? symbols = _parser.Symbols.GetValueOrDefault(sectionType);
                 for (int i = 0; i < symbols?.Count; i++)
                 {
                     var sym = symbols[i];
@@ -25,7 +25,7 @@ namespace PersonalTools.ELFAnalyzer
                         Bind = ELFSymbolInfo.GetSymbolBinding(sym.st_info) ?? string.Empty,
                         Vis = ELFSymbolInfo.GetSymbolVisibility(sym.st_other) ?? string.Empty,
                         Ndx = sym.st_shndx == 0 ? "UND" : sym.st_shndx == 0xFFF1 ? "ABS" : sym.st_shndx == 0xFFF2 ? "COM" : $"{sym.st_shndx}",
-                        Name = _parser.GetSymbolName(sym, sectionType) ?? string.Empty
+                        Name = SymbleName.GetSymbolName(_parser, sym, sectionType) ?? string.Empty
                     });
                 }
             }

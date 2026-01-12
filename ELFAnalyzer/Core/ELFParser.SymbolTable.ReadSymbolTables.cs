@@ -4,19 +4,19 @@ using System.IO;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public partial class ELFParser
+    public partial class SymbleTable
     {
-        private void ReadSymbolTables(BinaryReader reader, bool isLittleEndian)
+        public static void ReadSymbolTables(ELFParser parser, BinaryReader reader, bool isLittleEndian)
         {
-            for (int i = 0; i < _sectionHeaders?.Count; i++)
+            for (int i = 0; i < parser.SectionHeaders?.Count; i++)
             {
-                var section = _sectionHeaders[i];
+                var section = parser.SectionHeaders[i];
                 if (section.sh_type == (uint)SectionType.SHT_SYMTAB || section.sh_type == (uint)SectionType.SHT_DYNSYM)
                 {
                     reader.BaseStream.Seek((long)section.sh_offset, SeekOrigin.Begin);
 
                     int symbolCount = (int)(section.sh_size / section.sh_entsize);
-                    _symbols = new List<ELFSymbol>(symbolCount);
+                    var _symbols = new List<ELFSymbol>(symbolCount);
 
                     for (int j = 0; j < symbolCount; j++)
                     {
@@ -24,7 +24,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                         {
                             st_name = ELFParserUtils.ReadUInt32(reader, isLittleEndian)
                         };
-                        if (_is64Bit)
+                        if (parser.Is64Bit)
                         {
                             symbol.st_info = reader.ReadByte();
                             symbol.st_other = reader.ReadByte();
@@ -44,9 +44,9 @@ namespace PersonalTools.ELFAnalyzer.Core
                         
                         _symbols.Add(symbol);
                     }
-                    Symbols.Add((SectionType)section.sh_type, _symbols);
+                    parser.Symbols.Add((SectionType)section.sh_type, _symbols);
                     // 记录符号表关联的字符串表索引
-                    _linkedStrTabIdx.Add((SectionType)section.sh_type, section.sh_link);
+                    parser.LinkedStrTabIdx.Add((SectionType)section.sh_type, section.sh_link);
                 }
             }
         }

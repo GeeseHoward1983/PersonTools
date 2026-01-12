@@ -1,26 +1,22 @@
-using PersonalTools.ELFAnalyzer.Models;
-using System.IO;
-using System.Text;
-
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public partial class ELFParser
+    public partial class VersionSymbleTable
     {
         // 解析版本信息
-        private void ReadVersionInformation()
+        public static void ReadVersionInformation(ELFParser parser)
         {
             // 初始化版本定义和依赖字典
-            _versionDefinitions = [];
-            _versionDependencies = [];
+            parser.VersionDefinitions = [];
+            parser.VersionDependencies = [];
             
             // 解析版本符号表
-            ParseVersionSymbolTable();
+            ParseVersionSymbolTable(parser);
             
             // 解析版本定义
-            ParseVersionDefinitions();
+            ParseVersionDefinitions(parser);
             
             // 解析版本需求
-            ParseVersionDependencies();
+            ParseVersionDependencies(parser);
         }
     }
 }

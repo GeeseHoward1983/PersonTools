@@ -15,7 +15,7 @@ namespace PersonalTools.ELFAnalyzer
             {
                 foreach (var entry in _parser.DynamicEntries)
                 {
-                    var tag = ELF_DYNAMIC_INFO.GetDynamicTagDescription((ulong)entry.d_tag);
+                    var tag = ELFDynamicInfo.GetDynamicTagDescription((ulong)entry.d_tag);
                     string value = string.Empty;
 
                     // Handle entries that refer to string table
@@ -37,11 +37,11 @@ namespace PersonalTools.ELFAnalyzer
                     }
                     else if (entry.d_tag == (long)DynamicTag.DT_FLAGS)
                     {
-                        value = ELF_DYNAMIC_INFO.GetDynamicFlagDescription((uint)entry.d_val);
+                        value = ELFDynamicInfo.GetDynamicFlagDescription((uint)entry.d_val);
                     }
                     else if (entry.d_tag == (long)DynamicTag.DT_FLAGS_1)
                     {
-                        value = ELF_DYNAMIC_INFO.GetDynamicFlag1Description((uint)entry.d_val);
+                        value = ELFDynamicInfo.GetDynamicFlag1Description((uint)entry.d_val);
                     }
                     // Handle DT_PLTREL - should show REL or RELA
                     else

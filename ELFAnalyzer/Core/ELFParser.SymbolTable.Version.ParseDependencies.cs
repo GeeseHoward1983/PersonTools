@@ -2,17 +2,17 @@ using PersonalTools.Enums;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public partial class ELFParser
+    public partial class VersionSymbleTable
     {
-        private void ParseVersionDependencies()
+        private static void ParseVersionDependencies(ELFParser parser)
         {
             // 查找版本依赖 (DT_VERNEED)
             long verneedAddr = 0;
             long verneedNum = 0;
 
-            if (_dynamicEntries != null)
+            if (parser.DynamicEntries != null)
             {
-                foreach (var entry in _dynamicEntries)
+                foreach (var entry in parser.DynamicEntries)
                 {
                     if (entry.d_tag == (long)DynamicTag.DT_VERNEED)
                     {
@@ -27,21 +27,21 @@ namespace PersonalTools.ELFAnalyzer.Core
 
             if (verneedAddr > 0 && verneedNum > 0)
             {
-                _versionDependencies = [];
+                parser.VersionDependencies = [];
 
-                var verneedSection = FindSectionByAddress((ulong)verneedAddr);
+                var verneedSection = FindSectionByAddress(parser, (ulong)verneedAddr);
                 if (verneedSection != null)
                 {
-                    ParseVerNeedEntries(verneedSection.Value, (int)verneedNum);
+                    ParseVerNeedEntries(parser, verneedSection.Value, (int)verneedNum);
                 }
             }
         }
 
-        private Models.ELFSectionHeader? FindSectionByAddress(ulong address)
+        private static Models.ELFSectionHeader? FindSectionByAddress(ELFParser parser, ulong address)
         {
-            if (_sectionHeaders == null) return null;
+            if (parser.SectionHeaders == null) return null;
             
-            foreach (var section in _sectionHeaders)
+            foreach (var section in parser.SectionHeaders)
             {
                 if (section.sh_addr == address)
                 {
@@ -51,59 +51,59 @@ namespace PersonalTools.ELFAnalyzer.Core
             return null;
         }
 
-        private void ParseVerNeedEntries(Models.ELFSectionHeader section, int count)
+        private static void ParseVerNeedEntries(ELFParser parser, Models.ELFSectionHeader section, int count)
         {
-            if (_sectionHeaders == null || _versionDependencies == null) return;
+            if (parser.SectionHeaders == null || parser.VersionDependencies == null) return;
             
             // 找到版本需求字符串表
             int strTabIdx = (int)section.sh_link;
-            if (strTabIdx >= _sectionHeaders.Count) return;
+            if (strTabIdx >= parser.SectionHeaders.Count) return;
             
-            var strTabSection = _sectionHeaders[strTabIdx];
+            var strTabSection = parser.SectionHeaders[strTabIdx];
             var strTabData = new byte[strTabSection.sh_size];
-            Array.Copy(_fileData, (long)strTabSection.sh_offset, strTabData, 0, (int)strTabSection.sh_size);
+            Array.Copy(parser.FileData, (long)strTabSection.sh_offset, strTabData, 0, (int)strTabSection.sh_size);
             
             long offset = (long)section.sh_offset;
             int processed = 0;
-            
-            while (processed < count && offset < _fileData.Length)
+
+            while (processed < count && offset < parser.FileData.Length)
             {
                 // 读取版本需求结构
-                _ = BitConverter.ToUInt16(_fileData, (int)offset);
-                var vn_cnt = BitConverter.ToUInt16(_fileData, (int)offset + 2);
-                var vn_file = BitConverter.ToUInt32(_fileData, (int)offset + 4);
-                var vn_aux = BitConverter.ToUInt32(_fileData, (int)offset + 8);
-                var vn_next = BitConverter.ToUInt32(_fileData, (int)offset + 12);
+                _ = BitConverter.ToUInt16(parser.FileData, (int)offset);
+                var vn_cnt = BitConverter.ToUInt16(parser.FileData, (int)offset + 2);
+                var vn_file = BitConverter.ToUInt32(parser.FileData, (int)offset + 4);
+                var vn_aux = BitConverter.ToUInt32(parser.FileData, (int)offset + 8);
+                var vn_next = BitConverter.ToUInt32(parser.FileData, (int)offset + 12);
 
                 // 获取库名称
                 _ = ELFParserUtils.ExtractStringFromBytes(strTabData, (int)vn_file);
 
                 long auxOffset = offset + vn_aux;
                 int auxProcessed = 0;
-                
+
                 // 遍历辅助条目
-                while (auxProcessed < vn_cnt && auxOffset < _fileData.Length)
+                while (auxProcessed < vn_cnt && auxOffset < parser.FileData.Length)
                 {
-                    var nameOffset = BitConverter.ToUInt32(_fileData, (int)auxOffset + 8);
-                    var flags = BitConverter.ToUInt16(_fileData, (int)auxOffset + 6);
-                    var auxNext = BitConverter.ToUInt32(_fileData, (int)auxOffset + 12);
+                    var nameOffset = BitConverter.ToUInt32(parser.FileData, (int)auxOffset + 8);
+                    var flags = BitConverter.ToUInt16(parser.FileData, (int)auxOffset + 6);
+                    var auxNext = BitConverter.ToUInt32(parser.FileData, (int)auxOffset + 12);
                     string versionName = ELFParserUtils.ExtractStringFromBytes(strTabData, (int)nameOffset);
-                    
+
                     // 使用版本索引作为键，而不是顺序
                     ushort verIndex = (ushort)(flags & 0x7fff); // 去除隐藏标志
-                    if (!_versionDependencies.ContainsKey(verIndex))
+                    if (!parser.VersionDependencies.ContainsKey(verIndex))
                     {
-                        _versionDependencies.Add(verIndex, versionName);
+                        parser.VersionDependencies.Add(verIndex, versionName);
                     }
-                    
+
                     auxProcessed++;
                     if (auxNext == 0) break;
                     auxOffset += auxNext;
                 }
-                
+
                 offset += vn_next; // 移动到下一个版本需求
                 processed++;
-                
+
                 if (vn_next == 0) break; // 没有更多版本需求
             }
         }

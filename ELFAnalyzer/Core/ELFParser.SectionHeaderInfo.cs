@@ -1,25 +1,10 @@
 using PersonalTools.Enums;
+using System.IO;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
     public static class ELFSectionHeader
     {
-        public static string GetProgramHeaderType(uint pType)
-        {
-            return ELFParserUtils.GetTypeName(typeof(ProgramHeaderType), pType, "");
-        }
-
-        public static string GetProgramHeaderFlags(uint pFlags)
-        {
-            var descriptions = new List<string>();
-
-            if ((pFlags & (uint)ProgramHeaderFlags.PF_R) != 0) descriptions.Add("R");
-            if ((pFlags & (uint)ProgramHeaderFlags.PF_W) != 0) descriptions.Add("W");
-            if ((pFlags & (uint)ProgramHeaderFlags.PF_X) != 0) descriptions.Add("E");
-
-            return string.Join("", descriptions);
-        }
-
         public static string GetSectionType(uint shType)
         {
             return ELFParserUtils.GetTypeName(typeof(SectionType), shType, "");
@@ -43,5 +28,32 @@ namespace PersonalTools.ELFAnalyzer.Core
 
             return sectionFlags;
         }
+
+        public static void ReadSectionHeaders(ELFParser parser, BinaryReader reader, bool isLittleEndian)
+        {
+            if (parser.Header.e_shnum == 0) return;
+
+            reader.BaseStream.Seek((long)parser.Header.e_shoff, SeekOrigin.Begin);
+
+            parser.SectionHeaders = [];
+            for (int i = 0; i < parser.Header.e_shnum; i++)
+            {
+                var sh = new Models.ELFSectionHeader
+                {
+                    sh_name = ELFParserUtils.ReadUInt32(reader, isLittleEndian),
+                    sh_type = ELFParserUtils.ReadUInt32(reader, isLittleEndian),
+                    sh_flags = parser.Is64Bit ? ELFParserUtils.ReadUInt64(reader, isLittleEndian) : ELFParserUtils.ReadUInt32(reader, isLittleEndian),
+                    sh_addr = parser.Is64Bit ? ELFParserUtils.ReadUInt64(reader, isLittleEndian) : ELFParserUtils.ReadUInt32(reader, isLittleEndian),
+                    sh_offset = parser.Is64Bit ? ELFParserUtils.ReadUInt64(reader, isLittleEndian) : ELFParserUtils.ReadUInt32(reader, isLittleEndian),
+                    sh_size = parser.Is64Bit ? ELFParserUtils.ReadUInt64(reader, isLittleEndian) : ELFParserUtils.ReadUInt32(reader, isLittleEndian),
+                    sh_link = ELFParserUtils.ReadUInt32(reader, isLittleEndian),
+                    sh_info = ELFParserUtils.ReadUInt32(reader, isLittleEndian),
+                    sh_addralign = parser.Is64Bit ? ELFParserUtils.ReadUInt64(reader, isLittleEndian) : ELFParserUtils.ReadUInt32(reader, isLittleEndian),
+                    sh_entsize = parser.Is64Bit ? ELFParserUtils.ReadUInt64(reader, isLittleEndian) : ELFParserUtils.ReadUInt32(reader, isLittleEndian)
+                };
+                parser.SectionHeaders.Add(sh);
+            }
+        }
+
     }
 }

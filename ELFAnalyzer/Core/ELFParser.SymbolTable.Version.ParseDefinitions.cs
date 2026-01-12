@@ -2,17 +2,17 @@ using PersonalTools.Enums;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public partial class ELFParser
+    public partial class VersionSymbleTable
     {
-        private void ParseVersionDefinitions()
+        private static void ParseVersionDefinitions(ELFParser parser)
         {
             // 查找版本定义 (DT_VERDEF)
             long verdefAddr = 0;
             long verdefNum = 0;
 
-            if (_dynamicEntries != null)
+            if (parser.DynamicEntries != null)
             {
-                foreach (var entry in _dynamicEntries)
+                foreach (var entry in parser.DynamicEntries)
                 {
                     if (entry.d_tag == (long)DynamicTag.DT_VERDEF)
                     {
@@ -27,38 +27,38 @@ namespace PersonalTools.ELFAnalyzer.Core
 
             if (verdefAddr > 0 && verdefNum > 0)
             {
-                _versionDefinitions = [];
+                parser.VersionDefinitions = [];
 
-                var verdefSection = FindSectionByAddress((ulong)verdefAddr);
+                var verdefSection = FindSectionByAddress(parser, (ulong)verdefAddr);
                 if (verdefSection != null)
                 {
-                    ParseVerDefEntries(verdefSection.Value, (int)verdefNum);
+                    ParseVerDefEntries(parser,  verdefSection.Value, (int)verdefNum);
                 }
             }
             else
             {
                 // 如果动态段中没有找到版本定义信息，则直接查找SHT_GNU_VERDEF类型的节
-                FindAndParseVersionDefinitionSection();
+                FindAndParseVersionDefinitionSection(parser);
             }
         }
 
-        private void FindAndParseVersionDefinitionSection()
+        private static void FindAndParseVersionDefinitionSection(ELFParser parser)
         {
-            if (_sectionHeaders == null || _versionDefinitions != null) return;
+            if (parser.SectionHeaders == null || parser.VersionDefinitions != null) return;
 
             // 确保_versionDefinitions字典存在
-            if (_versionDefinitions == null)
+            if (parser.VersionDefinitions == null)
             {
-                _versionDefinitions = [];
+                parser.VersionDefinitions = [];
             }
 
             // 遍历所有节头查找SHT_GNU_VERDEF类型的节（即.gnu.version_d）
-            for (int i = 0; i < _sectionHeaders.Count; i++)
+            for (int i = 0; i < parser.SectionHeaders.Count; i++)
             {
-                var section = _sectionHeaders[i];
+                var section = parser.SectionHeaders[i];
                 if (section.sh_type == (uint)SectionType.SHT_GNU_verdef)
                 {
-                    ParseVerDefEntries(section, CalculateVerDefEntryCount(section));
+                    ParseVerDefEntries(parser, section, CalculateVerDefEntryCount(section));
                 }
             }
         }
@@ -69,47 +69,47 @@ namespace PersonalTools.ELFAnalyzer.Core
             return (int)(section.sh_size / section.sh_entsize);
         }
 
-        private void ParseVerDefEntries(Models.ELFSectionHeader section, int count)
+        private static void ParseVerDefEntries(ELFParser parser, Models.ELFSectionHeader section, int count)
         {
-            if (_sectionHeaders == null || _versionDefinitions == null) return;
+            if (parser.SectionHeaders == null || parser.VersionDefinitions == null) return;
             
             // 找到版本定义字符串表
             int strTabIdx = (int)section.sh_link;
-            if (strTabIdx >= _sectionHeaders.Count) return;
+            if (strTabIdx >= parser.SectionHeaders.Count) return;
             
-            var strTabSection = _sectionHeaders[strTabIdx];
+            var strTabSection = parser.SectionHeaders[strTabIdx];
             var strTabData = new byte[strTabSection.sh_size];
-            Array.Copy(_fileData, (long)strTabSection.sh_offset, strTabData, 0, (int)strTabSection.sh_size);
+            Array.Copy(parser.FileData, (long)strTabSection.sh_offset, strTabData, 0, (int)strTabSection.sh_size);
             
             ulong offset = section.sh_offset;
             int processed = 0;
             
-            while (processed < count && offset < (ulong)_fileData.Length)
+            while (processed < count && offset < (ulong)parser.FileData.Length)
             {          
-                var vd_version = BitConverter.ToUInt16(_fileData, (int)offset);
-                var vd_flags = BitConverter.ToUInt16(_fileData, (int)offset + 2);
-                var vd_ndx = BitConverter.ToUInt16(_fileData, (int)offset + 4);
-                var vd_cnt = BitConverter.ToUInt16(_fileData, (int)offset + 6);
+                var vd_version = BitConverter.ToUInt16(parser.FileData, (int)offset);
+                var vd_flags = BitConverter.ToUInt16(parser.FileData, (int)offset + 2);
+                var vd_ndx = BitConverter.ToUInt16(parser.FileData, (int)offset + 4);
+                var vd_cnt = BitConverter.ToUInt16(parser.FileData, (int)offset + 6);
                 // Skip vd_hash at offset+8
 
-                var vd_aux = _is64Bit ? BitConverter.ToUInt64(_fileData, (int)offset + 8) : BitConverter.ToUInt32(_fileData, (int)offset + 12);  // 64位的vd_aux和vd_next
-                var vd_next = _is64Bit ? BitConverter.ToUInt64(_fileData, (int)offset + 16) : BitConverter.ToUInt32(_fileData, (int)offset + 16);
+                var vd_aux = parser.Is64Bit ? BitConverter.ToUInt64(parser.FileData, (int)offset + 8) : BitConverter.ToUInt32(parser.FileData, (int)offset + 12);  // 64位的vd_aux和vd_next
+                var vd_next = parser.Is64Bit ? BitConverter.ToUInt64(parser.FileData, (int)offset + 16) : BitConverter.ToUInt32(parser.FileData, (int)offset + 16);
 
                 // 获取版本名称
                 // vernaux 结构紧跟在 verdef 结构之后
                 ulong nameOffset = offset + vd_aux;
-                var nameOffsetInStrTab = BitConverter.ToUInt32(_fileData, (int)nameOffset + 8); // vernaux.vna_name
+                var nameOffsetInStrTab = BitConverter.ToUInt32(parser.FileData, (int)nameOffset + 8); // vernaux.vna_name
                 string versionName = ELFParserUtils.ExtractStringFromBytes(strTabData, (int)nameOffsetInStrTab);
                 
                 // 存储版本定义
                 ushort index = (ushort)(vd_ndx & 0x7fff); // 去除隐藏标志
-                if (!_versionDefinitions.ContainsKey(index))
+                if (!parser.VersionDefinitions.ContainsKey(index))
                 {
-                    _versionDefinitions.Add(index, versionName);
+                    parser.VersionDefinitions.Add(index, versionName);
                 }
                 
                 // 如果没有更多版本定义或者偏移量为0，则退出循环
-                if (vd_next == 0 || offset + vd_next >= (ulong)_fileData.Length)
+                if (vd_next == 0 || offset + vd_next >= (ulong)parser.FileData.Length)
                 {
                     break;
                 }
@@ -119,9 +119,9 @@ namespace PersonalTools.ELFAnalyzer.Core
             }
         }
 
-        public string GetFormattedVersionDefinitionInfo()
+        public static string GetFormattedVersionDefinitionInfo(ELFParser parser)
         {
-            if (_versionDefinitions == null || _versionDefinitions.Count == 0)
+            if (parser.VersionDefinitions == null || parser.VersionDefinitions.Count == 0)
             {
                 return "未找到版本定义信息";
             }
@@ -130,11 +130,11 @@ namespace PersonalTools.ELFAnalyzer.Core
             sb.AppendLine("Version definition section '.gnu.version_d' contains 1 entries:");
 
             // 获取.gnu.version_d节的信息
-            var verdefSection = _sectionHeaders?.Find(sh => sh.sh_type == (uint)SectionType.SHT_GNU_verdef);
+            var verdefSection = parser.SectionHeaders?.Find(sh => sh.sh_type == (uint)SectionType.SHT_GNU_verdef);
             if (verdefSection != null)
             {
                 int entryIndex = 0;
-                foreach (var kvp in _versionDefinitions.OrderBy(k => k.Key))
+                foreach (var kvp in parser.VersionDefinitions.OrderBy(k => k.Key))
                 {
                     string flags = kvp.Key == 1 ? "BASE" : "";
                     sb.AppendLine($"  地址：0x{(kvp.Key == 1 ? ((Models.ELFSectionHeader)verdefSection).sh_addr : ((Models.ELFSectionHeader)verdefSection).sh_addr + ((ulong)entryIndex * ((Models.ELFSectionHeader)verdefSection).sh_entsize)):x8}  Offset: 0x{(kvp.Key == 1 ? ((Models.ELFSectionHeader)verdefSection).sh_offset : ((Models.ELFSectionHeader)verdefSection).sh_offset + ((ulong)entryIndex * ((Models.ELFSectionHeader)verdefSection).sh_entsize)):x6}  Link: {((Models.ELFSectionHeader)verdefSection).sh_link} (.dynstr)  {entryIndex:D4}: Rev: 1  Flags: {flags,-6}   Index: {kvp.Key}  Cnt: 1  名称：{kvp.Value}");
@@ -146,7 +146,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             if (verdefSection != null)
             {
                 var verdefsCount = CalculateVerDefEntryCount((Models.ELFSectionHeader)verdefSection);
-                if (_versionDefinitions.Count > verdefsCount)
+                if (parser.VersionDefinitions.Count > verdefsCount)
                 {
                     sb.AppendLine("  Version definition past end of section");
                 }

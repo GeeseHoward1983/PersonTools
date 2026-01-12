@@ -4,7 +4,7 @@ using System.Text;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public static class ELFHeaderInfo
+    public static partial class ELFHeaderInfo
     {
         public static string GetArchitectureName(ELFHeader header)
         {

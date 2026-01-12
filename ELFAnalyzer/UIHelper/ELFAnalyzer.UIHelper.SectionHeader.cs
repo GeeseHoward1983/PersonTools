@@ -1,3 +1,4 @@
+using PersonalTools.ELFAnalyzer.Core;
 using PersonalTools.ELFAnalyzer.Models;
 
 namespace PersonalTools.ELFAnalyzer
@@ -16,7 +17,7 @@ namespace PersonalTools.ELFAnalyzer
                     result.Add(new ELFSectionHeaderInfo
                     {
                         Index = i,
-                        Name = _parser.GetSectionName(i) ?? string.Empty,
+                        Name = SymbleName.GetSectionName(_parser, i) ?? string.Empty,
                         Type = Core.ELFSectionHeader.GetSectionType(sh.sh_type) ?? string.Empty,
                         Address = $"0x{sh.sh_addr:x10}",
                         Offset = $"0x{sh.sh_offset:x8}",

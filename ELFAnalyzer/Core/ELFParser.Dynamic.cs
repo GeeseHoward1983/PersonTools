@@ -4,37 +4,37 @@ using System.IO;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public partial class ELFParser
+    public class Dynamic
     {
-        private void ReadDynamicEntries(BinaryReader reader, bool isLittleEndian)
+        public static void ReadDynamicEntries(ELFParser parser, BinaryReader reader, bool isLittleEndian)
         {
             // Find the dynamic section
             int dynamicSectionIndex = -1;
-            for (int i = 0; i < _sectionHeaders?.Count; i++)
+            for (int i = 0; i < parser.SectionHeaders?.Count; i++)
             {
-                if (_sectionHeaders[i].sh_type == (uint)SectionType.SHT_DYNAMIC)
+                if (parser.SectionHeaders[i].sh_type == (uint)SectionType.SHT_DYNAMIC)
                 {
                     dynamicSectionIndex = i;
                     break;
                 }
             }
 
-            if (dynamicSectionIndex != -1 && _sectionHeaders != null)
+            if (dynamicSectionIndex != -1 && parser.SectionHeaders != null)
             {
-                var dynSection = _sectionHeaders[dynamicSectionIndex];
+                var dynSection = parser.SectionHeaders[dynamicSectionIndex];
                 reader.BaseStream.Seek((long)dynSection.sh_offset, SeekOrigin.Begin);
 
                 int entryCount = (int)(dynSection.sh_size / dynSection.sh_entsize);
-                _dynamicEntries = new List<ELFDynamic>(entryCount);
+                parser.DynamicEntries = new List<ELFDynamic>(entryCount);
 
                 for (int i = 0; i < entryCount; i++)
                 {
                     var entry = new ELFDynamic
                     {
-                        d_tag = _is64Bit ? ELFParserUtils.ReadInt64(reader, isLittleEndian) : ELFParserUtils.ReadInt32(reader, isLittleEndian),
-                        d_val = _is64Bit ? ELFParserUtils.ReadUInt64(reader, isLittleEndian) : ELFParserUtils.ReadUInt32(reader, isLittleEndian)
+                        d_tag = parser.Is64Bit ? ELFParserUtils.ReadInt64(reader, isLittleEndian) : ELFParserUtils.ReadInt32(reader, isLittleEndian),
+                        d_val = parser.Is64Bit ? ELFParserUtils.ReadUInt64(reader, isLittleEndian) : ELFParserUtils.ReadUInt32(reader, isLittleEndian)
                     };
-                    _dynamicEntries.Add(entry);
+                    parser.DynamicEntries.Add(entry);
                 }
             }
         }

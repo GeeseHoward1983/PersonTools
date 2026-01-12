@@ -2,7 +2,7 @@ using PersonalTools.Enums;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public static class ELF_DYNAMIC_INFO
+    public static class ELFDynamicInfo
     {
         public static string GetDynamicTagDescription(ulong dTag)
         {

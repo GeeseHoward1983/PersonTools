@@ -17,13 +17,13 @@ namespace PersonalTools.ELFAnalyzer
                 {
                     result.Add(new ProgramHeaderInfo
                     {
-                        Type = Core.ELFSectionHeader.GetProgramHeaderType(ph.p_type) ?? "UNKNOWN",
+                        Type = Core.ELFProgramHeaderInfo.GetProgramHeaderType(ph.p_type) ?? "UNKNOWN",
                         Offset = $"0x{ph.p_offset:x16}",
                         VirtAddr = $"0x{ph.p_vaddr:x16}",
                         PhysAddr = $"0x{ph.p_paddr:x16}",
                         FileSize = $"{ph.p_filesz}",
                         MemSize = $"{ph.p_memsz}",
-                        Flags = Core.ELFSectionHeader.GetProgramHeaderFlags(ph.p_flags) ?? "",
+                        Flags = Core.ELFProgramHeaderInfo.GetProgramHeaderFlags(ph.p_flags) ?? "",
                         Align = $"0x{ph.p_align:x}"
                     });
                 }
@@ -65,7 +65,7 @@ namespace PersonalTools.ELFAnalyzer
                     var sh = _parser.SectionHeaders[i];
                     
                     // Skip sections with zero size or invalid addresses
-                    if (sh.sh_size == 0 || string.IsNullOrEmpty(_parser.GetSectionName(i)))
+                    if (sh.sh_size == 0 || string.IsNullOrEmpty(SymbleName.GetSectionName(_parser, i)))
                         continue;
                         
                     // Calculate the end address of the section
@@ -82,7 +82,7 @@ namespace PersonalTools.ELFAnalyzer
                     
                     if (overlapsInVirtualMemory)
                     {
-                        var sectionName = _parser.GetSectionName(i);
+                        var sectionName = SymbleName.GetSectionName(_parser, i);
                         if (!string.IsNullOrEmpty(sectionName))
                         {                            
                             sections.Add(sectionName);
@@ -93,7 +93,7 @@ namespace PersonalTools.ELFAnalyzer
             return sections;
         }
 
-        public string? GetInterpreterInfo()
+        public string GetInterpreterInfo()
         {
             if (_parser.ProgramHeaders != null)
             {
@@ -116,7 +116,7 @@ namespace PersonalTools.ELFAnalyzer
                 }
             }
 
-            return null;
+            return string.Empty;
         }
     }
 }

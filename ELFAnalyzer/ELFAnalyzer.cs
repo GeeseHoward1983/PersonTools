@@ -33,17 +33,17 @@ namespace PersonalTools.ELFAnalyzer
         
         public string GetFormattedVersionSymbolInfo()
         {
-            return _parser.GetFormattedVersionSymbolInfo();
+            return VersionSymbleTable.GetFormattedVersionSymbolInfo(_parser);
         }
         
         public string GetFormattedVersionDependencyInfo()
         {
-            return _parser.GetFormattedVersionDependencyInfo();
+            return VersionSymbleTable.GetFormattedVersionDependencyInfo(_parser);
         }
 
         public string GetFormattedVersionDefinitionInfo()
         {
-            return _parser.GetFormattedVersionDefinitionInfo();
+            return VersionSymbleTable.GetFormattedVersionDefinitionInfo(_parser);
         }
     }
 }

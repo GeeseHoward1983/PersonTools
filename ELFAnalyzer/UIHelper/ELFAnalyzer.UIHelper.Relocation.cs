@@ -18,7 +18,7 @@ namespace PersonalTools.ELFAnalyzer
             {
                 for (int i = 0; i < _parser.SectionHeaders.Count; i++)
                 {
-                    string currentSectionName = _parser.GetSectionName(i) ?? string.Empty;
+                    string currentSectionName = SymbleName.GetSectionName(_parser, i) ?? string.Empty;
                     if (currentSectionName == sectionName)
                     {
                         sectionIndex = i;
@@ -50,37 +50,28 @@ namespace PersonalTools.ELFAnalyzer
 
                         // 读取符号表
                         var symbols = new List<ELFSymbol>();
-                        int symEntrySize = _parser._is64Bit ? 24 : 16; // 64位ELF符号表项大小为24字节，32位为16字节
+                        int symEntrySize = _parser.Is64Bit ? 24 : 16; // 64位ELF符号表项大小为24字节，32位为16字节
                         int symCount = symTabData.Length / symEntrySize;
                         
                         for (int symIdx = 0; symIdx < symCount; symIdx++)
                         {
-                            ELFSymbol symbol;
-                            if (!_parser._is64Bit)
+                            symbols.Add(_parser.Is64Bit ? new ELFSymbol
                             {
-                                symbol = new ELFSymbol
-                                {
-                                    st_name = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize),
-                                    st_value = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize + 4),
-                                    st_size = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize + 8),
-                                    st_info = symTabData[symIdx * symEntrySize + 12],
-                                    st_other = symTabData[symIdx * symEntrySize + 13],
-                                    st_shndx = BitConverter.ToUInt16(symTabData, symIdx * symEntrySize + 14)
-                                };
-                            }
-                            else
-                            {                                
-                                symbol = new ELFSymbol
-                                {
-                                    st_name = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize),
-                                    st_value = BitConverter.ToUInt64(symTabData, symIdx * symEntrySize + 8),
-                                    st_size = BitConverter.ToUInt64(symTabData, symIdx * symEntrySize + 16),
-                                    st_info = symTabData[symIdx * symEntrySize + 4],
-                                    st_other = symTabData[symIdx * symEntrySize + 5],
-                                    st_shndx = BitConverter.ToUInt16(symTabData, symIdx * symEntrySize + 6)
-                                };
-                            }
-                            symbols.Add(symbol);
+                                st_name = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize),
+                                st_value = BitConverter.ToUInt64(symTabData, symIdx * symEntrySize + 8),
+                                st_size = BitConverter.ToUInt64(symTabData, symIdx * symEntrySize + 16),
+                                st_info = symTabData[symIdx * symEntrySize + 4],
+                                st_other = symTabData[symIdx * symEntrySize + 5],
+                                st_shndx = BitConverter.ToUInt16(symTabData, symIdx * symEntrySize + 6)
+                            } : new ELFSymbol
+                            {
+                                st_name = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize),
+                                st_value = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize + 4),
+                                st_size = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize + 8),
+                                st_info = symTabData[symIdx * symEntrySize + 12],
+                                st_other = symTabData[symIdx * symEntrySize + 13],
+                                st_shndx = BitConverter.ToUInt16(symTabData, symIdx * symEntrySize + 14)
+                            });
                         }
 
                         for (int j = 0; j < entryCount; j++)
@@ -93,7 +84,7 @@ namespace PersonalTools.ELFAnalyzer
                             string symbolName = string.Empty;
                             string symbolValue = "0000000000000000"; // 默认符号值
                             
-                            if (!_parser._is64Bit)
+                            if (!_parser.Is64Bit)
                             {
                                 if (sectionName.Contains("rela"))
                                 {
@@ -119,7 +110,7 @@ namespace PersonalTools.ELFAnalyzer
                                 if (sym < symbols.Count)
                                 {
                                     var symbol = symbols[(int)sym];
-                                    symbolName = _parser.GetSymbolName(symbol, SectionType.SHT_DYNSYM) ?? "Unknown";
+                                    symbolName = SymbleName.GetSymbolName(_parser, symbol, SectionType.SHT_DYNSYM) ?? "Unknown";
                                     symbolValue = $"{symbol.st_value:x8}";
                                 }
                             }
@@ -149,7 +140,7 @@ namespace PersonalTools.ELFAnalyzer
                                 if (sym < symbols.Count)
                                 {
                                     var symbol = symbols[(int)sym];
-                                    symbolName = _parser.GetSymbolName(symbol, SectionType.SHT_DYNSYM);
+                                    symbolName = SymbleName.GetSymbolName(_parser, symbol, SectionType.SHT_DYNSYM);
                                     symbolValue = $"{symbol.st_value:x16}";
                                 }
                             }
