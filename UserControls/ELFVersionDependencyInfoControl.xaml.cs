@@ -11,7 +11,7 @@ namespace PersonalTools.UserControls
 
         public void SetVersionDependencyInfo(string versionDependencyInfo)
         {
-            ELFVersionDependencyInfoTextBlock.Text = versionDependencyInfo;
+            ELFVersionDependencyInfoTextBox.Text = versionDependencyInfo;
         }
     }
 }

@@ -11,7 +11,7 @@ namespace PersonalTools.UserControls
 
         public void SetSectionToSegmentInfo(string mappingInfo)
         {
-            ELFSectionToSegmentInfoTextBlock.Text = mappingInfo;
+            ELFSectionToSegmentInfoTextBox.Text = mappingInfo;
         }
     }
 }

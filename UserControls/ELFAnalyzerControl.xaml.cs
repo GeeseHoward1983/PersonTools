@@ -102,6 +102,10 @@ namespace PersonalTools.UserControls
                 relaPltTable.AddRange(relPltTable);
                 ELFPltRelocationControl.SetRelaPltData(relaPltTable);
                 ELFRelaPltTabItem.Visibility = relaPltTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+                
+                // 显示note信息
+                var noteInfo = analyzer.GetFormattedNotesInfo();
+                ELFNoteInfoControl.SetNoteInfo(noteInfo);
             }
             catch (Exception ex)
             {

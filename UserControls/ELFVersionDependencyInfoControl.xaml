@@ -8,7 +8,7 @@
              d:DesignHeight="450" d:DesignWidth="800">
     <GroupBox Header="版本依赖信息" Margin="5">
         <ScrollViewer>
-            <TextBlock Name="ELFVersionDependencyInfoTextBlock" TextWrapping="Wrap" Padding="10"/>
+            <TextBox Name="ELFVersionDependencyInfoTextBox" TextWrapping="Wrap" Padding="10" IsReadOnly="True"/>
         </ScrollViewer>
     </GroupBox>
 </UserControl>

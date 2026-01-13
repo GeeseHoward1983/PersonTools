@@ -123,7 +123,7 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             if (parser.VersionDefinitions == null || parser.VersionDefinitions.Count == 0)
             {
-                return "未找到版本定义信息";
+                return "";
             }
 
             var sb = new System.Text.StringBuilder();

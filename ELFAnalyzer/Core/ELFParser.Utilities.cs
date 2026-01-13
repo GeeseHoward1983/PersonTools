@@ -25,6 +25,17 @@ namespace PersonalTools.ELFAnalyzer.Core
             return string.Empty;
         }
 
+        public static string ExtractStringFromBytes(byte[] data, int startOffset, int maxLength = -1)
+        {
+            while (maxLength > 0 && data[startOffset + maxLength - 1] == 0)
+            {
+                maxLength--;
+            }
+
+            return maxLength > 0 ? System.Text.Encoding.UTF8.GetString(data, startOffset, maxLength) : string.Empty;
+        }
+
+
         public static long ReadInt64(BinaryReader reader, bool isLittleEndian)
         {
             var bytes = reader.ReadBytes(8);

@@ -62,7 +62,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 
             if ((verNeedSection != null))
             {
-                if (verNeedSection != null && parser.VersionDependencies != null)
+                if (parser.VersionDependencies != null)
                 {
                     sb.AppendLine($"Version needs section '.gnu.version_r' contains {parser.VersionDependencies.Count} entries:");
                     sb.AppendLine($"  地址: 0x{verNeedSection.Value.sh_addr:x16}  Offset: 0x{verNeedSection.Value.sh_offset:x6}  Link: {verNeedSection.Value.sh_link} (.dynstr)");
@@ -71,11 +71,6 @@ namespace PersonalTools.ELFAnalyzer.Core
                     ParseAndAppendVersionNeeds(parser, verNeedSection.Value, sb);
                 }
             }
-            else
-            {
-                sb.AppendLine("Version needs section '.gnu.version_r' not found or empty.");
-            }
-
             return sb.ToString();
         }
 

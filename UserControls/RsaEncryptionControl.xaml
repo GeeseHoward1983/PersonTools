@@ -23,8 +23,9 @@
                 <TextBlock Text="输入类型:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                 <RadioButton Name="RsaInputStringRadio" Content="字符串" GroupName="RsaInputType" IsChecked="True" Margin="0,0,10,0" VerticalAlignment="Center"/>
                 <RadioButton Name="RsaInputHexRadio" Content="Hex" GroupName="RsaInputType" Margin="0,0,20,0" VerticalAlignment="Center"/>
-
-                <TextBlock Text="公钥:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,5">
+                    <TextBlock Text="公钥:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                 <TextBox Name="RsaPublicKey" Width="300" Margin="0,0,5,0" VerticalAlignment="Center"/>
 
                 <TextBlock Text="私钥:" VerticalAlignment="Center" Margin="0,0,5,0"/>

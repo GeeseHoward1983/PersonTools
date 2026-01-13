@@ -75,6 +75,11 @@
             <TabItem Name="ELFRelaPltTabItem" Header="PLT重定位信息"  Visibility="Collapsed">
                 <local:ELFPltRelocationControl x:Name="ELFPltRelocationControl" />
             </TabItem>
+            
+            <!-- Note信息标签页 -->
+            <TabItem Name="ELFNoteInfoTabItem" Header="Note信息">
+                <local:ELFNoteInfoControl x:Name="ELFNoteInfoControl" />
+            </TabItem>
         </TabControl>
     </Grid>
 </UserControl>

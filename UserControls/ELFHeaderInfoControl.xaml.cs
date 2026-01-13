@@ -11,14 +11,14 @@ namespace PersonalTools.UserControls
 
         public void SetELFHeaderInfo(string headerInfo)
         {
-            ELFHeaderInfoTextBlock.Text = headerInfo;
+            ELFHeaderInfoTextBox.Text = headerInfo;
         }
 
         public void SetInterpreterInfo(string interpreter)
         {
             if (!string.IsNullOrEmpty(interpreter))
             {
-                ELFHeaderInfoTextBlock.Text += $"\n\nInterpreter:\n{interpreter}\n";
+                ELFHeaderInfoTextBox.Text += $"\n\nInterpreter:\n{interpreter}\n";
             }
         }
     }

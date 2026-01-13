@@ -11,7 +11,7 @@ namespace PersonalTools.UserControls
 
         public void SetVersionSymbolInfo(string versionSymbolInfo)
         {
-            ELFVersionSymbolInfoTextBlock.Text = versionSymbolInfo;
+            ELFVersionSymbolInfoTextBox.Text = versionSymbolInfo;
         }
     }
 }
