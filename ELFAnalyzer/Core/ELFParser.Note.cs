@@ -1,6 +1,4 @@
-using PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.Enums;
-using System.Collections;
 using System.IO;
 using System.Text;
 

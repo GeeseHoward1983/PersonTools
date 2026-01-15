@@ -3,7 +3,7 @@ namespace PersonalTools.Enums
     public enum DynamicTag : ulong
     {
         DT_NULL = 0,                    // Marks end of dynamic section
-        DT_NEEDED = 1,                  // Name of needed library
+        DT_NEEDED = 1UL,                  // Name of needed library
         DT_PLTRELSZ = 2,                // Size in bytes of PLT relocs
         DT_PLTGOT = 3,                  // Processor defined value
         DT_HASH = 4,                    // Address of symbol hash table

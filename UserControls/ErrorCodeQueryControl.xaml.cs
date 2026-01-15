@@ -1,5 +1,4 @@
 using PersonalTools.ConstString;
-using System.Windows;
 using System.Windows.Controls;
 
 namespace PersonalTools.UserControls
@@ -12,109 +11,39 @@ namespace PersonalTools.UserControls
         public ErrorCodeQueryControl()
         {
             InitializeComponent();
+            
+            // 初始化各个ErrorCodeQueryItem的错误码字典
+            InitializeErrorCodeItems();
         }
 
-        private void Grid_PreviewDragOver(object sender, System.Windows.DragEventArgs e)
+        private void InitializeErrorCodeItems()
         {
-            e.Handled = true;
-        }
-
-        // Windows errno 查询按钮点击事件
-        private void WindowsErrnoQuery_Click(object sender, RoutedEventArgs e)
-        {
-            QueryErrorCode(WindowsErrnoInput.Text, WindowsStandardErrno.WindowsStandardErrnoMap, WindowsErrnoResult);
-        }
-
-        // Linux errno 查询按钮点击事件
-        private void LinuxErrnoQuery_Click(object sender, RoutedEventArgs e)
-        {
-            QueryErrorCode(LinuxErrnoInput.Text, LinuxErrno.LinuxErrnoMap, LinuxErrnoResult);
-        }
-
-        // Mac errno 查询按钮点击事件
-        private void MacErrnoQuery_Click(object sender, RoutedEventArgs e)
-        {
-            QueryErrorCode(MacErrnoInput.Text, MacErrno.MacErrnoMap, MacErrnoResult);
-        }
-
-        // HTTP 状态码查询按钮点击事件
-        private void HttpStatusCodeQuery_Click(object sender, RoutedEventArgs e)
-        {
-            QueryErrorCode(HttpStatusCodeInput.Text, HttpStatus.HttpStatusMap, HttpStatusCodeResult);
-        }
-
-        // SQL Server 错误码查询按钮点击事件
-        private void SqlServerErrorQuery_Click(object sender, RoutedEventArgs e)
-        {
-            QueryErrorCode(SqlServerErrorInput.Text, SqlServerErrors.SqlServerErrorsMap, SqlServerErrorResult);
-        }
-
-        // MySQL 错误码查询按钮点击事件
-        private void MySqlErrorQuery_Click(object sender, RoutedEventArgs e)
-        {
-            QueryErrorCode(MySqlErrorInput.Text, MySqlErrors.MySqlErrorsMap, MySqlErrorResult);
-        }
-
-        // Oracle SQLCODE 查询按钮点击事件
-        private void OracleSqlCodeQuery_Click(object sender, RoutedEventArgs e)
-        {
-            QueryErrorCode(OracleSqlCodeInput.Text, OracleSqlCode.OracleSqlCodeMap, OracleSqlCodeResult);
-        }
-
-        // ODBC 错误码查询按钮点击事件
-        private void OdbcErrorQuery_Click(object sender, RoutedEventArgs e)
-        {
-            QueryErrorCode(OdbcErrorInput.Text, OdbcErrors.OdbcErrorsMap, OdbcErrorResult);
-        }
-
-        // Windows 系统错误码查询按钮点击事件
-        private void WindowsSystemErrorQuery_Click(object sender, RoutedEventArgs e)
-        {
-            QueryErrorCode(WindowsSystemErrorInput.Text, WindowsSystemErrors.WindowsSystemErrorsMap, WindowsSystemErrorResult);
-        }
-
-        // 通用错误码查询方法
-        private static void QueryErrorCode(string input, Dictionary<long, string> errorCodeMap, TextBlock resultTextBlock)
-        {
-            if (string.IsNullOrWhiteSpace(input))
-            {
-                resultTextBlock.Text = "请输入错误码";
-                return;
-            }
-
-            if (uint.TryParse(input.Trim(), out uint errorCode))
-            {
-                if (errorCodeMap.TryGetValue(errorCode, out string? errorMessage))
-                {
-                    resultTextBlock.Text = $"错误码: {errorCode}\n错误信息: {errorMessage}";
-                }
-                else
-                {
-                    resultTextBlock.Text = $"未找到错误码 {errorCode} 的相关信息";
-                }
-            }
-            else
-            {
-                resultTextBlock.Text = "输入的不是有效的数字";
-            }
-        }
-
-        private static void QueryErrorCode(string input, Dictionary<string, string> errorCodeMap, TextBlock resultTextBlock)
-        {
-            if (string.IsNullOrWhiteSpace(input))
-            {
-                resultTextBlock.Text = "请输入错误码";
-                return;
-            }
-
-            if (errorCodeMap.TryGetValue(input, out string? errorMessage))
-            {
-                resultTextBlock.Text = $"错误码: {input}\n错误信息: {errorMessage}";
-            }
-            else
-            {
-                resultTextBlock.Text = $"未找到错误码 {input} 的相关信息";
-            }
+            // Windows errno
+            WindowsErrnoQueryItem.ErrorCodeMap = WindowsStandardErrno.WindowsStandardErrnoMap;
+            
+            // Linux errno
+            LinuxErrnoQueryItem.ErrorCodeMap = LinuxErrno.LinuxErrnoMap;
+            
+            // Mac errno
+            MacErrnoQueryItem.ErrorCodeMap = MacErrno.MacErrnoMap;
+            
+            // HTTP 状态码
+            HttpStatusCodeQueryItem.ErrorCodeMap = HttpStatus.HttpStatusMap;
+            
+            // SQL Server 错误码
+            SqlServerQueryItem.ErrorCodeMap = SqlServerErrors.SqlServerErrorsMap;
+            
+            // MySQL 错误码
+            MySqlQueryItem.ErrorCodeMap = MySqlErrors.MySqlErrorsMap;
+            
+            // Oracle SQLCODE
+            OracleQueryItem.ErrorCodeMap = OracleSqlCode.OracleSqlCodeMap;
+            
+            // ODBC 错误码
+            OdbcQueryItem.ErrorCodeMapString = OdbcErrors.OdbcErrorsMap;
+            
+            // Windows 系统错误码
+            WindowsSystemErrorQueryItem.ErrorCodeMap = WindowsSystemErrors.WindowsSystemErrorsMap;
         }
     }
 }

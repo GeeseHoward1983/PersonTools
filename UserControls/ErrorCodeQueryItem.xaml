@@ -1,0 +1,26 @@
+<UserControl x:Class="PersonalTools.UserControls.ErrorCodeQueryItem"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:PersonalTools.UserControls"
+             mc:Ignorable="d" 
+             d:DesignHeight="400" d:DesignWidth="600">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBox Name="ErrorCodeInput" Width="100" Margin="0,0,10,0" VerticalContentAlignment="Center" KeyDown="ErrorCodeInput_KeyDown"/>
+            <Button Name="QueryButton" Content="查询" Click="QueryButton_Click" Padding="10,0"/>
+        </StackPanel>
+
+        <GroupBox Grid.Row="1" Name="ResultGroupBox" Header="错误信息" Padding="10">
+            <ScrollViewer>
+                <TextBox Name="ResultTextBox" TextWrapping="Wrap" IsReadOnly="True"/>
+            </ScrollViewer>
+        </GroupBox>
+    </Grid>
+</UserControl>

@@ -24,7 +24,13 @@ namespace PersonalTools.ELFAnalyzer
                         Type = ELFSymbolInfo.GetSymbolType(sym.st_info) ?? string.Empty,
                         Bind = ELFSymbolInfo.GetSymbolBinding(sym.st_info) ?? string.Empty,
                         Vis = ELFSymbolInfo.GetSymbolVisibility(sym.st_other) ?? string.Empty,
-                        Ndx = sym.st_shndx == 0 ? "UND" : sym.st_shndx == 0xFFF1 ? "ABS" : sym.st_shndx == 0xFFF2 ? "COM" : $"{sym.st_shndx}",
+                        Ndx = sym.st_shndx switch
+                        { 
+                            0 => "UND",
+                            0xFFF1 => "ABS",
+                            0xFFF2 => "COM",
+                            _ => $"{sym.st_shndx}"
+                        },
                         Name = SymbleName.GetSymbolName(_parser, sym, sectionType) ?? string.Empty
                     });
                 }

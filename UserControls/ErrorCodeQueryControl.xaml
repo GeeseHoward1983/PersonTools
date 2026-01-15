@@ -10,191 +10,47 @@
         <TabControl Margin="5">
             <!-- Windows errno查询 -->
             <TabItem Header="Windows errno">
-                <Grid Margin="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-                        <TextBox Name="WindowsErrnoInput" Width="100" Margin="0,0,10,0" VerticalContentAlignment="Center"/>
-                        <Button Content="查询" Click="WindowsErrnoQuery_Click" Padding="10,0"/>
-                    </StackPanel>
-
-                    <GroupBox Grid.Row="1" Header="错误信息" Padding="10">
-                        <ScrollViewer>
-                            <TextBlock Name="WindowsErrnoResult" TextWrapping="Wrap" />
-                        </ScrollViewer>
-                    </GroupBox>
-                </Grid>
+                <local:ErrorCodeQueryItem x:Name="WindowsErrnoQueryItem" GroupBoxHeader="错误信息" />
             </TabItem>
 
             <!-- Linux errno查询 -->
             <TabItem Header="Linux errno">
-                <Grid Margin="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-                        <TextBox Name="LinuxErrnoInput" Width="100" Margin="0,0,10,0" VerticalContentAlignment="Center"/>
-                        <Button Content="查询" Click="LinuxErrnoQuery_Click" Padding="10,0"/>
-                    </StackPanel>
-
-                    <GroupBox Grid.Row="1" Header="错误信息" Padding="10">
-                        <ScrollViewer>
-                            <TextBlock Name="LinuxErrnoResult" TextWrapping="Wrap" />
-                        </ScrollViewer>
-                    </GroupBox>
-                </Grid>
+                <local:ErrorCodeQueryItem x:Name="LinuxErrnoQueryItem" GroupBoxHeader="错误信息" />
             </TabItem>
 
             <!-- Mac errno查询 -->
             <TabItem Header="Mac errno">
-                <Grid Margin="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-                        <TextBox Name="MacErrnoInput" Width="100" Margin="0,0,10,0" VerticalContentAlignment="Center"/>
-                        <Button Content="查询" Click="MacErrnoQuery_Click" Padding="10,0"/>
-                    </StackPanel>
-
-                    <GroupBox Grid.Row="1" Header="错误信息" Padding="10">
-                        <ScrollViewer>
-                            <TextBlock Name="MacErrnoResult" TextWrapping="Wrap" />
-                        </ScrollViewer>
-                    </GroupBox>
-                </Grid>
+                <local:ErrorCodeQueryItem x:Name="MacErrnoQueryItem" GroupBoxHeader="错误信息" />
             </TabItem>
 
             <!-- HTTP状态码查询 -->
             <TabItem Header="HTTP状态码">
-                <Grid Margin="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-                        <TextBox Name="HttpStatusCodeInput" Width="100" Margin="0,0,10,0" VerticalContentAlignment="Center"/>
-                        <Button Content="查询" Click="HttpStatusCodeQuery_Click" Padding="10,0"/>
-                    </StackPanel>
-
-                    <GroupBox Grid.Row="1" Header="状态信息" Padding="10">
-                        <ScrollViewer>
-                            <TextBlock Name="HttpStatusCodeResult" TextWrapping="Wrap" />
-                        </ScrollViewer>
-                    </GroupBox>
-                </Grid>
+                <local:ErrorCodeQueryItem x:Name="HttpStatusCodeQueryItem" GroupBoxHeader="状态信息" />
             </TabItem>
 
             <!-- SQL Server错误码查询 -->
             <TabItem Header="SQL Server">
-                <Grid Margin="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-                        <TextBox Name="SqlServerErrorInput" Width="100" Margin="0,0,10,0" VerticalContentAlignment="Center"/>
-                        <Button Content="查询" Click="SqlServerErrorQuery_Click" Padding="10,0"/>
-                    </StackPanel>
-
-                    <GroupBox Grid.Row="1" Header="错误信息" Padding="10">
-                        <ScrollViewer>
-                            <TextBlock Name="SqlServerErrorResult" TextWrapping="Wrap" />
-                        </ScrollViewer>
-                    </GroupBox>
-                </Grid>
+                <local:ErrorCodeQueryItem x:Name="SqlServerQueryItem" GroupBoxHeader="错误信息" />
             </TabItem>
 
             <!-- MySQL错误码查询 -->
             <TabItem Header="MySQL">
-                <Grid Margin="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-                        <TextBox Name="MySqlErrorInput" Width="100" Margin="0,0,10,0" VerticalContentAlignment="Center"/>
-                        <Button Content="查询" Click="MySqlErrorQuery_Click" Padding="10,0"/>
-                    </StackPanel>
-
-                    <GroupBox Grid.Row="1" Header="错误信息" Padding="10">
-                        <ScrollViewer>
-                            <TextBlock Name="MySqlErrorResult" TextWrapping="Wrap" />
-                        </ScrollViewer>
-                    </GroupBox>
-                </Grid>
+                <local:ErrorCodeQueryItem x:Name="MySqlQueryItem" GroupBoxHeader="错误信息" />
             </TabItem>
 
             <!-- Oracle SQLCODE查询 -->
             <TabItem Header="Oracle">
-                <Grid Margin="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-                        <TextBox Name="OracleSqlCodeInput" Width="100" Margin="0,0,10,0" VerticalContentAlignment="Center"/>
-                        <Button Content="查询" Click="OracleSqlCodeQuery_Click" Padding="10,0"/>
-                    </StackPanel>
-
-                    <GroupBox Grid.Row="1" Header="错误信息" Padding="10">
-                        <ScrollViewer>
-                            <TextBlock Name="OracleSqlCodeResult" TextWrapping="Wrap" />
-                        </ScrollViewer>
-                    </GroupBox>
-                </Grid>
+                <local:ErrorCodeQueryItem x:Name="OracleQueryItem" GroupBoxHeader="错误信息" />
             </TabItem>
 
             <!-- ODBC错误码查询 -->
             <TabItem Header="ODBC">
-                <Grid Margin="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-                        <TextBox Name="OdbcErrorInput" Width="100" Margin="0,0,10,0" VerticalContentAlignment="Center"/>
-                        <Button Content="查询" Click="OdbcErrorQuery_Click" Padding="10,0"/>
-                    </StackPanel>
-
-                    <GroupBox Grid.Row="1" Header="错误信息" Padding="10">
-                        <ScrollViewer>
-                            <TextBlock Name="OdbcErrorResult" TextWrapping="Wrap" />
-                        </ScrollViewer>
-                    </GroupBox>
-                </Grid>
+                <local:ErrorCodeQueryItem x:Name="OdbcQueryItem" GroupBoxHeader="错误信息" />
             </TabItem>
 
             <!-- Windows系统错误码查询 -->
             <TabItem Header="Windows系统错误码">
-                <Grid Margin="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-                        <TextBox Name="WindowsSystemErrorInput" Width="100" Margin="0,0,10,0" VerticalContentAlignment="Center"/>
-                        <Button Content="查询" Click="WindowsSystemErrorQuery_Click" Padding="10,0"/>
-                    </StackPanel>
-
-                    <GroupBox Grid.Row="1" Header="错误信息" Padding="10">
-                        <ScrollViewer>
-                            <TextBlock Name="WindowsSystemErrorResult" TextWrapping="Wrap" />
-                        </ScrollViewer>
-                    </GroupBox>
-                </Grid>
+                <local:ErrorCodeQueryItem x:Name="WindowsSystemErrorQueryItem" GroupBoxHeader="错误信息" />
             </TabItem>
         </TabControl>
     </Grid>

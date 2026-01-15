@@ -7,53 +7,51 @@ namespace PersonalTools.ELFAnalyzer
 {
     public partial class ELFAnalyzer
     {
+        private string GetDynamicSectionInfoTableEntryValue(ELFDynamic entry)
+        {
+            string value = string.Empty;
+            var strTabAddr = GetStringValueFromDynamicEntries(DynamicTag.DT_STRTAB);
+            var strTabSize = GetStringValueFromDynamicEntries(DynamicTag.DT_STRSZ);
+
+            if (strTabAddr != 0 && strTabSize != 0 && _parser.SectionHeaders != null)
+            {
+                // Find the section that contains the string table
+                var stringTableSection = FindSectionByAddress(strTabAddr);
+                if (stringTableSection != null)
+                {
+                    value = ReadStringFromSection(stringTableSection, entry.d_val) ?? $"0x{entry.d_val:x}";
+                }
+            }
+            return value;
+
+        }
+        private string GetDynamicSectionInfoValue(ELFDynamic entry)
+        {
+            return (entry.d_tag) switch
+            {
+                (long)DynamicTag.DT_NEEDED => $"{GetDynamicSectionInfoTableEntryValue(entry)}",
+                (long)DynamicTag.DT_SONAME => $"{GetDynamicSectionInfoTableEntryValue(entry)}",
+                (long)DynamicTag.DT_RPATH => $"{GetDynamicSectionInfoTableEntryValue(entry)}",
+                (long)DynamicTag.DT_RUNPATH => $"{GetDynamicSectionInfoTableEntryValue(entry)}",
+                (long)DynamicTag.DT_FLAGS => $"{ELFDynamicInfo.GetDynamicFlagDescription((uint)entry.d_val)}",
+                (long)DynamicTag.DT_FLAGS_1 => $"{ELFDynamicInfo.GetDynamicFlag1Description((uint)entry.d_val)}",
+                _ => entry.d_tag == (long)DynamicTag.DT_PLTREL ? ELFParserUtils.GetTypeName(typeof(DynamicTag), entry.d_val, "") : $"0x{entry.d_val:x}"
+            };
+        }
+
         public List<ELFDynamicSectionInfo> GetDynamicSectionInfoList()
         {
             var result = new List<ELFDynamicSectionInfo>();
 
-            if (_parser.DynamicEntries != null && _parser.DynamicEntries.Count > 0)
+            if (_parser.DynamicEntries != null)
             {
                 foreach (var entry in _parser.DynamicEntries)
                 {
-                    var tag = ELFDynamicInfo.GetDynamicTagDescription((ulong)entry.d_tag);
-                    string value = string.Empty;
-
-                    // Handle entries that refer to string table
-                    if (IsStringTableEntry(entry.d_tag))
-                    {
-                        // Find the string table to resolve the name
-                        var strTabAddr = GetStringValueFromDynamicEntries(DynamicTag.DT_STRTAB);
-                        var strTabSize = GetStringValueFromDynamicEntries(DynamicTag.DT_STRSZ);
-
-                        if (strTabAddr != 0 && strTabSize != 0 && _parser.SectionHeaders != null)
-                        {
-                            // Find the section that contains the string table
-                            var stringTableSection = FindSectionByAddress(strTabAddr);
-                            if (stringTableSection != null)
-                            {
-                                value = ReadStringFromSection64(stringTableSection, entry.d_val) ?? $"0x{entry.d_val:x}";
-                            }
-                        }
-                    }
-                    else if (entry.d_tag == (long)DynamicTag.DT_FLAGS)
-                    {
-                        value = ELFDynamicInfo.GetDynamicFlagDescription((uint)entry.d_val);
-                    }
-                    else if (entry.d_tag == (long)DynamicTag.DT_FLAGS_1)
-                    {
-                        value = ELFDynamicInfo.GetDynamicFlag1Description((uint)entry.d_val);
-                    }
-                    // Handle DT_PLTREL - should show REL or RELA
-                    else
-                    {
-                        value = entry.d_tag == (long)DynamicTag.DT_PLTREL ? ELFParserUtils.GetTypeName(typeof(DynamicTag), entry.d_val, "") : $"0x{entry.d_val:x}";
-                    }
-
                     result.Add(new ELFDynamicSectionInfo
                     {
                         Tag = $"0x{entry.d_tag:x16}",
-                        Type = tag,
-                        Value = value
+                        Type = ELFDynamicInfo.GetDynamicTagDescription((ulong)entry.d_tag),
+                        Value = GetDynamicSectionInfoValue(entry)
                     });
                     if(entry.d_tag == (long)DynamicTag.DT_NULL)
                     {
@@ -63,14 +61,6 @@ namespace PersonalTools.ELFAnalyzer
             }
 
             return result;
-        }
-
-        private static bool IsStringTableEntry(long tag)
-        {
-            return tag == (long)DynamicTag.DT_NEEDED || 
-                   tag == (long)DynamicTag.DT_SONAME || 
-                   tag == (long)DynamicTag.DT_RPATH || 
-                   tag == (long)DynamicTag.DT_RUNPATH;
         }
                 
         private ulong GetStringValueFromDynamicEntries(DynamicTag tag)
@@ -101,7 +91,7 @@ namespace PersonalTools.ELFAnalyzer
             return null;
         }
                 
-        private string? ReadStringFromSection64(Models.ELFSectionHeader? section, ulong offset)
+        private string? ReadStringFromSection(Models.ELFSectionHeader? section, ulong offset)
         {
             try
             {
