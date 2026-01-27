@@ -10,47 +10,47 @@
         <TabControl Margin="5">
             <!-- Windows errno查询 -->
             <TabItem Header="Windows errno">
-                <local:ErrorCodeQueryItem x:Name="WindowsErrnoQueryItem" GroupBoxHeader="错误信息" />
+                <local:ErrorCodeQueryItem x:Name="WindowsErrnoQueryItem" />
             </TabItem>
 
             <!-- Linux errno查询 -->
             <TabItem Header="Linux errno">
-                <local:ErrorCodeQueryItem x:Name="LinuxErrnoQueryItem" GroupBoxHeader="错误信息" />
+                <local:ErrorCodeQueryItem x:Name="LinuxErrnoQueryItem" />
             </TabItem>
 
             <!-- Mac errno查询 -->
             <TabItem Header="Mac errno">
-                <local:ErrorCodeQueryItem x:Name="MacErrnoQueryItem" GroupBoxHeader="错误信息" />
+                <local:ErrorCodeQueryItem x:Name="MacErrnoQueryItem" />
             </TabItem>
 
             <!-- HTTP状态码查询 -->
             <TabItem Header="HTTP状态码">
-                <local:ErrorCodeQueryItem x:Name="HttpStatusCodeQueryItem" GroupBoxHeader="状态信息" />
+                <local:ErrorCodeQueryItem x:Name="HttpStatusCodeQueryItem" />
             </TabItem>
 
             <!-- SQL Server错误码查询 -->
             <TabItem Header="SQL Server">
-                <local:ErrorCodeQueryItem x:Name="SqlServerQueryItem" GroupBoxHeader="错误信息" />
+                <local:ErrorCodeQueryItem x:Name="SqlServerQueryItem" />
             </TabItem>
 
             <!-- MySQL错误码查询 -->
             <TabItem Header="MySQL">
-                <local:ErrorCodeQueryItem x:Name="MySqlQueryItem" GroupBoxHeader="错误信息" />
+                <local:ErrorCodeQueryItem x:Name="MySqlQueryItem" />
             </TabItem>
 
             <!-- Oracle SQLCODE查询 -->
             <TabItem Header="Oracle">
-                <local:ErrorCodeQueryItem x:Name="OracleQueryItem" GroupBoxHeader="错误信息" />
+                <local:ErrorCodeQueryItem x:Name="OracleQueryItem" />
             </TabItem>
 
             <!-- ODBC错误码查询 -->
             <TabItem Header="ODBC">
-                <local:ErrorCodeQueryItem x:Name="OdbcQueryItem" GroupBoxHeader="错误信息" />
+                <local:ErrorCodeQueryItem x:Name="OdbcQueryItem" />
             </TabItem>
 
             <!-- Windows系统错误码查询 -->
             <TabItem Header="Windows系统错误码">
-                <local:ErrorCodeQueryItem x:Name="WindowsSystemErrorQueryItem" GroupBoxHeader="错误信息" />
+                <local:ErrorCodeQueryItem x:Name="WindowsSystemErrorQueryItem" />
             </TabItem>
         </TabControl>
     </Grid>

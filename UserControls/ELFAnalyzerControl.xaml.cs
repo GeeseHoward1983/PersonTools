@@ -1,4 +1,5 @@
 using Microsoft.Win32;
+using PersonalTools.ELFAnalyzer;
 using PersonalTools.Enums;
 using System.Windows;
 using System.Windows.Controls;
@@ -49,7 +50,7 @@ namespace PersonalTools.UserControls
                 var analyzer = new ELFAnalyzer.ELFAnalyzer(filePath);
 
                 // 更新各控件的信息
-                ELFHeaderInfoControl.SetELFHeaderInfo(analyzer.GetFormattedELFHeaderInfo());
+                ELFHeaderInfoControl.SetELFHeaderInfo(ELFHeaderHelper.GetFormattedELFHeaderInfo(analyzer._parser));
                 
                 var interpreter = analyzer.GetInterpreterInfo();
                 if (!string.IsNullOrEmpty(interpreter))
