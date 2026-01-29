@@ -365,37 +365,17 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         public static string GetFormattedELFFlags(ELFHeader header)
         {
-            var descriptions = new List<string>();
-            uint flags = header.e_flags;
-
             // 根据架构类型解析不同的标志
-            switch (header.e_machine)
-            {
-                case (ushort)EMachine.EM_MIPS:
-                    descriptions = GetMIPSFormattedELFFlags(flags);
-                    break;
-
-                case (ushort)EMachine.EM_ARM:
-                    descriptions = GetARMSFormattedELFFlags(flags);
-                    break;
-
-                case (ushort)EMachine.EM_PPC:
-                case (ushort)EMachine.EM_PPC64:
-                    descriptions = GetPPCFormattedELFFlags(flags);
-                    break;
-
-                case (ushort)EMachine.EM_SPARC:
-                case (ushort)EMachine.EM_SPARC32PLUS:
-                case (ushort)EMachine.EM_SPARCV9:
-                    descriptions = GetSPARCFormattedELFFlags(flags);
-                    break;
-
-                default:
-                    // 对于其他架构，只显示十六进制值
-                    break;
-            }
-
-            return string.Join(", ", descriptions);
+            return string.Join(", ",
+                  header.e_machine switch
+                  {
+                      (ushort)EMachine.EM_MIPS => GetMIPSFormattedELFFlags(header.e_flags),
+                      (ushort)EMachine.EM_ARM => GetARMSFormattedELFFlags(header.e_flags),
+                      (ushort)EMachine.EM_PPC or (ushort)EMachine.EM_PPC64 => GetPPCFormattedELFFlags(header.e_flags),
+                      (ushort)EMachine.EM_SPARC or (ushort)EMachine.EM_SPARC32PLUS or (ushort)EMachine.EM_SPARCV9 => GetSPARCFormattedELFFlags(header.e_flags),
+                      _ => [$"0x{header.e_flags:X8}"],
+                  }
+                );
         }
     }
 }

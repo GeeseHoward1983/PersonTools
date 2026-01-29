@@ -222,72 +222,81 @@ namespace PersonalTools.PEAnalyzer.Parsers
         // 获取操作系统版本描述
         public static string GetOperatingSystemVersionDescription(ushort majorVersion, ushort minorVersion)
         {
-            string osDescription = "Unknown OS";
-            switch (majorVersion)
+            return $"{majorVersion switch
             {
-                case 3:
-                    if (minorVersion == 10) osDescription = "Windows NT 3.1";
-                    else if (minorVersion == 51) osDescription = "Windows NT 3.51";
-                    break;
-                case 4:
-                    if (minorVersion == 0) osDescription = "Windows NT 4.0";
-                    break;
-                case 5:
-                    if (minorVersion == 0) osDescription = "Windows 2000";
-                    else if (minorVersion == 1) osDescription = "Windows XP";
-                    else if (minorVersion == 2) osDescription = "Windows Server 2003";
-                    break;
-                case 6:
-                    if (minorVersion == 0) osDescription = "Windows Vista/Server 2008";
-                    else if (minorVersion == 1) osDescription = "Windows 7/Server 2008 R2";
-                    else if (minorVersion == 2) osDescription = "Windows 8/Server 2012";
-                    else if (minorVersion == 3) osDescription = "Windows 8.1/Server 2012 R2";
-                    break;
-                case 10:
-                    if (minorVersion == 0) osDescription = "Windows 10/11/Server 2016/2019/2022";
-                    break;
-                default:
-                    osDescription = $"Windows NT {majorVersion}.{minorVersion}";
-                    break;
-            }
-
-            return $"{osDescription} [{majorVersion}.{minorVersion}]";
+                3 => minorVersion switch
+                {
+                    10 => "Windows NT 3.1",
+                    51 => "Windows NT 3.51",
+                    _ => "Unknown OS"
+                },
+                4 => minorVersion switch
+                {
+                    0 => "Windows NT 4.0",
+                    _ => "Unknown OS"
+                },
+                5 => minorVersion switch
+                {
+                    0 => "Windows 2000",
+                    1 => "Windows XP",
+                    2 => "Windows Server 2003",
+                    _ => "Unknown OS"
+                },
+                6 => minorVersion switch
+                {
+                    0 => "Windows Vista/Server 2008",
+                    1 => "Windows 7/Server 2008 R2",
+                    2 => "Windows 8/Server 2012",
+                    3 => "Windows 8.1/Server 2012 R2",
+                    _ => "Unknown OS"
+                },
+                10 => minorVersion switch
+                {
+                    0 => "Windows 10/11/Server 2016/2019/2022",
+                    _ => "Unknown OS"
+                },
+                _ => $"Windows NT {majorVersion}.{minorVersion}"
+            }} [{majorVersion}.{minorVersion}]";
         }
 
         // 获取子系统版本描述
         public static string GetSubsystemVersionDescription(ushort majorVersion, ushort minorVersion)
         {
-            string subsystemDescription = "Unknown Subsystem Version";
-            // 子系统版本通常与目标操作系统有关
-            switch (majorVersion)
+            return $"{majorVersion switch
             {
-                case 3:
-                    if (minorVersion == 10) subsystemDescription = "Windows NT 3.1";
-                    else if (minorVersion == 51) subsystemDescription = "Windows NT 3.51";
-                    break;
-                case 4:
-                    if (minorVersion == 0) subsystemDescription = "Windows NT 4.0";
-                    break;
-                case 5:
-                    if (minorVersion == 0) subsystemDescription = "Windows 2000";
-                    else if (minorVersion == 1) subsystemDescription = "Windows XP";
-                    else if (minorVersion == 2) subsystemDescription = "Windows Server 2003";
-                    break;
-                case 6:
-                    if (minorVersion == 0) subsystemDescription = "Windows Vista/Server 2008";
-                    else if (minorVersion == 1) subsystemDescription = "Windows 7/Server 2008 R2";
-                    else if (minorVersion == 2) subsystemDescription = "Windows 8/Server 2012";
-                    else if (minorVersion == 3) subsystemDescription = "Windows 8.1/Server 2012 R2";
-                    break;
-                case 10:
-                    if (minorVersion == 0) subsystemDescription = "Windows 10/11";
-                    break;
-                default:
-                    subsystemDescription = $"Windows NT {majorVersion}.{minorVersion}";
-                    break;
-            }
-
-            return $"{subsystemDescription} [{majorVersion}.{minorVersion}]";
+                3 => minorVersion switch
+                {
+                    10 => "Windows NT 3.1",
+                    51 => "Windows NT 3.51",
+                    _ => "Unknown OS"
+                },
+                4 => minorVersion switch
+                {
+                    0 => "Windows NT 4.0",
+                    _ => "Unknown OS"
+                },
+                5 => minorVersion switch
+                {
+                    0 => "Windows 2000",
+                    1 => "Windows XP",
+                    2 => "Windows Server 2003",
+                    _ => "Unknown OS"
+                },
+                6 => minorVersion switch
+                {
+                    0 => "Windows Vista/Server 2008",
+                    1 => "Windows 7/Server 2008 R2",
+                    2 => "Windows 8/Server 2012",
+                    3 => "Windows 8.1/Server 2012 R2",
+                    _ => "Unknown OS"
+                },
+                10 => minorVersion switch
+                {
+                    0 => "Windows 10/11",
+                    _ => "Unknown OS"
+                },
+                _ => $"Windows NT {majorVersion}.{minorVersion}"
+            }} [{majorVersion}.{minorVersion}]";
         }
 
         // 获取镜像版本描述
@@ -349,55 +358,23 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 fileType = "Object File";
             }
 
-            // 根据子系统进一步细化
-            string subsystemDetail;
-            switch (subsystem)
+            return $"{fileType}{subsystem switch
             {
-                case 1: // Native
-                    if (fileType == "Driver/System File")
-                        subsystemDetail = " (Native Driver)";
-                    else
-                        subsystemDetail = " (Native Application)";
-                    break;
-                case 2: // Windows GUI
-                    subsystemDetail = " (Windows GUI Application)";
-                    break;
-                case 3: // Windows CUI
-                    subsystemDetail = " (Windows Console Application)";
-                    break;
-                case 5: // OS/2 CUI
-                    subsystemDetail = " (OS/2 Console Application)";
-                    break;
-                case 7: // POSIX CUI
-                    subsystemDetail = " (POSIX Console Application)";
-                    break;
-                case 9: // Windows CE GUI
-                    subsystemDetail = " (Windows CE GUI Application)";
-                    break;
-                case 10: // EFI Application
-                    subsystemDetail = " (EFI Application)";
-                    break;
-                case 11: // EFI Boot Service Driver
-                    subsystemDetail = " (EFI Boot Service Driver)";
-                    break;
-                case 12: // EFI Runtime Driver
-                    subsystemDetail = " (EFI Runtime Driver)";
-                    break;
-                case 13: // EFI ROM
-                    subsystemDetail = " (EFI ROM)";
-                    break;
-                case 14: // XBOX
-                    subsystemDetail = " (Xbox Application)";
-                    break;
-                case 16: // Windows Boot Application
-                    subsystemDetail = " (Windows Boot Application)";
-                    break;
-                default:
-                    subsystemDetail = $" (Unknown Subsystem: {subsystem})";
-                    break;
+                    1 => fileType switch { "Driver/System File" => " (Native Driver)" , _ => "Windows Driver" },
+                    2 => " (Windows GUI Application)",
+                    3 => " (Windows Console Application)",
+                    5 => " (OS/2 Console Application)",
+                    7 => " (POSIX Console Application)",
+                    9 => " (Windows CE GUI Application)",
+                    10 => " (EFI Application)",
+                    11 => " (EFI Boot Service Driver)",
+                    12 => " (EFI Runtime Driver)",
+                    13 => " (EFI ROM)",
+                    14 => " (Xbox Application)",
+                    16 => " (Windows Boot Application)",
+                    _ => $" (Unknown Subsystem: {subsystem})"
             }
-
-            return $"{fileType}{subsystemDetail} (Characteristics: 0x{characteristics:X4}, Subsystem: 0x{subsystem:X4})";
+                } (Characteristics: 0x{characteristics:X4}, Subsystem: 0x{subsystem:X4})";
         }
 
         // 检查是否为Windows NT驱动程序
@@ -407,24 +384,14 @@ namespace PersonalTools.PEAnalyzer.Parsers
             if ((characteristics & 0x1000) == 0)
                 return string.Empty; // 不是系统文件，不是驱动程序
 
-            string driverType = "Windows Driver";
-
-            // 根据子系统类型进一步分类
-            switch (subsystem)
+            string driverType = subsystem switch
             {
-                case 1: // Native
-                    driverType = "Windows NT Kernel Mode Driver";
-                    break;
-                case 11: // EFI Boot Service Driver
-                    driverType = "EFI Boot Service Driver";
-                    break;
-                case 12: // EFI Runtime Driver
-                    driverType = "EFI Runtime Driver";
-                    break;
-                case 16: // Windows Boot Application
-                    driverType = "Windows Boot Driver/Application";
-                    break;
-            }
+                1 => "Windows NT Kernel Mode Driver",
+                11 => "EFI Boot Service Driver",
+                12 => "EFI Runtime Driver",
+                16 => "Windows Boot Driver/Application",
+                _ => "Windows Driver",
+            };
 
             // 检查DLL特征以获取更多信息
             if ((dllCharacteristics & 0x0020) != 0) // IMAGE_DLLCHARACTERISTICS_WDM_DRIVER

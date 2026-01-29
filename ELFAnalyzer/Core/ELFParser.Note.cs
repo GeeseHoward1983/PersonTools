@@ -18,7 +18,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 {
                     if (parser.SectionHeaders[i].sh_type == (uint)SectionType.SHT_NOTE)
                     {
-                        var noteInfo = ParseNoteSection(parser, parser.SectionHeaders[i], i);
+                        var noteInfo = ParseNoteSection(parser, parser.SectionHeaders[i]);
                         if (!string.IsNullOrEmpty(noteInfo))
                         {
                             sb.AppendLine(noteInfo);
@@ -82,11 +82,11 @@ namespace PersonalTools.ELFAnalyzer.Core
                 offset = nextOffset;
             }
 
-            return sb.ToString().TrimEnd();
+            return sb.ToString();
 
         }
 
-        private static string ParseNoteSection(ELFParser parser, Models.ELFSectionHeader section, int sectionIndex)
+        private static string ParseNoteSection(ELFParser parser, Models.ELFSectionHeader section)
         {
             return GetNoteDescription(parser, section.sh_offset, section.sh_size);
         }

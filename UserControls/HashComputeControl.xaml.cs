@@ -70,12 +70,7 @@ namespace PersonalTools.UserControls
                     inputBytes = Encoding.UTF8.GetBytes(input);
                 }
                 byte[] hashBytes = MD5.HashData(inputBytes);
-                StringBuilder sb = new();
-                for (int i = 0; i < hashBytes.Length; i++)
-                {
-                    sb.Append(hashBytes[i].ToString("x2"));
-                }
-                MD5ResultLabel.Content = sb.ToString();  // 恢复：使用Label的Content属性
+                MD5ResultLabel.Content = Utils.ToHexString(hashBytes);  // 恢复：使用Label的Content属性
             }
             catch (Exception ex)
             {
@@ -120,12 +115,7 @@ namespace PersonalTools.UserControls
                     inputBytes = Encoding.UTF8.GetBytes(input);
                 }
                 byte[] hashBytes = SHA1.HashData(inputBytes);
-                StringBuilder sb = new();
-                for (int i = 0; i < hashBytes.Length; i++)
-                {
-                    sb.Append(hashBytes[i].ToString("x2"));
-                }
-                SHA1ResultLabel.Content = sb.ToString();
+                SHA1ResultLabel.Content = Utils.ToHexString(hashBytes);
             }
             catch (Exception ex)
             {
@@ -173,13 +163,7 @@ namespace PersonalTools.UserControls
                 // 取前28个字节（224位）作为SHA224结果
                 byte[] sha224Bytes = new byte[28];
                 Array.Copy(hashBytes, sha224Bytes, 28);
-
-                StringBuilder sb = new();
-                for (int i = 0; i < sha224Bytes.Length; i++)
-                {
-                    sb.Append(sha224Bytes[i].ToString("x2"));
-                }
-                SHA224ResultLabel.Content = sb.ToString();
+                SHA224ResultLabel.Content = Utils.ToHexString(hashBytes);
             }
             catch (Exception ex)
             {
@@ -224,12 +208,7 @@ namespace PersonalTools.UserControls
                     inputBytes = Encoding.UTF8.GetBytes(input);
                 }
                 byte[] hashBytes = SHA256.HashData(inputBytes);
-                StringBuilder sb = new();
-                for (int i = 0; i < hashBytes.Length; i++)
-                {
-                    sb.Append(hashBytes[i].ToString("x2"));
-                }
-                SHA256ResultLabel.Content = sb.ToString();
+                SHA256ResultLabel.Content = Utils.ToHexString(hashBytes);
             }
             catch (Exception ex)
             {
@@ -274,12 +253,7 @@ namespace PersonalTools.UserControls
                     inputBytes = Encoding.UTF8.GetBytes(input);
                 }
                 byte[] hashBytes = SHA384.HashData(inputBytes);
-                StringBuilder sb = new();
-                for (int i = 0; i < hashBytes.Length; i++)
-                {
-                    sb.Append(hashBytes[i].ToString("x2"));
-                }
-                SHA384ResultLabel.Content = sb.ToString();
+                SHA384ResultLabel.Content = Utils.ToHexString(hashBytes);
             }
             catch (Exception ex)
             {
@@ -324,12 +298,7 @@ namespace PersonalTools.UserControls
                     inputBytes = Encoding.UTF8.GetBytes(input);
                 }
                 byte[] hashBytes = SHA512.HashData(inputBytes);
-                StringBuilder sb = new();
-                for (int i = 0; i < hashBytes.Length; i++)
-                {
-                    sb.Append(hashBytes[i].ToString("x2"));
-                }
-                SHA512ResultLabel.Content = sb.ToString();
+                SHA512ResultLabel.Content = Utils.ToHexString(hashBytes);
             }
             catch (Exception ex)
             {
@@ -384,12 +353,7 @@ namespace PersonalTools.UserControls
                 // 使用真正的SHA3算法
                 SHA3 sha3 = new(selectedOption.Value);
                 byte[] hashBytes = sha3.ComputeHash(inputBytes);
-                StringBuilder sb = new();
-                for (int i = 0; i < hashBytes.Length; i++)
-                {
-                    sb.Append(hashBytes[i].ToString("x2"));
-                }
-                SHA3ResultLabel.Content = sb.ToString();
+                SHA3ResultLabel.Content = Utils.ToHexString(hashBytes);
             }
             catch (Exception ex)
             {
