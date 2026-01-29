@@ -230,7 +230,7 @@ namespace PersonalTools.UserControls
             csEncrypt.Write(inputBytes, 0, inputBytes.Length);
             byte[] encryptedBytes = msEncrypt.ToArray();
             // 返回十六进制字符串而不是Base64
-            return BitConverter.ToString(encryptedBytes).Replace("-", "");
+            return Utils.ToHexString(encryptedBytes);
         }
 
         // AES解密字符串
@@ -360,7 +360,7 @@ namespace PersonalTools.UserControls
                 }
 
                 // 将文件内容显示在输入框中
-                AesInput.Text = BitConverter.ToString(fileBytes).Replace("-", "");
+                AesInput.Text = Utils.ToHexString(fileBytes);
                 // 同时切换到Hex字符串模式
                 AesInputHexRadio.IsChecked = true;
             }

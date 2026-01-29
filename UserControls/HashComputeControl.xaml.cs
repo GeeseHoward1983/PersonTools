@@ -436,7 +436,7 @@ namespace PersonalTools.UserControls
                 CalculateAndDisplayHashValues(fileBytes);
 
                 // 将文件内容转换为hex字符串显示在SHA3输入框中
-                string hexString = BitConverter.ToString(fileBytes).Replace("-", "");
+                string hexString = Utils.ToHexString(fileBytes);
                 SHA3InputTextBox.Text = hexString;
 
                 // 设置SHA3为hex输入模式
@@ -456,30 +456,30 @@ namespace PersonalTools.UserControls
         {
             // 计算MD5
             byte[] hash = MD5.HashData(data);
-            MD5ResultLabel.Content = BitConverter.ToString(hash).Replace("-", "").ToLower();
+            MD5ResultLabel.Content = Utils.ToHexString(hash);
 
             // 计算SHA1
             hash = SHA1.HashData(data);
-            SHA1ResultLabel.Content = BitConverter.ToString(hash).Replace("-", "").ToLower();
+            SHA1ResultLabel.Content = Utils.ToHexString(hash);
 
             // 计算SHA224
             hash = SHA256.HashData(data);
             byte[] sha224Bytes = new byte[28];
             Array.Copy(hash, sha224Bytes, 28);
 
-            SHA224ResultLabel.Content = BitConverter.ToString(sha224Bytes).Replace("-", "").ToLower();
+            SHA224ResultLabel.Content = Utils.ToHexString(sha224Bytes);
 
             // 计算SHA256
             hash = SHA256.HashData(data);
-            SHA256ResultLabel.Content = BitConverter.ToString(hash).Replace("-", "").ToLower();
+            SHA256ResultLabel.Content = Utils.ToHexString(hash);
 
             // 计算SHA384
             hash = SHA384.HashData(data);
-            SHA384ResultLabel.Content = BitConverter.ToString(hash).Replace("-", "").ToLower();
+            SHA384ResultLabel.Content = Utils.ToHexString(hash);
 
             // 计算SHA512
             hash = SHA512.HashData(data);
-            SHA512ResultLabel.Content = BitConverter.ToString(hash).Replace("-", "").ToLower();
+            SHA512ResultLabel.Content = Utils.ToHexString(hash);
         }
     }
 }

@@ -322,7 +322,7 @@ namespace PersonalTools.UserControls
                 byte[] encryptedBytes = rsa.Encrypt(inputBytes, RSAEncryptionPadding.Pkcs1);
 
                 // 返回十六进制字符串
-                return BitConverter.ToString(encryptedBytes).Replace("-", "");
+                return Utils.ToHexString(encryptedBytes);
             }
             catch (Exception ex)
             {
@@ -382,7 +382,7 @@ namespace PersonalTools.UserControls
                 byte[] signatureBytes = rsa.SignData(inputBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
 
                 // 返回十六进制字符串
-                return BitConverter.ToString(signatureBytes).Replace("-", "");
+                return Utils.ToHexString(signatureBytes);
             }
             catch (Exception ex)
             {
@@ -454,7 +454,7 @@ namespace PersonalTools.UserControls
                 }
 
                 // 将文件内容显示在输入框中
-                RsaInput.Text = BitConverter.ToString(fileBytes).Replace("-", "");
+                RsaInput.Text = Utils.ToHexString(fileBytes);
                 // 同时切换到Hex字符串模式
                 RsaInputHexRadio.IsChecked = true;
             }

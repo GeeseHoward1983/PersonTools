@@ -188,7 +188,7 @@ namespace PersonalTools.UserControls
                 }
 
                 // 将文件内容转换为hex字符串显示在输入框中
-                string hexString = BitConverter.ToString(fileBytes).Replace("-", "");
+                string hexString = Utils.ToHexString(fileBytes);
                 CRCInputTextBox.Text = hexString;
 
                 // 设置为hex输入模式

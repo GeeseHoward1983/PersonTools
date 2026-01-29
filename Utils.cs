@@ -42,5 +42,16 @@ namespace PersonalTools
             }
             return result;
         }
+
+        public static string ToHexString(byte[] bytes, int startIndex, int length)
+        {
+            return BitConverter.ToString(bytes, startIndex, length).Replace("-", "");
+        }
+
+        public static string ToHexString(byte[] bytes)
+        {
+            return BitConverter.ToString(bytes).Replace("-", "");
+        }
+
     }
 }

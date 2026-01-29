@@ -74,7 +74,7 @@ namespace PersonalTools.UserControls
                 if (ContainsInvisibleCharacters(bytes))
                 {
                     // 如果包含不可见字符，转换为Hex字符串显示
-                    string hexString = BitConverter.ToString(bytes).Replace("-", "");
+                    string hexString = Utils.ToHexString(bytes);
                     Base64Input.Text = hexString;
                 }
                 else
@@ -140,7 +140,7 @@ namespace PersonalTools.UserControls
                 }
 
                 // 将文件内容显示在输入框中
-                Base64Input.Text = BitConverter.ToString(fileBytes).Replace("-", "");
+                Base64Input.Text = Utils.ToHexString(fileBytes);
                 // 将文件内容转换为Base64字符串并显示在结果框中
                 Base64Result.Text = Convert.ToBase64String(fileBytes);
 

@@ -51,7 +51,7 @@ namespace PersonalTools.ELFAnalyzer
             magic.Append($"{header.EI_MAG2:X2} ");
             magic.Append($"{header.EI_MAG3:X2} ");
 
-            magic.Append($"{BitConverter.ToString(header.EI_PAD).Replace("-", "")} ");
+            magic.Append($"{Utils.ToHexString(header.EI_PAD)} ");
             return magic.ToString().Trim();
         }
 

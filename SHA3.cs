@@ -16,7 +16,7 @@ namespace PersonalTools
         {
             byte[] inputBytes = Encoding.UTF8.GetBytes(input);
             byte[] output = ComputeHash(inputBytes, outputLengthBits);
-            return BitConverter.ToString(output).Replace("-", "").ToLower();
+            return Utils.ToHexString(output);
         }
 
         public static byte[] ComputeHash(byte[] input, int outputLengthBits = 256)
