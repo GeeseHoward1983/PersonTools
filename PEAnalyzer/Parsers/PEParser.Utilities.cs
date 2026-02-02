@@ -106,117 +106,51 @@ namespace PersonalTools.PEAnalyzer.Parsers
         public static string GetLinkerVersionDescription(byte majorVersion, byte minorVersion)
         {
             // 常见的链接器版本映射
-            string linkerName;
-            switch (majorVersion)
+            return $"{majorVersion switch
             {
-                case 1:
-                case 2:
-                case 3:
-                case 4:
-                case 5:
-                    linkerName = "Microsoft Linker (早期版本)";
-                    break;
-                case 6:
-                    linkerName = "Microsoft Linker 6.x";
-                    break;
-                case 7:
-                    linkerName = "Microsoft Linker 7.x (VS.NET 2002)";
-                    break;
-                case 8:
-                    linkerName = "Microsoft Linker 8.x (VS 2005)";
-                    break;
-                case 9:
-                    linkerName = "Microsoft Linker 9.x (VS 2008)";
-                    break;
-                case 10:
-                    linkerName = "Microsoft Linker 10.x (VS 2010)";
-                    break;
-                case 11:
-                    linkerName = "Microsoft Linker 11.x (VS 2012)";
-                    break;
-                case 12:
-                    linkerName = "Microsoft Linker 12.x (VS 2013)";
-                    break;
-                case 14:
-                    if (minorVersion == 10)
-                        linkerName = "Microsoft Linker 14.10 (VS 2015)";
-                    else if (minorVersion == 20)
-                        linkerName = "Microsoft Linker 14.20 (VS 2017)";
-                    else if (minorVersion >= 26 && minorVersion <= 29)
-                        linkerName = "Microsoft Linker 14.26-14.29 (VS 2019)";
-                    else if (minorVersion >= 30)
-                        linkerName = "Microsoft Linker 14.30+ (VS 2022)";
-                    else
-                        linkerName = "Microsoft Linker 14.x (VS 2015/2017/2019)";
-                    break;
-                case 15:
-                    linkerName = "Microsoft Linker 15.x";
-                    break;
-                default:
-                    if (majorVersion > 15)
-                        linkerName = $"Microsoft Linker {majorVersion}.{minorVersion} (较新版本)";
-                    else
-                        linkerName = $"Microsoft Linker {majorVersion}.{minorVersion} (未知版本)";
-                    break;
-            }
+                1 or 2 or 3 or 4 or 5 => "Microsoft Linker (早期版本)",
+                6 => "Microsoft Linker 6.x",
+                7 => "Microsoft Linker 7.x (VS.NET 2002)",
+                8 => "Microsoft Linker 8.x (VS 2005)",
+                9 => "Microsoft Linker 9.x (VS 2008)",
+                10 => "Microsoft Linker 10.x (VS 2010)",
+                11 => "Microsoft Linker 11.x (VS 2012)",
+                12 => "Microsoft Linker 12.x (VS 2013)",
+                14 => minorVersion == 10 ? "Microsoft Linker 14.10 (VS 2015)"
+                    : (minorVersion == 20) ? "Microsoft Linker 14.20 (VS 2017)"
+                    : (minorVersion >= 26 && minorVersion <= 29) ? "Microsoft Linker 14.26-14.29 (VS 2019)"
+                    : (minorVersion >= 30) ? "Microsoft Linker 14.30+ (VS 2022)"
+                    : "Microsoft Linker 14.x (VS 2015/2017/2019)",
+                15 => "Microsoft Linker 15.x",
+                _ =>
+                    majorVersion > 15 ? $"Microsoft Linker {majorVersion}.{minorVersion} (较新版本)" : $"Microsoft Linker {majorVersion}.{minorVersion} (未知版本)"
 
-            return $"{linkerName} [{majorVersion}.{minorVersion}]";
+            }} [{majorVersion}.{minorVersion}]";
         }
 
         // 获取编译器版本描述
         public static string GetCompilerVersionDescription(byte majorVersion, byte minorVersion, bool isNetAssembly = false)
         {
             // 编译器版本信息通常可以从链接器版本推断
-            string compilerInfo;
-            switch (majorVersion)
+            return $"{majorVersion switch
             {
-                case 6:
-                    compilerInfo = "Microsoft Visual C++ 6.0";
-                    break;
-                case 7:
-                    compilerInfo = "Microsoft Visual C++ .NET 2002";
-                    break;
-                case 8:
-                    compilerInfo = "Microsoft Visual C++ 2005";
-                    break;
-                case 9:
-                    compilerInfo = "Microsoft Visual C++ 2008";
-                    break;
-                case 10:
-                    compilerInfo = "Microsoft Visual C++ 2010";
-                    break;
-                case 11:
-                    compilerInfo = "Microsoft Visual C++ 2012";
-                    break;
-                case 12:
-                    compilerInfo = "Microsoft Visual C++ 2013";
-                    break;
-                case 14:
-                    if (minorVersion == 10)
-                        compilerInfo = "Microsoft Visual C++ 2015";
-                    else if (minorVersion == 20)
-                        compilerInfo = "Microsoft Visual C++ 2017";
-                    else if (minorVersion >= 26 && minorVersion <= 29)
-                        compilerInfo = "Microsoft Visual C++ 2019";
-                    else if (minorVersion >= 30)
-                        compilerInfo = "Microsoft Visual C++ 2022";
-                    else
-                        compilerInfo = "Microsoft Visual C++ 2015/2017/2019";
-                    break;
-                case 15:
-                    compilerInfo = "Microsoft Visual C++ ???";
-                    break;
-                default:
-                    if (isNetAssembly)
-                        compilerInfo = "Microsoft .NET Compiler";
-                    else if (majorVersion > 15)
-                        compilerInfo = $"Microsoft Visual C++ (较新版本)";
-                    else
-                        compilerInfo = $"Microsoft Visual C++ (未知版本)";
-                    break;
-            }
-
-            return $"{compilerInfo} [{majorVersion}.{minorVersion}]";
+                6 => "Microsoft Visual C++ 6.0",
+                7 => "Microsoft Visual C++ .NET 2002",
+                8 => "Microsoft Visual C++ 2005",
+                9 => "Microsoft Visual C++ 2008",
+                10 => "Microsoft Visual C++ 2010",
+                11 => "Microsoft Visual C++ 2012",
+                12 => "Microsoft Visual C++ 2013",
+                14 => minorVersion == 10 ? "Microsoft Visual C++ 2015"
+                    : (minorVersion == 20) ? "Microsoft Visual C++ 2017"
+                    : (minorVersion >= 26 && minorVersion <= 29) ? "Microsoft Visual C++ 2019"
+                    : (minorVersion >= 30) ? "Microsoft Visual C++ 2022"
+                    : "Microsoft Visual C++ 2015/2017/2019",
+                15 => "Microsoft Visual C++ ???",
+                _ =>
+                    isNetAssembly ? "Microsoft .NET Compiler" :
+                    majorVersion > 15 ?"Microsoft Visual C++ (较新版本)" : "Microsoft Visual C++ (未知版本)"
+            }} [{majorVersion}.{minorVersion}]";
         }
 
         // 获取操作系统版本描述
