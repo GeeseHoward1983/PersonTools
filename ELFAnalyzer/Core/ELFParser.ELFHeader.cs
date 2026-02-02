@@ -1,10 +1,10 @@
-﻿using PersonalTools.ELFAnalyzer.Models;
+using PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.Enums;
 using System.IO;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public static partial class ELFHeaderInfo
+    public partial class ELFHeaderInfo
     {
         public static ELFHeader ReadELFHeader(BinaryReader reader, ref bool is64Bit, ref bool isLittleEndian)
         {
@@ -45,6 +45,16 @@ namespace PersonalTools.ELFAnalyzer.Core
             header.e_shstrndx = ELFParserUtils.ReadUInt16(reader, isLittleEndian);
 
             return header;
+        }
+
+        /// <summary>
+        /// Determines if the ELF file uses little-endian byte order.
+        /// </summary>
+        /// <param name="header">The ELF header to check</param>
+        /// <returns>True if the ELF file is little-endian, false otherwise</returns>
+        public static bool IsLittleEndian(this ELFHeader header)
+        {
+            return header.EI_DATA == (byte)ELFData.ELFDATA2LSB;
         }
     }
 }

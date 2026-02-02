@@ -107,6 +107,11 @@ namespace PersonalTools.UserControls
                 // 显示note信息
                 var noteInfo = analyzer.GetFormattedNotesInfo();
                 ELFNoteInfoControl.SetNoteInfo(noteInfo);
+                
+                // 显示属性信息
+                var attributeInfo = analyzer.GetAttributeInfo();
+                ELFAttributeInfoControl.SetAttributeInfo(attributeInfo);
+                ELFAttributeInfoTabItem.Visibility = attributeInfo.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
             }
             catch (Exception ex)
             {

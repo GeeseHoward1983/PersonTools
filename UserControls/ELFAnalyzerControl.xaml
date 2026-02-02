@@ -80,6 +80,11 @@
             <TabItem Name="ELFNoteInfoTabItem" Header="Note信息">
                 <local:ELFNoteInfoControl x:Name="ELFNoteInfoControl" />
             </TabItem>
+            
+            <!-- 属性信息标签页 -->
+            <TabItem Name="ELFAttributeInfoTabItem" Header="属性信息" Visibility="Collapsed">
+                <local:ELFAttributeInfoControl x:Name="ELFAttributeInfoControl" />
+            </TabItem>
         </TabControl>
     </Grid>
 </UserControl>
