@@ -4,7 +4,7 @@ using PersonalTools.Enums;
 using System;
 using System.Text;
 
-namespace PersonalTools.ELFAnalyzer
+namespace PersonalTools.ELFAnalyzer.UIHelper
 {
     public class ELFHeaderHelper
     {

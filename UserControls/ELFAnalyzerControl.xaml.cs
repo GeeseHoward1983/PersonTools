@@ -1,5 +1,5 @@
 using Microsoft.Win32;
-using PersonalTools.ELFAnalyzer;
+using PersonalTools.ELFAnalyzer.UIHelper;
 using PersonalTools.Enums;
 using System.Windows;
 using System.Windows.Controls;

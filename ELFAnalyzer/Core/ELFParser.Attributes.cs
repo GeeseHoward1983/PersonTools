@@ -80,11 +80,16 @@ namespace PersonalTools.ELFAnalyzer.Core
                     
                     if (vendorName == "aeabi")
                     {
-                        sb.Append(ParseAEABIAttributes(parser, data, ref offset, subSectionEnd));
+                        sb.Append(ParseAEABIAttributes(data, ref offset, subSectionEnd));
+                    }
+                    else if (vendorName.Contains("gnu") && parser.Header.e_machine == (ushort)EMachine.EM_MIPS)
+                    {
+                        // 专门处理GNU属性
+                        ParseMipsGNUAttributes(parser, data, ref offset, subSectionEnd, sb);
                     }
                     else
                     {
-                        ParseGenericAttributes(parser, data, ref offset, subSectionEnd, sb, vendorName);
+                        ParseGenericAttributes(data, ref offset, subSectionEnd, sb);
                     }
                     
                     // 确保offset不会倒退
@@ -95,7 +100,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             return sb.ToString();
         }
 
-        private static string ParseAEABIAttributes(ELFParser parser, byte[] data, ref int offset, int endOffset)
+        private static string ParseAEABIAttributes(byte[] data, ref int offset, int endOffset)
         {
             StringBuilder sb = new();
             offset += 5; // 长度
@@ -109,8 +114,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 // 对于AEABI，属性值的长度也在第一个字节中编码
                 if (offset >= data.Length) break;
 
-                string attrValueStr = "";
-                
+                string attrValueStr;
                 switch (attrTag)
                 {
                     case 5: // Tag_CPU_name
@@ -174,8 +178,8 @@ namespace PersonalTools.ELFAnalyzer.Core
                         break;
                     case 19: // Tag_ABI_FP_rounding
                         {
-                            offset++;
                             sb.AppendLine($"  Tag_ABI_FP_rounding: {ELFParserUtils.GetTypeName(typeof(ABIFPRounding), data[offset], "")}");
+                            offset++;
                         }
                         break;
                     case 20: // Tag_ABI_FP_denormal
@@ -202,9 +206,27 @@ namespace PersonalTools.ELFAnalyzer.Core
                             offset++;
                         }
                         break;
+                    case 25: // Tag_ABI_align_preserved
+                        {
+                            sb.AppendLine($"  Tag_ABI_align_preserved: {ELFParserUtils.GetTypeName(typeof(ABIAlignPreserved), data[offset], "")}");
+                            offset++;
+                        }
+                        break;
                     case 26: // Tag_ABI_enum_size
                         {
                             sb.AppendLine($"  Tag_ABI_enum_size: {ELFParserUtils.GetTypeName(typeof(ABIEnumSize), data[offset], "")}");
+                            offset++;
+                        }
+                        break;
+                    case 27: // Tag_ABI_HardFP_use
+                        {
+                            sb.AppendLine($"  Tag_ABI_HardFP_use: {ELFParserUtils.GetTypeName(typeof(ABIFPHardUse), data[offset], "")}");
+                            offset++;
+                        }
+                        break;
+                    case 28: // Tag_ABI_VFP_args
+                        {
+                            sb.AppendLine($"  Tag_ABI_VFP_args: {ELFParserUtils.GetTypeName(typeof(ABIVFPArguments), data[offset], "")}");
                             offset++;
                         }
                         break;
@@ -245,20 +267,12 @@ namespace PersonalTools.ELFAnalyzer.Core
             return string.Empty;
         }
 
-        private static void ParseGenericAttributes(ELFParser parser, byte[] data, ref int offset, int endOffset, StringBuilder sb, string vendorName)
+        private static void ParseGenericAttributes(byte[] data, ref int offset, int endOffset, StringBuilder sb)
         {
             // 根据供应商名称选择不同的处理方式
-            if (vendorName == "gnu" || vendorName.Contains("gnu"))
-            {
-                // 专门处理GNU属性
-                ParseGNUAttributes(parser, data, ref offset, endOffset, sb);
-                return;
-            }
-
             while (offset < endOffset)
             {
-                int attrTag;
-                int bytesRead = ReadULEB128(data, offset, out attrTag);
+                int bytesRead = ReadULEB128(data, offset, out int attrTag);
                 if (bytesRead == 0) break;
                 
                 offset += bytesRead;
@@ -373,7 +387,7 @@ namespace PersonalTools.ELFAnalyzer.Core
         }
 
         // 专门处理GNU属性的函数
-        private static void ParseGNUAttributes(ELFParser parser, byte[] data, ref int offset, int endOffset, StringBuilder sb)
+        private static void ParseMipsGNUAttributes(ELFParser parser, byte[] data, ref int offset, int endOffset, StringBuilder sb)
         {
             // 按照readelf的输出格式，首先添加"File Attributes"标题
             sb.AppendLine("  File Attributes");
@@ -389,7 +403,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 {
                     case 1: // Tag_File - 这种情况下需要读取长度
                         {
-                            int bytesRead = ReadULEB128(data, offset, out int attrValueLen);
+                            int bytesRead = ReadULEB128(data, offset, out _);
                             if (bytesRead == 0) break;
                             offset += bytesRead;
                         }
@@ -427,14 +441,14 @@ namespace PersonalTools.ELFAnalyzer.Core
                             int fpAbi = data[offset++] + 1;
                             string fpAbiDesc = fpAbi switch
                             {
-                                0 => "任意浮点ABI",           // Val_GNU_MIPS_ABI_FP_ANY
-                                1 => "双精度硬浮点",          // Val_GNU_MIPS_ABI_FP_DOUBLE
-                                2 => "单精度硬浮点",          // Val_GNU_MIPS_ABI_FP_SINGLE
-                                3 => "软浮点",               // Val_GNU_MIPS_ABI_FP_SOFT
-                                4 => "旧64位浮点",           // Val_GNU_MIPS_ABI_FP_OLD_64
-                                5 => "未知浮点扩展",          // Val_GNU_MIPS_ABI_FP_XX
-                                6 => "64位浮点",             // Val_GNU_MIPS_ABI_FP_64
-                                7 => "64位浮点增强",          // Val_GNU_MIPS_ABI_FP_64A
+                                0 => "任意浮点ABI",              // Val_GNU_MIPS_ABI_FP_ANY
+                                1 => "硬浮点 (双精度)",          // Val_GNU_MIPS_ABI_FP_DOUBLE
+                                2 => "硬浮点 (单精度)",          // Val_GNU_MIPS_ABI_FP_SINGLE
+                                3 => "软浮点",                   // Val_GNU_MIPS_ABI_FP_SOFT
+                                4 => "旧64位浮点",               // Val_GNU_MIPS_ABI_FP_OLD_64
+                                5 => "未知浮点扩展",             // Val_GNU_MIPS_ABI_FP_XX
+                                6 => "64位浮点",                 // Val_GNU_MIPS_ABI_FP_64
+                                7 => "64位浮点增强",             // Val_GNU_MIPS_ABI_FP_64A
                                 _ => $"未知({fpAbi})"
                             };
                             
