@@ -157,7 +157,31 @@ namespace PersonalTools.ELFAnalyzer.Core
                             offset++;
                         }
                         break;
-                    case 16: // Tag_Advanced_SIMD_arch
+                    case 12: // Tag_Advanced_SIMD_arch
+                        {
+                            sb.AppendLine($"  Tag_Advanced_SIMD_arch: {ELFParserUtils.GetTypeName(typeof(AdvancedSIMDArch), data[offset], "")}");
+                            offset++;
+                        }
+                        break;
+                    case 13: // 未定义或保留
+                        {
+                            sb.AppendLine($"  Tag_Unknown_13: {data[offset]}");
+                            offset++;
+                        }
+                        break;
+                    case 14: // 未定义或保留
+                        {
+                            sb.AppendLine($"  Tag_Unknown_14: {data[offset]}");
+                            offset++;
+                        }
+                        break;
+                    case 15: // 未定义或保留
+                        {
+                            sb.AppendLine($"  Tag_Unknown_15: {data[offset]}");
+                            offset++;
+                        }
+                        break;
+                    case 16: // Tag_Advanced_SIMD_arch (重复定义，可能用于不同目的)
                         {
                             sb.AppendLine($"  Tag_Advanced_SIMD_arch: {ELFParserUtils.GetTypeName(typeof(AdvancedSIMDArch), data[offset], "")}");
                             offset++;
