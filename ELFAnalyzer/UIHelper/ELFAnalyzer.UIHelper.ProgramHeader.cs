@@ -3,11 +3,11 @@ using PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.Enums;
 using System.Text;
 
-namespace PersonalTools.ELFAnalyzer
+namespace PersonalTools.ELFAnalyzer.UIHelper
 {
-    public partial class ELFAnalyzer
+    public class ProgrameHeaderHelper
     {
-        public List<ProgramHeaderInfo> GetProgramHeaderInfoList()
+        public static List<ProgramHeaderInfo> GetProgramHeaderInfoList(ELFParser _parser)
         {
             var result = new List<ProgramHeaderInfo>();
 
@@ -32,7 +32,7 @@ namespace PersonalTools.ELFAnalyzer
             return result;
         }
 
-        public string GetSectionToSegmentMappingInfo()
+        public static string GetSectionToSegmentMappingInfo(ELFParser _parser)
         {
             var sb = new StringBuilder();
             sb.AppendLine(" Section to Segment mapping:");
@@ -44,7 +44,7 @@ namespace PersonalTools.ELFAnalyzer
                 {
                     var ph = _parser.ProgramHeaders[i];
                     sb.Append($"   {i:D2}     ");
-                    var sections = GetSectionsInSegment(ph);
+                    var sections = GetSectionsInSegment(_parser, ph);
                     sb.AppendLine(string.Join(" ", sections));
                 }
             }
@@ -52,7 +52,7 @@ namespace PersonalTools.ELFAnalyzer
             return sb.ToString();
         }
 
-        private List<string> GetSectionsInSegment(ELFProgramHeader ph)
+        private static List<string> GetSectionsInSegment(ELFParser _parser, ELFProgramHeader ph)
         {
             var sections = new List<string>();
             if (_parser.SectionHeaders != null)
@@ -93,7 +93,7 @@ namespace PersonalTools.ELFAnalyzer
             return sections;
         }
 
-        public string GetInterpreterInfo()
+        public static string GetInterpreterInfo(ELFParser _parser)
         {
             if (_parser.ProgramHeaders != null)
             {

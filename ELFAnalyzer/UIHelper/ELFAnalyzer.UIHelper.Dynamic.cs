@@ -1,57 +1,53 @@
 using PersonalTools.ELFAnalyzer.Core;
-using PersonalTools.ELFAnalyzer.Models;
+using ELFModels=PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.Enums;
 using System.Text;
 
-namespace PersonalTools.ELFAnalyzer
+namespace PersonalTools.ELFAnalyzer.UIHelper
 {
-    public partial class ELFAnalyzer
+    public class DynamicHelper
     {
-        private string GetDynamicSectionInfoTableEntryValue(ELFDynamic entry)
+        private static string GetDynamicSectionInfoTableEntryValue(ELFParser _parser, ELFModels.ELFDynamic entry)
         {
             string value = string.Empty;
-            var strTabAddr = GetStringValueFromDynamicEntries(DynamicTag.DT_STRTAB);
-            var strTabSize = GetStringValueFromDynamicEntries(DynamicTag.DT_STRSZ);
+            var strTabAddr = GetStringValueFromDynamicEntries(_parser, DynamicTag.DT_STRTAB);
+            var strTabSize = GetStringValueFromDynamicEntries(_parser, DynamicTag.DT_STRSZ);
 
             if (strTabAddr != 0 && strTabSize != 0 && _parser.SectionHeaders != null)
             {
                 // Find the section that contains the string table
-                var stringTableSection = FindSectionByAddress(strTabAddr);
+                var stringTableSection = FindSectionByAddress(_parser, strTabAddr);
                 if (stringTableSection != null)
                 {
-                    value = ReadStringFromSection(stringTableSection, entry.d_val) ?? $"0x{entry.d_val:x}";
+                    value = ReadStringFromSection(_parser, stringTableSection, entry.d_val);
                 }
             }
             return value;
 
         }
-        private string GetDynamicSectionInfoValue(ELFDynamic entry)
+        private static string GetDynamicSectionInfoValue(ELFParser _parser, ELFModels.ELFDynamic entry)
         {
             return (entry.d_tag) switch
             {
-                (long)DynamicTag.DT_NEEDED => $"{GetDynamicSectionInfoTableEntryValue(entry)}",
-                (long)DynamicTag.DT_SONAME => $"{GetDynamicSectionInfoTableEntryValue(entry)}",
-                (long)DynamicTag.DT_RPATH => $"{GetDynamicSectionInfoTableEntryValue(entry)}",
-                (long)DynamicTag.DT_RUNPATH => $"{GetDynamicSectionInfoTableEntryValue(entry)}",
-                (long)DynamicTag.DT_FLAGS => $"{ELFDynamicInfo.GetDynamicFlagDescription((uint)entry.d_val)}",
-                (long)DynamicTag.DT_FLAGS_1 => $"{ELFDynamicInfo.GetDynamicFlag1Description((uint)entry.d_val)}",
+                (long)DynamicTag.DT_NEEDED or (long)DynamicTag.DT_SONAME  or (long)DynamicTag.DT_RPATH or (long)DynamicTag.DT_RUNPATH => $"{GetDynamicSectionInfoTableEntryValue(_parser, entry)}",
+                (long)DynamicTag.DT_FLAGS or (long)DynamicTag.DT_FLAGS_1 => $"{ELFDynamicInfo.GetDynamicFlagDescription((uint)entry.d_val)}",
                 _ => entry.d_tag == (long)DynamicTag.DT_PLTREL ? ELFParserUtils.GetTypeName(typeof(DynamicTag), entry.d_val, "") : $"0x{entry.d_val:x}"
             };
         }
 
-        public List<ELFDynamicSectionInfo> GetDynamicSectionInfoList()
+        public static List<ELFModels.ELFDynamicSectionInfo> GetDynamicSectionInfoList(ELFParser _parser)
         {
-            var result = new List<ELFDynamicSectionInfo>();
+            var result = new List<ELFModels.ELFDynamicSectionInfo>();
 
             if (_parser.DynamicEntries != null)
             {
                 foreach (var entry in _parser.DynamicEntries)
                 {
-                    result.Add(new ELFDynamicSectionInfo
+                    result.Add(new ELFModels.ELFDynamicSectionInfo
                     {
                         Tag = $"0x{entry.d_tag:x16}",
                         Type = ELFDynamicInfo.GetDynamicTagDescription((ulong)entry.d_tag),
-                        Value = GetDynamicSectionInfoValue(entry)
+                        Value = GetDynamicSectionInfoValue(_parser, entry)
                     });
                     if(entry.d_tag == (long)DynamicTag.DT_NULL)
                     {
@@ -63,7 +59,7 @@ namespace PersonalTools.ELFAnalyzer
             return result;
         }
                 
-        private ulong GetStringValueFromDynamicEntries(DynamicTag tag)
+        private static ulong GetStringValueFromDynamicEntries(ELFParser _parser, DynamicTag tag)
         {
             if (_parser.DynamicEntries != null)
             {
@@ -76,7 +72,7 @@ namespace PersonalTools.ELFAnalyzer
             return 0;
         }
                 
-        private Models.ELFSectionHeader? FindSectionByAddress(ulong address)
+        private static ELFModels.ELFSectionHeader? FindSectionByAddress(ELFParser _parser, ulong address)
         {
             if (_parser.SectionHeaders != null)
             {
@@ -91,7 +87,7 @@ namespace PersonalTools.ELFAnalyzer
             return null;
         }
                 
-        private string? ReadStringFromSection(Models.ELFSectionHeader? section, ulong offset)
+        private static string ReadStringFromSection(ELFParser _parser, ELFModels.ELFSectionHeader? section, ulong offset)
         {
             try
             {
@@ -116,7 +112,7 @@ namespace PersonalTools.ELFAnalyzer
             {
                 // If there's an error reading the string, return null
             }
-            return null;
+            return $"0x{offset:x}";
         }
     }
 }

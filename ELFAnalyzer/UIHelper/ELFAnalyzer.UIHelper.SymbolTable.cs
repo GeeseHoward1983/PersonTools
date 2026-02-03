@@ -1,22 +1,22 @@
 using PersonalTools.ELFAnalyzer.Core;
-using PersonalTools.ELFAnalyzer.Models;
+using ELFModels=PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.Enums;
 
-namespace PersonalTools.ELFAnalyzer
+namespace PersonalTools.ELFAnalyzer.UIHelper
 {
-    public partial class ELFAnalyzer
+    public class SymbolTableHelper
     {
-        public List<ELFSymbolTableInfo> GetSymbolTableInfoList(SectionType sectionType)
+        public static List<ELFModels.ELFSymbolTableInfo> GetSymbolTableInfoList(ELFParser _parser, SectionType sectionType)
         {
-            var result = new List<ELFSymbolTableInfo>();
+            var result = new List<ELFModels.ELFSymbolTableInfo>();
 
             if (_parser.Symbols != null && _parser.Symbols.Count > 0)
             {
-                List<ELFSymbol>? symbols = _parser.Symbols.GetValueOrDefault(sectionType);
+                List<ELFModels.ELFSymbol>? symbols = _parser.Symbols.GetValueOrDefault(sectionType);
                 for (int i = 0; i < symbols?.Count; i++)
                 {
                     var sym = symbols[i];
-                    result.Add(new ELFSymbolTableInfo
+                    result.Add(new ELFModels.ELFSymbolTableInfo
                     {
                         Number = i,
                         Value = $"0x{sym.st_value:x12}",

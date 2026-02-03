@@ -1,10 +1,10 @@
 using PersonalTools.ELFAnalyzer.Core;
 
-namespace PersonalTools.ELFAnalyzer
+namespace PersonalTools.ELFAnalyzer.UIHelper
 {
-    public partial class ELFAnalyzer
+    public class AttributesHelper
     {
-        public string GetAttributeInfo()
+        public static string GetAttributeInfo(ELFParser _parser)
         {
             return ELFAttributeInfo.GetFormattedAttributeInfo(_parser);
         }

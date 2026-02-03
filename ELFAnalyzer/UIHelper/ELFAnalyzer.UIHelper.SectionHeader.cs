@@ -1,11 +1,11 @@
 using PersonalTools.ELFAnalyzer.Core;
 using PersonalTools.ELFAnalyzer.Models;
 
-namespace PersonalTools.ELFAnalyzer
+namespace PersonalTools.ELFAnalyzer.UIHelper
 {
-    public partial class ELFAnalyzer
+    public class SectionHeaderHelper
     {
-        public List<ELFSectionHeaderInfo> GetSectionHeaderInfoList()
+        public static List<ELFSectionHeaderInfo> GetSectionHeaderInfoList(ELFParser _parser)
         {
             var result = new List<ELFSectionHeaderInfo>();
 

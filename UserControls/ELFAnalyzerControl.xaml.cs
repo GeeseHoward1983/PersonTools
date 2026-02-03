@@ -52,35 +52,35 @@ namespace PersonalTools.UserControls
                 // 更新各控件的信息
                 ELFHeaderInfoControl.SetELFHeaderInfo(ELFHeaderHelper.GetFormattedELFHeaderInfo(analyzer._parser));
                 
-                var interpreter = analyzer.GetInterpreterInfo();
+                var interpreter = ProgrameHeaderHelper.GetInterpreterInfo(analyzer._parser);
                 if (!string.IsNullOrEmpty(interpreter))
                 {
                     ELFHeaderInfoControl.SetInterpreterInfo(interpreter);
                 }
 
                 // 显示程序头信息
-                var programHeaders = analyzer.GetProgramHeaderInfoList();
+                var programHeaders = ProgrameHeaderHelper.GetProgramHeaderInfoList(analyzer._parser);
                 ELFProgramHeaderControl.SetProgramHeadersData(programHeaders);
 
                 // 显示节头信息
-                var sectionHeaders = analyzer.GetSectionHeaderInfoList();
+                var sectionHeaders = SectionHeaderHelper.GetSectionHeaderInfoList(analyzer._parser);
                 ELFSectionHeaderControl.SetSectionHeadersData(sectionHeaders);
 
                 // 显示节到段映射信息
-                ELFSectionToSegmentMappingControl.SetSectionToSegmentInfo(analyzer.GetSectionToSegmentMappingInfo());
+                ELFSectionToSegmentMappingControl.SetSectionToSegmentInfo(ProgrameHeaderHelper.GetSectionToSegmentMappingInfo(analyzer._parser));
 
                 // 显示符号表信息
-                var symbolTable = analyzer.GetSymbolTableInfoList(SectionType.SHT_SYMTAB);
+                var symbolTable = SymbolTableHelper.GetSymbolTableInfoList(analyzer._parser, SectionType.SHT_SYMTAB);
                 ELFSymbolTableControl.SetSymbolTableData(symbolTable);
                 ELFSymbolTableTabItem.Visibility = symbolTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
                 // 显示动态符号表信息
-                var dynsymTable = analyzer.GetSymbolTableInfoList(SectionType.SHT_DYNSYM);
+                var dynsymTable = SymbolTableHelper.GetSymbolTableInfoList(analyzer._parser, SectionType.SHT_DYNSYM);
                 ELFDynsymControl.SetDynsymData(dynsymTable);
                 ELFDynsymTabItem.Visibility = dynsymTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
                 // 显示动态段信息
-                var dynamicSection = analyzer.GetDynamicSectionInfoList();
+                var dynamicSection = DynamicHelper.GetDynamicSectionInfoList(analyzer._parser);
                 ELFDynamicSectionControl.SetDynamicSectionData(dynamicSection);
                 ELFDynamicSectionTabItem.Visibility = dynamicSection.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
@@ -91,15 +91,15 @@ namespace PersonalTools.UserControls
                 ELFVersionDependencyInfoControl.SetVersionDependencyInfo(analyzer.GetFormattedVersionDefinitionInfo() + "\n\n" + analyzer.GetFormattedVersionDependencyInfo());
 
                 // 显示重定位信息
-                var relaDynTable = analyzer.GetRelocationInfoForSpecificSection(".rela.dyn");
-                var relDynTable = analyzer.GetRelocationInfoForSpecificSection(".rel.dyn");
+                var relaDynTable = RelocationHelper.GetRelocationInfoForSpecificSection(analyzer._parser, ".rela.dyn");
+                var relDynTable = RelocationHelper.GetRelocationInfoForSpecificSection(analyzer._parser, ".rel.dyn");
                 relaDynTable.AddRange(relDynTable);
                 ELFRelocationControl.SetRelaDynData(relaDynTable);
                 ELFRelaDynTabItem.Visibility = relaDynTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
                 // 显示plt重定位信息
-                var relaPltTable = analyzer.GetRelocationInfoForSpecificSection(".rela.plt");
-                var relPltTable = analyzer.GetRelocationInfoForSpecificSection(".rel.plt");
+                var relaPltTable = RelocationHelper.GetRelocationInfoForSpecificSection(analyzer._parser, ".rela.plt");
+                var relPltTable = RelocationHelper.GetRelocationInfoForSpecificSection(analyzer._parser, ".rel.plt");
                 relaPltTable.AddRange(relPltTable);
                 ELFPltRelocationControl.SetRelaPltData(relaPltTable);
                 ELFRelaPltTabItem.Visibility = relaPltTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -109,7 +109,7 @@ namespace PersonalTools.UserControls
                 ELFNoteInfoControl.SetNoteInfo(noteInfo);
                 
                 // 显示属性信息
-                var attributeInfo = analyzer.GetAttributeInfo();
+                var attributeInfo = AttributesHelper.GetAttributeInfo(analyzer._parser);
                 ELFAttributeInfoControl.SetAttributeInfo(attributeInfo);
                 ELFAttributeInfoTabItem.Visibility = attributeInfo.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
             }

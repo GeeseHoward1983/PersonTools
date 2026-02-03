@@ -2,11 +2,11 @@ using PersonalTools.ELFAnalyzer.Core;
 using PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.Enums;
 
-namespace PersonalTools.ELFAnalyzer
+namespace PersonalTools.ELFAnalyzer.UIHelper
 {
-    public partial class ELFAnalyzer
+    public class RelocationHelper
     {
-        public List<ELFRelocationInfo> GetRelocationInfoForSpecificSection(string sectionName)
+        public static List<ELFRelocationInfo> GetRelocationInfoForSpecificSection(ELFParser _parser, string sectionName)
         {
             var result = new List<ELFRelocationInfo>();
             
