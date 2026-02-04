@@ -120,11 +120,15 @@ namespace PersonalTools.ELFAnalyzer.Core
                 foreach (var symbol in symbolList.Value)
                 {
                     // 查找地址最接近且不大于目标地址的符号
-                    if ((symbol.st_value == address || symbol.st_value == address + 1) &&
+                    if ((symbol.st_value == address || symbol.st_value == address + 1 || symbol.st_value + symbol.st_size == address || symbol.st_value + symbol.st_size == address + 1) &&
                         symbol.st_info != 0 && // 非NULL符号
                         symbol.st_shndx != 0) // 非未定义符号
                     {
                         string name = SymbleName.GetSymbolName(parser, symbol, symbolList.Key);
+                        if(symbol.st_value + symbol.st_size == address || symbol.st_value + symbol.st_size == address + 1)
+                        {
+                            name += $"+0x{symbol.st_size:x}";
+                        }
                         
                         if (!string.IsNullOrEmpty(name))
                         {
@@ -309,7 +313,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 sb.AppendLine("  Refuse to unwind");
             }
-            else if ((cmd & 0x8000) == 0x8000)
+            else if (cmd >= 0x8001 && cmd <= 0x8FFF)
             {
                 int regMask = cmd & 0xFFF;
                 var regs = new List<string>();
