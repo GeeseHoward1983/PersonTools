@@ -82,8 +82,11 @@
             </TabItem>
             
             <!-- 属性信息标签页 -->
-            <TabItem Name="ELFAttributeInfoTabItem" Header="属性信息" Visibility="Collapsed">
+            <TabItem Name="ELFAttributeInfoTabItem" Header="Attribute Info">
                 <local:ELFAttributeInfoControl x:Name="ELFAttributeInfoControl" />
+            </TabItem>
+            <TabItem x:Name="ELFExidxInfoTabItem" Header="Exidx Info">
+                <local:ELFExidxInfoControl x:Name="ELFExidxInfoControl" />
             </TabItem>
         </TabControl>
     </Grid>

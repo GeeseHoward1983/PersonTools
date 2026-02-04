@@ -112,6 +112,11 @@ namespace PersonalTools.UserControls
                 var attributeInfo = AttributesHelper.GetAttributeInfo(analyzer._parser);
                 ELFAttributeInfoControl.SetAttributeInfo(attributeInfo);
                 ELFAttributeInfoTabItem.Visibility = attributeInfo.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+                
+                // 显示Exidx信息
+                var exidxInfo = ExidxInfoHelper.GetExidxInfo(analyzer._parser);
+                ELFExidxInfoControl.SetExidxInfo(exidxInfo);
+                ELFExidxInfoTabItem.Visibility = !exidxInfo.Contains("There are no exception index entries") ? Visibility.Visible : Visibility.Collapsed;
             }
             catch (Exception ex)
             {

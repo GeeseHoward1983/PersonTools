@@ -110,7 +110,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                                 if (sym < symbols.Count)
                                 {
                                     var symbol = symbols[(int)sym];
-                                    symbolName = SymbleName.GetSymbolName(_parser, symbol, SectionType.SHT_DYNSYM) ?? "Unknown";
+                                    symbolName = SymbleName.GetSymbolName(_parser, symbol, SectionType.SHT_DYNSYM);
                                     symbolValue = $"{symbol.st_value:x8}";
                                 }
                             }

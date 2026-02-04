@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -114,6 +114,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
 	<Page Include="UserControls\ELFAttributeInfoControl.xaml">
+		<SubType>Designer</SubType>
+		<Generator>MSBuild:Compile</Generator>
+	</Page>
+	<Page Include="UserControls\ELFExidxInfoControl.xaml">
 		<SubType>Designer</SubType>
 		<Generator>MSBuild:Compile</Generator>
 	</Page>

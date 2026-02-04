@@ -16,14 +16,18 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                 for (int i = 0; i < symbols?.Count; i++)
                 {
                     var sym = symbols[i];
+                    if(sym.st_value == 0x4064)
+                    {
+                        ;
+                    }
                     result.Add(new ELFModels.ELFSymbolTableInfo
                     {
                         Number = i,
                         Value = $"0x{sym.st_value:x12}",
                         Size = $"{sym.st_size}",
-                        Type = ELFSymbolInfo.GetSymbolType(sym.st_info) ?? string.Empty,
-                        Bind = ELFSymbolInfo.GetSymbolBinding(sym.st_info) ?? string.Empty,
-                        Vis = ELFSymbolInfo.GetSymbolVisibility(sym.st_other) ?? string.Empty,
+                        Type = ELFSymbolInfo.GetSymbolType(sym.st_info),
+                        Bind = ELFSymbolInfo.GetSymbolBinding(sym.st_info),
+                        Vis = ELFSymbolInfo.GetSymbolVisibility(sym.st_other),
                         Ndx = sym.st_shndx switch
                         { 
                             0 => "UND",
@@ -31,7 +35,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                             0xFFF2 => "COM",
                             _ => $"{sym.st_shndx}"
                         },
-                        Name = SymbleName.GetSymbolName(_parser, sym, sectionType) ?? string.Empty
+                        Name = SymbleName.GetSymbolName(_parser, sym, sectionType)
                     });
                 }
             }
