@@ -12,15 +12,20 @@ namespace PersonalTools.ELFAnalyzer.Core
 
             if (parser.SectionHeaders != null)
             {
+                Models.ELFSectionHeader? exidxSection = null, MextabSection = null;
                 for (int i = 0; i < parser.SectionHeaders.Count; i++)
                 {
                     if (parser.SectionHeaders[i].sh_type == (uint)SectionType.SHT_ARM_EXIDX)
                     {
-                        var exidxInfo = ParseExidxSection(parser, parser.SectionHeaders[i], i);
-                        if (!string.IsNullOrEmpty(exidxInfo))
-                        {
-                            sb.AppendLine(exidxInfo);
-                        }
+                        exidxSection = parser.SectionHeaders[i];
+                    }
+                }
+                if(exidxSection != null)
+                {
+                    var exidxInfo = ParseExidxSection(parser, (Models.ELFSectionHeader)exidxSection, MextabSection);
+                    if (!string.IsNullOrEmpty(exidxInfo))
+                    {
+                        sb.AppendLine(exidxInfo);
                     }
                 }
             }
@@ -33,18 +38,18 @@ namespace PersonalTools.ELFAnalyzer.Core
             return sb.ToString();
         }
 
-        private static string ParseExidxSection(ELFParser parser, Models.ELFSectionHeader section, int sectionIndex)
+        private static string ParseExidxSection(ELFParser parser, Models.ELFSectionHeader exidxSection, Models.ELFSectionHeader? extabSection)
         {
             var sb = new StringBuilder();
 
             // 移除节区标题输出，保持与readelf工具一致的输出格式
             
             // 读取异常索引表的数据
-            var data = new byte[section.sh_size];
-            Array.Copy(parser.FileData, (long)section.sh_offset, data, 0, (int)section.sh_size);
+            var data = new byte[exidxSection.sh_size];
+            Array.Copy(parser.FileData, (long)exidxSection.sh_offset, data, 0, (int)exidxSection.sh_size);
 
             // ARM异常索引表由8字节(2个字)的条目组成
-            int entryCount = (int)(section.sh_size / 8); // 8字节每条目
+            int entryCount = (int)(exidxSection.sh_size / 8); // 8字节每条目
             
             for (int idx = 0; idx < entryCount; idx++)
             {
@@ -74,12 +79,19 @@ namespace PersonalTools.ELFAnalyzer.Core
                 }
 
                 // 计算绝对地址
-                int absAddr = ((int)section.sh_addr + (int)(addrOffset * 2) / 2) + offset;
+                int absAddr = ((int)exidxSection.sh_addr + (int)(addrOffset * 2) / 2) + offset;
                 
                 // 获取可能的符号名称
                 string symbolName = FindNearestSymbolName(parser, (ulong)absAddr);
+                if(symbolName == "")
+                {
+                    symbolName = FindNearestSymbolNameEx(parser, (ulong)absAddr);
+                }
                 string symbolDesc = string.IsNullOrEmpty(symbolName) ? $"0x{absAddr:x}" : $"0x{absAddr:x} <{symbolName}>";
-                                
+                if(absAddr == 0x6988)
+                {
+                    ;
+                }
                 // 根据展开信息判断是索引还是标记
                 if (unwindInfo == 1) // 特殊值表示无法展开
                 {
@@ -93,17 +105,61 @@ namespace PersonalTools.ELFAnalyzer.Core
                     int instruction = unwindInfo & 0x00FFFFFF; // 低24位是实际指令
                     
                     sb.AppendLine($"  Compact model index: {compactIndex}");
-                    
+                    byte[] bInstruction = new byte[3];
+                    bInstruction[0] = (byte)(instruction >> 16 & 0xFF);
+                    bInstruction[1] = (byte)(instruction >> 8 & 0xFF);
+                    bInstruction[2] = (byte)(instruction & 0xFF);
                     // 解析实际的展开指令
-                    ParseUnwindInstructions(instruction, sb);
+                    ParseUnwindInstructions(bInstruction, 3, sb);
                 }
                 else
                 {
                     // 展开表条目索引 - 指向 .ARM.extab 节的偏移
-                    sb.AppendLine($"{symbolDesc}: @0x{(int)section.sh_addr + (int)((unwindInfo + 4) * 2) / 2 + offset:x}");
-                    sb.AppendLine($"  Index into .ARM.extab: 0x{unwindInfo:x8}");
+                    int extabOffset = (int)exidxSection.sh_addr + (int)((unwindInfo + 4) * 2) / 2 + offset;
+                    sb.AppendLine($"{symbolDesc}: @0x{extabOffset:x}");
+                    //sb.AppendLine($"  Index into .ARM.extab: 0x{unwindInfo:x8}");
+                    if (parser.Header.IsLittleEndian())
+                    {
+                        unwindInfo = BitConverter.ToInt32(parser.FileData, extabOffset);
+                    }
+                    else
+                    {
+                        var bytes = new byte[4];
+                        Array.Copy(parser.FileData, extabOffset, bytes, 0, 4);
+                        Array.Reverse(bytes);
+                        unwindInfo = BitConverter.ToInt32(bytes, 0);
+                    }
+                    int compactIndex = (unwindInfo >> 24) & 0x7F;
+
+                    sb.AppendLine($"  Compact model index: {compactIndex}");
+                    byte[] bInstruction;
+                    if (compactIndex == 1)
+                    {   int remainDWords = (unwindInfo >> 16) & 0xFF;
+                        bInstruction = new byte[2 + remainDWords * 4];
+                        bInstruction[0] = (byte)(unwindInfo >> 8 & 0xFF);
+                        bInstruction[1] = (byte)(unwindInfo & 0xFF);
+
+                        for (int i = 0; i < remainDWords; i++)
+                        {
+                            extabOffset += 4;
+                            Array.Copy(parser.FileData, extabOffset, bInstruction, 2 + i * 4, 4);
+                            if (parser.Header.IsLittleEndian())
+                            {
+                                Array.Reverse(bInstruction, 2 + i * 4, 4);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        bInstruction = new byte[3];
+                        bInstruction[0] = (byte)(unwindInfo >> 16 & 0xFF);
+                        bInstruction[1] = (byte)(unwindInfo >> 8 & 0xFF);
+                        bInstruction[2] = (byte)(unwindInfo & 0xFF);
+                    }
+                    ParseUnwindInstructions(bInstruction, bInstruction.Length, sb);
+
                 }
-                
+
                 sb.AppendLine(); // 添加空行分隔
             }
 
@@ -120,15 +176,11 @@ namespace PersonalTools.ELFAnalyzer.Core
                 foreach (var symbol in symbolList.Value)
                 {
                     // 查找地址最接近且不大于目标地址的符号
-                    if ((symbol.st_value == address || symbol.st_value == address + 1 || symbol.st_value + symbol.st_size == address || symbol.st_value + symbol.st_size == address + 1) &&
+                    if ((symbol.st_value == address || symbol.st_value == address + 1) &&
                         symbol.st_info != 0 && // 非NULL符号
                         symbol.st_shndx != 0) // 非未定义符号
                     {
                         string name = SymbleName.GetSymbolName(parser, symbol, symbolList.Key);
-                        if(symbol.st_value + symbol.st_size == address || symbol.st_value + symbol.st_size == address + 1)
-                        {
-                            name += $"+0x{symbol.st_size:x}";
-                        }
                         
                         if (!string.IsNullOrEmpty(name))
                         {
@@ -140,50 +192,72 @@ namespace PersonalTools.ELFAnalyzer.Core
             
             return string.Empty;
         }
-        
-        private static void ParseUnwindInstructions(int instruction, StringBuilder sb)
+
+        private static string FindNearestSymbolNameEx(ELFParser parser, ulong address)
+        {
+            if (parser.Symbols == null) return string.Empty;
+
+            // 遍历符号表，寻找最接近的符号
+            foreach (var symbolList in parser.Symbols)
+            {
+                foreach (var symbol in symbolList.Value)
+                {
+                    // 查找地址最接近且不大于目标地址的符号
+                    if ((symbol.st_value + symbol.st_size == address || symbol.st_value + symbol.st_size == address + 1) &&
+                        symbol.st_info != 0 && // 非NULL符号
+                        symbol.st_shndx != 0) // 非未定义符号
+                    {
+                        string name = SymbleName.GetSymbolName(parser, symbol, symbolList.Key);
+                        if (name != "")
+                        {
+                            name += $"+0x{symbol.st_size:x}";
+                        }
+
+                        if (!string.IsNullOrEmpty(name))
+                        {
+                            return name;
+                        }
+                    }
+                }
+            }
+
+            return string.Empty;
+        }
+
+
+        private static void ParseUnwindInstructions(byte[] instruction, int instructionLength, StringBuilder sb)
         {
             // 根据 ARM Exception Handling ABI (EHABI) 规范解析展开指令
             // 指令存储在低24位中
             int offset = 0;
-            
+
             // 循环处理指令直到完成
-            while (offset < 24)
+            while (offset < instructionLength)
             {
                 // 检查是否还有更多指令
-                if (offset >= 24) break;
+                byte cmd = instruction[offset];
+
+                // 检查是否为有效的单字节指令
+                // 如果不是有效的单字节指令，尝试作为双字节指令处理
+                if (IsValidSingleByteInstruction(cmd) || offset + 2 > instructionLength)
                 {
-                    // 单字节指令 - 读取接下来的8位
-                    if (offset + 8 <= 24)
-                    {
-                        byte cmd = (byte)((instruction >> (23 - offset - 7)) & 0xFF);
-                        // 检查是否为有效的单字节指令
-                        // 如果不是有效的单字节指令，尝试作为双字节指令处理
-                        if (IsValidSingleByteInstruction(cmd) || offset + 16 > 24)
-                        {
-                            sb.Append($"  0x{cmd:x2}");
-                            
-                            // 处理具体的单字节指令
-                            ProcessSingleByteInstruction(cmd, sb);
-                            
-                            offset += 8; // 移动8位
-                        }
-                        else
-                        {
-                            // 尝试作为双字节指令处理
-                            ushort doubleCmd = (ushort)((instruction >> (23 - offset - 15)) & 0xFFFF);
-                            sb.Append($"  0x{(doubleCmd >> 8):x2} 0x{(doubleCmd & 0xFF):x2}");
-                            
-                            // 处理双字节指令
-                            ProcessDoubleByteInstruction(doubleCmd, sb);
-                            
-                            offset += 16; // 移动16位
-                        }
-                    }
-                    else
-                    {
-                        break; // 没有足够的位来解析指令
-                    }
+                    sb.Append($"  0x{cmd:x2}");
+
+                    // 处理具体的单字节指令
+                    ProcessSingleByteInstruction(cmd, sb);
+
+                    offset += 1; // 移动8位
+                }
+                else
+                {
+                    // 尝试作为双字节指令处理
+                    ushort doubleCmd = (ushort)(instruction[offset] << 8 | instruction[offset + 1]);
+                    sb.Append($"  0x{instruction[offset]:x2} 0x{instruction[offset + 1]:x2}");
+
+                    // 处理双字节指令
+                    ProcessDoubleByteInstruction(doubleCmd, sb);
+
+                    offset += 2; // 移动16位
                 }
             }
         }
@@ -232,7 +306,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                     else if (cmd >= 0x40 && cmd <= 0x7F)
                     {
                         int imm = cmd & 0x3F;
-                        int bytes = (imm - 1) << 2;
+                        int bytes = (imm + 1) << 2;
                         sb.AppendLine($"  vsp = vsp - {bytes}");
                     }
                     else if((cmd & 0x90) == 0x90)
@@ -361,7 +435,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 int ssss = (cmd >> 4) & 0x0F;
                 int cccc = cmd & 0x0F;
                 var regs = new List<string>();
-                for (int i = 0; i <= ssss + cccc; i++)
+                for (int i = 0; i <= cccc; i++)
                 {
                         regs.Add($"D{ssss + i}");
                 }
@@ -370,7 +444,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                     sb.AppendLine($"  pop {{{string.Join(", ", regs)}}}");
                 }
             }
-            else if (cmd >= 0xC600 || cmd <= 0xC6FF)
+            else if (cmd >= 0xC600 && cmd <= 0xC6FF)
             {
                 int ssss = (cmd >> 4) & 0x0F;
                 int cccc = cmd & 0x0F;
@@ -404,7 +478,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 int ssss = (cmd >> 4) & 0x0F;
                 int cccc = cmd & 0x0F;
                 var regs = new List<string>();
-                for (int i = 0; i <= ssss + cccc; i++)
+                for (int i = 0; i <= cccc; i++)
                 {
                     regs.Add($"D{ssss + i + 16}");
                 }
@@ -418,7 +492,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 int ssss = (cmd >> 4) & 0x0F;
                 int cccc = cmd & 0x0F;
                 var regs = new List<string>();
-                for (int i = 0; i <= ssss + cccc; i++)
+                for (int i = 0; i <= cccc; i++)
                 {
                     regs.Add($"D{ssss + i}");
                 }
