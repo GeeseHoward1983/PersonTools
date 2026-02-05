@@ -163,15 +163,15 @@ namespace PersonalTools.ELFAnalyzer.Core
                             offset++;
                         }
                         break;
-                    case 13: // 未定义或保留
+                    case 13: // Tag_PCS_config
                         {
-                            sb.AppendLine($"  Tag_Unknown_13: {data[offset]}");
+                            sb.AppendLine($"  Tag_PCS_config: {data[offset]}");
                             offset++;
                         }
                         break;
-                    case 14: // 未定义或保留
+                    case 14: // Tag_PCS_R9_use
                         {
-                            sb.AppendLine($"  Tag_Unknown_14: {data[offset]}");
+                            sb.AppendLine($"  Tag_PCS_R9_use: {data[offset]}");
                             offset++;
                         }
                         break;

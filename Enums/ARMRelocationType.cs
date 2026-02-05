@@ -9,7 +9,7 @@ namespace PersonalTools.Enums
         R_ARM_PC24 = 1,               /* Deprecated PC relative 26 bit branch. */
         R_ARM_ABS32 = 2,              /* Direct 32 bit */
         R_ARM_REL32 = 3,              /* PC relative 32 bit */
-        R_ARM_PC13 = 4,
+        R_ARM_LDR_PC_G0 = 4,
         R_ARM_ABS16 = 5,              /* Direct 16 bit */
         R_ARM_ABS12 = 6,              /* Direct 12 bit */
         R_ARM_THM_ABS5 = 7,           /* Direct & 0x7C (LDR, STR). */
@@ -18,8 +18,7 @@ namespace PersonalTools.Enums
         R_ARM_THM_PC22 = 10,          /* PC relative 24 bit (Thumb32 BL). */
         R_ARM_THM_PC8 = 11,           /* PC relative & 0x3FC (Thumb16 LDR, ADD, ADR). */
         R_ARM_AMP_VCALL9 = 12,
-        R_ARM_SWI24 = 13,             /* Obsolete static relocation. */
-        R_ARM_TLS_DESC = R_ARM_SWI24,          /* Dynamic relocation. */
+        R_ARM_TLS_DESC = 13,             /* Obsolete static relocation. */
         R_ARM_THM_SWI8 = 14,          /* Reserved. */
         R_ARM_XPC25 = 15,             /* Reserved. */
         R_ARM_THM_XPC22 = 16,         /* Reserved. */
@@ -118,12 +117,50 @@ namespace PersonalTools.Enums
         R_ARM_TLS_LDO12 = 109,        /* 12 bit relative to TLS block (LDR, STR). */
         R_ARM_TLS_LE12 = 110,         /* 12 bit relative to static TLS block (LDR, STR). */
         R_ARM_TLS_IE12GP = 111,       /* 12 bit GOT entry relative to GOT origin (LDR). */
+        R_ARM_PRIVATE_0,
+        R_ARM_PRIVATE_1,
+        R_ARM_PRIVATE_2,
+        R_ARM_PRIVATE_3,
+        R_ARM_PRIVATE_4,
+        R_ARM_PRIVATE_5,
+        R_ARM_PRIVATE_6,
+        R_ARM_PRIVATE_7,
+        R_ARM_PRIVATE_8,
+        R_ARM_PRIVATE_9,
+        R_ARM_PRIVATE_10,
+        R_ARM_PRIVATE_11,
+        R_ARM_PRIVATE_12,
+        R_ARM_PRIVATE_13,
+        R_ARM_PRIVATE_14,
+        R_ARM_PRIVATE_15,
         R_ARM_ME_TOO = 128,           /* Obsolete. */
-        R_ARM_THM_TLS_DESCSEQ = 129,
-        R_ARM_THM_TLS_DESCSEQ16 = R_ARM_THM_TLS_DESCSEQ,
+        R_ARM_THM_TLS_DESCSEQ16 = 129,
         R_ARM_THM_TLS_DESCSEQ32 = 130,
         R_ARM_THM_GOT_BREL12 = 131,   /* GOT entry relative to GOT origin, 12 bit (Thumb32 LDR). */
+        R_ARM_THM_ALU_ABS_G0_NC,
+        R_ARM_THM_ALU_ABS_G1_NC,
+        R_ARM_THM_ALU_ABS_G2_NC,
+        R_ARM_THM_ALU_ABS_G3,
+        R_ARM_THM_BF16,
+        R_ARM_THM_BF12,
+        R_ARM_THM_BF18,
         R_ARM_IRELATIVE = 160,
+        R_ARM_PRIVATE_16,
+        R_ARM_PRIVATE_17,
+        R_ARM_PRIVATE_18,
+        R_ARM_PRIVATE_19,
+        R_ARM_PRIVATE_20,
+        R_ARM_PRIVATE_21,
+        R_ARM_PRIVATE_22,
+        R_ARM_PRIVATE_23,
+        R_ARM_PRIVATE_24,
+        R_ARM_PRIVATE_25,
+        R_ARM_PRIVATE_26,
+        R_ARM_PRIVATE_27,
+        R_ARM_PRIVATE_28,
+        R_ARM_PRIVATE_29,
+        R_ARM_PRIVATE_30,
+        R_ARM_PRIVATE_31,
         R_ARM_RXPC25 = 249,
         R_ARM_RSBREL32 = 250,
         R_ARM_THM_RPC22 = 251,
