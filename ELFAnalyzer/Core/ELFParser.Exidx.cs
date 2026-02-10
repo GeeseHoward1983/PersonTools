@@ -12,7 +12,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 
             if (parser.SectionHeaders != null)
             {
-                Models.ELFSectionHeader? exidxSection = null, MextabSection = null;
+                Models.ELFSectionHeader? exidxSection = null;
                 for (int i = 0; i < parser.SectionHeaders.Count; i++)
                 {
                     if (parser.SectionHeaders[i].sh_type == (uint)SectionType.SHT_ARM_EXIDX)
@@ -22,7 +22,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 }
                 if(exidxSection != null)
                 {
-                    var exidxInfo = ParseExidxSection(parser, (Models.ELFSectionHeader)exidxSection, MextabSection);
+                    var exidxInfo = ParseExidxSection(parser, (Models.ELFSectionHeader)exidxSection);
                     if (!string.IsNullOrEmpty(exidxInfo))
                     {
                         sb.AppendLine(exidxInfo);
@@ -38,7 +38,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             return sb.ToString();
         }
 
-        private static string ParseExidxSection(ELFParser parser, Models.ELFSectionHeader exidxSection, Models.ELFSectionHeader? extabSection)
+        private static string ParseExidxSection(ELFParser parser, Models.ELFSectionHeader exidxSection)
         {
             var sb = new StringBuilder();
 
@@ -82,10 +82,10 @@ namespace PersonalTools.ELFAnalyzer.Core
                 int absAddr = ((int)exidxSection.sh_addr + (int)(addrOffset * 2) / 2) + offset;
                 
                 // 获取可能的符号名称
-                string symbolName = FindNearestSymbolName(parser, (ulong)absAddr);
+                string symbolName = FindNearestSymbolName(parser, (ulong)absAddr, false);
                 if(symbolName == "")
                 {
-                    symbolName = FindNearestSymbolNameEx(parser, (ulong)absAddr);
+                    symbolName = FindNearestSymbolName(parser, (ulong)absAddr, true);
                 }
                 string symbolDesc = string.IsNullOrEmpty(symbolName) ? $"0x{absAddr:x}" : $"0x{absAddr:x} <{symbolName}>";
                 if(absAddr == 0x6988)
@@ -105,10 +105,12 @@ namespace PersonalTools.ELFAnalyzer.Core
                     int instruction = unwindInfo & 0x00FFFFFF; // 低24位是实际指令
                     
                     sb.AppendLine($"  Compact model index: {compactIndex}");
-                    byte[] bInstruction = new byte[3];
-                    bInstruction[0] = (byte)(instruction >> 16 & 0xFF);
-                    bInstruction[1] = (byte)(instruction >> 8 & 0xFF);
-                    bInstruction[2] = (byte)(instruction & 0xFF);
+                    byte[] bInstruction =
+                    [
+                        (byte)(instruction >> 16 & 0xFF),
+                        (byte)(instruction >> 8 & 0xFF),
+                        (byte)(instruction & 0xFF),
+                    ];
                     // 解析实际的展开指令
                     ParseUnwindInstructions(bInstruction, 3, sb);
                 }
@@ -166,49 +168,27 @@ namespace PersonalTools.ELFAnalyzer.Core
             return sb.ToString();
         }
         
-        private static string FindNearestSymbolName(ELFParser parser, ulong address)
+        private static string FindNearestSymbolName(ELFParser parser, ulong address, bool containstSize)
         {
             if (parser.Symbols == null) return string.Empty;
-            
+
             // 遍历符号表，寻找最接近的符号
             foreach (var symbolList in parser.Symbols)
             {
                 foreach (var symbol in symbolList.Value)
                 {
-                    // 查找地址最接近且不大于目标地址的符号
-                    if ((symbol.st_value == address || symbol.st_value == address + 1) &&
-                        symbol.st_info != 0 && // 非NULL符号
-                        symbol.st_shndx != 0) // 非未定义符号
+                    ulong pos = symbol.st_value;
+                    if(containstSize)
                     {
-                        string name = SymbleName.GetSymbolName(parser, symbol, symbolList.Key);
-                        
-                        if (!string.IsNullOrEmpty(name))
-                        {
-                            return name;
-                        }
+                        pos += symbol.st_size;
                     }
-                }
-            }
-            
-            return string.Empty;
-        }
-
-        private static string FindNearestSymbolNameEx(ELFParser parser, ulong address)
-        {
-            if (parser.Symbols == null) return string.Empty;
-
-            // 遍历符号表，寻找最接近的符号
-            foreach (var symbolList in parser.Symbols)
-            {
-                foreach (var symbol in symbolList.Value)
-                {
                     // 查找地址最接近且不大于目标地址的符号
-                    if ((symbol.st_value + symbol.st_size == address || symbol.st_value + symbol.st_size == address + 1) &&
+                    if ((pos == address || pos == address + 1) &&
                         symbol.st_info != 0 && // 非NULL符号
                         symbol.st_shndx != 0) // 非未定义符号
                     {
                         string name = SymbleName.GetSymbolName(parser, symbol, symbolList.Key);
-                        if (name != "")
+                        if (containstSize && name != "")
                         {
                             name += $"+0x{symbol.st_size:x}";
                         }
@@ -430,14 +410,19 @@ namespace PersonalTools.ELFAnalyzer.Core
                 int vsp = 0x204 + (uleb128 << 2);
                 sb.AppendLine($" vsp = vsp + {vsp}");
             }
-            else if(cmd >= 0xB300 && cmd <= 0xB3FF)
+            else if((cmd >= 0xB300 && cmd <= 0xB3FF) || (cmd >= 0xC900 && cmd <= 0xC9FF) || (cmd >= 0xC800 && cmd <= 0xC8FF))
             {
+                int idx = 0;
+                if((cmd >= 0xC800 && cmd <= 0xC8FF))
+                {
+                    idx = 16;
+                }
                 int ssss = (cmd >> 4) & 0x0F;
                 int cccc = cmd & 0x0F;
                 var regs = new List<string>();
                 for (int i = 0; i <= cccc; i++)
                 {
-                        regs.Add($"D{ssss + i}");
+                        regs.Add($"D{ssss + i + idx}");
                 }
                 if (regs.Count > 0)
                 {
@@ -467,34 +452,6 @@ namespace PersonalTools.ELFAnalyzer.Core
                     if ((regMask & 1) == 1)
                         regs.Add($"wCGR{i}");
                     regMask >>= 1;
-                }
-                if (regs.Count > 0)
-                {
-                    sb.AppendLine($"  pop {{{string.Join(", ", regs)}}}");
-                }
-            }
-            else if (cmd >= 0xC800 && cmd <= 0xC8FF)
-            {
-                int ssss = (cmd >> 4) & 0x0F;
-                int cccc = cmd & 0x0F;
-                var regs = new List<string>();
-                for (int i = 0; i <= cccc; i++)
-                {
-                    regs.Add($"D{ssss + i + 16}");
-                }
-                if (regs.Count > 0)
-                {
-                    sb.AppendLine($"  pop {{{string.Join(", ", regs)}}}");
-                }
-            }
-            else if (cmd >= 0xC900 && cmd <= 0xC9FF)
-            {
-                int ssss = (cmd >> 4) & 0x0F;
-                int cccc = cmd & 0x0F;
-                var regs = new List<string>();
-                for (int i = 0; i <= cccc; i++)
-                {
-                    regs.Add($"D{ssss + i}");
                 }
                 if (regs.Count > 0)
                 {
