@@ -38,6 +38,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                         // 读取第一项目录信息
                         byte width = iconData[6];
                         byte height = iconData[7];
+
                         ushort bitCount = BitConverter.ToUInt16(iconData, 12);
 
                         iconInfo.Width = width == 0 ? 256 : width;

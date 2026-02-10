@@ -103,6 +103,15 @@ namespace PersonalTools.ELFAnalyzer.Core
             while (offset < parser.FileData.Length)
             {
                 // 读取版本需求结构
+                if (!parser.Header.IsLittleEndian()) // 如果不是小端序
+                {
+                    Array.Reverse(parser.FileData, (int)offset, 2);
+                    Array.Reverse(parser.FileData, (int)offset + 2, 2);
+                    Array.Reverse(parser.FileData, (int)offset + 4, 4);
+                    Array.Reverse(parser.FileData, (int)offset + 8, 4);
+                    Array.Reverse(parser.FileData, (int)offset + 12, 4);
+                }
+
                 var vn_version = BitConverter.ToUInt16(parser.FileData, (int)offset);
                 var vn_cnt = BitConverter.ToUInt16(parser.FileData, (int)offset + 2);
                 var vn_file = BitConverter.ToUInt32(parser.FileData, (int)offset + 4);
@@ -123,6 +132,12 @@ namespace PersonalTools.ELFAnalyzer.Core
                 // 遍历该库的所有版本依赖
                 while (auxProcessed < vn_cnt && auxOffset < parser.FileData.Length)
                 {
+                    if (!parser.Header.IsLittleEndian()) // 如果不是小端序
+                    {
+                        Array.Reverse(parser.FileData, (int)auxOffset + 8, 4);
+                        Array.Reverse(parser.FileData, (int)auxOffset + 6, 2);
+                        Array.Reverse(parser.FileData, (int)auxOffset + 12, 4);
+                    }
                     var nameOffset = BitConverter.ToUInt32(parser.FileData, (int)auxOffset + 8);
                     var flags = BitConverter.ToUInt16(parser.FileData, (int)auxOffset + 6);
                     var auxNext = BitConverter.ToUInt32(parser.FileData, (int)auxOffset + 12);

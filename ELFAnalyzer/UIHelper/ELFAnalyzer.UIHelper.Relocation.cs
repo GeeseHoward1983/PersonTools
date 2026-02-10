@@ -55,6 +55,24 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                         
                         for (int symIdx = 0; symIdx < symCount; symIdx++)
                         {
+                            if (!_parser.Header.IsLittleEndian()) // 如果不是小端序
+                            {
+
+                                Array.Reverse(symTabData, symIdx * symEntrySize, 4);
+                                if (_parser.Is64Bit)
+                                {
+                                    Array.Reverse(symTabData, symIdx * symEntrySize + 8, 8);
+                                    Array.Reverse(symTabData, symIdx * symEntrySize + 16, 8);
+                                    Array.Reverse(symTabData, symIdx * symEntrySize + 6, 2);
+                                }
+                                else
+                                {
+                                    Array.Reverse(symTabData, symIdx * symEntrySize + 4, 4);
+                                    Array.Reverse(symTabData, symIdx * symEntrySize + 8, 4);
+                                    Array.Reverse(symTabData, symIdx * symEntrySize + 14, 2);
+
+                                }
+                            }
                             symbols.Add(_parser.Is64Bit ? new ELFSymbol
                             {
                                 st_name = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize),
@@ -88,6 +106,12 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                             {
                                 if (sectionName.Contains("rela"))
                                 {
+                                    if (!_parser.Header.IsLittleEndian()) // 如果不是小端序
+                                    {
+                                        Array.Reverse(data, j * 12, 4);
+                                        Array.Reverse(data, j * 12 + 4, 4);
+                                        Array.Reverse(data, j * 12 + 8, 4);
+                                    }
                                     // 读取32位RELA条目
                                     // r_offset (4 bytes), r_info (4 bytes), r_addend (4 bytes)
                                     offset = BitConverter.ToUInt32(data, j * 12);
@@ -96,6 +120,11 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                                 }
                                 else
                                 {
+                                    if (!_parser.Header.IsLittleEndian()) // 如果不是小端序
+                                    {
+                                        Array.Reverse(data, j * 8, 4);
+                                        Array.Reverse(data, j * 8 + 4, 4);
+                                    }
                                     // 读取32位REL条目
                                     // r_offset (4 bytes), r_info (4 bytes)
                                     offset = BitConverter.ToUInt32(data, j * 8);
@@ -118,6 +147,12 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                             {
                                 if (sectionName.Contains("rela"))
                                 {
+                                    if (!_parser.Header.IsLittleEndian()) // 如果不是小端序
+                                    {
+                                        Array.Reverse(data, j * 24, 8);
+                                        Array.Reverse(data, j * 24 + 8, 8);
+                                        Array.Reverse(data, j * 24 + 16, 8);
+                                    }
                                     // 读取64位RELA条目
                                     // r_offset (8 bytes), r_info (8 bytes), r_addend (8 bytes)
                                     offset = BitConverter.ToUInt64(data, j * 24);
@@ -126,6 +161,11 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                                 }
                                 else
                                 {
+                                    if (!_parser.Header.IsLittleEndian()) // 如果不是小端序
+                                    {
+                                        Array.Reverse(data, j * 16, 8);
+                                        Array.Reverse(data, j * 16 + 8, 8);
+                                    }
                                     // 读取64位REL条目
                                     // r_offset (8 bytes), r_info (8 bytes)
                                     offset = BitConverter.ToUInt64(data, j * 16);

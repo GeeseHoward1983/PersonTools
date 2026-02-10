@@ -17,15 +17,11 @@ namespace PersonalTools.ELFAnalyzer.Core
                 {
                     if (parser.SectionHeaders[i].sh_type == (uint)SectionType.SHT_ARM_EXIDX)
                     {
-                        exidxSection = parser.SectionHeaders[i];
-                    }
-                }
-                if(exidxSection != null)
-                {
-                    var exidxInfo = ParseExidxSection(parser, (Models.ELFSectionHeader)exidxSection);
-                    if (!string.IsNullOrEmpty(exidxInfo))
-                    {
-                        sb.AppendLine(exidxInfo);
+                        var exidxInfo = ParseExidxSection(parser, (Models.ELFSectionHeader)parser.SectionHeaders[i]);
+                        if (!string.IsNullOrEmpty(exidxInfo))
+                        {
+                            sb.AppendLine(exidxInfo);
+                        }
                     }
                 }
             }
@@ -41,9 +37,7 @@ namespace PersonalTools.ELFAnalyzer.Core
         private static string ParseExidxSection(ELFParser parser, Models.ELFSectionHeader exidxSection)
         {
             var sb = new StringBuilder();
-
-            // 移除节区标题输出，保持与readelf工具一致的输出格式
-            
+           
             // 读取异常索引表的数据
             var data = new byte[exidxSection.sh_size];
             Array.Copy(parser.FileData, (long)exidxSection.sh_offset, data, 0, (int)exidxSection.sh_size);
@@ -61,22 +55,13 @@ namespace PersonalTools.ELFAnalyzer.Core
                 int addrOffset;
                 int unwindInfo;
                 
-                if (parser.Header.IsLittleEndian())
+                if (!parser.Header.IsLittleEndian())
                 {
-                    addrOffset = BitConverter.ToInt32(data, offset);
-                    unwindInfo = BitConverter.ToInt32(data, offset + 4);
+                    Array.Reverse(data, offset, 4);                   
+                    Array.Reverse(data, offset + 4, 4);
                 }
-                else
-                {
-                    var bytes = new byte[4];
-                    Array.Copy(data, offset, bytes, 0, 4);
-                    Array.Reverse(bytes);
-                    addrOffset = BitConverter.ToInt32(bytes, 0);
-                    
-                    Array.Copy(data, offset + 4, bytes, 0, 4);
-                    Array.Reverse(bytes);
-                    unwindInfo = BitConverter.ToInt32(bytes, 0);
-                }
+                addrOffset = BitConverter.ToInt32(data, offset);
+                unwindInfo = BitConverter.ToInt32(data, offset + 4);
 
                 // 计算绝对地址
                 int absAddr = ((int)exidxSection.sh_addr + (int)(addrOffset * 2) / 2) + offset;
@@ -115,18 +100,12 @@ namespace PersonalTools.ELFAnalyzer.Core
                     // 展开表条目索引 - 指向 .ARM.extab 节的偏移
                     int extabOffset = (int)exidxSection.sh_addr + (int)((unwindInfo + 4) * 2) / 2 + offset;
                     sb.AppendLine($"{symbolDesc}: @0x{extabOffset:x}");
-                    //sb.AppendLine($"  Index into .ARM.extab: 0x{unwindInfo:x8}");
-                    if (parser.Header.IsLittleEndian())
+                    if (!parser.Header.IsLittleEndian())
                     {
-                        unwindInfo = BitConverter.ToInt32(parser.FileData, extabOffset);
+                        Array.Reverse(parser.FileData, extabOffset, 4);
                     }
-                    else
-                    {
-                        var bytes = new byte[4];
-                        Array.Copy(parser.FileData, extabOffset, bytes, 0, 4);
-                        Array.Reverse(bytes);
-                        unwindInfo = BitConverter.ToInt32(bytes, 0);
-                    }
+                    unwindInfo = BitConverter.ToInt32(parser.FileData, extabOffset);
+
                     int compactIndex = (unwindInfo >> 24) & 0x7F;
 
                     sb.AppendLine($"  Compact model index: {compactIndex}");

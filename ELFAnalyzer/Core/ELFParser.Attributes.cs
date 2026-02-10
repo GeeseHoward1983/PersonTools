@@ -50,13 +50,11 @@ namespace PersonalTools.ELFAnalyzer.Core
                 while (offset < data.Length)
                 {
                     // 解析子节长度 (4字节整数)
-                    uint subSectionLength = BitConverter.ToUInt32(data, offset);
                     if (!parser.Header.IsLittleEndian()) // 如果不是小端序
                     {
-                        var bytes = BitConverter.GetBytes(subSectionLength);
-                        Array.Reverse(bytes);
-                        subSectionLength = BitConverter.ToUInt32(bytes, 0);
+                        Array.Reverse(data, offset, 4);
                     }
+                    uint subSectionLength = BitConverter.ToUInt32(data, offset);
                     offset += 4;
                     
                     if (offset >= data.Length) break;
@@ -436,14 +434,12 @@ namespace PersonalTools.ELFAnalyzer.Core
                         if (offset + 4 <= endOffset)  // 需要至少4字节
                         {
                             // 读取4个字节的版本信息
-                            int osNum = BitConverter.ToInt32(data, offset);
                             if (!parser.Header.IsLittleEndian())
                             {
-                                var bytes = BitConverter.GetBytes(osNum);
-                                Array.Reverse(bytes);
-                                osNum = BitConverter.ToInt32(bytes, 0);
+                                Array.Reverse(data, offset, 4);
                             }
-                            
+                            int osNum = BitConverter.ToInt32(data, offset);
+
                             string osName = osNum switch
                             {
                                 0 => "linux",

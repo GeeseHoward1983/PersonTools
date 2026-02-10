@@ -63,7 +63,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 {
                     if (descOffset % 4 != 0) descOffset = (descOffset + 3) & ~3UL; // 对齐
                 }
-                string noteInfo = ProcessNoteEntry(type, owner, parser.FileData, (int)descOffset, (int)descsz);
+                string noteInfo = ProcessNoteEntry(parser, type, owner, parser.FileData, (int)descOffset, (int)descsz);
                 if (!string.IsNullOrEmpty(noteInfo))
                 {
                     sb.AppendLine($"  {owner,-18}0x{descsz:x8}           {noteInfo}");
@@ -91,8 +91,15 @@ namespace PersonalTools.ELFAnalyzer.Core
             return GetNoteDescription(parser, section.sh_offset, section.sh_size);
         }
 
-        private static string GetABIVersion(byte[] data, int descOffset, int descSize)
+        private static string GetABIVersion(ELFParser parser, byte[] data, int descOffset, int descSize)
         {
+            if (!parser.Header.IsLittleEndian()) // 如果不是小端序
+            {
+                Array.Reverse(data, descOffset, 4);
+                Array.Reverse(data, descOffset + 4, 4);
+                Array.Reverse(data, descOffset + 8, 4);
+                Array.Reverse(data, descOffset + 12, 4);
+            }
             return descSize >= 16 ? $"(ABI version: {BitConverter.ToUInt32(data, descOffset)}.{BitConverter.ToUInt32(data, descOffset + 4)}.{BitConverter.ToUInt32(data, descOffset + 8)}.{BitConverter.ToUInt32(data, descOffset + 12)})" : "";
         }
 
@@ -101,7 +108,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             return descSize >= 20 ? $"(NT_GNU_BUILD_ID (unique build ID bitstring)\n    Build ID: {Utils.ToHexString(data, descOffset, descSize)}" : "";
         }
 
-        private static string ProcessNoteEntry(uint type, string owner, byte[] data, int descOffset, int descSize)
+        private static string ProcessNoteEntry(ELFParser parser, uint type, string owner, byte[] data, int descOffset, int descSize)
         {
             string description = GetNoteDescription(type, owner);
 
@@ -109,7 +116,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 "GNU" => type switch
                 {
-                    1 => $"{description} {GetABIVersion(data, descOffset, descSize)}",
+                    1 => $"{description} {GetABIVersion(parser, data, descOffset, descSize)}",
                     2 => $"{description}",
                     3 => $"{GetBuildID(data, descOffset, descSize)}",
                     4 => $"{description} (gold version)\n    Version: gold {ELFParserUtils.ExtractStringFromBytes(data, descOffset)}",

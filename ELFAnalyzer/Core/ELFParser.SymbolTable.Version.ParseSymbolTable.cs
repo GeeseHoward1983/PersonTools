@@ -33,9 +33,12 @@ namespace PersonalTools.ELFAnalyzer.Core
 
                     for (int i = 0; i < count; i++)
                     {
-                        parser.VersionSymbols[i] = parser.Header.EI_DATA == (byte)ELFData.ELFDATA2LSB ?
-                            BitConverter.ToUInt16(data, i * 2) :
-                            (ushort)((data[i * 2 + 1] << 8) | data[i * 2]);
+                        if (!parser.Header.IsLittleEndian()) // 如果不是小端序
+                        {
+                            Array.Reverse(parser.FileData, (int)i * 2, 2);
+                        }
+
+                        BitConverter.ToUInt16(data, i * 2);
                     }
                 }
             }

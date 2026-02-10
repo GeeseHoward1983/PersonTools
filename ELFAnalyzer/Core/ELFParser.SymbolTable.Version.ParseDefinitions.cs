@@ -85,11 +85,28 @@ namespace PersonalTools.ELFAnalyzer.Core
             int processed = 0;
             
             while (processed < count && offset < (ulong)parser.FileData.Length)
-            {          
-                var vd_version = BitConverter.ToUInt16(parser.FileData, (int)offset);
-                var vd_flags = BitConverter.ToUInt16(parser.FileData, (int)offset + 2);
+            {
+                if (!parser.Header.IsLittleEndian()) // 如果不是小端序
+                {
+                    Array.Reverse(parser.FileData, (int)offset, 2);
+                    Array.Reverse(parser.FileData, (int)offset + 2, 2);
+                    Array.Reverse(parser.FileData, (int)offset + 4, 2);
+                    Array.Reverse(parser.FileData, (int)offset + 6, 2);
+                    if (parser.Is64Bit)
+                    { 
+                        Array.Reverse(parser.FileData, (int)offset + 8, 8);
+                        Array.Reverse(parser.FileData, (int)offset + 16, 8);
+                    }
+                    else {
+                        Array.Reverse(parser.FileData, (int)offset + 12, 4);
+                        Array.Reverse(parser.FileData, (int)offset + 16, 4);
+                    }
+                }
+
+                _ = BitConverter.ToUInt16(parser.FileData, (int)offset);
+                _ = BitConverter.ToUInt16(parser.FileData, (int)offset + 2);
                 var vd_ndx = BitConverter.ToUInt16(parser.FileData, (int)offset + 4);
-                var vd_cnt = BitConverter.ToUInt16(parser.FileData, (int)offset + 6);
+                _ = BitConverter.ToUInt16(parser.FileData, (int)offset + 6);
                 // Skip vd_hash at offset+8
 
                 var vd_aux = parser.Is64Bit ? BitConverter.ToUInt64(parser.FileData, (int)offset + 8) : BitConverter.ToUInt32(parser.FileData, (int)offset + 12);  // 64位的vd_aux和vd_next
@@ -98,6 +115,10 @@ namespace PersonalTools.ELFAnalyzer.Core
                 // 获取版本名称
                 // vernaux 结构紧跟在 verdef 结构之后
                 ulong nameOffset = offset + vd_aux;
+                if (!parser.Header.IsLittleEndian()) // 如果不是小端序
+                {
+                    Array.Reverse(parser.FileData, (int)nameOffset + 8, 4);
+                }
                 var nameOffsetInStrTab = BitConverter.ToUInt32(parser.FileData, (int)nameOffset + 8); // vernaux.vna_name
                 string versionName = ELFParserUtils.ExtractStringFromBytes(strTabData, (int)nameOffsetInStrTab);
                 
