@@ -19,7 +19,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             if ((flags & (uint)DynamicFlags.DF_BIND_NOW) != 0) descriptions.Add("BIND_NOW");
             if ((flags & (uint)DynamicFlags.DF_STATIC_TLS) != 0) descriptions.Add("STATIC_TLS");
 
-            return string.Join(", ", descriptions);
+            return Utils.EnumerableToString(", ", descriptions);
         }
 
         public static string GetDynamicFlag1Description(uint flags)
@@ -47,7 +47,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             if ((flags & 0x00020000) != 0) descriptions.Add("GLOBAUDIT");     // Global auditing required
             if ((flags & 0x00040000) != 0) descriptions.Add(" SINGLETON");    // Singleton symbols are used
 
-            return string.Join(", ", descriptions);
+            return Utils.EnumerableToString(", ", descriptions);
         }
     }
 }

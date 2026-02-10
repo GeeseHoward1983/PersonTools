@@ -366,7 +366,7 @@ namespace PersonalTools.ELFAnalyzer.Core
         public static string GetFormattedELFFlags(ELFHeader header)
         {
             // 根据架构类型解析不同的标志
-            return string.Join(", ",
+            return Utils.EnumerableToString(", ",
                   header.e_machine switch
                   {
                       (ushort)EMachine.EM_MIPS => GetMIPSFormattedELFFlags(header.e_flags),

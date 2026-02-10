@@ -88,10 +88,6 @@ namespace PersonalTools.ELFAnalyzer.Core
                     symbolName = FindNearestSymbolName(parser, (ulong)absAddr, true);
                 }
                 string symbolDesc = string.IsNullOrEmpty(symbolName) ? $"0x{absAddr:x}" : $"0x{absAddr:x} <{symbolName}>";
-                if(absAddr == 0x6988)
-                {
-                    ;
-                }
                 // 根据展开信息判断是索引还是标记
                 if (unwindInfo == 1) // 特殊值表示无法展开
                 {
@@ -266,6 +262,12 @@ namespace PersonalTools.ELFAnalyzer.Core
             // 其他情况暂不认定为有效单字节指令
             return false;
         }
+
+        private static int CalcVsp(byte cmd)
+        {
+                int imm = cmd & 0x3F;
+                return (imm + 1) << 2;
+        }
         
         private static void ProcessSingleByteInstruction(byte cmd, StringBuilder sb)
         {
@@ -278,16 +280,12 @@ namespace PersonalTools.ELFAnalyzer.Core
                     // vsp = vsp - (imm4 + 1) << 2指令 (0x00-0x3F)
                     if (cmd <= 0x3F)
                     {
-                        int imm = cmd & 0x3F;
-                        int bytes = (imm + 1) << 2;
-                        sb.AppendLine($"  vsp = vsp + {bytes}");
+                        sb.AppendLine($"  vsp = vsp + {CalcVsp(cmd)}");
                     }
                     // vsp = vsp - (imm4 - 1) << 2指令 (0x40-0x7F)
                     else if (cmd >= 0x40 && cmd <= 0x7F)
                     {
-                        int imm = cmd & 0x3F;
-                        int bytes = (imm + 1) << 2;
-                        sb.AppendLine($"  vsp = vsp - {bytes}");
+                        sb.AppendLine($"  vsp = vsp - {CalcVsp(cmd)}");
                     }
                     else if((cmd & 0x90) == 0x90)
                     {
@@ -298,7 +296,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                             sb.AppendLine($"  vsp = r{imm}");
                     }
                     // 检查是否是pop {r4-rN, lr}指令 (0xA0-0xAF)
-                    else if ((cmd & 0xA0) == 0xA0)
+                    else if (cmd >= 0xA0 && cmd <= 0xAF)
                     {
                         var regs = new List<string>();
                         int regMask = cmd & 0x07;
@@ -311,7 +309,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 
                         if (regs.Count > 0)
                         {
-                            sb.AppendLine($"  pop {{{string.Join(", ", regs)}}}");
+                            sb.AppendLine($"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
                         }
                     }
                     else if(cmd == 0xB4)
@@ -336,7 +334,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                         }
                         if (regs.Count > 0)
                         {
-                            sb.AppendLine($"  pop {{{string.Join(", ", regs)}}}");
+                            sb.AppendLine($"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
                         }
                     }
                     else if (cmd >= 0xC0 || cmd <= 0xC5)
@@ -349,7 +347,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                         }
                         if (regs.Count > 0)
                         {
-                            sb.AppendLine($"  pop {{{string.Join(", ", regs)}}}");
+                            sb.AppendLine($"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
                         }
                     }
                     else
@@ -382,7 +380,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 
                 if (regs.Count > 0)
                 {
-                    sb.AppendLine($"  pop {{{string.Join(", ", regs)}}}");
+                    sb.AppendLine($"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
                 }
             }
             else if (cmd == 0xB100 || (cmd >= 0xB110 && cmd <= 0xB1FF) || cmd == 0xC700 || (cmd >= 0xC710 && cmd <= 0xC7FF))
@@ -401,7 +399,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 }
                 if (regs.Count > 0)
                 {
-                    sb.AppendLine($"  pop {{{string.Join(", ", regs)}}}");
+                    sb.AppendLine($"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
                 }
             }
             else if (cmd >= 0xB200 && cmd <= 0xB2FF)
@@ -426,7 +424,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 }
                 if (regs.Count > 0)
                 {
-                    sb.AppendLine($"  pop {{{string.Join(", ", regs)}}}");
+                    sb.AppendLine($"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
                 }
             }
             else if (cmd >= 0xC600 && cmd <= 0xC6FF)
@@ -440,7 +438,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 }
                 if (regs.Count > 0)
                 {
-                    sb.AppendLine($"  pop {{{string.Join(", ", regs)}}}");
+                    sb.AppendLine($"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
                 }
             }
             else if (cmd >= 0xC701 && cmd <= 0xC70F)
@@ -455,7 +453,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 }
                 if (regs.Count > 0)
                 {
-                    sb.AppendLine($"  pop {{{string.Join(", ", regs)}}}");
+                    sb.AppendLine($"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
                 }
             }
             else

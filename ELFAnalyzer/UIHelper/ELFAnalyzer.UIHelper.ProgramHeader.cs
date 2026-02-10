@@ -45,7 +45,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                     var ph = _parser.ProgramHeaders[i];
                     sb.Append($"   {i:D2}     ");
                     var sections = GetSectionsInSegment(_parser, ph);
-                    sb.AppendLine(string.Join(" ", sections));
+                    sb.AppendLine(Utils.EnumerableToString(" ", sections));
                 }
             }
 

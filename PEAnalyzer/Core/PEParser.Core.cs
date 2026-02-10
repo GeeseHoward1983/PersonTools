@@ -1,6 +1,7 @@
 using PersonalTools.PEAnalyzer.Models;
 using PersonalTools.PEAnalyzer.Resources;
 using System.IO;
+using System.Windows;
 
 namespace PersonalTools
 {
@@ -14,7 +15,7 @@ namespace PersonalTools
         /// </summary>
         /// <param name="filePath">文件路径</param>
         /// <returns>PE文件信息</returns>
-        public static PEInfo ParsePEFile(string filePath)
+        public static PEInfo? ParsePEFile(string filePath)
         {
             var peInfo = new PEInfo { FilePath = filePath };
 
@@ -22,13 +23,22 @@ namespace PersonalTools
             using var reader = new BinaryReader(fs);
             // 解析DOS头
             peInfo.DosHeader = ParseDosHeader(reader);
+            if(peInfo.DosHeader.e_magic != 0x5A4D)
+            {
+                MessageBox.Show("文件不是有效的PE文件！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                return null;
+            }
 
             // 移动到NT头位置
             fs.Position = peInfo.DosHeader.e_lfanew;
 
             // 解析NT头
             peInfo.NtHeaders = ParseNtHeaders(reader);
-
+            if(peInfo.NtHeaders.Signature != 0x00004550)
+            {
+                MessageBox.Show("文件不是有效的PE文件！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                return null;
+            }
             // 解析可选头
             peInfo.OptionalHeader = ParseOptionalHeader(reader, peInfo.NtHeaders.FileHeader.SizeOfOptionalHeader);
 

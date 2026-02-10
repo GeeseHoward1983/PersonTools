@@ -53,5 +53,13 @@ namespace PersonalTools
             return BitConverter.ToString(bytes).Replace("-", "");
         }
 
+        public static string EnumerableToString(string? separator, IEnumerable<string> values)
+        {
+            if(values.Any())
+            {
+                return string.Join(separator, values);
+            }
+            return string.Empty;
+        }
     }
 }

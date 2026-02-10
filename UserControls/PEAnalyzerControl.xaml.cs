@@ -60,6 +60,10 @@ namespace PersonalTools.UserControls
             try
             {
                 currentPEInfo = PEParser.ParsePEFile(filePath);
+                if (currentPEInfo == null)
+                {
+                    return;
+                }
                 DisplayHeaderInfo();
                 DisplayDependencies();
                 DisplayImportExportFunctions();
@@ -152,7 +156,7 @@ namespace PersonalTools.UserControls
                 {
                     { "运行时版本", $"v{currentPEInfo.CLRInfo.RuntimeVersion}" },
                     { "架构类型", currentPEInfo.CLRInfo.Architecture },
-                    { "标志位", string.Join(", ", currentPEInfo.CLRInfo.FlagDescriptions) },
+                    { "标志位", Utils.EnumerableToString(", ", currentPEInfo.CLRInfo.FlagDescriptions) },
                     { "入口点", $"0x{currentPEInfo.CLRInfo.EntryPointTokenOrRva:X8}" },
                     { "包含元数据", currentPEInfo.CLRInfo.HasMetaData ? "是" : "否" },
                     { "包含资源", currentPEInfo.CLRInfo.HasResources ? "是" : "否" },
