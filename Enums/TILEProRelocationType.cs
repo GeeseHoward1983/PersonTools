@@ -1,5 +1,3 @@
-using System;
-
 namespace PersonalTools.Enums
 {
     /// <summary>

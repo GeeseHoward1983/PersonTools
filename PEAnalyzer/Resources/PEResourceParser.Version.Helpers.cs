@@ -31,14 +31,18 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                     // 检查基本的有效性
                     if (wLength == 0)
+                    {
                         return;
+                    }
 
                     // 读取szKey (UNICODE字符串 "VS_VERSION_INFO")
                     string vsVersionInfoKey = PEResourceParserCore.ReadUnicodeStringWithMaxLength(reader, wLength);
 
                     // 验证键名
                     if (!vsVersionInfoKey.Equals("VS_VERSION_INFO", StringComparison.OrdinalIgnoreCase))
+                    {
                         return;
+                    }
 
                     // 对齐到4字节边界
                     long alignedPosition = fs.Position + 3 & ~3;
@@ -50,7 +54,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                         fs.Position = alignedPosition;
 
                         // 读取VS_FIXEDFILEINFO结构
-                        var fixedFileInfo = new VS_FIXEDFILEINFO
+                        VSFIXEDFILEINFO fixedFileInfo = new()
                         {
                             dwSignature = reader.ReadUInt32(),
                             dwStrucVersion = reader.ReadUInt32(),
@@ -134,7 +138,9 @@ namespace PersonalTools.PEAnalyzer.Resources
                     ushort wType = reader.ReadUInt16();
 
                     if (wLength == 0)
+                    {
                         break;
+                    }
 
                     // 读取键名
                     string key = PEResourceParserCore.ReadUnicodeStringWithMaxLength(reader, wLength);
@@ -155,7 +161,9 @@ namespace PersonalTools.PEAnalyzer.Resources
                     // 移动到下一个子项
                     long nextChildPos = childStartPos + wLength + 3 & ~3;
                     if (nextChildPos >= endPosition || nextChildPos < fs.Position)
+                    {
                         break;
+                    }
 
                     fs.Position = nextChildPos;
                 }

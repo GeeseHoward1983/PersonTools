@@ -65,44 +65,44 @@ namespace PersonalTools
                 }
 
                 // 读取CLR运行时头
-                var clrHeader = new IMAGE_COR20_HEADER
+                IMAGE_COR20_HEADER clrHeader = new()
                 {
                     cb = reader.ReadUInt32(),
                     MajorRuntimeVersion = reader.ReadUInt16(),
                     MinorRuntimeVersion = reader.ReadUInt16(),
-                    MetaData = new IMAGE_DATA_DIRECTORY
+                    MetaData = new IMAGEDATADIRECTORY
                     {
                         VirtualAddress = reader.ReadUInt32(),
                         Size = reader.ReadUInt32()
                     },
                     Flags = reader.ReadUInt32(),
                     EntryPointTokenOrRva = reader.ReadUInt32(),
-                    Resources = new IMAGE_DATA_DIRECTORY
+                    Resources = new IMAGEDATADIRECTORY
                     {
                         VirtualAddress = reader.ReadUInt32(),
                         Size = reader.ReadUInt32()
                     },
-                    StrongNameSignature = new IMAGE_DATA_DIRECTORY
+                    StrongNameSignature = new IMAGEDATADIRECTORY
                     {
                         VirtualAddress = reader.ReadUInt32(),
                         Size = reader.ReadUInt32()
                     },
-                    CodeManagerTable = new IMAGE_DATA_DIRECTORY
+                    CodeManagerTable = new IMAGEDATADIRECTORY
                     {
                         VirtualAddress = reader.ReadUInt32(),
                         Size = reader.ReadUInt32()
                     },
-                    VTableFixups = new IMAGE_DATA_DIRECTORY
+                    VTableFixups = new IMAGEDATADIRECTORY
                     {
                         VirtualAddress = reader.ReadUInt32(),
                         Size = reader.ReadUInt32()
                     },
-                    ExportAddressTableJumps = new IMAGE_DATA_DIRECTORY
+                    ExportAddressTableJumps = new IMAGEDATADIRECTORY
                     {
                         VirtualAddress = reader.ReadUInt32(),
                         Size = reader.ReadUInt32()
                     },
-                    ManagedNativeHeader = new IMAGE_DATA_DIRECTORY
+                    ManagedNativeHeader = new IMAGEDATADIRECTORY
                     {
                         VirtualAddress = reader.ReadUInt32(),
                         Size = reader.ReadUInt32()

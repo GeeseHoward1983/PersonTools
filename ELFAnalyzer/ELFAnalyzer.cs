@@ -1,40 +1,39 @@
 using PersonalTools.ELFAnalyzer.Core;
-using System.Text;
 
 namespace PersonalTools.ELFAnalyzer
 {
     public partial class ELFAnalyzer
     {
-        public readonly ELFParser _parser;
+        public ELFParser Parser { get; }
 
         public ELFAnalyzer(string filePath)
         {
-            _parser = new ELFParser(filePath);
+            Parser = new ELFParser(filePath);
         }
 
         public ELFAnalyzer(byte[] fileData)
         {
-            _parser = new ELFParser(fileData);
+            Parser = new ELFParser(fileData);
         }
-        
+
         public string GetFormattedVersionSymbolInfo()
         {
-            return VersionSymbleTable.GetFormattedVersionSymbolInfo(_parser);
+            return VersionSymbleTable.GetFormattedVersionSymbolInfo(Parser);
         }
-        
+
         public string GetFormattedVersionDependencyInfo()
         {
-            return VersionSymbleTable.GetFormattedVersionDependencyInfo(_parser);
+            return VersionSymbleTable.GetFormattedVersionDependencyInfo(Parser);
         }
 
         public string GetFormattedVersionDefinitionInfo()
         {
-            return VersionSymbleTable.GetFormattedVersionDefinitionInfo(_parser);
+            return VersionSymbleTable.GetFormattedVersionDefinitionInfo(Parser);
         }
-        
+
         public string GetFormattedNotesInfo()
         {
-            return ELFNoteInfo.GetFormattedNotesInfo(_parser);
+            return ELFNoteInfo.GetFormattedNotesInfo(Parser);
         }
     }
 }

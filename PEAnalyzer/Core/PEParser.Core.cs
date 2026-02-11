@@ -17,13 +17,13 @@ namespace PersonalTools
         /// <returns>PE文件信息</returns>
         public static PEInfo? ParsePEFile(string filePath)
         {
-            var peInfo = new PEInfo { FilePath = filePath };
+            PEInfo peInfo = new() { FilePath = filePath };
 
-            using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-            using var reader = new BinaryReader(fs);
+            FileStream fs = new(filePath, FileMode.Open, FileAccess.Read);
+            BinaryReader reader = new(fs);
             // 解析DOS头
             peInfo.DosHeader = ParseDosHeader(reader);
-            if(peInfo.DosHeader.e_magic != 0x5A4D)
+            if (peInfo.DosHeader.e_magic != 0x5A4D)
             {
                 MessageBox.Show("文件不是有效的PE文件！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                 return null;
@@ -34,7 +34,7 @@ namespace PersonalTools
 
             // 解析NT头
             peInfo.NtHeaders = ParseNtHeaders(reader);
-            if(peInfo.NtHeaders.Signature != 0x00004550)
+            if (peInfo.NtHeaders.Signature != 0x00004550)
             {
                 MessageBox.Show("文件不是有效的PE文件！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                 return null;

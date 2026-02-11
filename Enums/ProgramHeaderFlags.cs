@@ -1,7 +1,7 @@
 namespace PersonalTools.Enums
 {
     [Flags]
-    public enum ProgramHeaderFlags : uint
+    public enum ProgramHeaderPermissions : uint
     {
         PF_X = 0x1,            // Execute
         PF_W = 0x2,            // Write

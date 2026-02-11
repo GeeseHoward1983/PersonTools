@@ -1,24 +1,25 @@
 using PersonalTools.ELFAnalyzer.Core;
 using PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.Enums;
+using System.Globalization;
 
 namespace PersonalTools.ELFAnalyzer.UIHelper
 {
     public class RelocationHelper
     {
-        public static List<ELFRelocationInfo> GetRelocationInfoForSpecificSection(ELFParser _parser, string sectionName)
+        public static List<ELFRelocationInfo> GetRelocationInfoForSpecificSection(ELFParser Parser, string sectionName)
         {
-            var result = new List<ELFRelocationInfo>();
-            
+            List<ELFRelocationInfo> result = [];
+
             // 先找到对应节的索引
             int sectionIndex = -1;
             string actualSectionName = string.Empty;
-            
-            if (_parser.SectionHeaders != null)
+
+            if (Parser.SectionHeaders != null)
             {
-                for (int i = 0; i < _parser.SectionHeaders.Count; i++)
+                for (int i = 0; i < Parser.SectionHeaders.Count; i++)
                 {
-                    string currentSectionName = SymbleName.GetSectionName(_parser, i) ?? string.Empty;
+                    string currentSectionName = SymbleName.GetSectionName(Parser, i) ?? string.Empty;
                     if (currentSectionName == sectionName)
                     {
                         sectionIndex = i;
@@ -26,40 +27,40 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                         break;
                     }
                 }
-                
+
                 if (sectionIndex != -1)
                 {
-                    var section = _parser.SectionHeaders[sectionIndex];
-                    if (section.sh_type == (uint)SectionType.SHT_RELA || section.sh_type == (uint)SectionType.SHT_REL) // RELA/REL类型节
+                    Models.ELFSectionHeader section = Parser.SectionHeaders[sectionIndex];
+                    if (section.sh_type is ((uint)SectionType.SHT_RELA) or ((uint)SectionType.SHT_REL)) // RELA/REL类型节
                     {
                         // 计算条目数
                         int entryCount = (int)(section.sh_size / section.sh_entsize);
-                        
+
                         // 读取数据
-                        var data = new byte[section.sh_size];
-                        Array.Copy(_parser.FileData, (int)section.sh_offset, data, 0, (int)section.sh_size);
-                        
+                        byte[] data = new byte[section.sh_size];
+                        Array.Copy(Parser.FileData, (int)section.sh_offset, data, 0, (int)section.sh_size);
+
                         // 读取符号表和字符串表
-                        var symTabSection = _parser.SectionHeaders[(int)section.sh_link];
-                        var strTabSection = _parser.SectionHeaders[(int)symTabSection.sh_link];
-                        var strData = new byte[strTabSection.sh_size];
-                        Array.Copy(_parser.FileData, (int)strTabSection.sh_offset, strData, 0, (int)strTabSection.sh_size);
-                        
-                        var symTabData = new byte[symTabSection.sh_size];
-                        Array.Copy(_parser.FileData, (int)symTabSection.sh_offset, symTabData, 0, (int)symTabSection.sh_size);
+                        Models.ELFSectionHeader symTabSection = Parser.SectionHeaders[(int)section.sh_link];
+                        Models.ELFSectionHeader strTabSection = Parser.SectionHeaders[(int)symTabSection.sh_link];
+                        byte[] strData = new byte[strTabSection.sh_size];
+                        Array.Copy(Parser.FileData, (int)strTabSection.sh_offset, strData, 0, (int)strTabSection.sh_size);
+
+                        byte[] symTabData = new byte[symTabSection.sh_size];
+                        Array.Copy(Parser.FileData, (int)symTabSection.sh_offset, symTabData, 0, (int)symTabSection.sh_size);
 
                         // 读取符号表
-                        var symbols = new List<ELFSymbol>();
-                        int symEntrySize = _parser.Is64Bit ? 24 : 16; // 64位ELF符号表项大小为24字节，32位为16字节
+                        List<ELFSymbol> symbols = [];
+                        int symEntrySize = Parser.Is64Bit ? 24 : 16; // 64位ELF符号表项大小为24字节，32位为16字节
                         int symCount = symTabData.Length / symEntrySize;
-                        
+
                         for (int symIdx = 0; symIdx < symCount; symIdx++)
                         {
-                            if (!_parser.Header.IsLittleEndian()) // 如果不是小端序
+                            if (!Parser.Header.IsLittleEndian()) // 如果不是小端序
                             {
 
                                 Array.Reverse(symTabData, symIdx * symEntrySize, 4);
-                                if (_parser.Is64Bit)
+                                if (Parser.Is64Bit)
                                 {
                                     Array.Reverse(symTabData, symIdx * symEntrySize + 8, 8);
                                     Array.Reverse(symTabData, symIdx * symEntrySize + 16, 8);
@@ -73,22 +74,22 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
 
                                 }
                             }
-                            symbols.Add(_parser.Is64Bit ? new ELFSymbol
+                            symbols.Add(Parser.Is64Bit ? new ELFSymbol
                             {
-                                st_name = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize),
-                                st_value = BitConverter.ToUInt64(symTabData, symIdx * symEntrySize + 8),
-                                st_size = BitConverter.ToUInt64(symTabData, symIdx * symEntrySize + 16),
-                                st_info = symTabData[symIdx * symEntrySize + 4],
-                                st_other = symTabData[symIdx * symEntrySize + 5],
-                                st_shndx = BitConverter.ToUInt16(symTabData, symIdx * symEntrySize + 6)
+                                StName = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize),
+                                StValue = BitConverter.ToUInt64(symTabData, symIdx * symEntrySize + 8),
+                                StSize = BitConverter.ToUInt64(symTabData, symIdx * symEntrySize + 16),
+                                StInfo = symTabData[symIdx * symEntrySize + 4],
+                                StOther = symTabData[symIdx * symEntrySize + 5],
+                                StShndx = BitConverter.ToUInt16(symTabData, symIdx * symEntrySize + 6)
                             } : new ELFSymbol
                             {
-                                st_name = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize),
-                                st_value = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize + 4),
-                                st_size = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize + 8),
-                                st_info = symTabData[symIdx * symEntrySize + 12],
-                                st_other = symTabData[symIdx * symEntrySize + 13],
-                                st_shndx = BitConverter.ToUInt16(symTabData, symIdx * symEntrySize + 14)
+                                StName = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize),
+                                StValue = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize + 4),
+                                StSize = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize + 8),
+                                StInfo = symTabData[symIdx * symEntrySize + 12],
+                                StOther = symTabData[symIdx * symEntrySize + 13],
+                                StShndx = BitConverter.ToUInt16(symTabData, symIdx * symEntrySize + 14)
                             });
                         }
 
@@ -101,12 +102,12 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                             uint type;
                             string symbolName = string.Empty;
                             string symbolValue = "0000000000000000"; // 默认符号值
-                            
-                            if (!_parser.Is64Bit)
+
+                            if (!Parser.Is64Bit)
                             {
                                 if (sectionName.Contains("rela"))
                                 {
-                                    if (!_parser.Header.IsLittleEndian()) // 如果不是小端序
+                                    if (!Parser.Header.IsLittleEndian()) // 如果不是小端序
                                     {
                                         Array.Reverse(data, j * 12, 4);
                                         Array.Reverse(data, j * 12 + 4, 4);
@@ -120,7 +121,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                                 }
                                 else
                                 {
-                                    if (!_parser.Header.IsLittleEndian()) // 如果不是小端序
+                                    if (!Parser.Header.IsLittleEndian()) // 如果不是小端序
                                     {
                                         Array.Reverse(data, j * 8, 4);
                                         Array.Reverse(data, j * 8 + 4, 4);
@@ -138,16 +139,16 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                                 // 读取符号名和符号值
                                 if (sym < symbols.Count)
                                 {
-                                    var symbol = symbols[(int)sym];
-                                    symbolName = SymbleName.GetSymbolName(_parser, symbol, SectionType.SHT_DYNSYM);
-                                    symbolValue = $"{symbol.st_value:x8}";
+                                    ELFSymbol symbol = symbols[(int)sym];
+                                    symbolName = SymbleName.GetSymbolName(Parser, symbol, SectionType.SHT_DYNSYM);
+                                    symbolValue = $"{symbol.StValue:x8}";
                                 }
                             }
                             else
                             {
                                 if (sectionName.Contains("rela"))
                                 {
-                                    if (!_parser.Header.IsLittleEndian()) // 如果不是小端序
+                                    if (!Parser.Header.IsLittleEndian()) // 如果不是小端序
                                     {
                                         Array.Reverse(data, j * 24, 8);
                                         Array.Reverse(data, j * 24 + 8, 8);
@@ -161,7 +162,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                                 }
                                 else
                                 {
-                                    if (!_parser.Header.IsLittleEndian()) // 如果不是小端序
+                                    if (!Parser.Header.IsLittleEndian()) // 如果不是小端序
                                     {
                                         Array.Reverse(data, j * 16, 8);
                                         Array.Reverse(data, j * 16 + 8, 8);
@@ -179,14 +180,14 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                                 // 读取符号名和符号值
                                 if (sym < symbols.Count)
                                 {
-                                    var symbol = symbols[(int)sym];
-                                    symbolName = SymbleName.GetSymbolName(_parser, symbol, SectionType.SHT_DYNSYM);
-                                    symbolValue = $"{symbol.st_value:x16}";
+                                    ELFSymbol symbol = symbols[(int)sym];
+                                    symbolName = SymbleName.GetSymbolName(Parser, symbol, SectionType.SHT_DYNSYM);
+                                    symbolValue = $"{symbol.StValue:x16}";
                                 }
                             }
-                            
+
                             // 获取重定位类型名称
-                            string typeName = ELFRelocation.GetRelocationTypeName(type, _parser.Header.e_machine);
+                            string typeName = ELFRelocation.GetRelocationTypeName(type, Parser.Header.e_machine);
 
                             result.Add(new ELFRelocationInfo
                             {
@@ -195,14 +196,14 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                                 Type = typeName ?? "",
                                 SymbolValue = symbolValue.PadLeft(16),
                                 Symbol = symbolName,
-                                Addend = sectionName.Contains("rela") ? addend.ToString() : "",
+                                Addend = sectionName.Contains("rela") ? addend.ToString(CultureInfo.InvariantCulture) : "",
                                 SectionName = actualSectionName
                             });
                         }
                     }
                 }
             }
-            
+
             return result;
         }
     }

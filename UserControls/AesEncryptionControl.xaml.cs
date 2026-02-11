@@ -1,4 +1,3 @@
-using PersonalTools;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -89,8 +88,7 @@ namespace PersonalTools.UserControls
 
                 // 对于CBC和CFB等模式，需要IV向量
                 AesModeOption selectedMode = (AesModeOption)AesModeComboBox.SelectedItem;
-                if (selectedMode.Mode == CipherMode.CBC || selectedMode.Mode == CipherMode.CFB ||
-                    selectedMode.Mode == CipherMode.OFB)
+                if (selectedMode.Mode is CipherMode.CBC or CipherMode.CFB or CipherMode.OFB)
                 {
                     if (string.IsNullOrEmpty(ivInput))
                     {
@@ -154,8 +152,7 @@ namespace PersonalTools.UserControls
 
                 // 对于CBC和CFB等模式，需要IV向量
                 AesModeOption selectedMode = (AesModeOption)AesModeComboBox.SelectedItem;
-                if (selectedMode.Mode == CipherMode.CBC || selectedMode.Mode == CipherMode.CFB ||
-                    selectedMode.Mode == CipherMode.OFB)
+                if (selectedMode.Mode is CipherMode.CBC or CipherMode.CFB or CipherMode.OFB)
                 {
                     if (string.IsNullOrEmpty(ivInput))
                     {
@@ -307,12 +304,12 @@ namespace PersonalTools.UserControls
             if (isString)
             {
                 // 如果是字符串，检查字符长度
-                return key.Length == 16 || key.Length == 24 || key.Length == 32;
+                return key.Length is 16 or 24 or 32;
             }
             else
             {
                 // 如果是十六进制字符串，检查字符长度（每个字节需要2个字符）
-                return key.Length == 32 || key.Length == 48 || key.Length == 64; // 16*2, 24*2, 32*2
+                return key.Length is 32 or 48 or 64; // 16*2, 24*2, 32*2
             }
         }
 
@@ -353,10 +350,10 @@ namespace PersonalTools.UserControls
                 byte[] fileBytes;
 
                 // 读取文件内容
-                using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                using (FileStream fileStream = new(filePath, FileMode.Open, FileAccess.Read))
                 {
                     fileBytes = new byte[fileStream.Length];
-                    fileStream.Read(fileBytes, 0, fileBytes.Length);
+                    fileStream.ReadExactly(fileBytes);
                 }
 
                 // 将文件内容显示在输入框中

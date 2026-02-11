@@ -4,9 +4,9 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
 {
     public class AttributesHelper
     {
-        public static string GetAttributeInfo(ELFParser _parser)
+        public static string GetAttributeInfo(ELFParser Parser)
         {
-            return ELFAttributeInfo.GetFormattedAttributeInfo(_parser);
+            return ELFAttributeInfo.GetFormattedAttributeInfo(Parser);
         }
     }
 }

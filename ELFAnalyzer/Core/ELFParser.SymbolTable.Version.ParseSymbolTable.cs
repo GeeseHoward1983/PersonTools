@@ -1,3 +1,4 @@
+using PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.Enums;
 
 namespace PersonalTools.ELFAnalyzer.Core
@@ -11,7 +12,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 
             if (parser.DynamicEntries != null)
             {
-                foreach (var entry in parser.DynamicEntries)
+                foreach (ELFDynamic entry in parser.DynamicEntries)
                 {
                     if (entry.d_tag == (long)DynamicTag.DT_VERSYM)
                     {
@@ -22,10 +23,10 @@ namespace PersonalTools.ELFAnalyzer.Core
             // 查找对应的节头
             if (versymAddr > 0)
             {
-                var versymSection = FindSectionByAddress(parser, (ulong)versymAddr);
+                Models.ELFSectionHeader? versymSection = FindSectionByAddress(parser, (ulong)versymAddr);
                 if (versymSection != null)
                 {
-                    var data = new byte[versymSection.Value.sh_size];
+                    byte[] data = new byte[versymSection.Value.sh_size];
                     Array.Copy(parser.FileData, (long)versymSection.Value.sh_offset, data, 0, (int)versymSection.Value.sh_size);
 
                     int count = (int)(versymSection.Value.sh_size / 2); // 每个版本符号是2字节

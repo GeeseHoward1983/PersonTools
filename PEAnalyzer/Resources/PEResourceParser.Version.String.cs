@@ -24,7 +24,9 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 // 检查是否还有足够的数据
                 if (fs.Position + 6 > fs.Length)
+                {
                     return;
+                }
 
                 ushort wLength = reader.ReadUInt16();
                 ushort wValueLength = reader.ReadUInt16();

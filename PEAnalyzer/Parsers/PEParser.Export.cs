@@ -37,7 +37,7 @@ namespace PersonalTools
                         fs.Position = exportOffset;
 
                         // 读取导出目录
-                        var exportDir = new IMAGE_EXPORT_DIRECTORY
+                        IMAGEEXPORTDIRECTORY exportDir = new()
                         {
                             Characteristics = reader.ReadUInt32(),
                             TimeDateStamp = reader.ReadUInt32(),
@@ -53,7 +53,7 @@ namespace PersonalTools
                         };
 
                         // 获取函数地址表
-                        var functionAddresses = new List<uint>();
+                        List<uint> functionAddresses = [];
                         long funcAddrOffset = PEResourceParserCore.RvaToOffset(exportDir.AddressOfFunctions, peInfo.SectionHeaders);
                         if (funcAddrOffset != -1 && funcAddrOffset < fs.Length)
                         {
@@ -69,7 +69,7 @@ namespace PersonalTools
                         }
 
                         // 获取函数名称表
-                        var functionNameRVAs = new List<uint>();
+                        List<uint> functionNameRVAs = [];
                         long funcNameOffset = PEResourceParserCore.RvaToOffset(exportDir.AddressOfNames, peInfo.SectionHeaders);
                         if (funcNameOffset != -1 && funcNameOffset < fs.Length)
                         {
@@ -85,7 +85,7 @@ namespace PersonalTools
                         }
 
                         // 获取名称序号表
-                        var nameOrdinals = new List<ushort>();
+                        List<ushort> nameOrdinals = [];
                         long nameOrdinalOffset = PEResourceParserCore.RvaToOffset(exportDir.AddressOfNameOrdinals, peInfo.SectionHeaders);
                         if (nameOrdinalOffset != -1 && nameOrdinalOffset < fs.Length)
                         {
@@ -101,7 +101,7 @@ namespace PersonalTools
                         }
 
                         // 解析函数名称
-                        var functionNames = new Dictionary<int, string>();
+                        Dictionary<int, string> functionNames = [];
                         for (int i = 0; i < functionNameRVAs.Count; i++)
                         {
                             uint nameRVA = functionNameRVAs[i];
@@ -126,7 +126,7 @@ namespace PersonalTools
 
                             // 检查是否是转发函数（RVA指向非导出节）
                             //bool isForwarded = false;
-                            foreach (var section in peInfo.SectionHeaders)
+                            foreach (IMAGESECTIONHEADER section in peInfo.SectionHeaders)
                             {
                                 if (functionRVA >= section.VirtualAddress &&
                                     functionRVA < section.VirtualAddress + section.VirtualSize)
@@ -141,21 +141,14 @@ namespace PersonalTools
                                 }
                             }
 
-                            var exportFunc = new ExportFunctionInfo
+                            ExportFunctionInfo exportFunc = new()
                             {
                                 Ordinal = (int)(i + exportDir.Base),
                                 RVA = functionRVA
                             };
 
                             // 查找对应的函数名称
-                            if (functionNames.TryGetValue(i, out string? value))
-                            {
-                                exportFunc.Name = value;
-                            }
-                            else
-                            {
-                                exportFunc.Name = $"Ordinal_{exportFunc.Ordinal}";
-                            }
+                            exportFunc.Name = functionNames.TryGetValue(i, out string? value) ? value : $"Ordinal_{exportFunc.Ordinal}";
 
                             peInfo.ExportFunctions.Add(exportFunc);
                         }

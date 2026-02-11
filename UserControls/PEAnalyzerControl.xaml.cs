@@ -23,11 +23,11 @@ namespace PersonalTools.UserControls
             e.Handled = true;
         }
 
-        private PEInfo? currentPEInfo = null;
+        private PEInfo? currentPEInfo;
 
         private void OpenFile_Click(object sender, RoutedEventArgs e)
         {
-            var openFileDialog = new OpenFileDialog
+            OpenFileDialog openFileDialog = new()
             {
                 Filter = "PE Files (*.exe;*.dll;*.sys)|*.exe;*.dll;*.sys|All files (*.*)|*.*"
             };
@@ -80,10 +80,13 @@ namespace PersonalTools.UserControls
         {
             HeaderInfoPanel.Children.Clear();
 
-            if (currentPEInfo == null) return;
+            if (currentPEInfo == null)
+            {
+                return;
+            }
 
             // 准备文件信息
-            var fileInfo = new Dictionary<string, string>
+            Dictionary<string, string> fileInfo = new()
             {
                 { "文件路径", currentPEInfo.FilePath },
                 { "文件类型", Utilties.GetDetailedFileType(currentPEInfo.NtHeaders.FileHeader.Characteristics, currentPEInfo.OptionalHeader.Subsystem) },
@@ -165,18 +168,18 @@ namespace PersonalTools.UserControls
             }
 
             // 显示节信息
-            var sectionDict = CreateSectionInfo();
+            Dictionary<string, string> sectionDict = CreateSectionInfo();
             AddHeaderInfo("节信息", sectionDict);
         }
 
         private Dictionary<string, string> CreateSectionInfo()
         {
-            var sectionInfo = new Dictionary<string, string>();
+            Dictionary<string, string> sectionInfo = [];
 
             // 显示所有节信息，不再限制数量
             for (int i = 0; i < currentPEInfo?.SectionHeaders.Count; i++)
             {
-                var section = currentPEInfo.SectionHeaders[i];
+                IMAGESECTIONHEADER section = currentPEInfo.SectionHeaders[i];
                 string sectionName = System.Text.Encoding.UTF8.GetString(section.Name).Trim('\0');
                 sectionInfo[$"节 {i} ({sectionName})"] = $"RVA: 0x{section.VirtualAddress:X8}, 大小: 0x{section.VirtualSize:X8}, Raw大小: 0x{section.SizeOfRawData:X8}, 特征: 0x{section.Characteristics:X8}";
             }
@@ -191,7 +194,10 @@ namespace PersonalTools.UserControls
             AdditionalInfoPanel.Children.Clear();
 
             // 总是创建面板，即使没有附加信息
-            if (currentPEInfo == null) return;
+            if (currentPEInfo == null)
+            {
+                return;
+            }
 
             // 显示版本信息
             AddAdditionalInfo("版本信息", new Dictionary<string, string>
@@ -236,23 +242,27 @@ namespace PersonalTools.UserControls
 
         private void DisplayIcons()
         {
-            var iconViewModels = new List<IconViewModel>();
+            List<IconViewModel> iconViewModels = [];
 
             if (currentPEInfo?.Icons != null && currentPEInfo.Icons.Count > 0)
             {
-                foreach (var icon in currentPEInfo.Icons)
+                foreach (IconInfo icon in currentPEInfo.Icons)
                 {
                     try
                     {
                         // 检查图标数据是否有效
                         if (icon.Data == null || icon.Data.Length == 0)
+                        {
                             continue;
+                        }
 
                         // 验证图标尺寸，避免添加无效图标
                         if (icon.Width <= 0 || icon.Height <= 0)
+                        {
                             continue;
+                        }
 
-                        var iconViewModel = new IconViewModel
+                        IconViewModel iconViewModel = new()
                         {
                             Width = icon.Width,
                             Height = icon.Height,
@@ -261,11 +271,11 @@ namespace PersonalTools.UserControls
                         };
 
                         // 从字节数组创建位图
-                        using (var stream = new MemoryStream(icon.Data))
+                        using (MemoryStream stream = new(icon.Data))
                         {
                             try
                             {
-                                var bitmap = new BitmapImage();
+                                BitmapImage bitmap = new();
                                 bitmap.BeginInit();
                                 bitmap.StreamSource = stream;
                                 bitmap.CacheOption = BitmapCacheOption.OnLoad; // 提高性能并确保图像加载完成
@@ -298,11 +308,14 @@ namespace PersonalTools.UserControls
         {
             DependencyTree.Items.Clear();
 
-            if (currentPEInfo?.Dependencies == null) return;
-
-            foreach (var dep in currentPEInfo.Dependencies)
+            if (currentPEInfo?.Dependencies == null)
             {
-                var treeNode = new TreeViewItem { Header = dep.Name };
+                return;
+            }
+
+            foreach (DependencyInfo dep in currentPEInfo.Dependencies)
+            {
+                TreeViewItem treeNode = new() { Header = dep.Name };
                 // 这里可以添加递归依赖显示逻辑
                 DependencyTree.Items.Add(treeNode);
             }
@@ -315,7 +328,7 @@ namespace PersonalTools.UserControls
 
             // 显示导出函数
             // 对于.NET程序集，导出函数实际上可能是公开的类型
-            var exportItems = new List<object>();
+            List<object> exportItems = [];
 
             if (currentPEInfo != null)
             {
@@ -343,14 +356,16 @@ namespace PersonalTools.UserControls
 
         private static DateTime UnixTimeStampToDateTime(long unixTimeStamp)
         {
-            var dt = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            DateTime dt = new(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
             return dt.AddSeconds(unixTimeStamp).ToLocalTime();
         }
 
         private string GetArchitectureInfo()
         {
             if (currentPEInfo == null)
+            {
                 return "Unknown";
+            }
 
             // 对于.NET程序，显示PE头架构和.NET架构信息
             if (currentPEInfo.CLRInfo != null)
@@ -365,20 +380,15 @@ namespace PersonalTools.UserControls
         private string GetBitInfo()
         {
             if (currentPEInfo == null)
+            {
                 return "Unknown";
+            }
 
             // 对于.NET程序，根据.NET架构判断位数
             if (currentPEInfo.CLRInfo != null)
             {
                 string arch = currentPEInfo.CLRInfo.Architecture;
-                if (arch == "x86")
-                    return "32位";
-                else if (arch == "Any CPU")
-                    return "Any CPU";
-                else if (arch == "x64" || arch == "ARM64")
-                    return "64位";
-                else
-                    return "未知";
+                return arch == "x86" ? "32位" : arch == "Any CPU" ? "Any CPU" : arch is "x64" or "ARM64" ? "64位" : "未知";
             }
 
             // 对于非.NET程序，根据PE头判断位数
@@ -387,12 +397,12 @@ namespace PersonalTools.UserControls
 
         private void AddHeaderInfo(string title, System.Collections.Generic.Dictionary<string, string> info)
         {
-            var groupBox = new GroupBox { Header = title, Margin = new Thickness(0, 5, 0, 5) };
-            var panel = new StackPanel { Margin = new Thickness(5) };
+            GroupBox groupBox = new() { Header = title, Margin = new Thickness(0, 5, 0, 5) };
+            StackPanel panel = new() { Margin = new Thickness(5) };
 
-            foreach (var item in info)
+            foreach (KeyValuePair<string, string> item in info)
             {
-                var textBlock = new TextBlock
+                TextBlock textBlock = new()
                 {
                     Text = $"{item.Key}: {item.Value}",
                     Margin = new Thickness(0, 2, 0, 2),
@@ -407,14 +417,14 @@ namespace PersonalTools.UserControls
 
         private void AddAdditionalInfo(string title, System.Collections.Generic.Dictionary<string, string> info)
         {
-            var groupBox = new GroupBox { Header = title, Margin = new Thickness(0, 5, 0, 5) };
-            var panel = new StackPanel { Margin = new Thickness(5) };
+            GroupBox groupBox = new() { Header = title, Margin = new Thickness(0, 5, 0, 5) };
+            StackPanel panel = new() { Margin = new Thickness(5) };
 
             int itemsAdded = 0;
-            foreach (var item in info)
+            foreach (KeyValuePair<string, string> item in info)
             {
                 // 添加所有信息，即使是空的也显示出来，这样用户可以看到哪些信息不存在
-                var textBlock = new TextBlock
+                TextBlock textBlock = new()
                 {
                     Text = $"{item.Key}: {item.Value ?? "无"}",
                     Margin = new Thickness(0, 2, 0, 2),
@@ -427,7 +437,7 @@ namespace PersonalTools.UserControls
             // 如果没有任何信息，添加提示文本
             if (itemsAdded == 0)
             {
-                var textBlock = new TextBlock
+                TextBlock textBlock = new()
                 {
                     Text = "未找到相关信息",
                     Margin = new Thickness(0, 2, 0, 2),

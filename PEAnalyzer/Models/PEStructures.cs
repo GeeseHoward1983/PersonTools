@@ -1,10 +1,12 @@
 using System.Runtime.InteropServices;
+using System.Diagnostics.CodeAnalysis;
 
 namespace PersonalTools.PEAnalyzer.Models
 {
     // DOS头结构
+    [SuppressMessage("Design", "CA1051:DoNotDeclareVisibleInstanceFields", Justification = "Interop struct: fields must be public for correct marshaling.")]
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGE_DOS_HEADER
+    public struct IMAGEDOSHEADER
     {
         public ushort e_magic;       // 魔数 "MZ"
         public ushort e_cblp;
@@ -30,17 +32,19 @@ namespace PersonalTools.PEAnalyzer.Models
     }
 
     // NT头签名
+    [SuppressMessage("Design", "CA1051:DoNotDeclareVisibleInstanceFields", Justification = "Interop struct: fields must be public for correct marshaling.")]
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGE_NT_HEADERS
+    public struct IMAGENTHEADERS
     {
         public uint Signature;
-        public IMAGE_FILE_HEADER FileHeader;
-        public IMAGE_OPTIONAL_HEADER OptionalHeader;
+        public IMAGEFILEHEADER FileHeader;
+        public IMAGEOPTIONALHEADER OptionalHeader;
     }
 
     // 文件头
+    [SuppressMessage("Design", "CA1051:DoNotDeclareVisibleInstanceFields", Justification = "Interop struct: fields must be public for correct marshaling.")]
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGE_FILE_HEADER
+    public struct IMAGEFILEHEADER
     {
         public ushort Machine;
         public ushort NumberOfSections;
@@ -51,120 +55,45 @@ namespace PersonalTools.PEAnalyzer.Models
         public ushort Characteristics;
     }
 
-    // 可选头（32位）
-    [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGE_OPTIONAL_HEADER32
-    {
-        public ushort Magic;
-        public byte MajorLinkerVersion;
-        public byte MinorLinkerVersion;
-        public uint SizeOfCode;
-        public uint SizeOfInitializedData;
-        public uint SizeOfUninitializedData;
-        public uint AddressOfEntryPoint;
-        public uint BaseOfCode;
-        public uint BaseOfData;
-        public uint ImageBase;
-        public uint SectionAlignment;
-        public uint FileAlignment;
-        public ushort MajorOperatingSystemVersion;
-        public ushort MinorOperatingSystemVersion;
-        public ushort MajorImageVersion;
-        public ushort MinorImageVersion;
-        public ushort MajorSubsystemVersion;
-        public ushort MinorSubsystemVersion;
-        public uint Win32VersionValue;
-        public uint SizeOfImage;
-        public uint SizeOfHeaders;
-        public uint CheckSum;
-        public ushort Subsystem;
-        public ushort DllCharacteristics;
-        public uint SizeOfStackReserve;
-        public uint SizeOfStackCommit;
-        public uint SizeOfHeapReserve;
-        public uint SizeOfHeapCommit;
-        public uint LoaderFlags;
-        public uint NumberOfRvaAndSizes;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-        public IMAGE_DATA_DIRECTORY[] DataDirectory;
-    }
-
-    // 可选头（64位）
-    [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGE_OPTIONAL_HEADER64
-    {
-        public ushort Magic;
-        public byte MajorLinkerVersion;
-        public byte MinorLinkerVersion;
-        public uint SizeOfCode;
-        public uint SizeOfInitializedData;
-        public uint SizeOfUninitializedData;
-        public uint AddressOfEntryPoint;
-        public uint BaseOfCode;
-        public ulong ImageBase;
-        public uint SectionAlignment;
-        public uint FileAlignment;
-        public ushort MajorOperatingSystemVersion;
-        public ushort MinorOperatingSystemVersion;
-        public ushort MajorImageVersion;
-        public ushort MinorImageVersion;
-        public ushort MajorSubsystemVersion;
-        public ushort MinorSubsystemVersion;
-        public uint Win32VersionValue;
-        public uint SizeOfImage;
-        public uint SizeOfHeaders;
-        public uint CheckSum;
-        public ushort Subsystem;
-        public ushort DllCharacteristics;
-        public ulong SizeOfStackReserve;
-        public ulong SizeOfStackCommit;
-        public ulong SizeOfHeapReserve;
-        public ulong SizeOfHeapCommit;
-        public uint LoaderFlags;
-        public uint NumberOfRvaAndSizes;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-        public IMAGE_DATA_DIRECTORY[] DataDirectory;
-    }
-
     // 统一的可选头结构
-    public struct IMAGE_OPTIONAL_HEADER
+    public struct IMAGEOPTIONALHEADER
     {
-        public ushort Magic;
-        public byte MajorLinkerVersion;
-        public byte MinorLinkerVersion;
-        public uint SizeOfCode;
-        public uint SizeOfInitializedData;
-        public uint SizeOfUninitializedData;
-        public uint AddressOfEntryPoint;
-        public uint BaseOfCode;
-        public uint BaseOfData;
-        public ulong ImageBase;
-        public uint SectionAlignment;
-        public uint FileAlignment;
-        public ushort MajorOperatingSystemVersion;
-        public ushort MinorOperatingSystemVersion;
-        public ushort MajorImageVersion;
-        public ushort MinorImageVersion;
-        public ushort MajorSubsystemVersion;
-        public ushort MinorSubsystemVersion;
-        public uint Win32VersionValue;
-        public uint SizeOfImage;
-        public uint SizeOfHeaders;
-        public uint CheckSum;
-        public ushort Subsystem;
-        public ushort DllCharacteristics;
-        public ulong SizeOfStackReserve;
-        public ulong SizeOfStackCommit;
-        public ulong SizeOfHeapReserve;
-        public ulong SizeOfHeapCommit;
-        public uint LoaderFlags;
-        public uint NumberOfRvaAndSizes;
-        public IMAGE_DATA_DIRECTORY[] DataDirectory;
+        public ushort Magic { get; set; }
+        public byte MajorLinkerVersion { get; set; }
+        public byte MinorLinkerVersion { get; set; }
+        public uint SizeOfCode { get; set; }
+        public uint SizeOfInitializedData { get; set; }
+        public uint SizeOfUninitializedData { get; set; }
+        public uint AddressOfEntryPoint { get; set; }
+        public uint BaseOfCode { get; set; }
+        public uint BaseOfData { get; set; }
+        public ulong ImageBase { get; set; }
+        public uint SectionAlignment { get; set; }
+        public uint FileAlignment { get; set; }
+        public ushort MajorOperatingSystemVersion { get; set; }
+        public ushort MinorOperatingSystemVersion { get; set; }
+        public ushort MajorImageVersion { get; set; }
+        public ushort MinorImageVersion { get; set; }
+        public ushort MajorSubsystemVersion { get; set; }
+        public ushort MinorSubsystemVersion { get; set; }
+        public uint Win32VersionValue { get; set; }
+        public uint SizeOfImage { get; set; }
+        public uint SizeOfHeaders { get; set; }
+        public uint CheckSum { get; set; }
+        public ushort Subsystem { get; set; }
+        public ushort DllCharacteristics { get; set; }
+        public ulong SizeOfStackReserve { get; set; }
+        public ulong SizeOfStackCommit { get; set; }
+        public ulong SizeOfHeapReserve { get; set; }
+        public ulong SizeOfHeapCommit { get; set; }
+        public uint LoaderFlags { get; set; }
+        public uint NumberOfRvaAndSizes { get; set; }
+        public IMAGEDATADIRECTORY[] DataDirectory { get; set; }
     }
 
     // 数据目录项
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGE_DATA_DIRECTORY
+    public struct IMAGEDATADIRECTORY
     {
         public uint VirtualAddress;
         public uint Size;
@@ -172,7 +101,7 @@ namespace PersonalTools.PEAnalyzer.Models
 
     // 节头
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGE_SECTION_HEADER
+    public struct IMAGESECTIONHEADER
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
         public byte[] Name;
@@ -189,7 +118,7 @@ namespace PersonalTools.PEAnalyzer.Models
 
     // 导入描述符
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGE_IMPORT_DESCRIPTOR
+    public struct IMAGEIMPORTDESCRIPTOR
     {
         public uint OriginalFirstThunk;
         public uint TimeDateStamp;
@@ -199,8 +128,9 @@ namespace PersonalTools.PEAnalyzer.Models
     }
 
     // 导出目录
+    [SuppressMessage("Design", "CA1051:DoNotDeclareVisibleInstanceFields", Justification = "Interop struct: fields must be public for correct marshaling.")]
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGE_EXPORT_DIRECTORY
+    public struct IMAGEEXPORTDIRECTORY
     {
         public uint Characteristics;
         public uint TimeDateStamp;
@@ -217,7 +147,7 @@ namespace PersonalTools.PEAnalyzer.Models
 
     // 延迟加载导入描述符
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGE_DELAYLOAD_DESCRIPTOR
+    public struct IMAGEDELAYLOADDESCRIPTOR
     {
         public uint Attributes;          // 可能包含标志位
         public uint DllNameRVA;         // 指向DLL名称的RVA
@@ -231,7 +161,7 @@ namespace PersonalTools.PEAnalyzer.Models
 
     // 版权信息头
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGE_ARCHITECTURE_HEADER
+    public struct IMAGEARCHITECTUREHEADER
     {
         public uint AmaskValue;
         public uint Reserved1;  // 以前称为 Adummy1
@@ -244,7 +174,7 @@ namespace PersonalTools.PEAnalyzer.Models
 
     // 证书结构
     [StructLayout(LayoutKind.Sequential)]
-    public struct WIN_CERTIFICATE
+    public struct WINCERTIFICATE
     {
         public uint dwLength;
         public ushort wRevision;
@@ -253,8 +183,9 @@ namespace PersonalTools.PEAnalyzer.Models
     }
 
     // 版本信息结构
+    [SuppressMessage("Design", "CA1051:DoNotDeclareVisibleInstanceFields", Justification = "Interop struct: fields must be public for correct marshaling.")]
     [StructLayout(LayoutKind.Sequential)]
-    public struct VS_FIXEDFILEINFO
+    public struct VSFIXEDFILEINFO
     {
         public uint dwSignature;
         public uint dwStrucVersion;
@@ -271,23 +202,9 @@ namespace PersonalTools.PEAnalyzer.Models
         public uint dwFileDateLS;
     }
 
-    // 版本信息资源结构
-    [StructLayout(LayoutKind.Sequential)]
-    public struct VS_VERSIONINFO
-    {
-        public ushort wLength;
-        public ushort wValueLength;
-        public ushort wType;
-        // WCHAR szKey[] 跟随其后
-        // WORD Padding1[]
-        // VS_FIXEDFILEINFO Value
-        // WORD Padding2[]
-        // WORD Children[]
-    }
-
     // 资源目录项
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGE_RESOURCE_DIRECTORY_ENTRY
+    public struct IMAGERESOURCEDIRECTORYENTRY
     {
         public uint NameOrId;
         public uint OffsetToData;
@@ -295,7 +212,7 @@ namespace PersonalTools.PEAnalyzer.Models
 
     // 资源目录
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGE_RESOURCE_DIRECTORY
+    public struct IMAGERESOURCEDIRECTORY
     {
         public uint Characteristics;
         public uint TimeDateStamp;
@@ -307,7 +224,7 @@ namespace PersonalTools.PEAnalyzer.Models
 
     // 资源数据条目
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGE_RESOURCE_DATA_ENTRY
+    public struct IMAGERESOURCEDATAENTRY
     {
         public uint OffsetToData;
         public uint Size;

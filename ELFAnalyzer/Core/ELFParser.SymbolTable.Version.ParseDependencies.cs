@@ -1,3 +1,4 @@
+using PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.Enums;
 
 namespace PersonalTools.ELFAnalyzer.Core
@@ -12,7 +13,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 
             if (parser.DynamicEntries != null)
             {
-                foreach (var entry in parser.DynamicEntries)
+                foreach (ELFDynamic entry in parser.DynamicEntries)
                 {
                     if (entry.d_tag == (long)DynamicTag.DT_VERNEED)
                     {
@@ -29,7 +30,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 parser.VersionDependencies = [];
 
-                var verneedSection = FindSectionByAddress(parser, (ulong)verneedAddr);
+                Models.ELFSectionHeader? verneedSection = FindSectionByAddress(parser, (ulong)verneedAddr);
                 if (verneedSection != null)
                 {
                     ParseVerNeedEntries(parser, verneedSection.Value, (int)verneedNum);
@@ -39,9 +40,12 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private static Models.ELFSectionHeader? FindSectionByAddress(ELFParser parser, ulong address)
         {
-            if (parser.SectionHeaders == null) return null;
-            
-            foreach (var section in parser.SectionHeaders)
+            if (parser.SectionHeaders == null)
+            {
+                return null;
+            }
+
+            foreach (Models.ELFSectionHeader section in parser.SectionHeaders)
             {
                 if (section.sh_addr == address)
                 {
@@ -53,16 +57,22 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private static void ParseVerNeedEntries(ELFParser parser, Models.ELFSectionHeader section, int count)
         {
-            if (parser.SectionHeaders == null || parser.VersionDependencies == null) return;
-            
+            if (parser.SectionHeaders == null || parser.VersionDependencies == null)
+            {
+                return;
+            }
+
             // 找到版本需求字符串表
             int strTabIdx = (int)section.sh_link;
-            if (strTabIdx >= parser.SectionHeaders.Count) return;
-            
-            var strTabSection = parser.SectionHeaders[strTabIdx];
-            var strTabData = new byte[strTabSection.sh_size];
+            if (strTabIdx >= parser.SectionHeaders.Count)
+            {
+                return;
+            }
+
+            Models.ELFSectionHeader strTabSection = parser.SectionHeaders[strTabIdx];
+            byte[] strTabData = new byte[strTabSection.sh_size];
             Array.Copy(parser.FileData, (long)strTabSection.sh_offset, strTabData, 0, (int)strTabSection.sh_size);
-            
+
             long offset = (long)section.sh_offset;
             int processed = 0;
 
@@ -79,10 +89,10 @@ namespace PersonalTools.ELFAnalyzer.Core
 
                 // 读取版本需求结构
                 _ = BitConverter.ToUInt16(parser.FileData, (int)offset);
-                var vn_cnt = BitConverter.ToUInt16(parser.FileData, (int)offset + 2);
-                var vn_file = BitConverter.ToUInt32(parser.FileData, (int)offset + 4);
-                var vn_aux = BitConverter.ToUInt32(parser.FileData, (int)offset + 8);
-                var vn_next = BitConverter.ToUInt32(parser.FileData, (int)offset + 12);
+                ushort vn_cnt = BitConverter.ToUInt16(parser.FileData, (int)offset + 2);
+                uint vn_file = BitConverter.ToUInt32(parser.FileData, (int)offset + 4);
+                uint vn_aux = BitConverter.ToUInt32(parser.FileData, (int)offset + 8);
+                uint vn_next = BitConverter.ToUInt32(parser.FileData, (int)offset + 12);
 
                 // 获取库名称
                 _ = ELFParserUtils.ExtractStringFromBytes(strTabData, (int)vn_file);
@@ -100,27 +110,30 @@ namespace PersonalTools.ELFAnalyzer.Core
                         Array.Reverse(parser.FileData, (int)auxOffset + 12, 4);
                     }
 
-                    var nameOffset = BitConverter.ToUInt32(parser.FileData, (int)auxOffset + 8);
-                    var flags = BitConverter.ToUInt16(parser.FileData, (int)auxOffset + 6);
-                    var auxNext = BitConverter.ToUInt32(parser.FileData, (int)auxOffset + 12);
+                    uint nameOffset = BitConverter.ToUInt32(parser.FileData, (int)auxOffset + 8);
+                    ushort flags = BitConverter.ToUInt16(parser.FileData, (int)auxOffset + 6);
+                    uint auxNext = BitConverter.ToUInt32(parser.FileData, (int)auxOffset + 12);
                     string versionName = ELFParserUtils.ExtractStringFromBytes(strTabData, (int)nameOffset);
 
                     // 使用版本索引作为键，而不是顺序
                     ushort verIndex = (ushort)(flags & 0x7fff); // 去除隐藏标志
-                    if (!parser.VersionDependencies.ContainsKey(verIndex))
+                    parser.VersionDependencies.TryAdd(verIndex, versionName);
+                    auxProcessed++;
+                    if (auxNext == 0)
                     {
-                        parser.VersionDependencies.Add(verIndex, versionName);
+                        break;
                     }
 
-                    auxProcessed++;
-                    if (auxNext == 0) break;
                     auxOffset += auxNext;
                 }
 
                 offset += vn_next; // 移动到下一个版本需求
                 processed++;
 
-                if (vn_next == 0) break; // 没有更多版本需求
+                if (vn_next == 0)
+                {
+                    break; // 没有更多版本需求
+                }
             }
         }
     }

@@ -1,4 +1,4 @@
-using PersonalTools;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Windows.Controls;
@@ -119,7 +119,7 @@ namespace PersonalTools.UserControls
 
             try
             {
-                var selectedAlgorithm = (CRCAlgorithm)CRCAlgorithmComboBox.SelectedItem;
+                CRCAlgorithm selectedAlgorithm = (CRCAlgorithm)CRCAlgorithmComboBox.SelectedItem;
                 byte[] inputBytes;
 
                 if (CRCHexInputRadio.IsChecked == true)
@@ -133,12 +133,12 @@ namespace PersonalTools.UserControls
                     inputBytes = Encoding.UTF8.GetBytes(input);
                 }
 
-                var calculator = new CRCCalculator(selectedAlgorithm);
+                CRCCalculator calculator = new(selectedAlgorithm);
                 uint crcResult = calculator.Compute(inputBytes);
 
                 // 根据算法宽度格式化输出
                 string formatString = selectedAlgorithm.Width <= 8 ? "X2" : selectedAlgorithm.Width <= 16 ? "X4" : "X8";
-                CRCResultLabel.Content = crcResult.ToString(formatString);
+                CRCResultLabel.Content = crcResult.ToString(formatString, CultureInfo.InvariantCulture);
             }
             catch (Exception ex)
             {
@@ -181,10 +181,10 @@ namespace PersonalTools.UserControls
                 byte[] fileBytes;
 
                 // 读取文件内容
-                using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                using (FileStream fileStream = new(filePath, FileMode.Open, FileAccess.Read))
                 {
                     fileBytes = new byte[fileStream.Length];
-                    fileStream.Read(fileBytes, 0, fileBytes.Length);
+                    fileStream.ReadExactly(fileBytes);
                 }
 
                 // 将文件内容转换为hex字符串显示在输入框中

@@ -25,7 +25,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 fs.Position = directoryOffset;
 
                 // 读取资源目录
-                var directory = new IMAGE_RESOURCE_DIRECTORY
+                IMAGERESOURCEDIRECTORY directory = new()
                 {
                     Characteristics = reader.ReadUInt32(),
                     TimeDateStamp = reader.ReadUInt32(),
@@ -41,7 +41,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 {
                     fs.Position = directoryOffset + 16 + i * 8; // 跳过目录头(16字节)，每项8字节
 
-                    var entry = new IMAGE_RESOURCE_DIRECTORY_ENTRY
+                    IMAGERESOURCEDIRECTORYENTRY entry = new()
                     {
                         NameOrId = reader.ReadUInt32(),
                         OffsetToData = reader.ReadUInt32()
@@ -96,7 +96,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 }
 
                 // 读取资源数据项
-                var dataEntry = new IMAGE_RESOURCE_DATA_ENTRY
+                IMAGERESOURCEDATAENTRY dataEntry = new()
                 {
                     OffsetToData = reader.ReadUInt32(),
                     Size = reader.ReadUInt32(),
@@ -112,9 +112,11 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                     // 读取图标目录头
                     if (fs.Position + 6 > fs.Length)
+                    {
                         return;
+                    }
 
-                    var iconDirHeader = new ICON_DIR_HEADER
+                    ICONDIRHEADER iconDirHeader = new()
                     {
                         Reserved = reader.ReadUInt16(),
                         Type = reader.ReadUInt16(),
@@ -123,16 +125,20 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                     // 检查是否为有效的图标资源
                     if (iconDirHeader.Type != 1 || iconDirHeader.Count == 0)
+                    {
                         return;
+                    }
 
                     // 读取图标目录项
-                    var iconDirEntries = new ICON_DIR_ENTRY[iconDirHeader.Count];
+                    ICONDIRENTRY[] iconDirEntries = new ICONDIRENTRY[iconDirHeader.Count];
                     for (int i = 0; i < iconDirHeader.Count; i++)
                     {
                         if (fs.Position + 16 > fs.Length)
+                        {
                             break;
+                        }
 
-                        iconDirEntries[i] = new ICON_DIR_ENTRY
+                        iconDirEntries[i] = new ICONDIRENTRY
                         {
                             Width = reader.ReadByte(),
                             Height = reader.ReadByte(),
@@ -146,7 +152,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     }
 
                     // 为每个图标目录项解析实际的图标数据
-                    foreach (var entry in iconDirEntries)
+                    foreach (ICONDIRENTRY entry in iconDirEntries)
                     {
                         // 查找对应ID的RT_ICON资源
                         long iconDataOffset = PEResourceParserIconHelpers.FindIconDataByResourceId(fs, reader, peInfo, entry.ImageOffset, resourceBaseOffset);
@@ -157,9 +163,11 @@ namespace PersonalTools.PEAnalyzer.Resources
                             int height = entry.Height == 0 ? 256 : entry.Height;
 
                             if (width <= 0 || height <= 0)
+                            {
                                 continue;
+                            }
 
-                            var iconInfo = new IconInfo
+                            IconInfo iconInfo = new()
                             {
                                 Width = width,
                                 Height = height,
@@ -170,7 +178,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                             // 构建完整的ICO文件数据
                             // ICO文件结构: 6字节文件头 + 16字节目录项 + 图像数据
                             int fullIconDataSize = 6 + 16 + (int)entry.BytesInRes;
-                            if (fullIconDataSize > 0 && fullIconDataSize < 10 * 1024 * 1024) // 限制最大10MB
+                            if (fullIconDataSize is > 0 and < (10 * 1024 * 1024)) // 限制最大10MB
                             {
                                 byte[] fullIconData = new byte[fullIconDataSize];
 

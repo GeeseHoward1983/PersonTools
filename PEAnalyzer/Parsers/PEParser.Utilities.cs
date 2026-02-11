@@ -8,7 +8,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
     {
         public static string ReadNullTerminatedString(BinaryReader reader)
         {
-            var sb = new StringBuilder();
+            StringBuilder sb = new();
             try
             {
                 byte b;
@@ -16,11 +16,11 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 while ((b = reader.ReadByte()) != 0)
                 {
                     // 确保是有效的ASCII字符
-                    if (b >= 32 && b <= 126)
+                    if (b is >= 32 and <= 126)
                     {
                         sb.Append((char)b);
                     }
-                    else if (b == 9 || b == 10 || b == 13)
+                    else if (b is 9 or 10 or 13)
                     {
                         // 允许制表符、换行符和回车符
                         sb.Append((char)b);
@@ -118,7 +118,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 12 => "Microsoft Linker 12.x (VS 2013)",
                 14 => minorVersion == 10 ? "Microsoft Linker 14.10 (VS 2015)"
                     : (minorVersion == 20) ? "Microsoft Linker 14.20 (VS 2017)"
-                    : (minorVersion >= 26 && minorVersion <= 29) ? "Microsoft Linker 14.26-14.29 (VS 2019)"
+                    : (minorVersion is >= 26 and <= 29) ? "Microsoft Linker 14.26-14.29 (VS 2019)"
                     : (minorVersion >= 30) ? "Microsoft Linker 14.30+ (VS 2022)"
                     : "Microsoft Linker 14.x (VS 2015/2017/2019)",
                 15 => "Microsoft Linker 15.x",
@@ -143,13 +143,13 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 12 => "Microsoft Visual C++ 2013",
                 14 => minorVersion == 10 ? "Microsoft Visual C++ 2015"
                     : (minorVersion == 20) ? "Microsoft Visual C++ 2017"
-                    : (minorVersion >= 26 && minorVersion <= 29) ? "Microsoft Visual C++ 2019"
+                    : (minorVersion is >= 26 and <= 29) ? "Microsoft Visual C++ 2019"
                     : (minorVersion >= 30) ? "Microsoft Visual C++ 2022"
                     : "Microsoft Visual C++ 2015/2017/2019",
                 15 => "Microsoft Visual C++ ???",
                 _ =>
                     isNetAssembly ? "Microsoft .NET Compiler" :
-                    majorVersion > 15 ?"Microsoft Visual C++ (较新版本)" : "Microsoft Visual C++ (未知版本)"
+                    majorVersion > 15 ? "Microsoft Visual C++ (较新版本)" : "Microsoft Visual C++ (未知版本)"
             }} [{majorVersion}.{minorVersion}]";
         }
 
@@ -241,7 +241,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
         }
 
         // 判断是否为64位PE
-        public static bool Is64Bit(IMAGE_OPTIONAL_HEADER optionalHeader)
+        public static bool Is64Bit(IMAGEOPTIONALHEADER optionalHeader)
         {
             return optionalHeader.Magic == 0x20b;
         }
@@ -255,60 +255,39 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 // 进一步检查子系统来确定驱动类型
                 return $"Driver/System File (0x{characteristics:X4})";
             }
-            else if ((characteristics & 0x2000) != 0)
-            {
-                return $"DLL (0x{characteristics:X4})";
-            }
-            else if ((characteristics & 0x0002) != 0)
-            {
-                return $"Executable (0x{characteristics:X4})";
-            }
             else
             {
-                return $"Object (0x{characteristics:X4})";
+                return (characteristics & 0x2000) != 0
+                    ? $"DLL (0x{characteristics:X4})"
+                    : (characteristics & 0x0002) != 0 ? $"Executable (0x{characteristics:X4})" : $"Object (0x{characteristics:X4})";
             }
         }
 
         // 获取更详细的文件类型描述
         public static string GetDetailedFileType(ushort characteristics, ushort subsystem)
         {
-            string fileType;
+            string fileType = (characteristics & 0x1000) != 0
+                ? "Driver/System File"
+                : (characteristics & 0x2000) != 0 ? "Dynamic Link Library" : (characteristics & 0x0002) != 0 ? "Executable" : "Object File";
 
             // 根据特征值判断基本类型
-            if ((characteristics & 0x1000) != 0) // 系统文件标志
-            {
-                fileType = "Driver/System File";
-            }
-            else if ((characteristics & 0x2000) != 0) // DLL标志
-            {
-                fileType = "Dynamic Link Library";
-            }
-            else if ((characteristics & 0x0002) != 0) // 可执行文件标志
-            {
-                fileType = "Executable";
-            }
-            else
-            {
-                fileType = "Object File";
-            }
 
             return $"{fileType}{subsystem switch
             {
-                    1 => fileType switch { "Driver/System File" => " (Native Driver)" , _ => "Windows Driver" },
-                    2 => " (Windows GUI Application)",
-                    3 => " (Windows Console Application)",
-                    5 => " (OS/2 Console Application)",
-                    7 => " (POSIX Console Application)",
-                    9 => " (Windows CE GUI Application)",
-                    10 => " (EFI Application)",
-                    11 => " (EFI Boot Service Driver)",
-                    12 => " (EFI Runtime Driver)",
-                    13 => " (EFI ROM)",
-                    14 => " (Xbox Application)",
-                    16 => " (Windows Boot Application)",
-                    _ => $" (Unknown Subsystem: {subsystem})"
-            }
-                } (Characteristics: 0x{characteristics:X4}, Subsystem: 0x{subsystem:X4})";
+                1 => fileType switch { "Driver/System File" => " (Native Driver)", _ => "Windows Driver" },
+                2 => " (Windows GUI Application)",
+                3 => " (Windows Console Application)",
+                5 => " (OS/2 Console Application)",
+                7 => " (POSIX Console Application)",
+                9 => " (Windows CE GUI Application)",
+                10 => " (EFI Application)",
+                11 => " (EFI Boot Service Driver)",
+                12 => " (EFI Runtime Driver)",
+                13 => " (EFI ROM)",
+                14 => " (Xbox Application)",
+                16 => " (Windows Boot Application)",
+                _ => $" (Unknown Subsystem: {subsystem})"
+            }} (Characteristics: 0x{characteristics:X4}, Subsystem: 0x{subsystem:X4})";
         }
 
         // 检查是否为Windows NT驱动程序
@@ -316,7 +295,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
         {
             // 检查是否为系统文件
             if ((characteristics & 0x1000) == 0)
+            {
                 return string.Empty; // 不是系统文件，不是驱动程序
+            }
 
             string driverType = subsystem switch
             {
@@ -329,7 +310,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
             // 检查DLL特征以获取更多信息
             if ((dllCharacteristics & 0x0020) != 0) // IMAGE_DLLCHARACTERISTICS_WDM_DRIVER
+            {
                 driverType += " (WDM)";
+            }
 
             return driverType;
         }

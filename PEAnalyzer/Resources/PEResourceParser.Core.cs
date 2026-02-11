@@ -16,17 +16,21 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <param name="rva">相对虚拟地址</param>
         /// <param name="sections">节头列表</param>
         /// <returns>文件偏移量</returns>
-        public static long RvaToOffset(uint rva, List<IMAGE_SECTION_HEADER> sections)
+        public static long RvaToOffset(uint rva, List<IMAGESECTIONHEADER> sections)
         {
             // 添加对RVA的基本验证
             if (rva == 0)
+            {
                 return -1;
+            }
 
-            foreach (var section in sections)
+            foreach (IMAGESECTIONHEADER section in sections)
             {
                 // 确保VirtualSize不为0，避免除零错误
                 if (section.VirtualSize == 0)
+                {
                     continue;
+                }
 
                 // 检查RVA是否在当前节的范围内
                 // 使用VirtualSize作为节在内存中的大小
@@ -39,13 +43,17 @@ namespace PersonalTools.PEAnalyzer.Resources
                     // 如果偏移量超出了文件中节的大小，则返回-1
                     // 这种情况常见于未初始化数据节(.bss等)
                     if (relativeOffset >= section.SizeOfRawData)
+                    {
                         return -1;
+                    }
 
                     // 确保计算结果不会溢出
                     long offset = section.PointerToRawData + relativeOffset;
                     // 确保offset不为负数且在合理范围内
                     if (offset >= 0)
+                    {
                         return offset;
+                    }
                 }
             }
             return -1;
@@ -61,7 +69,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             try
             {
-                var sb = new StringBuilder();
+                StringBuilder sb = new();
                 int count = 0;
 
                 // 限制最大读取次数以防止死循环
@@ -71,11 +79,15 @@ namespace PersonalTools.PEAnalyzer.Resources
                 {
                     // 检查是否还有数据可读
                     if (reader.BaseStream.Position + 2 > reader.BaseStream.Length)
+                    {
                         break;
+                    }
 
                     ushort ch = reader.ReadUInt16();
                     if (ch == 0) // NULL终止符
+                    {
                         break;
+                    }
 
                     sb.Append((char)ch);
                     count++;

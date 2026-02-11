@@ -6,15 +6,15 @@ namespace PersonalTools.PEAnalyzer.Models
     public class PEInfo
     {
         public string FilePath { get; set; } = string.Empty;
-        public IMAGE_DOS_HEADER DosHeader { get; set; }
-        public IMAGE_NT_HEADERS NtHeaders { get; set; }
-        public IMAGE_OPTIONAL_HEADER OptionalHeader { get; set; }
-        public List<IMAGE_SECTION_HEADER> SectionHeaders { get; set; } = [];
+        internal IMAGEDOSHEADER DosHeader { get; set; }
+        internal IMAGENTHEADERS NtHeaders { get; set; }
+        internal IMAGEOPTIONALHEADER OptionalHeader { get; set; }
+        internal List<IMAGESECTIONHEADER> SectionHeaders { get; set; } = [];
         public List<ImportFunctionInfo> ImportFunctions { get; set; } = [];
         public List<ExportFunctionInfo> ExportFunctions { get; set; } = [];
         public List<DependencyInfo> Dependencies { get; set; } = [];
         public List<IconInfo> Icons { get; set; } = [];
-        public CLRInfo? CLRInfo { get; set; } = null;
+        public CLRInfo? CLRInfo { get; set; }
         public PEAdditionalInfo AdditionalInfo { get; set; } = new PEAdditionalInfo();
     }
 
@@ -31,17 +31,17 @@ namespace PersonalTools.PEAnalyzer.Models
         public string InternalName { get; set; } = string.Empty;
         public string LegalCopyright { get; set; } = string.Empty;
         public string LegalTrademarks { get; set; } = string.Empty;
-        public bool IsSigned { get; set; } = false;
+        public bool IsSigned { get; set; }
         public string CertificateInfo { get; set; } = string.Empty;
 
         // 翻译信息（来自VarFileInfo）
         public string TranslationInfo { get; set; } = string.Empty;
 
         // 是否已解析StringTable
-        public bool StringTableParsed { get; set; } = false;
+        public bool StringTableParsed { get; set; }
 
         // StringTable结束位置
-        public long StringTableEndPosition { get; set; } = 0;
+        public long StringTableEndPosition { get; set; }
     }
 
     // 导入函数信息
@@ -50,8 +50,8 @@ namespace PersonalTools.PEAnalyzer.Models
         public string DllName { get; set; } = string.Empty;
         public string FunctionName { get; set; } = string.Empty;
         public int Ordinal { get; set; }
-        public bool IsOrdinalImport { get; set; } = false;
-        public bool IsDelayLoaded { get; set; } = false;  // 添加延迟加载标记
+        public bool IsOrdinalImport { get; set; }
+        public bool IsDelayLoaded { get; set; }   // 添加延迟加载标记
 
         // 添加序号显示属性，同时显示十进制和十六进制
         public string OrdinalDisplay => $"{Ordinal} (0x{Ordinal:X8})";
@@ -78,24 +78,24 @@ namespace PersonalTools.PEAnalyzer.Models
     }
 
     // 图标目录头
-    public struct ICON_DIR_HEADER
+    public struct ICONDIRHEADER
     {
-        public ushort Reserved;
-        public ushort Type;
-        public ushort Count;
+        public ushort Reserved { get; set; }
+        public ushort Type { get; set; }
+        public ushort Count { get; set; }
     }
 
     // 图标目录项
-    public struct ICON_DIR_ENTRY
+    public struct ICONDIRENTRY
     {
-        public byte Width;
-        public byte Height;
-        public byte ColorCount;
-        public byte Reserved;
-        public ushort Planes;
-        public ushort BitCount;
-        public uint BytesInRes;
-        public uint ImageOffset;
+        public byte Width { get; set; }
+        public byte Height { get; set; }
+        public byte ColorCount { get; set; }
+        public byte Reserved { get; set; }
+        public ushort Planes { get; set; }
+        public ushort BitCount { get; set; }
+        public uint BytesInRes { get; set; }
+        public uint ImageOffset { get; set; }
     }
 
     // 图标信息
@@ -121,20 +121,20 @@ namespace PersonalTools.PEAnalyzer.Models
     /// <summary>
     /// CLR运行时头结构
     /// </summary>
-    public struct IMAGE_COR20_HEADER
+    internal struct IMAGE_COR20_HEADER
     {
         public uint cb;                              // 结构大小
         public ushort MajorRuntimeVersion;           // 主版本号
         public ushort MinorRuntimeVersion;           // 次版本号
-        public IMAGE_DATA_DIRECTORY MetaData;        // 元数据
+        public IMAGEDATADIRECTORY MetaData;        // 元数据
         public uint Flags;                           // 标志位
         public uint EntryPointTokenOrRva;            // 入口点标记或RVA
-        public IMAGE_DATA_DIRECTORY Resources;       // 资源
-        public IMAGE_DATA_DIRECTORY StrongNameSignature; // 强名称签名
-        public IMAGE_DATA_DIRECTORY CodeManagerTable;    // 代码管理器表
-        public IMAGE_DATA_DIRECTORY VTableFixups;        // V表修复
-        public IMAGE_DATA_DIRECTORY ExportAddressTableJumps; // 导出地址表跳转
-        public IMAGE_DATA_DIRECTORY ManagedNativeHeader;     // 托管本地头
+        public IMAGEDATADIRECTORY Resources;       // 资源
+        public IMAGEDATADIRECTORY StrongNameSignature; // 强名称签名
+        public IMAGEDATADIRECTORY CodeManagerTable;    // 代码管理器表
+        public IMAGEDATADIRECTORY VTableFixups;        // V表修复
+        public IMAGEDATADIRECTORY ExportAddressTableJumps; // 导出地址表跳转
+        public IMAGEDATADIRECTORY ManagedNativeHeader;     // 托管本地头
     }
 
     /// <summary>
@@ -190,11 +190,27 @@ namespace PersonalTools.PEAnalyzer.Models
         {
             get
             {
-                var descriptions = new List<string>();
-                if (IsILonly) descriptions.Add("IL Only");
-                if (Is32BitRequired) descriptions.Add("32-Bit Required");
-                if (Is32BitPreferred) descriptions.Add("32-Bit Preferred");
-                if (IsStrongNameSigned) descriptions.Add("Strong Name Signed");
+                List<string> descriptions = [];
+                if (IsILonly)
+                {
+                    descriptions.Add("IL Only");
+                }
+
+                if (Is32BitRequired)
+                {
+                    descriptions.Add("32-Bit Required");
+                }
+
+                if (Is32BitPreferred)
+                {
+                    descriptions.Add("32-Bit Preferred");
+                }
+
+                if (IsStrongNameSigned)
+                {
+                    descriptions.Add("Strong Name Signed");
+                }
+
                 return descriptions;
             }
         }

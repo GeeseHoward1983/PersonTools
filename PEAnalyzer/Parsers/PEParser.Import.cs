@@ -38,7 +38,7 @@ namespace PersonalTools
                         // 循环读取导入描述符直到遇到全零的描述符
                         while (fs.Position + 20 <= fs.Length) // IMAGE_IMPORT_DESCRIPTOR大小为20字节
                         {
-                            var importDesc = new IMAGE_IMPORT_DESCRIPTOR
+                            IMAGEIMPORTDESCRIPTOR importDesc = new()
                             {
                                 OriginalFirstThunk = reader.ReadUInt32(),
                                 TimeDateStamp = reader.ReadUInt32(),
@@ -72,7 +72,7 @@ namespace PersonalTools
                                 {
                                     // 检查是否已存在相同的依赖项
                                     bool alreadyExists = false;
-                                    foreach (var dep in peInfo.Dependencies)
+                                    foreach (DependencyInfo dep in peInfo.Dependencies)
                                     {
                                         if (dep.Name.Equals(dllName, StringComparison.OrdinalIgnoreCase))
                                         {
@@ -84,7 +84,7 @@ namespace PersonalTools
                                     // 如果不存在，则添加新的依赖项
                                     if (!alreadyExists)
                                     {
-                                        var dependency = new DependencyInfo { Name = dllName };
+                                        DependencyInfo dependency = new() { Name = dllName };
                                         peInfo.Dependencies.Add(dependency);
                                     }
                                 }
@@ -99,7 +99,7 @@ namespace PersonalTools
                 }
 
                 // 解析延迟加载导入表
-                var delayLoadedImports = ParseDelayLoadImportTable(fs, reader, peInfo);
+                List<ImportFunctionInfo> delayLoadedImports = ParseDelayLoadImportTable(fs, reader, peInfo);
                 // 将延迟加载的导入函数添加到主列表中
                 peInfo.ImportFunctions.AddRange(delayLoadedImports);
             }
@@ -118,7 +118,7 @@ namespace PersonalTools
         /// <param name="peInfo">PE文件信息</param>
         /// <param name="importDesc">导入描述符</param>
         /// <param name="dllName">DLL名称</param>
-        internal static void ParseImportFunctions(FileStream fs, BinaryReader reader, PEInfo peInfo, IMAGE_IMPORT_DESCRIPTOR importDesc, string dllName)
+        internal static void ParseImportFunctions(FileStream fs, BinaryReader reader, PEInfo peInfo, IMAGEIMPORTDESCRIPTOR importDesc, string dllName)
         {
             try
             {
@@ -141,9 +141,11 @@ namespace PersonalTools
 
                         // 检查是否是终止项
                         if (thunkValue == 0)
+                        {
                             break;
+                        }
 
-                        var importFunc = new ImportFunctionInfo
+                        ImportFunctionInfo importFunc = new()
                         {
                             DllName = dllName
                         };
@@ -201,7 +203,7 @@ namespace PersonalTools
         /// <returns>延迟加载的导入函数列表</returns>
         private static List<ImportFunctionInfo> ParseDelayLoadImportTable(FileStream fs, BinaryReader reader, PEInfo peInfo)
         {
-            var delayLoadImportFunctions = new List<ImportFunctionInfo>();
+            List<ImportFunctionInfo> delayLoadImportFunctions = [];
 
             // 延迟加载导入表通常在数据目录的第14项（索引为13）
             // IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT = 13 (从0开始计数为索引13)
@@ -223,12 +225,14 @@ namespace PersonalTools
                     {
                         // 检查是否还有足够的数据可读取 (IMAGE_DELAYLOAD_DESCRIPTOR 是 32 字节)
                         if (delayLoadImportStartOffset + (descriptorCount + 1) * 32 > fs.Length)
+                        {
                             break;
+                        }
 
                         // 定位到当前描述符位置
                         fs.Position = delayLoadImportStartOffset + descriptorCount * 32;
 
-                        var delayLoadDesc = new IMAGE_DELAYLOAD_DESCRIPTOR
+                        IMAGEDELAYLOADDESCRIPTOR delayLoadDesc = new()
                         {
                             Attributes = reader.ReadUInt32(),
                             DllNameRVA = reader.ReadUInt32(),
@@ -244,7 +248,9 @@ namespace PersonalTools
 
                         // 如果DllNameRVA为0，表示结束
                         if (delayLoadDesc.DllNameRVA == 0)
+                        {
                             break;
+                        }
 
                         // 获取DLL名称
                         string dllName = "";
@@ -273,7 +279,7 @@ namespace PersonalTools
 
                         // 添加到依赖信息列表（如果尚未存在）
                         bool alreadyExists = false;
-                        foreach (var dep in peInfo.Dependencies)
+                        foreach (DependencyInfo dep in peInfo.Dependencies)
                         {
                             if (dep.Name.Equals(dllName, StringComparison.OrdinalIgnoreCase))
                             {
@@ -285,7 +291,7 @@ namespace PersonalTools
                         // 如果不存在，则添加新的依赖项
                         if (!alreadyExists)
                         {
-                            var dependency = new DependencyInfo { Name = dllName };
+                            DependencyInfo dependency = new() { Name = dllName };
                             peInfo.Dependencies.Add(dependency);
                         }
 
@@ -304,7 +310,9 @@ namespace PersonalTools
                                 {
                                     // 检查是否还有足够的数据可读取
                                     if (fs.Position + (peInfo.OptionalHeader.Magic == 0x10b ? 4 : 8) > fs.Length)
+                                    {
                                         break;
+                                    }
 
                                     ulong thunkRva = (peInfo.OptionalHeader.Magic == 0x10b) ?
                                         reader.ReadUInt32() : reader.ReadUInt64();
@@ -312,9 +320,11 @@ namespace PersonalTools
                                     thunkCount++;
 
                                     if (thunkRva == 0)
+                                    {
                                         break;
+                                    }
 
-                                    var importFunc = new ImportFunctionInfo
+                                    ImportFunctionInfo importFunc = new()
                                     {
                                         DllName = dllName,
                                         IsDelayLoaded = true  // 标记为延迟加载
@@ -348,14 +358,7 @@ namespace PersonalTools
                                                     string functionName = Utilties.ReadNullTerminatedString(reader);
                                                     fs.Position = savePos; // 恢复位置
 
-                                                    if (!string.IsNullOrEmpty(functionName))
-                                                    {
-                                                        importFunc.FunctionName = functionName;
-                                                    }
-                                                    else
-                                                    {
-                                                        importFunc.FunctionName = $"EMPTY_NAME";
-                                                    }
+                                                    importFunc.FunctionName = !string.IsNullOrEmpty(functionName) ? functionName : $"EMPTY_NAME";
                                                     // 使用Hint字段作为序号
                                                     importFunc.Ordinal = hint;
                                                     importFunc.IsOrdinalImport = false;

@@ -25,7 +25,9 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 // 检查是否还有足够的数据
                 if (fs.Position + 6 > fs.Length)
+                {
                     return;
+                }
 
                 ushort wLength = reader.ReadUInt16();
                 ushort wValueLength = reader.ReadUInt16();
@@ -40,7 +42,9 @@ namespace PersonalTools.PEAnalyzer.Resources
                 long stringsPosition = afterLangIdPosition + 3 & ~3; // 对齐到4字节边界
 
                 if (stringsPosition >= fs.Length || stringsPosition >= endPosition)
+                {
                     return;
+                }
 
                 fs.Position = stringsPosition;
 
@@ -52,7 +56,10 @@ namespace PersonalTools.PEAnalyzer.Resources
                     long stringStartPos = fs.Position;
 
                     // 先读取头部信息判断长度
-                    if (fs.Position + 6 > fs.Length) break;
+                    if (fs.Position + 6 > fs.Length)
+                    {
+                        break;
+                    }
 
                     ushort strLength = reader.ReadUInt16();
                     ushort strValueLength = reader.ReadUInt16();
@@ -91,24 +98,35 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 // 检查是否还有足够的数据
                 if (fs.Position + 6 > fs.Length)
+                {
                     return;
+                }
 
                 ushort wLength = reader.ReadUInt16();
                 ushort wValueLength = reader.ReadUInt16();
                 ushort wType = reader.ReadUInt16();
 
                 if (wLength == 0 || startPosition + wLength > endPosition)
+                {
                     return;
+                }
 
                 // 读取键名
-                var keySb = new StringBuilder();
+                StringBuilder keySb = new();
                 char ch;
                 while (fs.Position < fs.Length && fs.Position < endPosition && fs.Position < startPosition + wLength)
                 {
-                    if (fs.Position + 2 > fs.Length) break;
+                    if (fs.Position + 2 > fs.Length)
+                    {
+                        break;
+                    }
+
                     ch = (char)reader.ReadUInt16();
                     if (ch == '\0')
+                    {
                         break;
+                    }
+
                     keySb.Append(ch);
                 }
 
@@ -120,26 +138,35 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 // 确保valuePosition不超过边界
                 if (valuePosition >= endPosition || valuePosition >= fs.Length)
+                {
                     return;
+                }
 
                 fs.Position = valuePosition;
 
                 // 读取值
-                var valueSb = new StringBuilder();
+                StringBuilder valueSb = new();
                 long valueEndPosition = Math.Min(startPosition + wLength, endPosition);
                 while (fs.Position < fs.Length && fs.Position < valueEndPosition)
                 {
-                    if (fs.Position + 2 > fs.Length) break;
+                    if (fs.Position + 2 > fs.Length)
+                    {
+                        break;
+                    }
+
                     ch = (char)reader.ReadUInt16();
                     if (ch == '\0')
+                    {
                         break;
+                    }
+
                     valueSb.Append(ch);
                 }
 
                 string value = valueSb.ToString();
 
                 // 根据键名设置相应的属性
-                switch (keyValue.ToLower())
+                switch (keyValue.ToLower(System.Globalization.CultureInfo.CurrentCulture))
                 {
                     case "companyname":
                         peInfo.AdditionalInfo.CompanyName = value;
@@ -149,14 +176,20 @@ namespace PersonalTools.PEAnalyzer.Resources
                         break;
                     case "fileversion":
                         if (string.IsNullOrEmpty(peInfo.AdditionalInfo.FileVersion) || !peInfo.AdditionalInfo.FileVersion.Contains('.'))
+                        {
                             peInfo.AdditionalInfo.FileVersion = value;
+                        }
+
                         break;
                     case "productname":
                         peInfo.AdditionalInfo.ProductName = value;
                         break;
                     case "productversion":
                         if (string.IsNullOrEmpty(peInfo.AdditionalInfo.ProductVersion) || !peInfo.AdditionalInfo.ProductVersion.Contains('.'))
+                        {
                             peInfo.AdditionalInfo.ProductVersion = value;
+                        }
+
                         break;
                     case "originalfilename":
                         peInfo.AdditionalInfo.OriginalFileName = value;
@@ -177,7 +210,9 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 // 确保不超出边界
                 if (fs.Position > endPosition)
+                {
                     fs.Position = endPosition;
+                }
             }
             catch (Exception ex)
             {

@@ -1,4 +1,3 @@
-using PersonalTools;
 using PersonalTools.Enums;
 
 namespace PersonalTools.ConstString
@@ -6,17 +5,11 @@ namespace PersonalTools.ConstString
     public static partial class MySqlErrors
     {
         // MySQL 错误码访问接口
-        public static Dictionary<long, string> MySqlErrorsMap
+        public static Dictionary<long, string> MySqlErrorsMap => GlobalState.CurrentLanguageType switch
         {
-            get
-            {
-                return GlobalState.CurrentLanguageType switch
-                {
-                    LanguageType.SimplifiedChinese => MySqlErrorsMapSimplifiedChinese,
-                    LanguageType.TraditionalChinese => MySqlErrorsMapTraditionalChinese,
-                    _ => MySqlErrorsMapEnglish
-                };
-            }
-        }
+            LanguageType.SimplifiedChinese => MySqlErrorsMapSimplifiedChinese,
+            LanguageType.TraditionalChinese => MySqlErrorsMapTraditionalChinese,
+            _ => MySqlErrorsMapEnglish
+        };
     }
 }

@@ -21,20 +21,20 @@ namespace PersonalTools.UserControls
 
         public Dictionary<long, string> ErrorCodeMap
         {
-            get { return (Dictionary<long, string>)GetValue(ErrorCodeMapLongProperty); }
-            set { SetValue(ErrorCodeMapLongProperty, value); }
+            get => (Dictionary<long, string>)GetValue(ErrorCodeMapLongProperty);
+            set => SetValue(ErrorCodeMapLongProperty, value);
         }
 
         public Dictionary<string, string> ErrorCodeMapString
         {
-            get { return (Dictionary<string, string>)GetValue(ErrorCodeMapStringProperty); }
-            set { SetValue(ErrorCodeMapStringProperty, value); }
+            get => (Dictionary<string, string>)GetValue(ErrorCodeMapStringProperty);
+            set => SetValue(ErrorCodeMapStringProperty, value);
         }
 
         public ICommand QueryCommand
         {
-            get { return (ICommand)GetValue(QueryCommandProperty); }
-            set { SetValue(QueryCommandProperty, value); }
+            get => (ICommand)GetValue(QueryCommandProperty);
+            set => SetValue(QueryCommandProperty, value);
         }
 
         public ErrorCodeQueryItem()
@@ -77,37 +77,19 @@ namespace PersonalTools.UserControls
             // 首先尝试使用数字类型的错误码字典
             if (ErrorCodeMap != null)
             {
-                if (long.TryParse(input.Trim(), out long errorCode))
-                {
-                    if (ErrorCodeMap.TryGetValue(errorCode, out string? errorMessage))
-                    {
-                        ResultTextBox.Text = $"错误码: {errorCode}\n错误信息: {errorMessage}";
-                    }
-                    else
-                    {
-                        ResultTextBox.Text = $"未找到错误码 {errorCode} 的相关信息";
-                    }
-                }
-                else
-                {
-                    ResultTextBox.Text = "输入的不是有效的数字";
-                }
-            }
-            // 如果没有数字字典，则尝试字符串类型的错误码字典
-            else if (ErrorCodeMapString != null)
-            {
-                if (ErrorCodeMapString.TryGetValue(input, out string? errorMessage))
-                {
-                    ResultTextBox.Text = $"错误码: {input}\n错误信息: {errorMessage}";
-                }
-                else
-                {
-                    ResultTextBox.Text = $"未找到错误码 {input} 的相关信息";
-                }
+                ResultTextBox.Text = long.TryParse(input.Trim(), out long errorCode)
+                    ? ErrorCodeMap.TryGetValue(errorCode, out string? errorMessage)
+                        ? $"错误码: {errorCode}\n错误信息: {errorMessage}"
+                        : $"未找到错误码 {errorCode} 的相关信息"
+                    : "输入的不是有效的数字";
             }
             else
             {
-                ResultTextBox.Text = "错误码字典未设置";
+                ResultTextBox.Text = ErrorCodeMapString != null
+                    ? ErrorCodeMapString.TryGetValue(input, out string? errorMessage)
+                    ? $"错误码: {input}\n错误信息: {errorMessage}"
+                    : $"未找到错误码 {input} 的相关信息"
+                    : "错误码字典未设置";
             }
         }
     }

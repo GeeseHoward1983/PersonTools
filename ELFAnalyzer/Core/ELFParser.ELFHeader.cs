@@ -8,7 +8,7 @@ namespace PersonalTools.ELFAnalyzer.Core
     {
         public static ELFHeader ReadELFHeader(BinaryReader reader, ref bool is64Bit, ref bool isLittleEndian)
         {
-            var header = new ELFHeader
+            ELFHeader header = new()
             {
                 EI_MAG0 = reader.ReadByte(),
                 EI_MAG1 = reader.ReadByte(),

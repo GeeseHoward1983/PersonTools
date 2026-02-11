@@ -1,4 +1,3 @@
-using PersonalTools;
 using System.IO;
 using System.Text;
 using System.Windows;
@@ -96,7 +95,7 @@ namespace PersonalTools.UserControls
             {
 
                 // 检查是否为不可见字符（控制字符，除了常见的空格、制表符、换行符）
-                if (b < 32 && b != 9 && b != 10 && b != 13) // 9=Tab, 10=Line Feed, 13=Carriage Return
+                if (b is < 32 and not 9 and not 10 and not 13) // 9=Tab, 10=Line Feed, 13=Carriage Return
                 {
                     return true;
                 }
@@ -133,10 +132,10 @@ namespace PersonalTools.UserControls
                 byte[] fileBytes;
 
                 // 读取文件内容
-                using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                using (FileStream fileStream = new(filePath, FileMode.Open, FileAccess.Read))
                 {
                     fileBytes = new byte[fileStream.Length];
-                    fileStream.Read(fileBytes, 0, fileBytes.Length);
+                    fileStream.ReadExactly(fileBytes);
                 }
 
                 // 将文件内容显示在输入框中

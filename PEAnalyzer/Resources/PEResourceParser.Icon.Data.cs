@@ -23,7 +23,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     iconData[2] == 0x01 && iconData[3] == 0x00)   // Type (1 = ICO)
                 {
                     // 已经是完整的ICO文件，直接使用
-                    var iconInfo = new IconInfo
+                    IconInfo iconInfo = new()
                     {
                         Width = 0, // 从ICO文件头中提取
                         Height = 0, // 从ICO文件头中提取
@@ -72,11 +72,15 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 // 检查BITMAPINFOHEADER
                 if (dibData.Length < 40)
+                {
                     return;
+                }
 
                 uint biSize = BitConverter.ToUInt32(dibData, 0);
                 if (biSize != 40)
+                {
                     return;
+                }
 
                 // 从BITMAPINFOHEADER中提取宽度和高度
                 int width = BitConverter.ToInt32(dibData, 4);
@@ -89,7 +93,7 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 // 构建完整的ICO文件数据
                 int fullIconDataSize = 6 + 16 + dibData.Length;
-                if (fullIconDataSize > 0 && fullIconDataSize < 10 * 1024 * 1024) // 限制最大10MB
+                if (fullIconDataSize is > 0 and < (10 * 1024 * 1024)) // 限制最大10MB
                 {
                     byte[] fullIconData = new byte[fullIconDataSize];
 
@@ -116,7 +120,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     // 复制图像数据
                     Array.Copy(dibData, 0, fullIconData, 6 + 16, dibData.Length);
 
-                    var iconInfo = new IconInfo
+                    IconInfo iconInfo = new()
                     {
                         Width = width,
                         Height = height,
@@ -144,7 +148,9 @@ namespace PersonalTools.PEAnalyzer.Resources
             try
             {
                 if (data == null || data.Length < 4)
+                {
                     return false;
+                }
 
                 // 检查是否是ICO文件头
                 if (data.Length >= 4 &&

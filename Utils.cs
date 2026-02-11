@@ -45,21 +45,17 @@ namespace PersonalTools
 
         public static string ToHexString(byte[] bytes, int startIndex, int length)
         {
-            return BitConverter.ToString(bytes, startIndex, length).Replace("-", "");
+            return Convert.ToHexString(bytes, startIndex, length);
         }
 
         public static string ToHexString(byte[] bytes)
         {
-            return BitConverter.ToString(bytes).Replace("-", "");
+            return Convert.ToHexString(bytes);
         }
 
         public static string EnumerableToString(string? separator, IEnumerable<string> values)
         {
-            if(values.Any())
-            {
-                return string.Join(separator, values);
-            }
-            return string.Empty;
+            return values.Any() ? string.Join(separator, values) : string.Empty;
         }
     }
 }

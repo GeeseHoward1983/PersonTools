@@ -1,4 +1,3 @@
-using PersonalTools;
 using PersonalTools.Enums;
 
 namespace PersonalTools.ConstString
@@ -213,17 +212,11 @@ namespace PersonalTools.ConstString
         };
 
         // HTTP 状态码
-        public static Dictionary<long, string> HttpStatusMap
+        public static Dictionary<long, string> HttpStatusMap => GlobalState.CurrentLanguageType switch
         {
-            get
-            {
-                return GlobalState.CurrentLanguageType switch
-                {
-                    LanguageType.SimplifiedChinese => HttpStatusMapSimplifiedChinese,
-                    LanguageType.TraditionalChinese => HttpStatusMapTraditionalChinese,
-                    _ => HttpStatusMapEnglish
-                };
-            }
-        }
+            LanguageType.SimplifiedChinese => HttpStatusMapSimplifiedChinese,
+            LanguageType.TraditionalChinese => HttpStatusMapTraditionalChinese,
+            _ => HttpStatusMapEnglish
+        };
     }
 }

@@ -1,19 +1,20 @@
 using PersonalTools.ELFAnalyzer.Core;
 using PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.Enums;
+using System.Globalization;
 using System.Text;
 
 namespace PersonalTools.ELFAnalyzer.UIHelper
 {
     public class ProgrameHeaderHelper
     {
-        public static List<ProgramHeaderInfo> GetProgramHeaderInfoList(ELFParser _parser)
+        public static List<ProgramHeaderInfo> GetProgramHeaderInfoList(ELFParser Parser)
         {
-            var result = new List<ProgramHeaderInfo>();
+            List<ProgramHeaderInfo> result = [];
 
-            if (_parser.ProgramHeaders != null)
+            if (Parser.ProgramHeaders != null)
             {
-                foreach (var ph in _parser.ProgramHeaders)
+                foreach (ELFProgramHeader ph in Parser.ProgramHeaders)
                 {
                     result.Add(new ProgramHeaderInfo
                     {
@@ -32,19 +33,19 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             return result;
         }
 
-        public static string GetSectionToSegmentMappingInfo(ELFParser _parser)
+        public static string GetSectionToSegmentMappingInfo(ELFParser Parser)
         {
-            var sb = new StringBuilder();
+            StringBuilder sb = new();
             sb.AppendLine(" Section to Segment mapping:");
             sb.AppendLine("  段节...");
-            
-            if (_parser.ProgramHeaders != null)
+
+            if (Parser.ProgramHeaders != null)
             {
-                for (int i = 0; i < _parser.ProgramHeaders.Count; i++)
+                for (int i = 0; i < Parser.ProgramHeaders.Count; i++)
                 {
-                    var ph = _parser.ProgramHeaders[i];
-                    sb.Append($"   {i:D2}     ");
-                    var sections = GetSectionsInSegment(_parser, ph);
+                    ELFProgramHeader ph = Parser.ProgramHeaders[i];
+                    sb.Append(CultureInfo.InvariantCulture, $"   {i:D2}     ");
+                    List<string> sections = GetSectionsInSegment(Parser, ph);
                     sb.AppendLine(Utils.EnumerableToString(" ", sections));
                 }
             }
@@ -54,37 +55,39 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
 
         private static List<string> GetSectionsInSegment(ELFParser _parser, ELFProgramHeader ph)
         {
-            var sections = new List<string>();
+            List<string> sections = [];
             if (_parser.SectionHeaders != null)
-            {               
+            {
                 // Calculate the end address of the segment based on memory size
                 ulong segEndAddr = ph.p_vaddr + ph.p_memsz;
-                
+
                 for (int i = 0; i < _parser.SectionHeaders.Count; i++)
                 {
-                    var sh = _parser.SectionHeaders[i];
-                    
+                    Models.ELFSectionHeader sh = _parser.SectionHeaders[i];
+
                     // Skip sections with zero size or invalid addresses
                     if (sh.sh_size == 0 || string.IsNullOrEmpty(SymbleName.GetSectionName(_parser, i)))
+                    {
                         continue;
-                        
+                    }
+
                     // Calculate the end address of the section
                     ulong secEndAddr = sh.sh_addr + sh.sh_size;
-                    
+
                     // Check if section overlaps with segment in virtual memory space
                     // Three cases of overlap:
                     // 1. Section starts within segment: sh.sh_addr >= ph.p_vaddr && sh.sh_addr < segEndAddr
                     // 2. Section ends within segment: secEndAddr > ph.p_vaddr && secEndAddr <= segEndAddr
                     // 3. Section completely contains segment: sh.sh_addr <= ph.p_vaddr && secEndAddr >= segEndAddr
-                    bool overlapsInVirtualMemory = (sh.sh_addr >= ph.p_vaddr && sh.sh_addr < segEndAddr) || 
+                    bool overlapsInVirtualMemory = (sh.sh_addr >= ph.p_vaddr && sh.sh_addr < segEndAddr) ||
                                                   (secEndAddr > ph.p_vaddr && secEndAddr <= segEndAddr) ||
                                                   (sh.sh_addr <= ph.p_vaddr && secEndAddr >= segEndAddr);
-                    
+
                     if (overlapsInVirtualMemory)
                     {
-                        var sectionName = SymbleName.GetSectionName(_parser, i);
+                        string sectionName = SymbleName.GetSectionName(_parser, i);
                         if (!string.IsNullOrEmpty(sectionName))
-                        {                            
+                        {
                             sections.Add(sectionName);
                         }
                     }
@@ -93,25 +96,25 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             return sections;
         }
 
-        public static string GetInterpreterInfo(ELFParser _parser)
+        public static string GetInterpreterInfo(ELFParser Parser)
         {
-            if (_parser.ProgramHeaders != null)
+            if (Parser.ProgramHeaders != null)
             {
                 // Find the PT_INTERP segment in 64-bit headers
-                var interpHeader = _parser.ProgramHeaders.FirstOrDefault(ph => ph.p_type == (uint)ProgramHeaderType.PT_INTERP);
+                ELFProgramHeader interpHeader = Parser.ProgramHeaders.FirstOrDefault(ph => ph.p_type == (uint)ProgramHeaderType.PT_INTERP);
                 if (interpHeader.p_type != 0)
                 {
                     // Read the interpreter string from the file data
-                    var start = (int)interpHeader.p_offset;
-                    var end = start;
-                    while (end < _parser.FileData.Length && _parser.FileData[end] != 0 && (ulong)(end - start) < interpHeader.p_filesz)
+                    int start = (int)interpHeader.p_offset;
+                    int end = start;
+                    while (end < Parser.FileData.Length && Parser.FileData[end] != 0 && (ulong)(end - start) < interpHeader.p_filesz)
                     {
                         end++;
                     }
 
                     if (end > start)
                     {
-                        return Encoding.UTF8.GetString(_parser.FileData, start, end - start);
+                        return Encoding.UTF8.GetString(Parser.FileData, start, end - start);
                     }
                 }
             }

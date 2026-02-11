@@ -306,17 +306,11 @@ namespace PersonalTools.ConstString
         };
 
         // ODBC 错误码
-        public static Dictionary<string, string> OdbcErrorsMap
+        public static Dictionary<string, string> OdbcErrorsMap => GlobalState.CurrentLanguageType switch
         {
-            get
-            {
-                return GlobalState.CurrentLanguageType switch
-                {
-                    LanguageType.SimplifiedChinese => OdbcErrorsMapSimplifiedChinese,
-                    LanguageType.TraditionalChinese => OdbcErrorsMapTraditionalChinese,
-                    _ => OdbcErrorsMapEnglish
-                };
-            }
-        }
+            LanguageType.SimplifiedChinese => OdbcErrorsMapSimplifiedChinese,
+            LanguageType.TraditionalChinese => OdbcErrorsMapTraditionalChinese,
+            _ => OdbcErrorsMapEnglish
+        };
     }
 }

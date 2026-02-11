@@ -40,7 +40,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                         // 读取证书头
                         if (fs.Position + 8 <= fs.Length)
                         {
-                            var certHeader = new WIN_CERTIFICATE
+                            WINCERTIFICATE certHeader = new()
                             {
                                 dwLength = reader.ReadUInt32(),
                                 wRevision = reader.ReadUInt16(),

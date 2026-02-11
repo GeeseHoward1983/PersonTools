@@ -24,14 +24,18 @@ namespace PersonalTools
             {
                 long metaDataOffset = PEResourceParserCore.RvaToOffset(metaDataRVA, peInfo.SectionHeaders);
                 if (metaDataOffset == -1 || metaDataOffset >= fs.Length)
+                {
                     return;
+                }
 
                 long originalPosition = fs.Position;
                 fs.Position = metaDataOffset;
 
                 // 检查是否有足够数据读取元数据头
                 if (fs.Position + 16 > fs.Length)
+                {
                     return;
+                }
 
                 // 读取元数据头
                 uint signature = reader.ReadUInt32();
@@ -42,7 +46,9 @@ namespace PersonalTools
 
                 // 检查签名是否正确 (BSJB = 0x42534A42)
                 if (signature != 0x42534A42)
+                {
                     return;
+                }
 
                 // 读取版本字符串
                 string versionString = PEResourceParserCore.ReadUnicodeStringWithMaxLength(reader, (int)length);
@@ -56,7 +62,9 @@ namespace PersonalTools
 
                 // 读取流数量
                 if (fs.Position + 2 > fs.Length)
+                {
                     return;
+                }
 
                 ushort streams = reader.ReadUInt16();
 
@@ -64,19 +72,23 @@ namespace PersonalTools
                 for (int i = 0; i < streams; i++)
                 {
                     if (fs.Position + 8 > fs.Length)
+                    {
                         break;
+                    }
 
                     uint offset = reader.ReadUInt32();
                     uint size = reader.ReadUInt32();
 
                     // 读取流名称
-                    var nameBuilder = new StringBuilder();
+                    StringBuilder nameBuilder = new();
                     byte b;
                     while ((b = reader.ReadByte()) != 0)
                     {
                         nameBuilder.Append((char)b);
                         if (fs.Position >= fs.Length)
+                        {
                             break;
+                        }
                     }
 
                     // 对齐到4字节边界
@@ -89,7 +101,7 @@ namespace PersonalTools
                     string streamName = nameBuilder.ToString();
 
                     // 如果是导出类型流 (#~ 或 #-)
-                    if (streamName == "#~" || streamName == "#-")
+                    if (streamName is "#~" or "#-")
                     {
                         // 解析元数据表以获取类型信息
                         ParseMetadataTables(fs, reader, peInfo, metaDataOffset + offset, size);
@@ -117,7 +129,9 @@ namespace PersonalTools
             try
             {
                 if (tablesOffset >= fs.Length || tablesOffset + size > fs.Length)
+                {
                     return;
+                }
 
                 long originalPosition = fs.Position;
                 fs.Position = tablesOffset;
@@ -136,11 +150,13 @@ namespace PersonalTools
                 for (int i = 0; i < 64; i++)
                 {
                     if ((maskValid & ((ulong)1 << i)) != 0)
+                    {
                         tableCount++;
+                    }
                 }
 
                 // 读取每个表的行数
-                var rowCounts = new uint[64];
+                uint[] rowCounts = new uint[64];
                 int rowIndex = 0;
                 for (int i = 0; i < 64; i++)
                 {
@@ -197,7 +213,9 @@ namespace PersonalTools
                 for (int i = 0; i < typeDefCount; i++)
                 {
                     if (fs.Position + 14 > fs.Length) // 最小大小检查
+                    {
                         break;
+                    }
 
                     uint flags = reader.ReadUInt32();
                     uint typeNameIndex = reader.ReadUInt32();
@@ -217,7 +235,7 @@ namespace PersonalTools
 
                         string fullName = string.IsNullOrEmpty(namespaceName) ? typeName : $"{namespaceName}.{typeName}";
 
-                        var exportFunc = new ExportFunctionInfo
+                        ExportFunctionInfo exportFunc = new()
                         {
                             Name = fullName,
                             Ordinal = i,

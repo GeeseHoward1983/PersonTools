@@ -24,7 +24,9 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 // 检查是否还有足够的数据
                 if (fs.Position + 6 > fs.Length)
+                {
                     return;
+                }
 
                 ushort wLength = reader.ReadUInt16();
                 ushort wValueLength = reader.ReadUInt16();
@@ -78,7 +80,9 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 // 检查是否还有足够的数据
                 if (fs.Position + 6 > fs.Length)
+                {
                     return;
+                }
 
                 ushort wLength = reader.ReadUInt16();
                 ushort wValueLength = reader.ReadUInt16();
@@ -93,7 +97,9 @@ namespace PersonalTools.PEAnalyzer.Resources
                 long valuePosition = afterVarNamePosition + 3 & ~3; // 对齐到4字节边界
 
                 if (valuePosition >= fs.Length || valuePosition >= endPosition)
+                {
                     return;
+                }
 
                 fs.Position = valuePosition;
 

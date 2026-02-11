@@ -131,19 +131,23 @@ namespace PersonalTools
             try
             {
                 if (heapOffset == -1 || index == 0)
+                {
                     return string.Empty;
+                }
 
                 long originalPosition = fs.Position;
                 fs.Position = heapOffset + index;
 
                 // 读取以null结尾的字符串
-                var sb = new StringBuilder();
+                StringBuilder sb = new();
                 byte b;
                 while ((b = reader.ReadByte()) != 0)
                 {
                     sb.Append((char)b);
                     if (fs.Position >= fs.Length)
+                    {
                         break;
+                    }
                 }
 
                 fs.Position = originalPosition;

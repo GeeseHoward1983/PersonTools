@@ -16,7 +16,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 (ushort)EMachine.EM_MIPS => ELFParserUtils.GetTypeName(typeof(MipsRelocationType), type, "R_MIPS_"),
                 (ushort)EMachine.EM_MIPS_RS3_LE => ELFParserUtils.GetTypeName(typeof(MipsRelocationType), type, "R_MIPS_"), // MIPS RS3000 Little-endian
                 (ushort)EMachine.EM_LOONGARCH => ELFParserUtils.GetTypeName(typeof(LoongArchRelocationType), type, "R_LARCH_"),
-                
+
                 // 新增其他架构支持
                 (ushort)EMachine.EM_68K => ELFParserUtils.GetTypeName(typeof(M68kRelocationType), type, "R_68K_"),
                 (ushort)EMachine.EM_SPARC => ELFParserUtils.GetTypeName(typeof(SPARCRelocationType), type, "R_SPARC_"),
@@ -34,7 +34,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 (ushort)EMachine.EM_ALTERA_NIOS2 => ELFParserUtils.GetTypeName(typeof(Nios2RelocationType), type, "R_NIOS2_"),
                 (ushort)EMachine.EM_TILEPRO => ELFParserUtils.GetTypeName(typeof(TILEProRelocationType), type, "R_TILEPRO_"),
                 (ushort)EMachine.EM_TILEGX => ELFParserUtils.GetTypeName(typeof(TILEGxRelocationType), type, "R_TILEGX_"),
-                
+
                 _ => $"R_UNKNOWN({type})",
             };
         }

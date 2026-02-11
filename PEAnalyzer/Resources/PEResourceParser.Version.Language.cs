@@ -1,5 +1,5 @@
-using PersonalTools;
 using PersonalTools.Enums;
+using System.Globalization;
 
 namespace PersonalTools.PEAnalyzer.Resources
 {
@@ -1213,7 +1213,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 0x780C => languageNames[229],
                 0x7C0A => languageNames[230],
                 0x7C0C => languageNames[231],
-                _ => string.Format(languageNames[232], languageId)
+                _ => string.Format(CultureInfo.InvariantCulture, languageNames[232], languageId)
             };
         }
 
@@ -1306,7 +1306,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 54936 => codePageNames[68],
                 65000 => codePageNames[69],
                 65001 => codePageNames[70],
-                _ => string.Format(codePageNames[71], codePage)
+                _ => string.Format(CultureInfo.InvariantCulture, codePageNames[71], codePage)
             };
         }
     }

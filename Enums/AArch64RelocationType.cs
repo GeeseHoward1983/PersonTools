@@ -7,7 +7,7 @@ namespace PersonalTools.Enums
     {
         // 基本重定位类型
         R_AARCH64_NONE = 0,
-        
+
         // 静态重定位类型
         R_AARCH64_ABS64 = 257,
         R_AARCH64_ABS32 = 258,
@@ -60,7 +60,7 @@ namespace PersonalTools.Enums
         R_AARCH64_ADR_GOT_PAGE = 307,
         R_AARCH64_LD64_GOT_LO12_NC = 308,
         R_AARCH64_LD64_GOTPAGE_LO15 = 309,
-        
+
         // TLS相关重定位类型
         R_AARCH64_TLSGD_ADR_PREL21 = 512,
         R_AARCH64_TLSGD_ADR_PAGE21 = 513,
@@ -124,7 +124,7 @@ namespace PersonalTools.Enums
         R_AARCH64_TLSLE_LDST128_TPREL_LO12_NC = 571,
         R_AARCH64_TLSLD_LDST128_DTPREL_LO12 = 572,
         R_AARCH64_TLSLD_LDST128_DTPREL_LO12_NC = 573,
-        
+
         // 动态重定位类型
         R_AARCH64_COPY = 1024,
         R_AARCH64_GLOB_DAT = 1025,      // S + A

@@ -1,5 +1,3 @@
-using System;
-
 namespace PersonalTools.Enums
 {
     /// <summary>
@@ -11,17 +9,17 @@ namespace PersonalTools.Enums
         /// 不使用硬浮点
         /// </summary>
         Not_Allowed = 0,
-        
+
         /// <summary>
         /// 仅SP（单精度）浮点运算
         /// </summary>
         SP_only = 1,
-        
+
         /// <summary>
         /// SP和DP（双精度）浮点运算
         /// </summary>
         SP_and_DP = 2,
-        
+
         /// <summary>
         /// 已弃用
         /// </summary>

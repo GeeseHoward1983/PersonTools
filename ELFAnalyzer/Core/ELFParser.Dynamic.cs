@@ -21,7 +21,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 
             if (dynamicSectionIndex != -1 && parser.SectionHeaders != null)
             {
-                var dynSection = parser.SectionHeaders[dynamicSectionIndex];
+                Models.ELFSectionHeader dynSection = parser.SectionHeaders[dynamicSectionIndex];
                 reader.BaseStream.Seek((long)dynSection.sh_offset, SeekOrigin.Begin);
 
                 int entryCount = (int)(dynSection.sh_size / dynSection.sh_entsize);
@@ -29,7 +29,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 
                 for (int i = 0; i < entryCount; i++)
                 {
-                    var entry = new ELFDynamic
+                    ELFDynamic entry = new()
                     {
                         d_tag = parser.Is64Bit ? ELFParserUtils.ReadInt64(reader, isLittleEndian) : ELFParserUtils.ReadInt32(reader, isLittleEndian),
                         d_val = parser.Is64Bit ? ELFParserUtils.ReadUInt64(reader, isLittleEndian) : ELFParserUtils.ReadUInt32(reader, isLittleEndian)

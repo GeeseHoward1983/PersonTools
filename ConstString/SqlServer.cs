@@ -198,17 +198,11 @@ namespace PersonalTools.ConstString
         };
 
         // SQL Server 错误码
-        public static Dictionary<long, string> SqlServerErrorsMap
+        public static Dictionary<long, string> SqlServerErrorsMap => GlobalState.CurrentLanguageType switch
         {
-            get
-            {
-                return GlobalState.CurrentLanguageType switch
-                {
-                    LanguageType.SimplifiedChinese => SqlServerErrorsMapSimplifiedChinese,
-                    LanguageType.TraditionalChinese => SqlServerErrorsMapTraditionalChinese,
-                    _ => SqlServerErrorsMapEnglish
-                };
-            }
-        }
+            LanguageType.SimplifiedChinese => SqlServerErrorsMapSimplifiedChinese,
+            LanguageType.TraditionalChinese => SqlServerErrorsMapTraditionalChinese,
+            _ => SqlServerErrorsMapEnglish
+        };
     }
 }

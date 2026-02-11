@@ -1,4 +1,5 @@
 using PersonalTools.Enums;
+using System.Globalization;
 using System.IO;
 using System.Text;
 
@@ -8,20 +9,22 @@ namespace PersonalTools.ELFAnalyzer.Core
     {
         public static string GetFormattedNotesInfo(ELFParser parser)
         {
-            var sb = new StringBuilder();
+            StringBuilder sb = new();
 
-            if(sb.Length == 0) 
-            // 检查节头中的Note节
-            if (parser.SectionHeaders != null)
+            if (sb.Length == 0)
             {
-                for (int i = 0; i < parser.SectionHeaders.Count; i++)
+                // 检查节头中的Note节
+                if (parser.SectionHeaders != null)
                 {
-                    if (parser.SectionHeaders[i].sh_type == (uint)SectionType.SHT_NOTE)
+                    for (int i = 0; i < parser.SectionHeaders.Count; i++)
                     {
-                        var noteInfo = ParseNoteSection(parser, parser.SectionHeaders[i]);
-                        if (!string.IsNullOrEmpty(noteInfo))
+                        if (parser.SectionHeaders[i].sh_type == (uint)SectionType.SHT_NOTE)
                         {
-                            sb.AppendLine(noteInfo);
+                            string noteInfo = ParseNoteSection(parser, parser.SectionHeaders[i]);
+                            if (!string.IsNullOrEmpty(noteInfo))
+                            {
+                                sb.AppendLine(noteInfo);
+                            }
                         }
                     }
                 }
@@ -37,8 +40,8 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private static string GetNoteDescription(ELFParser parser, ulong offset, ulong size)
         {
-            var sb = new StringBuilder();
-            sb.AppendLine($"Displaying notes found at file offset 0x{offset:x8} with length 0x{size:x8}:");
+            StringBuilder sb = new();
+            sb.AppendLine(CultureInfo.InvariantCulture, $"Displaying notes found at file offset 0x{offset:x8} with length 0x{size:x8}:");
             sb.AppendLine("  Owner             Data size            Description");
             ulong endOffset = offset + size;
 
@@ -57,27 +60,39 @@ namespace PersonalTools.ELFAnalyzer.Core
                 // 修复对齐方式 - 确保对齐到4字节边界
                 if (parser.Is64Bit)
                 {
-                    if (descOffset % 8 != 0) descOffset = (descOffset + 7) & ~7UL; // 对齐 (64位)
+                    if (descOffset % 8 != 0)
+                    {
+                        descOffset = (descOffset + 7) & ~7UL; // 对齐 (64位)
+                    }
                 }
                 else
                 {
-                    if (descOffset % 4 != 0) descOffset = (descOffset + 3) & ~3UL; // 对齐
+                    if (descOffset % 4 != 0)
+                    {
+                        descOffset = (descOffset + 3) & ~3UL; // 对齐
+                    }
                 }
                 string noteInfo = ProcessNoteEntry(parser, type, owner, parser.FileData, (int)descOffset, (int)descsz);
                 if (!string.IsNullOrEmpty(noteInfo))
                 {
-                    sb.AppendLine($"  {owner,-18}0x{descsz:x8}           {noteInfo}");
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"  {owner,-18}0x{descsz:x8}           {noteInfo}");
                 }
 
                 // 计算下一个note的偏移
                 ulong nextOffset = descOffset + descsz;
                 if (parser.Is64Bit)
                 {
-                    if (nextOffset % 8 != 0) nextOffset = (nextOffset + 7) & ~7UL; // 对齐 (64位)
+                    if (nextOffset % 8 != 0)
+                    {
+                        nextOffset = (nextOffset + 7) & ~7UL; // 对齐 (64位)
+                    }
                 }
                 else
                 {
-                    if (nextOffset % 4 != 0) nextOffset = (nextOffset + 3) & ~3UL; // 对齐
+                    if (nextOffset % 4 != 0)
+                    {
+                        nextOffset = (nextOffset + 3) & ~3UL; // 对齐
+                    }
                 }
                 offset = nextOffset;
             }

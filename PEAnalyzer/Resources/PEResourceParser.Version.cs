@@ -65,7 +65,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 fs.Position = resourceOffset;
 
                 // 读取根资源目录
-                var rootDirectory = new IMAGE_RESOURCE_DIRECTORY
+                IMAGERESOURCEDIRECTORY rootDirectory = new()
                 {
                     Characteristics = reader.ReadUInt32(),
                     TimeDateStamp = reader.ReadUInt32(),
@@ -82,7 +82,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 {
                     fs.Position = resourceOffset + 16 + i * 8; // 16是IMAGE_RESOURCE_DIRECTORY大小，每项8字节
 
-                    var entry = new IMAGE_RESOURCE_DIRECTORY_ENTRY
+                    IMAGERESOURCEDIRECTORYENTRY entry = new()
                     {
                         NameOrId = reader.ReadUInt32(),
                         OffsetToData = reader.ReadUInt32()
@@ -121,7 +121,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 fs.Position = directoryOffset;
 
                 // 读取资源目录
-                var directory = new IMAGE_RESOURCE_DIRECTORY
+                IMAGERESOURCEDIRECTORY directory = new()
                 {
                     Characteristics = reader.ReadUInt32(),
                     TimeDateStamp = reader.ReadUInt32(),
@@ -137,7 +137,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 {
                     fs.Position = directoryOffset + 16 + i * 8; // 跳过目录头(16字节)，每项8字节
 
-                    var entry = new IMAGE_RESOURCE_DIRECTORY_ENTRY
+                    IMAGERESOURCEDIRECTORYENTRY entry = new()
                     {
                         NameOrId = reader.ReadUInt32(),
                         OffsetToData = reader.ReadUInt32()
@@ -193,7 +193,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 }
 
                 // 读取资源数据项
-                var dataEntry = new IMAGE_RESOURCE_DATA_ENTRY
+                IMAGERESOURCEDATAENTRY dataEntry = new()
                 {
                     OffsetToData = reader.ReadUInt32(),
                     Size = reader.ReadUInt32(),

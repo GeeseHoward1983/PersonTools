@@ -8,7 +8,7 @@ namespace PersonalTools.Enums
     public enum ARMCPUArchProfile : sbyte
     {
         Application = (sbyte)'A',
-        Realtime = (sbyte)'R', 
+        Realtime = (sbyte)'R',
         Microcontroller = (sbyte)'M'
     }
 }

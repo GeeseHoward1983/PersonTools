@@ -8,8 +8,8 @@ namespace PersonalTools.UserControls
 {
     public class SHA3AlgorithmOption(string name, int value)
     {
-        public string Name = name;
-        public int Value = value;
+        public required string Name { get; set; } = name;
+        public required int Value { get; set; } = value;
     }
 
     /// <summary>
@@ -32,9 +32,9 @@ namespace PersonalTools.UserControls
         private void InitializeSHA3AlgorithmComboBox()
         {
             // 添加算法选项到下拉框
-            SHA3AlgorithmComboBox.Items.Add(new SHA3AlgorithmOption("SHA3-256", 256));
-            SHA3AlgorithmComboBox.Items.Add(new SHA3AlgorithmOption("SHA3-384", 384));
-            SHA3AlgorithmComboBox.Items.Add(new SHA3AlgorithmOption("SHA3-512", 512));
+            SHA3AlgorithmComboBox.Items.Add(new SHA3AlgorithmOption(name: "SHA3-256", value: 256) { Name = "SHA3-256", Value = 256 });
+            SHA3AlgorithmComboBox.Items.Add(new SHA3AlgorithmOption(name: "SHA3-384", value: 384) { Name = "SHA3-384", Value = 384 });
+            SHA3AlgorithmComboBox.Items.Add(new SHA3AlgorithmOption(name: "SHA3-512", value: 512) { Name = "SHA3-512", Value = 512 });
 
             // 设置默认选中项
             SHA3AlgorithmComboBox.SelectedIndex = 0; // 默认选择SHA3-256
@@ -390,10 +390,10 @@ namespace PersonalTools.UserControls
                 byte[] fileBytes;
 
                 // 读取文件内容
-                using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                using (FileStream fileStream = new(filePath, FileMode.Open, FileAccess.Read))
                 {
                     fileBytes = new byte[fileStream.Length];
-                    fileStream.Read(fileBytes, 0, fileBytes.Length);
+                    fileStream.ReadExactly(fileBytes);
                 }
 
                 // 计算除SHA3外的所有哈希值

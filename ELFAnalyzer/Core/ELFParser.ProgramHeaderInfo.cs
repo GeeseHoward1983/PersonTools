@@ -13,25 +13,39 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         public static string GetProgramHeaderFlags(uint pFlags)
         {
-            var descriptions = new List<string>();
+            List<string> descriptions = [];
 
-            if ((pFlags & (uint)ProgramHeaderFlags.PF_R) != 0) descriptions.Add("R");
-            if ((pFlags & (uint)ProgramHeaderFlags.PF_W) != 0) descriptions.Add("W");
-            if ((pFlags & (uint)ProgramHeaderFlags.PF_X) != 0) descriptions.Add("E");
+            if ((pFlags & (uint)ProgramHeaderPermissions.PF_R) != 0)
+            {
+                descriptions.Add("R");
+            }
+
+            if ((pFlags & (uint)ProgramHeaderPermissions.PF_W) != 0)
+            {
+                descriptions.Add("W");
+            }
+
+            if ((pFlags & (uint)ProgramHeaderPermissions.PF_X) != 0)
+            {
+                descriptions.Add("E");
+            }
 
             return Utils.EnumerableToString("", descriptions);
         }
 
         public static void ReadProgramHeaders(ELFParser parser, BinaryReader reader, bool isLittleEndian)
         {
-            if (parser.Header.e_phnum == 0) return;
+            if (parser.Header.e_phnum == 0)
+            {
+                return;
+            }
 
             reader.BaseStream.Seek((long)parser.Header.e_phoff, SeekOrigin.Begin);
 
             parser.ProgramHeaders = [];
             for (ushort i = 0; i < parser.Header.e_phnum; i++)
             {
-                var ph = new ELFProgramHeader
+                ELFProgramHeader ph = new()
                 {
                     p_type = ELFParserUtils.ReadUInt32(reader, isLittleEndian)
                 };

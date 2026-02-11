@@ -10,38 +10,38 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             for (int i = 0; i < parser.SectionHeaders?.Count; i++)
             {
-                var section = parser.SectionHeaders[i];
-                if (section.sh_type == (uint)SectionType.SHT_SYMTAB || section.sh_type == (uint)SectionType.SHT_DYNSYM)
+                Models.ELFSectionHeader section = parser.SectionHeaders[i];
+                if (section.sh_type is ((uint)SectionType.SHT_SYMTAB) or ((uint)SectionType.SHT_DYNSYM))
                 {
                     reader.BaseStream.Seek((long)section.sh_offset, SeekOrigin.Begin);
 
                     int symbolCount = (int)(section.sh_size / section.sh_entsize);
-                    var _symbols = new List<ELFSymbol>(symbolCount);
+                    List<ELFSymbol> _symbols = new(symbolCount);
 
                     for (int j = 0; j < symbolCount; j++)
                     {
-                        var symbol = new ELFSymbol
+                        ELFSymbol symbol = new()
                         {
-                            st_name = ELFParserUtils.ReadUInt32(reader, isLittleEndian)
+                            StName = ELFParserUtils.ReadUInt32(reader, isLittleEndian)
                         };
                         if (parser.Is64Bit)
                         {
-                            symbol.st_info = reader.ReadByte();
-                            symbol.st_other = reader.ReadByte();
-                            symbol.st_shndx = ELFParserUtils.ReadUInt16(reader, isLittleEndian);
-                            symbol.st_value = ELFParserUtils.ReadUInt64(reader, isLittleEndian);
-                            symbol.st_size = ELFParserUtils.ReadUInt64(reader, isLittleEndian);
+                            symbol.StInfo = reader.ReadByte();
+                            symbol.StOther = reader.ReadByte();
+                            symbol.StShndx = ELFParserUtils.ReadUInt16(reader, isLittleEndian);
+                            symbol.StValue = ELFParserUtils.ReadUInt64(reader, isLittleEndian);
+                            symbol.StSize = ELFParserUtils.ReadUInt64(reader, isLittleEndian);
                         }
                         else
                         {
 
-                            symbol.st_value = ELFParserUtils.ReadUInt32(reader, isLittleEndian);
-                            symbol.st_size = ELFParserUtils.ReadUInt32(reader, isLittleEndian);
-                            symbol.st_info = reader.ReadByte();
-                            symbol.st_other = reader.ReadByte();
-                            symbol.st_shndx = ELFParserUtils.ReadUInt16(reader, isLittleEndian);
+                            symbol.StValue = ELFParserUtils.ReadUInt32(reader, isLittleEndian);
+                            symbol.StSize = ELFParserUtils.ReadUInt32(reader, isLittleEndian);
+                            symbol.StInfo = reader.ReadByte();
+                            symbol.StOther = reader.ReadByte();
+                            symbol.StShndx = ELFParserUtils.ReadUInt16(reader, isLittleEndian);
                         }
-                        
+
                         _symbols.Add(symbol);
                     }
                     parser.Symbols.Add((SectionType)section.sh_type, _symbols);

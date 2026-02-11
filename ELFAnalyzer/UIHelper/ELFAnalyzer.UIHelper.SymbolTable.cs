@@ -1,41 +1,42 @@
 using PersonalTools.ELFAnalyzer.Core;
-using ELFModels=PersonalTools.ELFAnalyzer.Models;
+using ELFModels = PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.Enums;
+using PersonalTools.ELFAnalyzer.Models;
 
 namespace PersonalTools.ELFAnalyzer.UIHelper
 {
     public class SymbolTableHelper
     {
-        public static List<ELFModels.ELFSymbolTableInfo> GetSymbolTableInfoList(ELFParser _parser, SectionType sectionType)
+        public static List<ELFModels.ELFSymbolTableInfo> GetSymbolTableInfoList(ELFParser Parser, SectionType sectionType)
         {
-            var result = new List<ELFModels.ELFSymbolTableInfo>();
+            List<ELFSymbolTableInfo> result = [];
 
-            if (_parser.Symbols != null && _parser.Symbols.Count > 0)
+            if (Parser.Symbols != null && Parser.Symbols.Count > 0)
             {
-                List<ELFModels.ELFSymbol>? symbols = _parser.Symbols.GetValueOrDefault(sectionType);
+                List<ELFModels.ELFSymbol>? symbols = Parser.Symbols.GetValueOrDefault(sectionType);
                 for (int i = 0; i < symbols?.Count; i++)
                 {
-                    var sym = symbols[i];
-                    if(sym.st_value == 0x4064)
+                    ELFSymbol sym = symbols[i];
+                    if (sym.StValue == 0x4064)
                     {
                         ;
                     }
                     result.Add(new ELFModels.ELFSymbolTableInfo
                     {
                         Number = i,
-                        Value = $"0x{sym.st_value:x12}",
-                        Size = $"{sym.st_size}",
-                        Type = ELFSymbolInfo.GetSymbolType(sym.st_info),
-                        Bind = ELFSymbolInfo.GetSymbolBinding(sym.st_info),
-                        Vis = ELFSymbolInfo.GetSymbolVisibility(sym.st_other),
-                        Ndx = sym.st_shndx switch
-                        { 
+                        Value = $"0x{sym.StValue:x12}",
+                        Size = $"{sym.StSize}",
+                        Type = ELFSymbolInfo.GetSymbolType(sym.StInfo),
+                        Bind = ELFSymbolInfo.GetSymbolBinding(sym.StInfo),
+                        Vis = ELFSymbolInfo.GetSymbolVisibility(sym.StOther),
+                        Ndx = sym.StShndx switch
+                        {
                             0 => "UND",
                             0xFFF1 => "ABS",
                             0xFFF2 => "COM",
-                            _ => $"{sym.st_shndx}"
+                            _ => $"{sym.StShndx}"
                         },
-                        Name = SymbleName.GetSymbolName(_parser, sym, sectionType)
+                        Name = SymbleName.GetSymbolName(Parser, sym, sectionType)
                     });
                 }
             }

@@ -7,24 +7,34 @@ namespace PersonalTools.ELFAnalyzer.Core
     {
         public static string GetSymbolName(ELFParser parser, ELFSymbol symbol, SectionType sectionType)
         {
-            var linkedStrTabIdx32 = parser.LinkedStrTabIdx.GetValueOrDefault(sectionType);
-            if (parser.SectionHeaders == null || linkedStrTabIdx32 >= parser.SectionHeaders.Count) 
+            uint linkedStrTabIdx32 = parser.LinkedStrTabIdx.GetValueOrDefault(sectionType);
+            if (parser.SectionHeaders == null || linkedStrTabIdx32 >= parser.SectionHeaders.Count)
+            {
                 return string.Empty;
-            
-            var strSection = parser.SectionHeaders[(int)linkedStrTabIdx32];
-            if (strSection.sh_type != (uint)SectionType.SHT_STRTAB) 
+            }
+
+            Models.ELFSectionHeader strSection = parser.SectionHeaders[(int)linkedStrTabIdx32];
+            if (strSection.sh_type != (uint)SectionType.SHT_STRTAB)
+            {
                 return string.Empty;
-                
-            var strData = new byte[strSection.sh_size];
+            }
+
+            byte[] strData = new byte[strSection.sh_size];
             Array.Copy(parser.FileData, (int)strSection.sh_offset, strData, 0, (int)strData.Length);
-            
-            int offset = (int)symbol.st_name;
-            if (offset >= strData.Length) return string.Empty;
-            
+
+            int offset = (int)symbol.StName;
+            if (offset >= strData.Length)
+            {
+                return string.Empty;
+            }
+
             string baseName = ELFParserUtils.ExtractStringFromBytes(strData, offset);
-            if(baseName.Length == 0) return string.Empty;
+            if (baseName.Length == 0)
+            {
+                return string.Empty;
+            }
             // 如果符号表是动态符号表(SHT_DYNSYM)，尝试获取版本信息
-            var symbols = parser.Symbols.GetValueOrDefault(sectionType);
+            List<ELFSymbol>? symbols = parser.Symbols.GetValueOrDefault(sectionType);
             if (symbols != null && parser.VersionSymbols != null)
             {
                 int symbolIndex = symbols.IndexOf(symbol);
@@ -44,7 +54,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                     }
                 }
             }
-            
+
             return baseName;
         }
 
@@ -52,16 +62,16 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             // 这里需要根据版本索引查找版本名称
             // 实现简化，实际应用中需要从 .gnu.version_d 或 .gnu.version_n 节中解析
-            if (parser.VersionDefinitions != null && parser.VersionDefinitions.ContainsKey(versionIndex))
+            if (parser.VersionDefinitions != null && parser.VersionDefinitions.TryGetValue(versionIndex, out string? value))
             {
-                return parser.VersionDefinitions[versionIndex];
+                return value;
             }
-            
-            if (parser.VersionDependencies != null && parser.VersionDependencies.ContainsKey(versionIndex))
+
+            if (parser.VersionDependencies != null && parser.VersionDependencies.TryGetValue(versionIndex, out value))
             {
-                return parser.VersionDependencies[versionIndex];
+                return value;
             }
-            
+
             // 通常版本索引2开始代表外部版本，可以尝试从动态段中查找
             // 简化实现：返回版本索引作为名称
             return $"VER_{versionIndex}";
@@ -71,37 +81,38 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             // 简化实现：对于动态符号，根据符号绑定类型判断
             // 全局符号且版本号最低的为默认版本
-            if (parser.Symbols != null && parser.VersionSymbols != null && 
+            if (parser.Symbols != null && parser.VersionSymbols != null &&
                 symbolIndex < parser.VersionSymbols.Length && symbolIndex < parser.Symbols.Count)
             {
-                var symbol = symbols[symbolIndex];
-                var versionIndex = (ushort)(parser.VersionSymbols[symbolIndex] & 0x7fff);
-                
+                ELFSymbol symbol = symbols[symbolIndex];
+                ushort versionIndex = (ushort)(parser.VersionSymbols[symbolIndex] & 0x7fff);
+
                 // 检查是否是全局符号
-                byte binding = (byte)(symbol.st_info >> 4);
-                if (binding == (byte)SymbolBinding.STB_GLOBAL || binding == (byte)SymbolBinding.STB_WEAK)
+                byte binding = (byte)(symbol.StInfo >> 4);
+                if (binding is ((byte)SymbolBinding.STB_GLOBAL) or ((byte)SymbolBinding.STB_WEAK))
                 {
                     // 简化处理：如果符号版本号是某个特定值，则认为是默认版本
                     return versionIndex == 1; // 版本1通常是默认版本
                 }
             }
-            
+
             return false;
         }
 
-        public static string GetSectionName(ELFParser parser,int index)
+        public static string GetSectionName(ELFParser parser, int index)
         {
-            if (parser.SectionHeaders == null || index >= parser.SectionHeaders.Count) return string.Empty;
+            if (parser.SectionHeaders == null || index >= parser.SectionHeaders.Count)
+            {
+                return string.Empty;
+            }
 
-            var strSection = parser.SectionHeaders[parser.Header.e_shstrndx];
-            var strData = new byte[strSection.sh_size];
+            Models.ELFSectionHeader strSection = parser.SectionHeaders[parser.Header.e_shstrndx];
+            byte[] strData = new byte[strSection.sh_size];
             Array.Copy(parser.FileData, (int)strSection.sh_offset, strData, 0, (int)strData.Length);
 
-            var section = parser.SectionHeaders[index];
+            Models.ELFSectionHeader section = parser.SectionHeaders[index];
             int offset = (int)section.sh_name;
-            if (offset >= strData.Length) return string.Empty;
-
-            return ELFParserUtils.ExtractStringFromBytes(strData, offset);
+            return offset >= strData.Length ? string.Empty : ELFParserUtils.ExtractStringFromBytes(strData, offset);
         }
     }
 }

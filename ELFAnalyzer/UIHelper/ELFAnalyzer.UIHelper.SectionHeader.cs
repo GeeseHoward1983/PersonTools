@@ -5,19 +5,19 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
 {
     public class SectionHeaderHelper
     {
-        public static List<ELFSectionHeaderInfo> GetSectionHeaderInfoList(ELFParser _parser)
+        public static List<ELFSectionHeaderInfo> GetSectionHeaderInfoList(ELFParser Parser)
         {
-            var result = new List<ELFSectionHeaderInfo>();
+            List<ELFSectionHeaderInfo> result = [];
 
-            if (_parser.SectionHeaders != null)
+            if (Parser.SectionHeaders != null)
             {
-                for (int i = 0; i < _parser.SectionHeaders.Count; i++)
+                for (int i = 0; i < Parser.SectionHeaders.Count; i++)
                 {
-                    var sh = _parser.SectionHeaders[i];
+                    Models.ELFSectionHeader sh = Parser.SectionHeaders[i];
                     result.Add(new ELFSectionHeaderInfo
                     {
                         Index = i,
-                        Name = SymbleName.GetSectionName(_parser, i),
+                        Name = SymbleName.GetSectionName(Parser, i),
                         Type = Core.ELFSectionHeader.GetSectionType(sh.sh_type),
                         Address = $"0x{sh.sh_addr:x10}",
                         Offset = $"0x{sh.sh_offset:x8}",

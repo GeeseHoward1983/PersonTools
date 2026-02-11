@@ -4,9 +4,9 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
 {
     public class ExidxInfoHelper
     {
-        public static string GetExidxInfo(ELFParser _parser)
+        public static string GetExidxInfo(ELFParser Parser)
         {
-            return ELFExidxInfo.GetFormattedExidxInfo(_parser);
+            return ELFExidxInfo.GetFormattedExidxInfo(Parser);
         }
     }
 }

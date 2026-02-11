@@ -1,4 +1,5 @@
 using Microsoft.Win32;
+using PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.ELFAnalyzer.UIHelper;
 using PersonalTools.Enums;
 using System.Windows;
@@ -20,7 +21,7 @@ namespace PersonalTools.UserControls
 
         private void OpenELFFile_Click(object sender, RoutedEventArgs e)
         {
-            var openFileDialog = new OpenFileDialog
+            OpenFileDialog openFileDialog = new()
             {
                 Filter = "Executable and Linkable Format files (*.elf)|*.elf|All files (*.*)|*.*"
             };
@@ -47,40 +48,40 @@ namespace PersonalTools.UserControls
         {
             try
             {
-                var analyzer = new ELFAnalyzer.ELFAnalyzer(filePath);
+                ELFAnalyzer.ELFAnalyzer analyzer = new(filePath);
 
                 // 更新各控件的信息
-                ELFHeaderInfoControl.SetELFHeaderInfo(ELFHeaderHelper.GetFormattedELFHeaderInfo(analyzer._parser));
-                
-                var interpreter = ProgrameHeaderHelper.GetInterpreterInfo(analyzer._parser);
+                ELFHeaderInfoControl.SetELFHeaderInfo(ELFHeaderHelper.GetFormattedELFHeaderInfo(analyzer.Parser));
+
+                string interpreter = ProgrameHeaderHelper.GetInterpreterInfo(analyzer.Parser);
                 if (!string.IsNullOrEmpty(interpreter))
                 {
                     ELFHeaderInfoControl.SetInterpreterInfo(interpreter);
                 }
 
                 // 显示程序头信息
-                var programHeaders = ProgrameHeaderHelper.GetProgramHeaderInfoList(analyzer._parser);
+                List<ProgramHeaderInfo> programHeaders = ProgrameHeaderHelper.GetProgramHeaderInfoList(analyzer.Parser);
                 ELFProgramHeaderControl.SetProgramHeadersData(programHeaders);
 
                 // 显示节头信息
-                var sectionHeaders = SectionHeaderHelper.GetSectionHeaderInfoList(analyzer._parser);
+                List<ELFSectionHeaderInfo> sectionHeaders = SectionHeaderHelper.GetSectionHeaderInfoList(analyzer.Parser);
                 ELFSectionHeaderControl.SetSectionHeadersData(sectionHeaders);
 
                 // 显示节到段映射信息
-                ELFSectionToSegmentMappingControl.SetSectionToSegmentInfo(ProgrameHeaderHelper.GetSectionToSegmentMappingInfo(analyzer._parser));
+                ELFSectionToSegmentMappingControl.SetSectionToSegmentInfo(ProgrameHeaderHelper.GetSectionToSegmentMappingInfo(analyzer.Parser));
 
                 // 显示符号表信息
-                var symbolTable = SymbolTableHelper.GetSymbolTableInfoList(analyzer._parser, SectionType.SHT_SYMTAB);
+                List<ELFSymbolTableInfo> symbolTable = SymbolTableHelper.GetSymbolTableInfoList(analyzer.Parser, SectionType.SHT_SYMTAB);
                 ELFSymbolTableControl.SetSymbolTableData(symbolTable);
                 ELFSymbolTableTabItem.Visibility = symbolTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
                 // 显示动态符号表信息
-                var dynsymTable = SymbolTableHelper.GetSymbolTableInfoList(analyzer._parser, SectionType.SHT_DYNSYM);
+                List<ELFSymbolTableInfo> dynsymTable = SymbolTableHelper.GetSymbolTableInfoList(analyzer.Parser, SectionType.SHT_DYNSYM);
                 ELFDynsymControl.SetDynsymData(dynsymTable);
                 ELFDynsymTabItem.Visibility = dynsymTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
                 // 显示动态段信息
-                var dynamicSection = DynamicHelper.GetDynamicSectionInfoList(analyzer._parser);
+                List<ELFDynamicSectionInfo> dynamicSection = DynamicHelper.GetDynamicSectionInfoList(analyzer.Parser);
                 ELFDynamicSectionControl.SetDynamicSectionData(dynamicSection);
                 ELFDynamicSectionTabItem.Visibility = dynamicSection.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
@@ -91,30 +92,30 @@ namespace PersonalTools.UserControls
                 ELFVersionDependencyInfoControl.SetVersionDependencyInfo(analyzer.GetFormattedVersionDefinitionInfo() + "\n\n" + analyzer.GetFormattedVersionDependencyInfo());
 
                 // 显示重定位信息
-                var relaDynTable = RelocationHelper.GetRelocationInfoForSpecificSection(analyzer._parser, ".rela.dyn");
-                var relDynTable = RelocationHelper.GetRelocationInfoForSpecificSection(analyzer._parser, ".rel.dyn");
+                List<ELFRelocationInfo> relaDynTable = RelocationHelper.GetRelocationInfoForSpecificSection(analyzer.Parser, ".rela.dyn");
+                List<ELFRelocationInfo> relDynTable = RelocationHelper.GetRelocationInfoForSpecificSection(analyzer.Parser, ".rel.dyn");
                 relaDynTable.AddRange(relDynTable);
                 ELFRelocationControl.SetRelaDynData(relaDynTable);
                 ELFRelaDynTabItem.Visibility = relaDynTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
                 // 显示plt重定位信息
-                var relaPltTable = RelocationHelper.GetRelocationInfoForSpecificSection(analyzer._parser, ".rela.plt");
-                var relPltTable = RelocationHelper.GetRelocationInfoForSpecificSection(analyzer._parser, ".rel.plt");
+                List<ELFRelocationInfo> relaPltTable = RelocationHelper.GetRelocationInfoForSpecificSection(analyzer.Parser, ".rela.plt");
+                List<ELFRelocationInfo> relPltTable = RelocationHelper.GetRelocationInfoForSpecificSection(analyzer.Parser, ".rel.plt");
                 relaPltTable.AddRange(relPltTable);
                 ELFPltRelocationControl.SetRelaPltData(relaPltTable);
                 ELFRelaPltTabItem.Visibility = relaPltTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-                
+
                 // 显示note信息
-                var noteInfo = analyzer.GetFormattedNotesInfo();
+                string noteInfo = analyzer.GetFormattedNotesInfo();
                 ELFNoteInfoControl.SetNoteInfo(noteInfo);
-                
+
                 // 显示属性信息
-                var attributeInfo = AttributesHelper.GetAttributeInfo(analyzer._parser);
+                string attributeInfo = AttributesHelper.GetAttributeInfo(analyzer.Parser);
                 ELFAttributeInfoControl.SetAttributeInfo(attributeInfo);
                 ELFAttributeInfoTabItem.Visibility = attributeInfo.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
-                
+
                 // 显示Exidx信息
-                var exidxInfo = ExidxInfoHelper.GetExidxInfo(analyzer._parser);
+                string exidxInfo = ExidxInfoHelper.GetExidxInfo(analyzer.Parser);
                 ELFExidxInfoControl.SetExidxInfo(exidxInfo);
                 ELFExidxInfoTabItem.Visibility = !exidxInfo.Contains("There are no exception index entries") ? Visibility.Visible : Visibility.Collapsed;
             }

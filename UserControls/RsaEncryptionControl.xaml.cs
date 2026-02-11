@@ -1,5 +1,4 @@
 using Microsoft.Win32;
-using PersonalTools;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -324,9 +323,17 @@ namespace PersonalTools.UserControls
                 // 返回十六进制字符串
                 return Utils.ToHexString(encryptedBytes);
             }
+            catch (ArgumentException ex)
+            {
+                throw new CryptographicException($"导入公钥或加密失败: {ex.Message}", ex);
+            }
+            catch (CryptographicException ex)
+            {
+                throw new CryptographicException($"导入公钥或加密失败: {ex.Message}", ex);
+            }
             catch (Exception ex)
             {
-                throw new Exception($"导入公钥或加密失败: {ex.Message}");
+                throw new CryptographicException($"导入公钥或加密失败: {ex.Message}", ex);
             }
         }
 
@@ -349,9 +356,17 @@ namespace PersonalTools.UserControls
                 // 返回解密后的字符串
                 return Encoding.UTF8.GetString(decryptedBytes);
             }
+            catch (ArgumentException ex)
+            {
+                throw new CryptographicException($"导入私钥或解密失败: {ex.Message}", ex);
+            }
+            catch (CryptographicException ex)
+            {
+                throw new CryptographicException($"导入私钥或解密失败: {ex.Message}", ex);
+            }
             catch (Exception ex)
             {
-                throw new Exception($"导入私钥或解密失败: {ex.Message}");
+                throw new CryptographicException($"导入私钥或解密失败: {ex.Message}", ex);
             }
         }
 
@@ -384,9 +399,17 @@ namespace PersonalTools.UserControls
                 // 返回十六进制字符串
                 return Utils.ToHexString(signatureBytes);
             }
+            catch (ArgumentException ex)
+            {
+                throw new CryptographicException($"导入私钥或签名失败: {ex.Message}", ex);
+            }
+            catch (CryptographicException ex)
+            {
+                throw new CryptographicException($"导入私钥或签名失败: {ex.Message}", ex);
+            }
             catch (Exception ex)
             {
-                throw new Exception($"导入私钥或签名失败: {ex.Message}");
+                throw new CryptographicException($"导入私钥或签名失败: {ex.Message}", ex);
             }
         }
 
@@ -447,10 +470,10 @@ namespace PersonalTools.UserControls
                 byte[] fileBytes;
 
                 // 读取文件内容
-                using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                using (FileStream fileStream = new(filePath, FileMode.Open, FileAccess.Read))
                 {
                     fileBytes = new byte[fileStream.Length];
-                    fileStream.Read(fileBytes, 0, fileBytes.Length);
+                    fileStream.ReadExactly(fileBytes);
                 }
 
                 // 将文件内容显示在输入框中

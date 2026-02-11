@@ -14,9 +14,9 @@ namespace PersonalTools
         /// </summary>
         /// <param name="reader">二进制读取器</param>
         /// <returns>DOS头结构</returns>
-        internal static IMAGE_DOS_HEADER ParseDosHeader(BinaryReader reader)
+        internal static IMAGEDOSHEADER ParseDosHeader(BinaryReader reader)
         {
-            return new IMAGE_DOS_HEADER
+            return new IMAGEDOSHEADER
             {
                 e_magic = reader.ReadUInt16(),
                 e_cblp = reader.ReadUInt16(),
@@ -48,12 +48,12 @@ namespace PersonalTools
         /// </summary>
         /// <param name="reader">二进制读取器</param>
         /// <returns>NT头结构</returns>
-        internal static IMAGE_NT_HEADERS ParseNtHeaders(BinaryReader reader)
+        internal static IMAGENTHEADERS ParseNtHeaders(BinaryReader reader)
         {
-            var ntHeaders = new IMAGE_NT_HEADERS
+            IMAGENTHEADERS ntHeaders = new()
             {
                 Signature = reader.ReadUInt32(),
-                FileHeader = new IMAGE_FILE_HEADER
+                FileHeader = new()
                 {
                     Machine = reader.ReadUInt16(),
                     NumberOfSections = reader.ReadUInt16(),
@@ -74,9 +74,9 @@ namespace PersonalTools
         /// <param name="reader">二进制读取器</param>
         /// <param name="sizeOfOptionalHeader">可选头大小</param>
         /// <returns>可选头结构</returns>
-        internal static IMAGE_OPTIONAL_HEADER ParseOptionalHeader(BinaryReader reader, ushort sizeOfOptionalHeader)
+        internal static IMAGEOPTIONALHEADER ParseOptionalHeader(BinaryReader reader, ushort sizeOfOptionalHeader)
         {
-            var optionalHeader = new IMAGE_OPTIONAL_HEADER
+            IMAGEOPTIONALHEADER optionalHeader = new()
             {
                 // 读取通用部分
                 Magic = reader.ReadUInt16(),
@@ -138,10 +138,10 @@ namespace PersonalTools
 
             // 读取数据目录
             int dataDirCount = (int)Math.Min(optionalHeader.NumberOfRvaAndSizes, 16);
-            optionalHeader.DataDirectory = new IMAGE_DATA_DIRECTORY[dataDirCount];
+            optionalHeader.DataDirectory = new IMAGEDATADIRECTORY[dataDirCount];
             for (int i = 0; i < dataDirCount; i++)
             {
-                optionalHeader.DataDirectory[i] = new IMAGE_DATA_DIRECTORY
+                optionalHeader.DataDirectory[i] = new IMAGEDATADIRECTORY
                 {
                     VirtualAddress = reader.ReadUInt32(),
                     Size = reader.ReadUInt32()
@@ -164,13 +164,13 @@ namespace PersonalTools
         /// <param name="reader">二进制读取器</param>
         /// <param name="numberOfSections">节的数量</param>
         /// <returns>节头列表</returns>
-        internal static List<IMAGE_SECTION_HEADER> ParseSectionHeaders(BinaryReader reader, ushort numberOfSections)
+        internal static List<IMAGESECTIONHEADER> ParseSectionHeaders(BinaryReader reader, ushort numberOfSections)
         {
-            var sections = new List<IMAGE_SECTION_HEADER>();
+            List<IMAGESECTIONHEADER> sections = [];
 
             for (int i = 0; i < numberOfSections; i++)
             {
-                var section = new IMAGE_SECTION_HEADER
+                IMAGESECTIONHEADER section = new()
                 {
                     Name = reader.ReadBytes(8),
                     VirtualSize = reader.ReadUInt32(),

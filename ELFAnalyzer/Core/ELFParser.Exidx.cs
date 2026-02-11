@@ -1,6 +1,7 @@
+using PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.Enums;
+using System.Globalization;
 using System.Text;
-using System.Collections.Generic;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
@@ -8,7 +9,7 @@ namespace PersonalTools.ELFAnalyzer.Core
     {
         public static string GetFormattedExidxInfo(ELFParser parser)
         {
-            var sb = new StringBuilder();
+            StringBuilder sb = new();
 
             if (parser.SectionHeaders != null)
             {
@@ -16,7 +17,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 {
                     if (parser.SectionHeaders[i].sh_type == (uint)SectionType.SHT_ARM_EXIDX)
                     {
-                        var exidxInfo = ParseExidxSection(parser, (Models.ELFSectionHeader)parser.SectionHeaders[i]);
+                        string exidxInfo = ParseExidxSection(parser, (Models.ELFSectionHeader)parser.SectionHeaders[i]);
                         if (!string.IsNullOrEmpty(exidxInfo))
                         {
                             sb.AppendLine(exidxInfo);
@@ -35,39 +36,39 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private static string ParseExidxSection(ELFParser parser, Models.ELFSectionHeader exidxSection)
         {
-            var sb = new StringBuilder();
-           
+            StringBuilder sb = new();
+
             // 读取异常索引表的数据
-            var data = new byte[exidxSection.sh_size];
+            byte[] data = new byte[exidxSection.sh_size];
             Array.Copy(parser.FileData, (long)exidxSection.sh_offset, data, 0, (int)exidxSection.sh_size);
 
             // ARM异常索引表由8字节(2个字)的条目组成
             int entryCount = (int)(exidxSection.sh_size / 8); // 8字节每条目
-            
+
             for (int idx = 0; idx < entryCount; idx++)
             {
                 int offset = idx * 8; // 每个条目占8字节
-                
+
                 // 每个条目包含两个32位值：
                 // 第一个32位：相对于节起始地址的偏移
                 // 第二个32位：展开信息(可能是索引或标记)
                 int addrOffset;
                 int unwindInfo;
-                
+
                 if (!parser.Header.IsLittleEndian())
                 {
-                    Array.Reverse(data, offset, 4);                   
+                    Array.Reverse(data, offset, 4);
                     Array.Reverse(data, offset + 4, 4);
                 }
                 addrOffset = BitConverter.ToInt32(data, offset);
                 unwindInfo = BitConverter.ToInt32(data, offset + 4);
 
                 // 计算绝对地址
-                int absAddr = ((int)exidxSection.sh_addr + (int)(addrOffset * 2) / 2) + offset;
-                
+                int absAddr = (int)exidxSection.sh_addr + addrOffset * 2 / 2 + offset;
+
                 // 获取可能的符号名称
                 string symbolName = FindNearestSymbolName(parser, (ulong)absAddr, false);
-                if(symbolName == "")
+                if (symbolName == "")
                 {
                     symbolName = FindNearestSymbolName(parser, (ulong)absAddr, true);
                 }
@@ -75,16 +76,16 @@ namespace PersonalTools.ELFAnalyzer.Core
                 // 根据展开信息判断是索引还是标记
                 if (unwindInfo == 1) // 特殊值表示无法展开
                 {
-                    sb.AppendLine($"{symbolDesc}: @0x{unwindInfo:x} (cantunwind)");
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"{symbolDesc}: @0x{unwindInfo:x} (cantunwind)");
                 }
                 else if ((unwindInfo & 0x80000000) != 0) // Compact展开表 (bit 31 set)
                 {
-                    sb.AppendLine($"{symbolDesc}: @0x{unwindInfo:x}");
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"{symbolDesc}: @0x{unwindInfo:x}");
                     // Compact model index 是高7位 (bits 30-24)
                     int compactIndex = (unwindInfo >> 24) & 0x7F;
                     int instruction = unwindInfo & 0x00FFFFFF; // 低24位是实际指令
-                    
-                    sb.AppendLine($"  Compact model index: {compactIndex}");
+
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"  Compact model index: {compactIndex}");
                     byte[] bInstruction =
                     [
                         (byte)(instruction >> 16 & 0xFF),
@@ -98,7 +99,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 {
                     // 展开表条目索引 - 指向 .ARM.extab 节的偏移
                     int extabOffset = (int)exidxSection.sh_addr + (int)((unwindInfo + 4) * 2) / 2 + offset;
-                    sb.AppendLine($"{symbolDesc}: @0x{extabOffset:x}");
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"{symbolDesc}: @0x{extabOffset:x}");
                     if (!parser.Header.IsLittleEndian())
                     {
                         Array.Reverse(parser.FileData, extabOffset, 4);
@@ -107,10 +108,11 @@ namespace PersonalTools.ELFAnalyzer.Core
 
                     int compactIndex = (unwindInfo >> 24) & 0x7F;
 
-                    sb.AppendLine($"  Compact model index: {compactIndex}");
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"  Compact model index: {compactIndex}");
                     byte[] bInstruction;
                     if (compactIndex == 1)
-                    {   int remainDWords = (unwindInfo >> 16) & 0xFF;
+                    {
+                        int remainDWords = (unwindInfo >> 16) & 0xFF;
                         bInstruction = new byte[2 + remainDWords * 4];
                         bInstruction[0] = (byte)(unwindInfo >> 8 & 0xFF);
                         bInstruction[1] = (byte)(unwindInfo & 0xFF);
@@ -141,30 +143,33 @@ namespace PersonalTools.ELFAnalyzer.Core
 
             return sb.ToString();
         }
-        
+
         private static string FindNearestSymbolName(ELFParser parser, ulong address, bool containstSize)
         {
-            if (parser.Symbols == null) return string.Empty;
+            if (parser.Symbols == null)
+            {
+                return string.Empty;
+            }
 
             // 遍历符号表，寻找最接近的符号
-            foreach (var symbolList in parser.Symbols)
+            foreach (KeyValuePair<SectionType, List<ELFSymbol>> symbolList in parser.Symbols)
             {
-                foreach (var symbol in symbolList.Value)
+                foreach (ELFSymbol symbol in symbolList.Value)
                 {
-                    ulong pos = symbol.st_value;
-                    if(containstSize)
+                    ulong pos = symbol.StValue;
+                    if (containstSize)
                     {
-                        pos += symbol.st_size;
+                        pos += symbol.StSize;
                     }
                     // 查找地址最接近且不大于目标地址的符号
                     if ((pos == address || pos == address + 1) &&
-                        symbol.st_info != 0 && // 非NULL符号
-                        symbol.st_shndx != 0) // 非未定义符号
+                        symbol.StInfo != 0 && // 非NULL符号
+                        symbol.StShndx != 0) // 非未定义符号
                     {
                         string name = SymbleName.GetSymbolName(parser, symbol, symbolList.Key);
                         if (containstSize && name != "")
                         {
-                            name += $"+0x{symbol.st_size:x}";
+                            name += $"+0x{symbol.StSize:x}";
                         }
 
                         if (!string.IsNullOrEmpty(name))
@@ -195,7 +200,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 // 如果不是有效的单字节指令，尝试作为双字节指令处理
                 if (IsValidSingleByteInstruction(cmd) || offset + 2 > instructionLength)
                 {
-                    sb.Append($"  0x{cmd:x2}");
+                    sb.Append(CultureInfo.InvariantCulture, $"  0x{cmd:x2}");
 
                     // 处理具体的单字节指令
                     ProcessSingleByteInstruction(cmd, sb);
@@ -206,7 +211,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 {
                     // 尝试作为双字节指令处理
                     ushort doubleCmd = (ushort)(instruction[offset] << 8 | instruction[offset + 1]);
-                    sb.Append($"  0x{instruction[offset]:x2} 0x{instruction[offset + 1]:x2}");
+                    sb.Append(CultureInfo.InvariantCulture, $"  0x{instruction[offset]:x2} 0x{instruction[offset + 1]:x2}");
 
                     // 处理双字节指令
                     ProcessDoubleByteInstruction(doubleCmd, sb);
@@ -215,38 +220,51 @@ namespace PersonalTools.ELFAnalyzer.Core
                 }
             }
         }
-        
+
         private static bool IsValidSingleByteInstruction(byte cmd)
         {
             if (cmd == 0x00) // nop
-                return true;          
-            
-            if (cmd <= 0x7F)
+            {
                 return true;
-                
-            // 0x90-0xAF: pop {r4-rN, lr}
-            if (cmd >= 0x90 && cmd <= 0xAF)
-                return true;
-                
-            // 0x80-0xFF: 以1开头的字节通常是单字节指令
-            if (cmd == 0xB0 || (cmd >= 0xB4 && cmd <= 0xBF))
-                return true;
-            if (cmd >= 0xC0 && cmd <= 0xC5)
-                return true;
+            }
 
-            if (cmd >= 0xCA && cmd <= 0xFF)
+            if (cmd <= 0x7F)
+            {
                 return true;
-                                
+            }
+
+            // 0x90-0xAF: pop {r4-rN, lr}
+            if (cmd is >= 0x90 and <= 0xAF)
+            {
+                return true;
+            }
+
+            // 0x80-0xFF: 以1开头的字节通常是单字节指令
+            if (cmd is 0xB0 or (>= 0xB4 and <= 0xBF))
+            {
+                return true;
+            }
+
+            if (cmd is >= 0xC0 and <= 0xC5)
+            {
+                return true;
+            }
+
+            if (cmd is >= 0xCA and <= 0xFF)
+            {
+                return true;
+            }
+
             // 其他情况暂不认定为有效单字节指令
             return false;
         }
 
         private static int CalcVsp(byte cmd)
         {
-                int imm = cmd & 0x3F;
-                return (imm + 1) << 2;
+            int imm = cmd & 0x3F;
+            return (imm + 1) << 2;
         }
-        
+
         private static void ProcessSingleByteInstruction(byte cmd, StringBuilder sb)
         {
             switch (cmd)
@@ -258,39 +276,45 @@ namespace PersonalTools.ELFAnalyzer.Core
                     // vsp = vsp - (imm4 + 1) << 2指令 (0x00-0x3F)
                     if (cmd <= 0x3F)
                     {
-                        sb.AppendLine($"  vsp = vsp + {CalcVsp(cmd)}");
+                        sb.AppendLine(CultureInfo.InvariantCulture, $"  vsp = vsp + {CalcVsp(cmd)}");
                     }
                     // vsp = vsp - (imm4 - 1) << 2指令 (0x40-0x7F)
-                    else if (cmd >= 0x40 && cmd <= 0x7F)
+                    else if (cmd is >= 0x40 and <= 0x7F)
                     {
-                        sb.AppendLine($"  vsp = vsp - {CalcVsp(cmd)}");
+                        sb.AppendLine(CultureInfo.InvariantCulture, $"  vsp = vsp - {CalcVsp(cmd)}");
                     }
-                    else if((cmd & 0x90) == 0x90)
+                    else if ((cmd & 0x90) == 0x90)
                     {
                         int imm = cmd & 0x0F;
-                        if (imm == 0xC || imm == 0xF)
+                        if (imm is 0xC or 0xF)
+                        {
                             sb.AppendLine("  reserved");
+                        }
                         else
-                            sb.AppendLine($"  vsp = r{imm}");
+                        {
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  vsp = r{imm}");
+                        }
                     }
                     // 检查是否是pop {r4-rN, lr}指令 (0xA0-0xAF)
-                    else if (cmd >= 0xA0 && cmd <= 0xAF)
+                    else if (cmd is >= 0xA0 and <= 0xAF)
                     {
-                        var regs = new List<string>();
+                        List<string> regs = [];
                         int regMask = cmd & 0x07;
                         for (int i = 0; i <= regMask; i++)
                         {
                             regs.Add($"r{i + 4}");
                         }
                         if ((cmd & 0x08) == 0x08)
+                        {
                             regs.Add("r14"); // LR register
+                        }
 
                         if (regs.Count > 0)
                         {
-                            sb.AppendLine($"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
                         }
                     }
-                    else if(cmd == 0xB4)
+                    else if (cmd == 0xB4)
                     {
                         sb.AppendLine("  pop");
                     }
@@ -298,13 +322,13 @@ namespace PersonalTools.ELFAnalyzer.Core
                     {
                         sb.AppendLine("  pop vsp");
                     }
-                    else if ((cmd == 0xB6 || cmd == 0xB7) || (cmd >= 0xCA && cmd <= 0xCF) || (cmd >= 0xD8 && cmd <= 0xFF))
+                    else if (cmd is 0xB6 or 0xB7 or (>= 0xCA and <= 0xCF) or (>= 0xD8 and <= 0xFF))
                     {
                         sb.AppendLine("  Spare");
                     }
-                    else if ((cmd >= 0xB8 && cmd <= 0xBF) || (cmd >= 0xD0 || cmd <= 0xD7))
+                    else if (cmd is (>= 0xB8 and <= 0xBF) or (>= 0xD0 and <= 0xD7))
                     {
-                        var regs = new List<string>();
+                        List<string> regs = [];
                         int regMask = cmd & 0x07;
                         for (int i = 0; i <= regMask; i++)
                         {
@@ -312,12 +336,12 @@ namespace PersonalTools.ELFAnalyzer.Core
                         }
                         if (regs.Count > 0)
                         {
-                            sb.AppendLine($"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
                         }
                     }
-                    else if (cmd >= 0xC0 || cmd <= 0xC5)
+                    else if (cmd is >= 0xC0 and <= 0xC5)
                     {
-                        var regs = new List<string>();
+                        List<string> regs = [];
                         int regMask = cmd & 0x07;
                         for (int i = 0; i <= regMask; i++)
                         {
@@ -325,7 +349,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                         }
                         if (regs.Count > 0)
                         {
-                            sb.AppendLine($"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
                         }
                     }
                     else
@@ -335,7 +359,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                     break;
             }
         }
-        
+
         private static void ProcessDoubleByteInstruction(ushort cmd, StringBuilder sb)
         {
             // 检查是否是pop {register_list}指令 (0x8000-0x8FFF)
@@ -343,10 +367,10 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 sb.AppendLine("  Refuse to unwind");
             }
-            else if (cmd >= 0x8001 && cmd <= 0x8FFF)
+            else if (cmd is >= 0x8001 and <= 0x8FFF)
             {
                 int regMask = cmd & 0xFFF;
-                var regs = new List<string>();
+                List<string> regs = [];
 
                 for (int i = 0; i < 12; i++)
                 {
@@ -358,80 +382,86 @@ namespace PersonalTools.ELFAnalyzer.Core
 
                 if (regs.Count > 0)
                 {
-                    sb.AppendLine($"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
                 }
             }
-            else if (cmd == 0xB100 || (cmd >= 0xB110 && cmd <= 0xB1FF) || cmd == 0xC700 || (cmd >= 0xC710 && cmd <= 0xC7FF))
+            else if (cmd is 0xB100 or (>= 0xB110 and <= 0xB1FF) or 0xC700 or (>= 0xC710 and <= 0xC7FF))
             {
                 sb.AppendLine("  Spare");
             }
-            else if (cmd >= 0xB101 && cmd <= 0xB10F)
+            else if (cmd is >= 0xB101 and <= 0xB10F)
             {
-                var regs = new List<string>();
+                List<string> regs = [];
                 int regMask = cmd & 0x0F;
                 for (int i = 0; regMask != 0; i++)
                 {
                     if ((regMask & 1) == 1)
+                    {
                         regs.Add($"r{i}");
+                    }
+
                     regMask >>= 1;
                 }
                 if (regs.Count > 0)
                 {
-                    sb.AppendLine($"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
                 }
             }
-            else if (cmd >= 0xB200 && cmd <= 0xB2FF)
+            else if (cmd is >= 0xB200 and <= 0xB2FF)
             {
                 int uleb128 = cmd & 0xFF;
                 int vsp = 0x204 + (uleb128 << 2);
-                sb.AppendLine($" vsp = vsp + {vsp}");
+                sb.AppendLine(CultureInfo.InvariantCulture, $" vsp = vsp + {vsp}");
             }
-            else if((cmd >= 0xB300 && cmd <= 0xB3FF) || (cmd >= 0xC900 && cmd <= 0xC9FF) || (cmd >= 0xC800 && cmd <= 0xC8FF))
+            else if (cmd is (>= 0xB300 and <= 0xB3FF) or (>= 0xC900 and <= 0xC9FF) or (>= 0xC800 and <= 0xC8FF))
             {
                 int idx = 0;
-                if((cmd >= 0xC800 && cmd <= 0xC8FF))
+                if (cmd is >= 0xC800 and <= 0xC8FF)
                 {
                     idx = 16;
                 }
                 int ssss = (cmd >> 4) & 0x0F;
                 int cccc = cmd & 0x0F;
-                var regs = new List<string>();
+                List<string> regs = [];
                 for (int i = 0; i <= cccc; i++)
                 {
-                        regs.Add($"D{ssss + i + idx}");
+                    regs.Add($"D{ssss + i + idx}");
                 }
                 if (regs.Count > 0)
                 {
-                    sb.AppendLine($"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
                 }
             }
-            else if (cmd >= 0xC600 && cmd <= 0xC6FF)
+            else if (cmd is >= 0xC600 and <= 0xC6FF)
             {
                 int ssss = (cmd >> 4) & 0x0F;
                 int cccc = cmd & 0x0F;
-                var regs = new List<string>();
+                List<string> regs = [];
                 for (int i = 0; i <= ssss + cccc; i++)
                 {
                     regs.Add($"wR{ssss + i}");
                 }
                 if (regs.Count > 0)
                 {
-                    sb.AppendLine($"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
                 }
             }
-            else if (cmd >= 0xC701 && cmd <= 0xC70F)
+            else if (cmd is >= 0xC701 and <= 0xC70F)
             {
-                var regs = new List<string>();
+                List<string> regs = [];
                 int regMask = cmd & 0x0F;
                 for (int i = 0; regMask != 0; i++)
                 {
                     if ((regMask & 1) == 1)
+                    {
                         regs.Add($"wCGR{i}");
+                    }
+
                     regMask >>= 1;
                 }
                 if (regs.Count > 0)
                 {
-                    sb.AppendLine($"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
                 }
             }
             else

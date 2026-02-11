@@ -1,4 +1,5 @@
 using PersonalTools.Enums;
+using System.Globalization;
 using System.Text;
 
 namespace PersonalTools.ELFAnalyzer.Core
@@ -7,15 +8,15 @@ namespace PersonalTools.ELFAnalyzer.Core
     {
         public static string GetFormattedAttributeInfo(ELFParser parser)
         {
-            var sb = new StringBuilder();
+            StringBuilder sb = new();
 
             if (parser.SectionHeaders != null)
             {
                 for (int i = 0; i < parser.SectionHeaders.Count; i++)
                 {
-                    if (parser.SectionHeaders[i].sh_type == (uint)Enums.SectionType.SHT_GNU_ATTRIBUTES || parser.SectionHeaders[i].sh_type == (uint)Enums.SectionType.SHT_ARM_ATTRIBUTES)
+                    if (parser.SectionHeaders[i].sh_type is ((uint)SectionType.SHT_GNU_ATTRIBUTES) or ((uint)SectionType.SHT_ARM_ATTRIBUTES))
                     {
-                        var attrInfo = ParseAttributeSection(parser, parser.SectionHeaders[i]);
+                        string attrInfo = ParseAttributeSection(parser, parser.SectionHeaders[i]);
                         if (!string.IsNullOrEmpty(attrInfo))
                         {
                             sb.AppendLine(attrInfo);
@@ -34,19 +35,19 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private static string ParseAttributeSection(ELFParser parser, Models.ELFSectionHeader section)
         {
-            var sb = new StringBuilder();
-                        
+            StringBuilder sb = new();
+
             // 读取属性段的数据
-            var data = new byte[section.sh_size];
+            byte[] data = new byte[section.sh_size];
             Array.Copy(parser.FileData, (long)section.sh_offset, data, 0, (int)section.sh_size);
-            
+
             int offset = 0;
-            
+
             // 解析属性段格式版本 (固定为'A' = 0x41)
             if (offset < data.Length && data[offset] == 0x41) // 'A'
             {
                 offset++;
-                
+
                 while (offset < data.Length)
                 {
                     // 解析子节长度 (4字节整数)
@@ -56,9 +57,12 @@ namespace PersonalTools.ELFAnalyzer.Core
                     }
                     uint subSectionLength = BitConverter.ToUInt32(data, offset);
                     offset += 4;
-                    
-                    if (offset >= data.Length) break;
-                    
+
+                    if (offset >= data.Length)
+                    {
+                        break;
+                    }
+
                     // 解析供应商名称 (null终止字符串)
                     int vendorNameStart = offset;
                     while (offset < data.Length && data[offset] != 0)
@@ -67,14 +71,17 @@ namespace PersonalTools.ELFAnalyzer.Core
                     }
                     string vendorName = Encoding.UTF8.GetString(data, vendorNameStart, offset - vendorNameStart);
                     offset++; // 跳过null终止符
-                    
-                    sb.AppendLine($"Attribute Section: {vendorName}");
-                    
+
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"Attribute Section: {vendorName}");
+
                     // 继续解析属性内容直到达到子节末尾
                     // subSectionLength 是供应商名称之后的属性数据长度
                     int subSectionEnd = (int)(offset + subSectionLength); // 修正：不再减去4，subSectionLength已经是剩余数据长度
-                    if (subSectionEnd > data.Length) subSectionEnd = data.Length;
-                    
+                    if (subSectionEnd > data.Length)
+                    {
+                        subSectionEnd = data.Length;
+                    }
+
                     if (vendorName == "aeabi")
                     {
                         sb.Append(ParseAEABIAttributes(data, ref offset, subSectionEnd));
@@ -88,9 +95,12 @@ namespace PersonalTools.ELFAnalyzer.Core
                     {
                         ParseGenericAttributes(data, ref offset, subSectionEnd, sb);
                     }
-                    
+
                     // 确保offset不会倒退
-                    if (offset < subSectionEnd) offset = subSectionEnd;
+                    if (offset < subSectionEnd)
+                    {
+                        offset = subSectionEnd;
+                    }
                 }
             }
 
@@ -106,186 +116,188 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 int attrTag = data[offset++];
 
-                if (attrTag < 5) continue; // 标签序列结束
+                if (attrTag < 5)
+                {
+                    continue; // 标签序列结束
+                }
 
                 // 对于AEABI，属性值的长度也在第一个字节中编码
-                if (offset >= data.Length) break;
+                if (offset >= data.Length)
+                {
+                    break;
+                }
 
                 string attrValueStr;
                 switch (attrTag)
                 {
                     case 5: // Tag_CPU_name
                         attrValueStr = ELFParserUtils.ExtractStringFromBytes(data, offset);
-                        sb.AppendLine($"  Tag_CPU_name: \"{attrValueStr}\"");
+                        sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_CPU_name: \"{attrValueStr}\"");
                         offset += attrValueStr.Length;
                         break;
                     case 6: // Tag_CPU_arch
                         {
-                            sb.AppendLine($"  Tag_CPU_arch: {ELFParserUtils.GetTypeName(typeof(ARMCPUArch), data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_CPU_arch: {ELFParserUtils.GetTypeName(typeof(ARMCPUArch), data[offset], "")}");
                             offset++;
                         }
                         break;
                     case 7: // Tag_CPU_arch_profile
                         {
-                            sb.AppendLine($"  Tag_CPU_arch_profile: {ELFParserUtils.GetTypeName(typeof(ARMCPUArchProfile), (sbyte)data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_CPU_arch_profile: {ELFParserUtils.GetTypeName(typeof(ARMCPUArchProfile), (sbyte)data[offset], "")}");
                             offset++;
                         }
                         break;
                     case 8: // Tag_ARM_ISA_use
                         {
-                            sb.AppendLine($"  Tag_ARM_ISA_use: {ELFParserUtils.GetTypeName(typeof(ARMISAUse), data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_ARM_ISA_use: {ELFParserUtils.GetTypeName(typeof(ARMISAUse), data[offset], "")}");
                             offset++;
                         }
                         break;
                     case 9: // Tag_THUMB_ISA_use
                         {
-                            sb.AppendLine($"  Tag_THUMB_ISA_use: {ELFParserUtils.GetTypeName(typeof(THUMBISAUse), data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_THUMB_ISA_use: {ELFParserUtils.GetTypeName(typeof(THUMBISAUse), data[offset], "")}");
                             offset++;
                         }
                         break;
                     case 10: // Tag_FP_arch
                         {
-                            sb.AppendLine($"  Tag_FP_arch: {ELFParserUtils.GetTypeName(typeof(FPArch), data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_FP_arch: {ELFParserUtils.GetTypeName(typeof(FPArch), data[offset], "")}");
                             offset++;
                         }
                         break;
                     case 11: // Tag_WMMX_arch
                         {
-                            sb.AppendLine($"  Tag_WMMX_arch: {ELFParserUtils.GetTypeName(typeof(WMMXArch), data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_WMMX_arch: {ELFParserUtils.GetTypeName(typeof(WMMXArch), data[offset], "")}");
                             offset++;
                         }
                         break;
                     case 12: // Tag_Advanced_SIMD_arch
                         {
-                            sb.AppendLine($"  Tag_Advanced_SIMD_arch: {ELFParserUtils.GetTypeName(typeof(AdvancedSIMDArch), data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_Advanced_SIMD_arch: {ELFParserUtils.GetTypeName(typeof(AdvancedSIMDArch), data[offset], "")}");
                             offset++;
                         }
                         break;
                     case 13: // Tag_PCS_config
                         {
-                            sb.AppendLine($"  Tag_PCS_config: {data[offset]}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_PCS_config: {data[offset]}");
                             offset++;
                         }
                         break;
                     case 14: // Tag_PCS_R9_use
                         {
-                            sb.AppendLine($"  Tag_PCS_R9_use: {data[offset]}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_PCS_R9_use: {data[offset]}");
                             offset++;
                         }
                         break;
                     case 15: // 未定义或保留
                         {
-                            sb.AppendLine($"  Tag_Unknown_15: {data[offset]}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_Unknown_15: {data[offset]}");
                             offset++;
                         }
                         break;
                     case 16: // Tag_Advanced_SIMD_arch (重复定义，可能用于不同目的)
                         {
-                            sb.AppendLine($"  Tag_Advanced_SIMD_arch: {ELFParserUtils.GetTypeName(typeof(AdvancedSIMDArch), data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_Advanced_SIMD_arch: {ELFParserUtils.GetTypeName(typeof(AdvancedSIMDArch), data[offset], "")}");
                             offset++;
                         }
                         break;
                     case 17: // Tag_ABI_PCS_GOT_use
                         {
-                            sb.AppendLine($"  Tag_ABI_PCS_GOT_use: {ELFParserUtils.GetTypeName(typeof(ABIPCSGOTUse), data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_ABI_PCS_GOT_use: {ELFParserUtils.GetTypeName(typeof(ABIPCSGOTUse), data[offset], "")}");
                             offset++;
                         }
                         break;
                     case 18: // Tag_ABI_PCS_wchar_t
                         {
-                            sb.AppendLine($"  Tag_ABI_PCS_wchar_t: {ELFParserUtils.GetTypeName(typeof(ABIPCSWCharT), data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_ABI_PCS_wchar_t: {ELFParserUtils.GetTypeName(typeof(ABIPCSWCharT), data[offset], "")}");
                             offset++;
                         }
                         break;
                     case 19: // Tag_ABI_FP_rounding
                         {
-                            sb.AppendLine($"  Tag_ABI_FP_rounding: {ELFParserUtils.GetTypeName(typeof(ABIFPRounding), data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_ABI_FP_rounding: {ELFParserUtils.GetTypeName(typeof(ABIFPRounding), data[offset], "")}");
                             offset++;
                         }
                         break;
                     case 20: // Tag_ABI_FP_denormal
                         {
-                            sb.AppendLine($"  Tag_ABI_FP_denormal: {ELFParserUtils.GetTypeName(typeof(ABIFPDenormal), data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_ABI_FP_denormal: {ELFParserUtils.GetTypeName(typeof(ABIFPDenormal), data[offset], "")}");
                             offset++;
                         }
                         break;
                     case 21: // Tag_ABI_FP_exceptions
                         {
-                            sb.AppendLine($"  Tag_ABI_FP_exceptions: {ELFParserUtils.GetTypeName(typeof(ABIFPExceptions), data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_ABI_FP_exceptions: {ELFParserUtils.GetTypeName(typeof(ABIFPExceptions), data[offset], "")}");
                             offset++;
                         }
                         break;
                     case 23: // Tag_ABI_FP_number_model
                         {
-                            sb.AppendLine($"  Tag_ABI_FP_number_model: {ELFParserUtils.GetTypeName(typeof(ABIFPNumberModel), data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_ABI_FP_number_model: {ELFParserUtils.GetTypeName(typeof(ABIFPNumberModel), data[offset], "")}");
                             offset++;
                         }
                         break;
                     case 24: // Tag_ABI_align_needed
                         {
-                            sb.AppendLine($"  Tag_ABI_align_needed: {ELFParserUtils.GetTypeName(typeof(ABIAlignNeeded), data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_ABI_align_needed: {ELFParserUtils.GetTypeName(typeof(ABIAlignNeeded), data[offset], "")}");
                             offset++;
                         }
                         break;
                     case 25: // Tag_ABI_align_preserved
                         {
-                            sb.AppendLine($"  Tag_ABI_align_preserved: {ELFParserUtils.GetTypeName(typeof(ABIAlignPreserved), data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_ABI_align_preserved: {ELFParserUtils.GetTypeName(typeof(ABIAlignPreserved), data[offset], "")}");
                             offset++;
                         }
                         break;
                     case 26: // Tag_ABI_enum_size
                         {
-                            sb.AppendLine($"  Tag_ABI_enum_size: {ELFParserUtils.GetTypeName(typeof(ABIEnumSize), data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_ABI_enum_size: {ELFParserUtils.GetTypeName(typeof(ABIEnumSize), data[offset], "")}");
                             offset++;
                         }
                         break;
                     case 27: // Tag_ABI_HardFP_use
                         {
-                            sb.AppendLine($"  Tag_ABI_HardFP_use: {ELFParserUtils.GetTypeName(typeof(ABIFPHardUse), data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_ABI_HardFP_use: {ELFParserUtils.GetTypeName(typeof(ABIFPHardUse), data[offset], "")}");
                             offset++;
                         }
                         break;
                     case 28: // Tag_ABI_VFP_args
                         {
-                            sb.AppendLine($"  Tag_ABI_VFP_args: {ELFParserUtils.GetTypeName(typeof(ABIVFPArguments), data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_ABI_VFP_args: {ELFParserUtils.GetTypeName(typeof(ABIVFPArguments), data[offset], "")}");
                             offset++;
                         }
                         break;
                     case 30: // Tag_ABI_optimization_goals   这里的值有一些问题，与readelf对不上，暂时调整为+1，与readelf输出一致
                         {
-                            sb.AppendLine($"  Tag_ABI_optimization_goals: {ELFParserUtils.GetTypeName(typeof(ABIOptimizationGoals), (byte)(data[offset] + 1), "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_ABI_optimization_goals: {ELFParserUtils.GetTypeName(typeof(ABIOptimizationGoals), (byte)(data[offset] + 1), "")}");
                             offset++;
                         }
                         break;
                     case 34: // Tag_CPU_unaligned_access
                         {
-                            sb.AppendLine($"  Tag_CPU_unaligned_access: {ELFParserUtils.GetTypeName(typeof(CPUUnalignedAccess), data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_CPU_unaligned_access: {ELFParserUtils.GetTypeName(typeof(CPUUnalignedAccess), data[offset], "")}");
                             offset++;
                         }
                         break;
                     case 38: // Tag_ABI_FP_16bit_format
                         {
-                            sb.AppendLine($"  Tag_ABI_FP_16bit_format: {ELFParserUtils.GetTypeName(typeof(ABIFP16BitFormat), data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_ABI_FP_16bit_format: {ELFParserUtils.GetTypeName(typeof(ABIFP16BitFormat), data[offset], "")}");
                             offset++;
                         }
                         break;
                     case 68: // Tag_Virtualization_use
                         {
-                            sb.AppendLine($"  Tag_Virtualization_use: {ELFParserUtils.GetTypeName(typeof(VirtualizationUse), data[offset], "")}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_Virtualization_use: {ELFParserUtils.GetTypeName(typeof(VirtualizationUse), data[offset], "")}");
                             offset++;
                         }
                         break;
                     default:
                         attrValueStr = ELFParserUtils.ExtractStringFromBytes(data, offset);
-                        sb.AppendLine($"  Unknown Tag {attrTag}: \"{attrValueStr}\"");
+                        sb.AppendLine(CultureInfo.InvariantCulture, $"  Unknown Tag {attrTag}: \"{attrValueStr}\"");
                         break;
                 }
             }
-            if (sb.Length > 0)
-            {
-                return "File Attributes:\n" + sb.ToString();
-            }
-            return string.Empty;
+            return sb.Length > 0 ? "File Attributes:\n" + sb.ToString() : string.Empty;
         }
 
         private static void ParseGenericAttributes(byte[] data, ref int offset, int endOffset, StringBuilder sb)
@@ -294,11 +306,17 @@ namespace PersonalTools.ELFAnalyzer.Core
             while (offset < endOffset)
             {
                 int bytesRead = ReadULEB128(data, offset, out int attrTag);
-                if (bytesRead == 0) break;
-                
+                if (bytesRead == 0)
+                {
+                    break;
+                }
+
                 offset += bytesRead;
 
-                if (attrTag == 0) break; // 标签序列结束
+                if (attrTag == 0)
+                {
+                    break; // 标签序列结束
+                }
 
                 // 判断属性值的类型
                 switch (attrTag)
@@ -316,10 +334,10 @@ namespace PersonalTools.ELFAnalyzer.Core
                     case 80: // Tag_MVE_arch
                     case 81: // Tag_MVE_use
                         // 标志类型，没有值，只是标记存在
-                        sb.AppendLine($"  {GetTagName(attrTag)}: Flag");
+                        sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetTagName(attrTag)}: Flag");
                         offset++; // 移动到下一个属性
                         break;
-                    
+
                     // 处理字符串类型的标签
                     case 1: // Tag_Section
                     case 3: // Tag_Symbol
@@ -333,10 +351,10 @@ namespace PersonalTools.ELFAnalyzer.Core
                             offset++;
                         }
                         string stringValue = Encoding.UTF8.GetString(data, stringStart, offset - stringStart);
-                        sb.AppendLine($"  {GetTagName(attrTag)}: \"{stringValue}\"");
+                        sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetTagName(attrTag)}: \"{stringValue}\"");
                         offset++; // 跳过null终止符
                         break;
-                    
+
                     // 处理整数类型的标签
                     case 5: // Tag_CPU_arch
                     case 6: // Tag_CPU_arch_profile
@@ -374,21 +392,24 @@ namespace PersonalTools.ELFAnalyzer.Core
                         if (offset < data.Length)
                         {
                             byte intValue = data[offset];
-                            sb.AppendLine($"  {GetTagName(attrTag)}: {intValue}");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetTagName(attrTag)}: {intValue}");
                             offset++;
                         }
                         else
                         {
-                            sb.AppendLine($"  {GetTagName(attrTag)}: <error reading value>");
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetTagName(attrTag)}: <error reading value>");
                         }
                         break;
-                    
+
                     default:
                         // 尝试读取长度和值（保持向后兼容）
                         int attrValueLen;
                         bytesRead = ReadULEB128(data, offset, out attrValueLen);
-                        if (bytesRead == 0) break;
-                        
+                        if (bytesRead == 0)
+                        {
+                            break;
+                        }
+
                         offset += bytesRead;
 
                         if (offset + attrValueLen > data.Length)
@@ -398,8 +419,8 @@ namespace PersonalTools.ELFAnalyzer.Core
                         }
 
                         string attrValue = Encoding.UTF8.GetString(data, offset, attrValueLen);
-                        
-                        sb.AppendLine($"  {GetTagName(attrTag)}: {attrValue}");
+
+                        sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetTagName(attrTag)}: {attrValue}");
 
                         offset += attrValueLen;
                         break;
@@ -412,12 +433,15 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             // 按照readelf的输出格式，首先添加"File Attributes"标题
             sb.AppendLine("  File Attributes");
-            
+
             while (offset < endOffset)
             {
                 int attrTag = data[offset++];  // 读取一个字节作为标签类型
-                
-                if (attrTag == 0) break; // 标签序列结束
+
+                if (attrTag == 0)
+                {
+                    break; // 标签序列结束
+                }
 
                 // 根据标签类型处理
                 switch (attrTag)
@@ -425,11 +449,15 @@ namespace PersonalTools.ELFAnalyzer.Core
                     case 1: // Tag_File - 这种情况下需要读取长度
                         {
                             int bytesRead = ReadULEB128(data, offset, out _);
-                            if (bytesRead == 0) break;
+                            if (bytesRead == 0)
+                            {
+                                break;
+                            }
+
                             offset += bytesRead;
                         }
                         break;
-                        
+
                     case 3: // Tag_GNU_ABI_TAG
                         if (offset + 4 <= endOffset)  // 需要至少4字节
                         {
@@ -443,17 +471,17 @@ namespace PersonalTools.ELFAnalyzer.Core
                             string osName = osNum switch
                             {
                                 0 => "linux",
-                                1 => "hurd", 
-                                2 => "unix", 
+                                1 => "hurd",
+                                2 => "unix",
                                 3 => "standalone",
                                 _ => $"unknown({osNum})"
                             };
-                            
-                            sb.AppendLine($"    Tag_GNU_ABI_TAG: {osName}");
+
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"    Tag_GNU_ABI_TAG: {osName}");
                             offset += 4; // 跳过4字节数据
                         }
                         break;
-                    
+
                     case 4: // Tag_GNU_MIPS_ABI_FP (MIPS架构)
                         if (offset < endOffset)
                         {
@@ -470,11 +498,11 @@ namespace PersonalTools.ELFAnalyzer.Core
                                 7 => "64位浮点增强",             // Val_GNU_MIPS_ABI_FP_64A
                                 _ => $"未知({fpAbi})"
                             };
-                            
-                            sb.AppendLine($"    Tag_GNU_MIPS_ABI_FP: {fpAbiDesc}");
+
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"    Tag_GNU_MIPS_ABI_FP: {fpAbiDesc}");
                         }
                         break;
-                    
+
                     case 8: // Tag_GNU_MIPS_ABI_MSA (MIPS架构)
                         if (offset < endOffset)
                         {
@@ -485,11 +513,11 @@ namespace PersonalTools.ELFAnalyzer.Core
                                 1 => "MSA 128-bit",       // Val_GNU_MIPS_ABI_MSA_128
                                 _ => $"未知({msaAbi})"
                             };
-                            
-                            sb.AppendLine($"    Tag_GNU_MIPS_ABI_MSA: {msaAbiDesc}");
+
+                            sb.AppendLine(CultureInfo.InvariantCulture, $"    Tag_GNU_MIPS_ABI_MSA: {msaAbiDesc}");
                         }
                         break;
-                        
+
                     default:
                         // 对于未知标签，尝试读取长度并跳过对应数据
                         int unknownValueLen;
