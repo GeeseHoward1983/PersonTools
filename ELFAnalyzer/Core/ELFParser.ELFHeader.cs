@@ -4,7 +4,7 @@ using System.IO;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public partial class ELFHeaderInfo
+    public static class ELFHeaderInfo
     {
         public static ELFHeader ReadELFHeader(BinaryReader reader, ref bool is64Bit, ref bool isLittleEndian)
         {

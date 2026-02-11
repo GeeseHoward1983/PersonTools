@@ -12,7 +12,6 @@ namespace PersonalTools.ELFAnalyzer.Core
 
             if (parser.SectionHeaders != null)
             {
-                Models.ELFSectionHeader? exidxSection = null;
                 for (int i = 0; i < parser.SectionHeaders.Count; i++)
                 {
                     if (parser.SectionHeaders[i].sh_type == (uint)SectionType.SHT_ARM_EXIDX)
