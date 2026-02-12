@@ -248,17 +248,10 @@ namespace PersonalTools
                 if (delayLoadImportOffset != -1 && delayLoadImportOffset < fs.Length)
                 {
                     long delayLoadImportStartOffset = delayLoadImportOffset; // 记录起始位置
-                    int maxDescriptors = 1000; // 设置最大描述符数量，防止死循环
                     int descriptorCount = 0;
 
-                    while (descriptorCount < maxDescriptors)
+                    while (delayLoadImportStartOffset + (descriptorCount + 1) * 32 <= fs.Length)
                     {
-                        // 检查是否还有足够的数据可读取 (IMAGE_DELAYLOAD_DESCRIPTOR 是 32 字节)
-                        if (delayLoadImportStartOffset + (descriptorCount + 1) * 32 > fs.Length)
-                        {
-                            break;
-                        }
-
                         // 定位到当前描述符位置
                         fs.Position = delayLoadImportStartOffset + descriptorCount * 32;
 
@@ -275,12 +268,6 @@ namespace PersonalTools
                         };
 
                         descriptorCount++;
-
-                        // 如果DllNameRVA为0，表示结束
-                        if (delayLoadDesc.DllNameRVA == 0)
-                        {
-                            break;
-                        }
 
                         // 获取DLL名称
                         string dllName = "";
@@ -300,6 +287,10 @@ namespace PersonalTools
                                 }
                             }
                         }
+                        else
+                        {
+                            break; // 如果DLL名称RVA为0，说明没有更多的描述符了
+                        }
 
                         // 如果DLL名称为空，跳过这个延迟加载描述符
                         if (string.IsNullOrEmpty(dllName))
@@ -308,21 +299,17 @@ namespace PersonalTools
                         }
 
                         // 添加到依赖信息列表（如果尚未存在）
-                        bool alreadyExists = false;
                         foreach (DependencyInfo dep in peInfo.Dependencies)
                         {
                             if (dep.Name.Equals(dllName, StringComparison.OrdinalIgnoreCase))
                             {
-                                alreadyExists = true;
                                 break;
                             }
-                        }
-
-                        // 如果不存在，则添加新的依赖项
-                        if (!alreadyExists)
-                        {
-                            DependencyInfo dependency = new() { Name = dllName };
-                            peInfo.Dependencies.Add(dependency);
+                            else
+                            {
+                                DependencyInfo dependency = new() { Name = dllName };
+                                peInfo.Dependencies.Add(dependency);
+                            }
                         }
 
                         // 解析延迟加载导入函数 - 使用ImportNameTableRVA
@@ -333,17 +320,10 @@ namespace PersonalTools
                             {
                                 long nameTableStartPos = nameTableOffset;
                                 fs.Position = nameTableOffset;
-                                int maxThunks = 4096; // 最大 thunk 数量，防止死循环
                                 int thunkCount = 0;
 
-                                while (thunkCount < maxThunks)
+                                while (fs.Position + (peInfo.OptionalHeader.Magic == 0x10b ? 4 : 8) <= fs.Length)
                                 {
-                                    // 检查是否还有足够的数据可读取
-                                    if (fs.Position + (peInfo.OptionalHeader.Magic == 0x10b ? 4 : 8) > fs.Length)
-                                    {
-                                        break;
-                                    }
-
                                     ulong thunkRva = (peInfo.OptionalHeader.Magic == 0x10b) ?
                                         reader.ReadUInt32() : reader.ReadUInt64();
 
