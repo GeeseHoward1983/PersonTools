@@ -6,9 +6,9 @@ using System.Text;
 
 namespace PersonalTools.ELFAnalyzer.UIHelper
 {
-    public class ELFHeaderHelper
+    internal static class ELFHeaderHelper
     {
-        public static string GetFormattedELFHeaderInfo(ELFParser parser)
+        internal static string GetFormattedELFHeaderInfo(ELFParser parser)
         {
             StringBuilder sb = new();
             sb.AppendLine("ELF 头:");
@@ -21,7 +21,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             }})");
             sb.AppendLine(CultureInfo.InvariantCulture, $"  数据:             {HeaderInfo.GetELFDataName(parser.Header)} ({parser.Header.EI_DATA switch
             {
-                (byte)ELFData.ELFDATA2LSB => "2's complement, little endian",
+                (byte)ELFData.LSB => "2's complement, little endian",
                 _ => "2's complement, big endian"
             }})");
             sb.AppendLine(CultureInfo.InvariantCulture, $"  版本:             {HeaderInfo.GetReadableVersion(parser.Header)} ({parser.Header.EI_VERSION})");

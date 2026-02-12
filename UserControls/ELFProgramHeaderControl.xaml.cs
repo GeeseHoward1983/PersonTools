@@ -11,7 +11,7 @@ namespace PersonalTools.UserControls
             InitializeComponent();
         }
 
-        public void SetProgramHeadersData(List<ProgramHeaderInfo> programHeaders)
+        internal void SetProgramHeadersData(List<ProgramHeaderInfo> programHeaders)
         {
             ELFProgramHeaderDataGrid.ItemsSource = programHeaders;
         }

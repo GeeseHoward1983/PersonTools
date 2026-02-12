@@ -9,7 +9,7 @@ namespace PersonalTools
     /// PE文件导入表解析器
     /// 专门负责解析PE文件的导入表信息
     /// </summary>
-    public static partial class PEParser
+    internal static partial class PEParser
     {
         /// <summary>
         /// 解析导入表

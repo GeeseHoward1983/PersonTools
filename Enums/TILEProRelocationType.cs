@@ -4,7 +4,7 @@ namespace PersonalTools.Enums
     /// TILEPro Relocation Types
     /// </summary>
     [Flags]
-    public enum TILEProRelocationType : uint
+    internal enum TILEProRelocationType : uint
     {
         R_TILEPRO_NONE = 0,                    /* No reloc */
         R_TILEPRO_32 = 1,                      /* Direct 32 bit */

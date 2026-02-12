@@ -6,7 +6,7 @@ using PersonalTools.ELFAnalyzer.Models;
 
 namespace PersonalTools.ELFAnalyzer.UIHelper
 {
-    public class DynamicHelper
+    internal static class DynamicHelper
     {
         private static string GetDynamicSectionInfoTableEntryValue(ELFParser _parser, ELFModels.ELFDynamic entry)
         {
@@ -36,7 +36,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             };
         }
 
-        public static List<ELFModels.ELFDynamicSectionInfo> GetDynamicSectionInfoList(ELFParser Parser)
+        internal static List<ELFModels.ELFDynamicSectionInfo> GetDynamicSectionInfoList(ELFParser Parser)
         {
             List<ELFDynamicSectionInfo> result = [];
 
@@ -109,10 +109,15 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                     }
                 }
             }
-            catch
+            catch (ArgumentOutOfRangeException)
             {
-                // If there's an error reading the string, return null
+                // 如果发生索引越界，返回偏移量
             }
+            catch (DecoderFallbackException)
+            {
+                // 如果发生解码错误，返回偏移量
+            }
+            // 移除 catch (Exception)
             return $"0x{offset:x}";
         }
     }

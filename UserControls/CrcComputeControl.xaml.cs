@@ -17,7 +17,7 @@ namespace PersonalTools.UserControls
         }
 
         // CRC算法参数模型
-        public class CRCAlgorithm
+        private sealed class CRCAlgorithm
         {
             public required string Name { get; set; }
             public required string PolynomialFormula { get; set; }
@@ -39,7 +39,7 @@ namespace PersonalTools.UserControls
         }
 
         // CRC算法定义
-        public static readonly List<CRCAlgorithm> CRCAlgorithms =
+        private static readonly List<CRCAlgorithm> CRCAlgorithms =
         [
             new CRCAlgorithm { Name = "CRC-8", PolynomialFormula = "x8 + x2 + x + 1", Width = 8, Polynomial = 0x07, InitialValue = 0x00, FinalXor = 0x00, ReverseInput = false, ReverseOutput = false },
             new CRCAlgorithm { Name = "CRC-8/ITU", PolynomialFormula = "x8 + x2 + x + 1", Width = 8, Polynomial = 0x07, InitialValue = 0x00, FinalXor = 0x55, ReverseInput = false, ReverseOutput = false },
@@ -59,7 +59,7 @@ namespace PersonalTools.UserControls
         ];
 
         // CRC计算器
-        public class CRCCalculator(CRCAlgorithm algorithm)
+        private sealed class CRCCalculator(CRCAlgorithm algorithm)
         {
             private readonly CRCAlgorithm _algorithm = algorithm;
 

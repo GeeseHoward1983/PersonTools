@@ -1,6 +1,6 @@
 namespace PersonalTools.Enums
 {
-    public enum SymbolType : byte
+    internal enum SymbolType : byte
     {
         STT_NOTYPE = 0,         // Symbol type is unspecified
         STT_OBJECT = 1,         // Symbol is a data object

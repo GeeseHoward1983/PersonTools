@@ -9,7 +9,7 @@ namespace PersonalTools
     /// PE文件解析器CLR元数据解析模块
     /// 专门负责解析.NET程序集的元数据信息
     /// </summary>
-    public static partial class PEParserCLR
+    internal static partial class PEParserCLR
     {
         /// <summary>
         /// 解析.NET元数据
@@ -110,9 +110,18 @@ namespace PersonalTools
 
                 fs.Position = originalPosition;
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
-                Console.WriteLine($"元数据解析错误: {ex.Message}");
+                Console.WriteLine($"元数据解析IO错误: {ex.Message}");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine($"元数据解析权限错误: {ex.Message}");
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -178,9 +187,18 @@ namespace PersonalTools
 
                 fs.Position = originalPosition;
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
-                Console.WriteLine($"元数据表解析错误: {ex.Message}");
+                Console.WriteLine($"元数据表解析IO错误: {ex.Message}");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine($"元数据表解析权限错误: {ex.Message}");
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -245,9 +263,18 @@ namespace PersonalTools
                     }
                 }
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
-                Console.WriteLine($"TypeDef表解析错误: {ex.Message}");
+                Console.WriteLine($"TypeDef表解析IO错误: {ex.Message}");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine($"TypeDef表解析权限错误: {ex.Message}");
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
     }

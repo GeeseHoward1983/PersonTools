@@ -3,7 +3,7 @@ using PersonalTools.Enums;
 
 namespace PersonalTools.ConstString
 {
-    public static partial class WindowsStandardErrno
+    internal static partial class WindowsStandardErrno
     {
         // 英文 errno 错误描述
         private static readonly Dictionary<long, string> WindowsStandardErrnoMapEnglish = new()

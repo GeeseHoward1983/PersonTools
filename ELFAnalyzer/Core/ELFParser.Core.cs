@@ -4,7 +4,7 @@ using System.IO;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public class ELFParser
+    internal sealed class ELFParser
     {
         private bool _is64Bit;
 
@@ -59,8 +59,5 @@ namespace PersonalTools.ELFAnalyzer.Core
             // Read version information if present
             VersionSymbleTable.ReadVersionInformation(this);
         }
-
-
-
     }
 }

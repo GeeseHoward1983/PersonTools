@@ -6,7 +6,7 @@ namespace PersonalTools.Enums
     /// M32R Relocation Types
     /// </summary>
     [Flags]
-    public enum M32RRelocationType : uint
+    internal enum M32RRelocationType : uint
     {
         R_M32R_NONE = 0,            /* No reloc. */
         R_M32R_16 = 1,              /* Direct 16 bit. */

@@ -1,9 +1,12 @@
+using System;
+
 namespace PersonalTools.Enums
 {
     /// <summary>
     /// ARM架构的重定位类型枚举
     /// </summary>
-    public enum ARMRelocationType : uint
+    [Flags]
+    internal enum ARMRelocationType : uint
     {
         R_ARM_NONE = 0,               /* No reloc */
         R_ARM_PC24 = 1,               /* Deprecated PC relative 26 bit branch. */

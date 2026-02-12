@@ -4,9 +4,8 @@ using System.Diagnostics.CodeAnalysis;
 namespace PersonalTools.PEAnalyzer.Models
 {
     // DOS头结构
-    [SuppressMessage("Design", "CA1051:DoNotDeclareVisibleInstanceFields", Justification = "Interop struct: fields must be public for correct marshaling.")]
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGEDOSHEADER
+    internal struct IMAGEDOSHEADER
     {
         public ushort e_magic;       // 魔数 "MZ"
         public ushort e_cblp;
@@ -32,9 +31,8 @@ namespace PersonalTools.PEAnalyzer.Models
     }
 
     // NT头签名
-    [SuppressMessage("Design", "CA1051:DoNotDeclareVisibleInstanceFields", Justification = "Interop struct: fields must be public for correct marshaling.")]
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGENTHEADERS
+    internal struct IMAGENTHEADERS
     {
         public uint Signature;
         public IMAGEFILEHEADER FileHeader;
@@ -42,9 +40,8 @@ namespace PersonalTools.PEAnalyzer.Models
     }
 
     // 文件头
-    [SuppressMessage("Design", "CA1051:DoNotDeclareVisibleInstanceFields", Justification = "Interop struct: fields must be public for correct marshaling.")]
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGEFILEHEADER
+    internal struct IMAGEFILEHEADER
     {
         public ushort Machine;
         public ushort NumberOfSections;
@@ -56,7 +53,7 @@ namespace PersonalTools.PEAnalyzer.Models
     }
 
     // 统一的可选头结构
-    public struct IMAGEOPTIONALHEADER
+    internal struct IMAGEOPTIONALHEADER
     {
         public ushort Magic { get; set; }
         public byte MajorLinkerVersion { get; set; }
@@ -93,7 +90,7 @@ namespace PersonalTools.PEAnalyzer.Models
 
     // 数据目录项
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGEDATADIRECTORY
+    internal struct IMAGEDATADIRECTORY
     {
         public uint VirtualAddress;
         public uint Size;
@@ -101,7 +98,7 @@ namespace PersonalTools.PEAnalyzer.Models
 
     // 节头
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGESECTIONHEADER
+    internal struct IMAGESECTIONHEADER
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
         public byte[] Name;
@@ -118,7 +115,7 @@ namespace PersonalTools.PEAnalyzer.Models
 
     // 导入描述符
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGEIMPORTDESCRIPTOR
+    internal struct IMAGEIMPORTDESCRIPTOR
     {
         public uint OriginalFirstThunk;
         public uint TimeDateStamp;
@@ -128,9 +125,8 @@ namespace PersonalTools.PEAnalyzer.Models
     }
 
     // 导出目录
-    [SuppressMessage("Design", "CA1051:DoNotDeclareVisibleInstanceFields", Justification = "Interop struct: fields must be public for correct marshaling.")]
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGEEXPORTDIRECTORY
+    internal struct IMAGEEXPORTDIRECTORY
     {
         public uint Characteristics;
         public uint TimeDateStamp;
@@ -147,7 +143,7 @@ namespace PersonalTools.PEAnalyzer.Models
 
     // 延迟加载导入描述符
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGEDELAYLOADDESCRIPTOR
+    internal struct IMAGEDELAYLOADDESCRIPTOR
     {
         public uint Attributes;          // 可能包含标志位
         public uint DllNameRVA;         // 指向DLL名称的RVA
@@ -161,7 +157,7 @@ namespace PersonalTools.PEAnalyzer.Models
 
     // 版权信息头
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGEARCHITECTUREHEADER
+    internal struct IMAGEARCHITECTUREHEADER
     {
         public uint AmaskValue;
         public uint Reserved1;  // 以前称为 Adummy1
@@ -174,7 +170,7 @@ namespace PersonalTools.PEAnalyzer.Models
 
     // 证书结构
     [StructLayout(LayoutKind.Sequential)]
-    public struct WINCERTIFICATE
+    internal struct WINCERTIFICATE
     {
         public uint dwLength;
         public ushort wRevision;
@@ -183,9 +179,8 @@ namespace PersonalTools.PEAnalyzer.Models
     }
 
     // 版本信息结构
-    [SuppressMessage("Design", "CA1051:DoNotDeclareVisibleInstanceFields", Justification = "Interop struct: fields must be public for correct marshaling.")]
     [StructLayout(LayoutKind.Sequential)]
-    public struct VSFIXEDFILEINFO
+    internal struct VSFIXEDFILEINFO
     {
         public uint dwSignature;
         public uint dwStrucVersion;
@@ -204,7 +199,7 @@ namespace PersonalTools.PEAnalyzer.Models
 
     // 资源目录项
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGERESOURCEDIRECTORYENTRY
+    internal struct IMAGERESOURCEDIRECTORYENTRY
     {
         public uint NameOrId;
         public uint OffsetToData;
@@ -212,7 +207,7 @@ namespace PersonalTools.PEAnalyzer.Models
 
     // 资源目录
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGERESOURCEDIRECTORY
+    internal struct IMAGERESOURCEDIRECTORY
     {
         public uint Characteristics;
         public uint TimeDateStamp;
@@ -224,7 +219,7 @@ namespace PersonalTools.PEAnalyzer.Models
 
     // 资源数据条目
     [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGERESOURCEDATAENTRY
+    internal struct IMAGERESOURCEDATAENTRY
     {
         public uint OffsetToData;
         public uint Size;

@@ -4,9 +4,9 @@ using System.IO;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public class Dynamic
+    internal static class Dynamic
     {
-        public static void ReadDynamicEntries(ELFParser parser, BinaryReader reader, bool isLittleEndian)
+        internal static void ReadDynamicEntries(ELFParser parser, BinaryReader reader, bool isLittleEndian)
         {
             // Find the dynamic section
             int dynamicSectionIndex = -1;

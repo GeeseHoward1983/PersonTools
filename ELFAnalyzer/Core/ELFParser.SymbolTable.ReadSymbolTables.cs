@@ -4,9 +4,9 @@ using System.IO;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public class SymbleTable
+    internal static class SymbleTable
     {
-        public static void ReadSymbolTables(ELFParser parser, BinaryReader reader, bool isLittleEndian)
+        internal static void ReadSymbolTables(ELFParser parser, BinaryReader reader, bool isLittleEndian)
         {
             for (int i = 0; i < parser.SectionHeaders?.Count; i++)
             {

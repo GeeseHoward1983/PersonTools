@@ -1,6 +1,6 @@
 namespace PersonalTools.ConstString
 {
-    public static partial class WindowsSystemErrors
+    internal static partial class WindowsSystemErrors
     {
         // Windows 系统错误码 (基于winerror.h) - 简体中文
         public static readonly Dictionary<long, string> WindowsSystemErrorsMapSimplifiedChinese = new()

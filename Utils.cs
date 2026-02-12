@@ -1,6 +1,6 @@
 namespace PersonalTools
 {
-    public static class Utils
+    internal static class Utils
     {
         /// <summary>
         /// 将Hex字符串转换为字节数组
@@ -9,8 +9,9 @@ namespace PersonalTools
         /// <returns>字节数组</returns>
         public static byte[] HexStringToByteArray(string hex)
         {
+            ArgumentNullException.ThrowIfNull(hex, nameof(hex));
             // 移除可能的空格和0x前缀
-            hex = hex.Replace(" ", "").Replace("0x", "");
+            hex = hex.Replace(" ", "", StringComparison.CurrentCulture).Replace("0x", "", StringComparison.CurrentCulture);
 
             if (hex.Length % 2 != 0)
             {

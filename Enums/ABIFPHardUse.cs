@@ -3,7 +3,7 @@ namespace PersonalTools.Enums
     /// <summary>
     /// ABI硬浮点使用要求枚举，用于Tag_ABI_HardFP_use标签
     /// </summary>
-    public enum ABIFPHardUse : byte
+    internal enum ABIFPHardUse : byte
     {
         /// <summary>
         /// 不使用硬浮点

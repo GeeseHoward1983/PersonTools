@@ -1,9 +1,9 @@
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public partial class VersionSymbleTable
+    internal static partial class VersionSymbleTable
     {
         // 解析版本信息
-        public static void ReadVersionInformation(ELFParser parser)
+        internal static void ReadVersionInformation(ELFParser parser)
         {
             // 初始化版本定义和依赖字典
             parser.VersionDefinitions = [];

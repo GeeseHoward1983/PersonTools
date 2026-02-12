@@ -2,9 +2,9 @@ using PersonalTools.ELFAnalyzer.Core;
 
 namespace PersonalTools.ELFAnalyzer.UIHelper
 {
-    public class ExidxInfoHelper
+    internal static class ExidxInfoHelper
     {
-        public static string GetExidxInfo(ELFParser Parser)
+        internal static string GetExidxInfo(ELFParser Parser)
         {
             return ELFExidxInfo.GetFormattedExidxInfo(Parser);
         }

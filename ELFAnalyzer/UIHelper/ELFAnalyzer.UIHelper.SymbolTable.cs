@@ -5,9 +5,9 @@ using PersonalTools.ELFAnalyzer.Models;
 
 namespace PersonalTools.ELFAnalyzer.UIHelper
 {
-    public class SymbolTableHelper
+    internal static class SymbolTableHelper
     {
-        public static List<ELFModels.ELFSymbolTableInfo> GetSymbolTableInfoList(ELFParser Parser, SectionType sectionType)
+        internal static List<ELFModels.ELFSymbolTableInfo> GetSymbolTableInfoList(ELFParser Parser, SectionType sectionType)
         {
             List<ELFSymbolTableInfo> result = [];
 

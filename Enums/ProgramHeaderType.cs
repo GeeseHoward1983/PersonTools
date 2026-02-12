@@ -1,6 +1,6 @@
 namespace PersonalTools.Enums
 {
-    public enum ProgramHeaderType : uint
+    internal enum ProgramHeaderType : uint
     {
         PT_NULL = 0,           // Unused program header table entry
         PT_LOAD = 1,           // Loadable program segment

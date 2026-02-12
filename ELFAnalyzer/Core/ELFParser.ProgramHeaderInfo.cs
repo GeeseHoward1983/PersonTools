@@ -4,7 +4,7 @@ using System.IO;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public class ELFProgramHeaderInfo
+    internal static class ELFProgramHeaderInfo
     {
         public static string GetProgramHeaderType(uint pType)
         {
@@ -33,7 +33,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             return Utils.EnumerableToString("", descriptions);
         }
 
-        public static void ReadProgramHeaders(ELFParser parser, BinaryReader reader, bool isLittleEndian)
+        internal static void ReadProgramHeaders(ELFParser parser, BinaryReader reader, bool isLittleEndian)
         {
             if (parser.Header.e_phnum == 0)
             {

@@ -6,7 +6,7 @@ namespace PersonalTools.Enums
     /// Nios2 Relocation Types
     /// </summary>
     [Flags]
-    public enum Nios2RelocationType : uint
+    internal enum Nios2RelocationType : uint
     {
         R_NIOS2_NONE = 0,            /* No reloc. */
         R_NIOS2_S16 = 1,             /* Direct signed 16 bit. */

@@ -3,7 +3,7 @@ namespace PersonalTools.Enums
     /// <summary>
     /// LoongArch架构的重定位类型枚举
     /// </summary>
-    public enum LoongArchRelocationType : uint
+    internal enum LoongArchRelocationType : uint
     {
         R_LARCH_NONE = 0,
         R_LARCH_32 = 1,

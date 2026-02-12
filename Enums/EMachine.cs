@@ -1,6 +1,6 @@
 namespace PersonalTools.Enums
 {
-    public enum EMachine : ushort
+    internal enum EMachine : ushort
     {
         EM_NONE = 0,      // No machine
         EM_M32 = 1,       // AT&T WE 32100

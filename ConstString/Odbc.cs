@@ -3,7 +3,7 @@ using PersonalTools.Enums;
 
 namespace PersonalTools.ConstString
 {
-    public static partial class OdbcErrors
+    internal static partial class OdbcErrors
     {
         // ODBC 错误码 - 英文
         private static readonly Dictionary<string, string> OdbcErrorsMapEnglish = new()

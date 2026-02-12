@@ -3,7 +3,7 @@ using System.Text;
 
 namespace PersonalTools
 {
-    public class SHA3(int variant) : IDisposable
+    internal sealed class SHA3(int variant) : IDisposable
     {
         private readonly int _outputLengthBits = variant;
 

@@ -3,7 +3,7 @@ namespace PersonalTools.Enums
     /// <summary>
     /// AArch64架构的重定位类型枚举
     /// </summary>
-    public enum AArch64RelocationType : uint
+    internal enum AArch64RelocationType : uint
     {
         // 基本重定位类型
         R_AARCH64_NONE = 0,

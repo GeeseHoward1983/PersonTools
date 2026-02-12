@@ -12,7 +12,7 @@ namespace PersonalTools.UserControls
             InitializeComponent();
         }
 
-        public void SetRelaPltData(List<ELFRelocationInfo> relaPltTable)
+        internal void SetRelaPltData(List<ELFRelocationInfo> relaPltTable)
         {
             ELFRelaPltDataGrid.ItemsSource = relaPltTable;
         }

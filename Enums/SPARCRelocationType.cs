@@ -6,7 +6,7 @@ namespace PersonalTools.Enums
     /// SPARC Relocation Types
     /// </summary>
     [Flags]
-    public enum SPARCRelocationType : uint
+    internal enum SPARCRelocationType : uint
     {
         R_SPARC_NONE = 0,        /* No reloc */
         R_SPARC_8 = 1,           /* Direct 8 bit */

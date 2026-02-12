@@ -5,9 +5,9 @@ using System.Globalization;
 
 namespace PersonalTools.ELFAnalyzer.UIHelper
 {
-    public class RelocationHelper
+    internal static class RelocationHelper
     {
-        public static List<ELFRelocationInfo> GetRelocationInfoForSpecificSection(ELFParser Parser, string sectionName)
+        internal static List<ELFRelocationInfo> GetRelocationInfoForSpecificSection(ELFParser Parser, string sectionName)
         {
             List<ELFRelocationInfo> result = [];
 
@@ -105,7 +105,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
 
                             if (!Parser.Is64Bit)
                             {
-                                if (sectionName.Contains("rela"))
+                                if (sectionName.Contains("rela", StringComparison.CurrentCulture))
                                 {
                                     if (!Parser.Header.IsLittleEndian()) // 如果不是小端序
                                     {
@@ -146,7 +146,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                             }
                             else
                             {
-                                if (sectionName.Contains("rela"))
+                                if (sectionName.Contains("rela", StringComparison.CurrentCulture))
                                 {
                                     if (!Parser.Header.IsLittleEndian()) // 如果不是小端序
                                     {
@@ -196,7 +196,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                                 Type = typeName ?? "",
                                 SymbolValue = symbolValue.PadLeft(16),
                                 Symbol = symbolName,
-                                Addend = sectionName.Contains("rela") ? addend.ToString(CultureInfo.InvariantCulture) : "",
+                                Addend = sectionName.Contains("rela", StringComparison.CurrentCulture) ? addend.ToString(CultureInfo.InvariantCulture) : "",
                                 SectionName = actualSectionName
                             });
                         }

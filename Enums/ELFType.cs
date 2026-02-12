@@ -1,6 +1,6 @@
 namespace PersonalTools.Enums
 {
-    public enum ELFType : ushort
+    internal enum ELFType : ushort
     {
         ET_NONE = 0,      // No file type
         ET_REL = 1,       // Relocatable file

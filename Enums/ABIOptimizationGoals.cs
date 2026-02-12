@@ -5,7 +5,7 @@ namespace PersonalTools.Enums
     /// <summary>
     /// ABI优化目标枚举
     /// </summary>
-    public enum ABIOptimizationGoals : byte
+    internal enum ABIOptimizationGoals : byte
     {
         None = 0,
         Aggressive_Debug = 1,

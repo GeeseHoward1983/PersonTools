@@ -3,7 +3,7 @@ using System.IO;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public static class ELFSectionHeader
+    internal static class ELFSectionHeader
     {
         public static string GetSectionType(uint shType)
         {
@@ -14,57 +14,57 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             string sectionFlags = "";
 
-            if ((shFlags & (ulong)SectionFlags.SHF_WRITE) != 0)
+            if ((shFlags & (ulong)SectionAttributes.SHF_WRITE) != 0)
             {
                 sectionFlags += "W";
             }
 
-            if ((shFlags & (ulong)SectionFlags.SHF_ALLOC) != 0)
+            if ((shFlags & (ulong)SectionAttributes.SHF_ALLOC) != 0)
             {
                 sectionFlags += "A";
             }
 
-            if ((shFlags & (ulong)SectionFlags.SHF_EXECINSTR) != 0)
+            if ((shFlags & (ulong)SectionAttributes.SHF_EXECINSTR) != 0)
             {
                 sectionFlags += "X";
             }
 
-            if ((shFlags & (ulong)SectionFlags.SHF_MERGE) != 0)
+            if ((shFlags & (ulong)SectionAttributes.SHF_MERGE) != 0)
             {
                 sectionFlags += "M";
             }
 
-            if ((shFlags & (ulong)SectionFlags.SHF_STRINGS) != 0)
+            if ((shFlags & (ulong)SectionAttributes.SHF_STRINGS) != 0)
             {
                 sectionFlags += "S";
             }
 
-            if ((shFlags & (ulong)SectionFlags.SHF_INFO_LINK) != 0)
+            if ((shFlags & (ulong)SectionAttributes.SHF_INFO_LINK) != 0)
             {
                 sectionFlags += "I";
             }
 
-            if ((shFlags & (ulong)SectionFlags.SHF_LINK_ORDER) != 0)
+            if ((shFlags & (ulong)SectionAttributes.SHF_LINK_ORDER) != 0)
             {
                 sectionFlags += "L";
             }
 
-            if ((shFlags & (ulong)SectionFlags.SHF_OS_NONCONFORMING) != 0)
+            if ((shFlags & (ulong)SectionAttributes.SHF_OS_NONCONFORMING) != 0)
             {
                 sectionFlags += "O";
             }
 
-            if ((shFlags & (ulong)SectionFlags.SHF_GROUP) != 0)
+            if ((shFlags & (ulong)SectionAttributes.SHF_GROUP) != 0)
             {
                 sectionFlags += "G";
             }
 
-            if ((shFlags & (ulong)SectionFlags.SHF_TLS) != 0)
+            if ((shFlags & (ulong)SectionAttributes.SHF_TLS) != 0)
             {
                 sectionFlags += "T";
             }
 
-            if ((shFlags & (ulong)SectionFlags.SHF_COMPRESSED) != 0)
+            if ((shFlags & (ulong)SectionAttributes.SHF_COMPRESSED) != 0)
             {
                 sectionFlags += "C";
             }
@@ -72,7 +72,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             return sectionFlags;
         }
 
-        public static void ReadSectionHeaders(ELFParser parser, BinaryReader reader, bool isLittleEndian)
+        internal static void ReadSectionHeaders(ELFParser parser, BinaryReader reader, bool isLittleEndian)
         {
             if (parser.Header.e_shnum == 0)
             {

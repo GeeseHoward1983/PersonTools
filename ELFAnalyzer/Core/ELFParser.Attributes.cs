@@ -4,7 +4,7 @@ using System.Text;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public class ELFAttributeInfo
+    internal static class ELFAttributeInfo
     {
         public static string GetFormattedAttributeInfo(ELFParser parser)
         {
@@ -86,7 +86,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                     {
                         sb.Append(ParseAEABIAttributes(data, ref offset, subSectionEnd));
                     }
-                    else if (vendorName.Contains("gnu") && parser.Header.e_machine == (ushort)EMachine.EM_MIPS)
+                    else if (vendorName.Contains("gnu", StringComparison.CurrentCulture) && parser.Header.e_machine == (ushort)EMachine.EM_MIPS)
                     {
                         // 专门处理GNU属性
                         ParseMipsGNUAttributes(parser, data, ref offset, subSectionEnd, sb);

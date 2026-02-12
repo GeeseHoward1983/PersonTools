@@ -5,7 +5,7 @@ namespace PersonalTools.Enums
     /// <summary>
     /// 浮点架构枚举
     /// </summary>
-    public enum FPArch : byte
+    internal enum FPArch : byte
     {
         No = 0,
         VFPv1 = 1,

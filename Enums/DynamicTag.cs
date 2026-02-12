@@ -1,6 +1,6 @@
 namespace PersonalTools.Enums
 {
-    public enum DynamicTag : ulong
+    internal enum DynamicTag : ulong
     {
         DT_NULL = 0,                    // Marks end of dynamic section
         DT_NEEDED = 1UL,                  // Name of needed library

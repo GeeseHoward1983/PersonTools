@@ -1,7 +1,7 @@
 namespace PersonalTools.Enums
 {
     [Flags]
-    public enum DynamicOptions : uint
+    internal enum DynamicOptions : uint
     {
         DF_ORIGIN = 0x00000001,         // Object may use DF_ORIGIN
         DF_SYMBOLIC = 0x00000002,       // Symbol resolutions starts here

@@ -3,7 +3,7 @@ using System.Text;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public partial class VersionSymbleTable
+    internal static partial class VersionSymbleTable
     {
         private static Models.ELFSectionHeader? GetSection(ELFParser parser, string objSectionName)
         {
@@ -20,7 +20,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             return null;
 
         }
-        public static string GetFormattedVersionSymbolInfo(ELFParser parser)
+        internal static string GetFormattedVersionSymbolInfo(ELFParser parser)
         {
             StringBuilder sb = new();
 
@@ -56,7 +56,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             return sb.ToString();
         }
 
-        public static string GetFormattedVersionDependencyInfo(ELFParser parser)
+        internal static string GetFormattedVersionDependencyInfo(ELFParser parser)
         {
             StringBuilder sb = new();
 

@@ -1,6 +1,6 @@
 namespace PersonalTools.ELFAnalyzer.Models
 {
-    public class ELFRelocationInfo
+    internal sealed class ELFRelocationInfo
     {
         public required string Offset { get; set; }
         public required string Info { get; set; }

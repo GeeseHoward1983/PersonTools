@@ -3,7 +3,7 @@ using PersonalTools.Enums;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public static class HeaderInfo
+    internal static class HeaderInfo
     {
         public static string GetArchitectureName(ELFHeader header)
         {

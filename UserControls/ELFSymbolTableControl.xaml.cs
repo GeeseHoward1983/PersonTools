@@ -10,7 +10,7 @@ namespace PersonalTools.UserControls
             InitializeComponent();
         }
 
-        public void SetSymbolTableData(List<ELFSymbolTableInfo> symbolTable)
+        internal void SetSymbolTableData(List<ELFSymbolTableInfo> symbolTable)
         {
             ELFSymbolTableDataGrid.ItemsSource = symbolTable;
         }

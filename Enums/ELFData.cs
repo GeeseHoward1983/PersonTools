@@ -1,9 +1,9 @@
 namespace PersonalTools.Enums
 {
-    public enum ELFData : byte
+    internal enum ELFData : byte
     {
-        ELFDATANONE = 0,
-        ELFDATA2LSB = 1,  // Little-endian
-        ELFDATA2MSB = 2   // Big-endian
+        NONE = 0,
+        LSB = 1,  // Little-endian
+        MSB = 2   // Big-endian
     }
 }

@@ -2,9 +2,9 @@ using PersonalTools.ELFAnalyzer.Core;
 
 namespace PersonalTools.ELFAnalyzer.UIHelper
 {
-    public class AttributesHelper
+    internal static class AttributesHelper
     {
-        public static string GetAttributeInfo(ELFParser Parser)
+        internal static string GetAttributeInfo(ELFParser Parser)
         {
             return ELFAttributeInfo.GetFormattedAttributeInfo(Parser);
         }

@@ -5,7 +5,7 @@ namespace PersonalTools.Enums
     /// <summary>
     /// ARM CPU架构枚举
     /// </summary>
-    public enum ARMCPUArch : byte
+    internal enum ARMCPUArch : byte
     {
         Pre_v4 = 0,
         v4 = 1,

@@ -7,7 +7,7 @@ namespace PersonalTools.PEAnalyzer.Resources
     /// PE资源解析器证书信息解析模块
     /// 专门负责解析PE文件中的数字证书信息
     /// </summary>
-    public static class PEResourceParserCertificate
+    internal static class PEResourceParserCertificate
     {
         /// <summary>
         /// 解析证书信息
@@ -15,7 +15,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <param name="fs">文件流</param>
         /// <param name="reader">二进制读取器</param>
         /// <param name="peInfo">PE文件信息</param>
-        public static void ParseCertificateInfo(FileStream fs, BinaryReader reader, PEInfo peInfo)
+        internal static void ParseCertificateInfo(FileStream fs, BinaryReader reader, PEInfo peInfo)
         {
             try
             {

@@ -2,9 +2,9 @@ using PersonalTools.ELFAnalyzer.Core;
 
 namespace PersonalTools.ELFAnalyzer
 {
-    public partial class ELFAnalyzer
+    internal sealed class ELFAnalyzer
     {
-        public ELFParser Parser { get; }
+        internal ELFParser Parser { get; }
 
         public ELFAnalyzer(string filePath)
         {

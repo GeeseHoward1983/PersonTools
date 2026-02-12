@@ -1,7 +1,7 @@
 namespace PersonalTools.Enums
 {
     [Flags]
-    public enum SectionFlags : ulong
+    internal enum SectionAttributes : ulong
     {
         SHF_WRITE = 0x1,          // Writable data during execution
         SHF_ALLOC = 0x2,          // Occupies memory during execution

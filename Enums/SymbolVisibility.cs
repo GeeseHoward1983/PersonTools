@@ -1,6 +1,6 @@
 namespace PersonalTools.Enums
 {
-    public enum SymbolVisibility : byte
+    internal enum SymbolVisibility : byte
     {
         STV_DEFAULT = 0,    // Default symbol visibility rules
         STV_INTERNAL = 1,   // Processor specific hidden class

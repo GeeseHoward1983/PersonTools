@@ -6,7 +6,7 @@ namespace PersonalTools.Enums
     /// HPPA Relocation Types
     /// </summary>
     [Flags]
-    public enum HPPARelocationType : uint
+    internal enum HPPARelocationType : uint
     {
         R_PARISC_NONE = 0,        /* No reloc. */
         R_PARISC_DIR32 = 1,       /* Direct 32-bit reference. */

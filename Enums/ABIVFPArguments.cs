@@ -3,7 +3,7 @@ namespace PersonalTools.Enums
     /// <summary>
     /// ABI VFP参数传递方式枚举，用于Tag_ABI_VFP_args标签
     /// </summary>
-    public enum ABIVFPArguments : byte
+    internal enum ABIVFPArguments : byte
     {
         /// <summary>
         /// 使用标准AAPCS参数传递

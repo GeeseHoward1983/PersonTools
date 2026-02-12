@@ -1,6 +1,6 @@
 namespace PersonalTools.Enums
 {
-    public enum SymbolBinding : byte
+    internal enum SymbolBinding : byte
     {
         STB_LOCAL = 0,      // Local symbol
         STB_GLOBAL = 1,     // Global symbol

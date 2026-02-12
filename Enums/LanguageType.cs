@@ -3,7 +3,7 @@ namespace PersonalTools.Enums
     /// <summary>
     /// 语言类型枚举
     /// </summary>
-    public enum LanguageType
+    internal enum LanguageType
     {
         /// <summary>
         /// 英文

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PersonalTools.ELFAnalyzer.Models
 {
-    public class ELFDynamicSectionInfo
+    internal sealed class ELFDynamicSectionInfo
     {
         public required string Tag { get; set; }
         public required string Type { get; set; }

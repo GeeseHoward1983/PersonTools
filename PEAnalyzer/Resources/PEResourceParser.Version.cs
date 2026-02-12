@@ -7,7 +7,7 @@ namespace PersonalTools.PEAnalyzer.Resources
     /// PE资源解析器版本信息解析模块
     /// 专门负责解析PE文件中的版本信息资源
     /// </summary>
-    public static class PEResourceParserVersion
+    internal static class PEResourceParserVersion
     {
         /// <summary>
         /// 解析版本信息
@@ -15,7 +15,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <param name="fs">文件流</param>
         /// <param name="reader">二进制读取器</param>
         /// <param name="peInfo">PE文件信息</param>
-        public static void ParseVersionInfo(FileStream fs, BinaryReader reader, PEInfo peInfo)
+        internal static void ParseVersionInfo(FileStream fs, BinaryReader reader, PEInfo peInfo)
         {
             try
             {

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public partial class VersionSymbleTable
+    internal static partial class VersionSymbleTable
     {
         private static void ParseVersionDefinitions(ELFParser parser)
         {
@@ -53,7 +53,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             }
 
             // 确保_versionDefinitions字典存在
-            parser.VersionDefinitions ??= [];
+            parser.VersionDefinitions = [];
 
             // 遍历所有节头查找SHT_GNU_VERDEF类型的节（即.gnu.version_d）
             for (int i = 0; i < parser.SectionHeaders.Count; i++)
@@ -146,7 +146,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             }
         }
 
-        public static string GetFormattedVersionDefinitionInfo(ELFParser parser)
+        internal static string GetFormattedVersionDefinitionInfo(ELFParser parser)
         {
             if (parser.VersionDefinitions == null || parser.VersionDefinitions.Count == 0)
             {

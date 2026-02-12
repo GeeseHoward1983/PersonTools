@@ -3,7 +3,7 @@ using System.Windows.Media.Imaging;
 namespace PersonalTools.PEAnalyzer.Models
 {
     // PE信息类
-    public class PEInfo
+    internal sealed class PEInfo
     {
         public string FilePath { get; set; } = string.Empty;
         internal IMAGEDOSHEADER DosHeader { get; set; }
@@ -19,7 +19,7 @@ namespace PersonalTools.PEAnalyzer.Models
     }
 
     // PE文件附加信息类
-    public class PEAdditionalInfo
+    internal sealed class PEAdditionalInfo
     {
         public string Copyright { get; set; } = string.Empty;
         public string CompanyName { get; set; } = string.Empty;
@@ -45,7 +45,7 @@ namespace PersonalTools.PEAnalyzer.Models
     }
 
     // 导入函数信息
-    public class ImportFunctionInfo
+    internal sealed class ImportFunctionInfo
     {
         public string DllName { get; set; } = string.Empty;
         public string FunctionName { get; set; } = string.Empty;
@@ -58,7 +58,7 @@ namespace PersonalTools.PEAnalyzer.Models
     }
 
     // 导出函数信息
-    public class ExportFunctionInfo
+    internal sealed class ExportFunctionInfo
     {
         public string Name { get; set; } = string.Empty;
         public int Ordinal { get; set; }
@@ -69,7 +69,7 @@ namespace PersonalTools.PEAnalyzer.Models
     }
 
     // 依赖信息
-    public class DependencyInfo
+    internal sealed class DependencyInfo
     {
         public string Name { get; set; } = string.Empty;
         public string ForwardedTo { get; set; } = string.Empty;
@@ -78,7 +78,7 @@ namespace PersonalTools.PEAnalyzer.Models
     }
 
     // 图标目录头
-    public struct ICONDIRHEADER
+    internal struct ICONDIRHEADER
     {
         public ushort Reserved { get; set; }
         public ushort Type { get; set; }
@@ -86,7 +86,7 @@ namespace PersonalTools.PEAnalyzer.Models
     }
 
     // 图标目录项
-    public struct ICONDIRENTRY
+    internal struct ICONDIRENTRY
     {
         public byte Width { get; set; }
         public byte Height { get; set; }
@@ -99,7 +99,7 @@ namespace PersonalTools.PEAnalyzer.Models
     }
 
     // 图标信息
-    public class IconInfo
+    internal sealed class IconInfo
     {
         public int Width { get; set; }
         public int Height { get; set; }
@@ -109,7 +109,7 @@ namespace PersonalTools.PEAnalyzer.Models
     }
 
     // 图标视图模型，用于在DataGrid中显示图标
-    public class IconViewModel
+    internal sealed class IconViewModel
     {
         public BitmapSource? ImageSource { get; set; }
         public int Width { get; set; }
@@ -140,7 +140,7 @@ namespace PersonalTools.PEAnalyzer.Models
     /// <summary>
     /// CLR信息
     /// </summary>
-    public class CLRInfo
+    internal sealed class CLRInfo
     {
         public ushort MajorRuntimeVersion { get; set; }
         public ushort MinorRuntimeVersion { get; set; }

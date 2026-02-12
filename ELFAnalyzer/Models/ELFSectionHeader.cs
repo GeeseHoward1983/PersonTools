@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace PersonalTools.ELFAnalyzer.Models
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct ELFSectionHeader
+    internal struct ELFSectionHeader
     {
         public uint sh_name;      // Section name (index into string table)
         public uint sh_type;      // Section type

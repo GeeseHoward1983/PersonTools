@@ -1,6 +1,6 @@
 namespace PersonalTools.ELFAnalyzer.Models
 {
-    public class ELFSymbolTableInfo
+    internal sealed class ELFSymbolTableInfo
     {
         public int Number { get; set; }
         public required string Value { get; set; }

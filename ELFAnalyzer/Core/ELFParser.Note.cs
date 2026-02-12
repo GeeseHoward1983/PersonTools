@@ -5,9 +5,9 @@ using System.Text;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public class ELFNoteInfo
+    internal static class ELFNoteInfo
     {
-        public static string GetFormattedNotesInfo(ELFParser parser)
+        internal static string GetFormattedNotesInfo(ELFParser parser)
         {
             StringBuilder sb = new();
 
@@ -48,10 +48,24 @@ namespace PersonalTools.ELFAnalyzer.Core
             while (offset < endOffset)
             {
                 // Note结构：namesz, descsz, type
-                bool isLittleEndian = parser.Header.EI_DATA == (byte)ELFData.ELFDATA2LSB;
-                uint namesz = ELFParserUtils.ReadUInt32(new BinaryReader(new MemoryStream(parser.FileData, (int)offset, Math.Min((int)(endOffset - offset), parser.FileData.Length - (int)offset))), isLittleEndian);
-                uint descsz = ELFParserUtils.ReadUInt32(new BinaryReader(new MemoryStream(parser.FileData, (int)offset + 4, Math.Min((int)(endOffset - offset - 4), parser.FileData.Length - (int)offset - 4))), isLittleEndian);
-                uint type = ELFParserUtils.ReadUInt32(new BinaryReader(new MemoryStream(parser.FileData, (int)offset + 8, Math.Min((int)(endOffset - offset - 8), parser.FileData.Length - (int)offset - 8))), isLittleEndian);
+                bool isLittleEndian = parser.Header.EI_DATA == (byte)ELFData.LSB;
+                uint namesz, descsz, type;
+
+                using (var ms = new MemoryStream(parser.FileData, (int)offset, Math.Min((int)(endOffset - offset), parser.FileData.Length - (int)offset)))
+                using (var br = new BinaryReader(ms))
+                {
+                    namesz = ELFParserUtils.ReadUInt32(br, isLittleEndian);
+                }
+                using (var ms = new MemoryStream(parser.FileData, (int)offset + 4, Math.Min((int)(endOffset - offset - 4), parser.FileData.Length - (int)offset - 4)))
+                using (var br = new BinaryReader(ms))
+                {
+                    descsz = ELFParserUtils.ReadUInt32(br, isLittleEndian);
+                }
+                using (var ms = new MemoryStream(parser.FileData, (int)offset + 8, Math.Min((int)(endOffset - offset - 8), parser.FileData.Length - (int)offset - 8)))
+                using (var br = new BinaryReader(ms))
+                {
+                    type = ELFParserUtils.ReadUInt32(br, isLittleEndian);
+                }
 
                 ulong nameOffset = offset + 12;
                 string owner = ELFParserUtils.ExtractStringFromBytes(parser.FileData, (int)nameOffset, (int)namesz);

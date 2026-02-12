@@ -351,7 +351,7 @@ namespace PersonalTools.UserControls
                 }
 
                 // 使用真正的SHA3算法
-                SHA3 sha3 = new(selectedOption.Value);
+                using SHA3 sha3 = new(selectedOption.Value);
                 byte[] hashBytes = sha3.ComputeHash(inputBytes);
                 SHA3ResultLabel.Content = Utils.ToHexString(hashBytes);
             }

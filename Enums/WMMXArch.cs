@@ -5,7 +5,7 @@ namespace PersonalTools.Enums
     /// <summary>
     /// WMMX架构枚举
     /// </summary>
-    public enum WMMXArch : byte
+    internal enum WMMXArch : byte
     {
         No = 0,
         WMMXv1 = 1,

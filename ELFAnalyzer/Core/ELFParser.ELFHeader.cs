@@ -4,7 +4,7 @@ using System.IO;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public static class ELFHeaderInfo
+    internal static class ELFHeaderInfo
     {
         public static ELFHeader ReadELFHeader(BinaryReader reader, ref bool is64Bit, ref bool isLittleEndian)
         {
@@ -28,8 +28,8 @@ namespace PersonalTools.ELFAnalyzer.Core
                 throw new InvalidDataException("File is not a valid ELF file");
             }
 
-            isLittleEndian = header.EI_DATA == (byte)ELFData.ELFDATA2LSB;
-            is64Bit = header.EI_CLASS == (byte)ELFClass.ELFCLASS64;
+            isLittleEndian = header.EI_DATA == (byte)ELFData.LSB;
+            is64Bit = header.EI_CLASS == (byte)ELFClass.BIT64;
             header.e_type = ELFParserUtils.ReadUInt16(reader, isLittleEndian);
             header.e_machine = ELFParserUtils.ReadUInt16(reader, isLittleEndian);
             header.e_version = ELFParserUtils.ReadUInt32(reader, isLittleEndian);
@@ -54,7 +54,7 @@ namespace PersonalTools.ELFAnalyzer.Core
         /// <returns>True if the ELF file is little-endian, false otherwise</returns>
         public static bool IsLittleEndian(this ELFHeader header)
         {
-            return header.EI_DATA == (byte)ELFData.ELFDATA2LSB;
+            return header.EI_DATA == (byte)ELFData.LSB;
         }
     }
 }

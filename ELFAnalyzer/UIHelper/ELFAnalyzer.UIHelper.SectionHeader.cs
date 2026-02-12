@@ -3,9 +3,9 @@ using PersonalTools.ELFAnalyzer.Models;
 
 namespace PersonalTools.ELFAnalyzer.UIHelper
 {
-    public class SectionHeaderHelper
+    internal static class SectionHeaderHelper
     {
-        public static List<ELFSectionHeaderInfo> GetSectionHeaderInfoList(ELFParser Parser)
+        internal static List<ELFSectionHeaderInfo> GetSectionHeaderInfoList(ELFParser Parser)
         {
             List<ELFSectionHeaderInfo> result = [];
 

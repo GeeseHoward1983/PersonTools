@@ -6,7 +6,7 @@ namespace PersonalTools
     /// 全局状态管理类
     /// 存储应用程序级别的全局状态信息
     /// </summary>
-    public static class GlobalState
+    internal static class GlobalState
     {
         /// <summary>
         /// 当前语言类型

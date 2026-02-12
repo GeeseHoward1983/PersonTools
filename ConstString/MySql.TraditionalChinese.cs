@@ -1,6 +1,6 @@
 namespace PersonalTools.ConstString
 {
-    public static partial class MySqlErrors
+    internal static partial class MySqlErrors
     {
         // MySQL 错误碼 - 繁體中文
         private static readonly Dictionary<long, string> MySqlErrorsMapTraditionalChinese = new()

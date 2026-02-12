@@ -3,7 +3,7 @@ using PersonalTools.Enums;
 
 namespace PersonalTools.ConstString
 {
-    public static partial class OracleSqlCode
+    internal static partial class OracleSqlCode
     {
         // Oracle SQLCODE - 英文
         private static readonly Dictionary<long, string> OracleSqlCodeMapEnglish = new()

@@ -5,9 +5,9 @@ using System.Text;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public class ELFExidxInfo
+    internal static class ELFExidxInfo
     {
-        public static string GetFormattedExidxInfo(ELFParser parser)
+        internal static string GetFormattedExidxInfo(ELFParser parser)
         {
             StringBuilder sb = new();
 
@@ -68,7 +68,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 
                 // 获取可能的符号名称
                 string symbolName = FindNearestSymbolName(parser, (ulong)absAddr, false);
-                if (symbolName == "")
+                if (string.IsNullOrEmpty(symbolName))
                 {
                     symbolName = FindNearestSymbolName(parser, (ulong)absAddr, true);
                 }
@@ -167,7 +167,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                         symbol.StShndx != 0) // 非未定义符号
                     {
                         string name = SymbleName.GetSymbolName(parser, symbol, symbolList.Key);
-                        if (containstSize && name != "")
+                        if (containstSize && !string.IsNullOrEmpty(name))
                         {
                             name += $"+0x{symbol.StSize:x}";
                         }

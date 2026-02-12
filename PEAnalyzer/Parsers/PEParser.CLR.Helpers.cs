@@ -7,7 +7,7 @@ namespace PersonalTools
     /// PE文件解析器CLR辅助函数模块
     /// 专门提供.NET程序集解析所需的辅助函数
     /// </summary>
-    public static partial class PEParserCLR
+    internal static partial class PEParserCLR
     {
         /// <summary>
         /// 计算String堆的偏移
@@ -49,7 +49,11 @@ namespace PersonalTools
 
                 return position;
             }
-            catch
+            catch (IOException)
+            {
+                return -1;
+            }
+            catch (IndexOutOfRangeException)
             {
                 return -1;
             }
@@ -153,7 +157,19 @@ namespace PersonalTools
                 fs.Position = originalPosition;
                 return sb.ToString();
             }
-            catch
+            catch (EndOfStreamException)
+            {
+                return $"Unknown_Type_{index}";
+            }
+            catch (IOException)
+            {
+                return $"Unknown_Type_{index}";
+            }
+            catch (ObjectDisposedException)
+            {
+                return $"Unknown_Type_{index}";
+            }
+            catch (ArgumentOutOfRangeException)
             {
                 return $"Unknown_Type_{index}";
             }

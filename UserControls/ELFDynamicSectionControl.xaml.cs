@@ -12,7 +12,7 @@ namespace PersonalTools.UserControls
             InitializeComponent();
         }
 
-        public void SetDynamicSectionData(List<ELFDynamicSectionInfo> dynamicSection)
+        internal void SetDynamicSectionData(List<ELFDynamicSectionInfo> dynamicSection)
         {
             ELFDynamicSectionDataGrid.ItemsSource = dynamicSection;
         }

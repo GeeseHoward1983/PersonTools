@@ -6,7 +6,7 @@ namespace PersonalTools.Enums
     /// MicroBlaze Relocation Types
     /// </summary>
     [Flags]
-    public enum MicroBlazeRelocationType : uint
+    internal enum MicroBlazeRelocationType : uint
     {
         R_MICROBLAZE_NONE = 0,            /* No reloc. */
         R_MICROBLAZE_32 = 1,              /* Direct 32 bit. */

@@ -3,7 +3,7 @@ namespace PersonalTools.Enums
     /// <summary>
     /// ABI对齐保留要求枚举，用于Tag_ABI_align_preserved标签
     /// </summary>
-    public enum ABIAlignPreserved : byte
+    internal enum ABIAlignPreserved : byte
     {
         /// <summary>
         /// 无特殊对齐保留要求

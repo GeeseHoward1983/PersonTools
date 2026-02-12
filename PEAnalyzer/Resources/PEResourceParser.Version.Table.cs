@@ -175,7 +175,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                         peInfo.AdditionalInfo.FileDescription = value;
                         break;
                     case "fileversion":
-                        if (string.IsNullOrEmpty(peInfo.AdditionalInfo.FileVersion) || !peInfo.AdditionalInfo.FileVersion.Contains('.'))
+                        if (string.IsNullOrEmpty(peInfo.AdditionalInfo.FileVersion) || !peInfo.AdditionalInfo.FileVersion.Contains('.', StringComparison.CurrentCulture))
                         {
                             peInfo.AdditionalInfo.FileVersion = value;
                         }
@@ -185,7 +185,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                         peInfo.AdditionalInfo.ProductName = value;
                         break;
                     case "productversion":
-                        if (string.IsNullOrEmpty(peInfo.AdditionalInfo.ProductVersion) || !peInfo.AdditionalInfo.ProductVersion.Contains('.'))
+                        if (string.IsNullOrEmpty(peInfo.AdditionalInfo.ProductVersion) || !peInfo.AdditionalInfo.ProductVersion.Contains('.', StringComparison.CurrentCulture))
                         {
                             peInfo.AdditionalInfo.ProductVersion = value;
                         }

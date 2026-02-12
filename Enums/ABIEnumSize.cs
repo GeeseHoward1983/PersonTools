@@ -5,7 +5,7 @@ namespace PersonalTools.Enums
     /// <summary>
     /// ABI枚举大小枚举
     /// </summary>
-    public enum ABIEnumSize : byte
+    internal enum ABIEnumSize : byte
     {
         None = 0,
         Small = 1,            // small

@@ -11,7 +11,7 @@ namespace PersonalTools.UserControls
             InitializeComponent();
         }
 
-        public void SetSectionHeadersData(List<ELFSectionHeaderInfo> sectionHeaders)
+        internal void SetSectionHeadersData(List<ELFSectionHeaderInfo> sectionHeaders)
         {
             ELFSectionHeaderDataGrid.ItemsSource = sectionHeaders;
         }

@@ -2,7 +2,7 @@ using PersonalTools.Enums;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public static class ELFRelocation
+    internal static class ELFRelocation
     {
         public static string GetRelocationTypeName(uint type, ushort machine)
         {

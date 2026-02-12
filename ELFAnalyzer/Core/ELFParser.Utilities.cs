@@ -3,7 +3,7 @@ using System.Windows;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public static class ELFParserUtils
+    internal static class ELFParserUtils
     {
         public static string FormatAddress(ulong address)
         {
@@ -12,6 +12,10 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         public static string ExtractStringFromBytes(byte[] data, int startOffset)
         {
+            if(data == null || startOffset < 0 || startOffset >= data.Length)
+            {
+                return string.Empty;
+            }
             int endOffset = startOffset;
             while (endOffset < data.Length && data[endOffset] != 0)
             {
@@ -23,6 +27,10 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         public static string ExtractStringFromBytes(byte[] data, int startOffset, int maxLength = -1)
         {
+            if(data == null || startOffset < 0 || startOffset >= data.Length)
+            {
+                return string.Empty;
+            }
             while (maxLength > 0 && data[startOffset + maxLength - 1] == 0)
             {
                 maxLength--;
@@ -75,7 +83,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                     return Enum.GetName(T, type) ?? $"{prefix}UNKNOWN({type})";
                 }
             }
-            catch (Exception e)
+            catch (ArgumentException e)
             {
                 MessageBox.Show(e.ToString());
             }

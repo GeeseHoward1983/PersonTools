@@ -1,10 +1,11 @@
 using PersonalTools.PEAnalyzer.Models;
 using System.IO;
 using System.Text;
+using System.Windows.Markup;
 
 namespace PersonalTools.PEAnalyzer.Parsers
 {
-    public static class Utilties
+    internal static class Utilties
     {
         public static string ReadNullTerminatedString(BinaryReader reader)
         {
@@ -32,7 +33,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
                     }
                 }
             }
-            catch (Exception)
+            catch (ArgumentNullException)
             {
                 // 发生异常时返回已读取的部分字符串
             }
@@ -241,7 +242,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
         }
 
         // 判断是否为64位PE
-        public static bool Is64Bit(IMAGEOPTIONALHEADER optionalHeader)
+        internal static bool Is64Bit(IMAGEOPTIONALHEADER optionalHeader)
         {
             return optionalHeader.Magic == 0x20b;
         }

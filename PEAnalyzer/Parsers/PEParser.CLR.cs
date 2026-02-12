@@ -8,7 +8,7 @@ namespace PersonalTools
     /// PE文件解析器CLR信息解析模块
     /// 专门负责解析.NET程序集的CLR运行时头信息
     /// </summary>
-    public static partial class PEParserCLR
+    internal static partial class PEParserCLR
     {
         /// <summary>
         /// 解析CLR运行时头信息
@@ -16,7 +16,7 @@ namespace PersonalTools
         /// <param name="fs">文件流</param>
         /// <param name="reader">二进制读取器</param>
         /// <param name="peInfo">PE文件信息</param>
-        public static void ParseCLRHeaderInfo(FileStream fs, BinaryReader reader, PEInfo peInfo)
+        internal static void ParseCLRHeaderInfo(FileStream fs, BinaryReader reader, PEInfo peInfo)
         {
             try
             {
@@ -37,11 +37,16 @@ namespace PersonalTools
                     }
                 }
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 // CLR头解析错误不中断程序执行
-                Console.WriteLine($"CLR运行时头解析错误: {ex.Message}");
+                Console.WriteLine($"CLR运行时头解析IO错误: {ex.Message}");
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine($"CLR运行时头解析权限错误: {ex.Message}");
+            }
+            // 你可以根据需要添加其他具体异常类型
         }
 
         /// <summary>
@@ -134,10 +139,15 @@ namespace PersonalTools
 
                 fs.Position = originalPosition;
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
-                Console.WriteLine($"CLR头解析错误: {ex.Message}");
+                Console.WriteLine($"CLR头解析IO错误: {ex.Message}");
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine($"CLR头解析权限错误: {ex.Message}");
+            }
+            // 你可以根据需要添加其他具体异常类型
         }
     }
 }

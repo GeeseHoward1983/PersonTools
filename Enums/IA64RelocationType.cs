@@ -6,7 +6,7 @@ namespace PersonalTools.Enums
     /// IA64 Relocation Types
     /// </summary>
     [Flags]
-    public enum IA64RelocationType : uint
+    internal enum IA64RelocationType : uint
     {
         R_IA64_NONE = 0x00,        /* none */
         R_IA64_IMM14 = 0x21,       /* symbol + addend, add imm14 */

@@ -1,6 +1,6 @@
 namespace PersonalTools.Enums
 {
-    public enum SectionType : uint
+    internal enum SectionType : uint
     {
         SHT_NULL = 0,             // Section header table entry unused
         SHT_PROGBITS = 1,         // Program data

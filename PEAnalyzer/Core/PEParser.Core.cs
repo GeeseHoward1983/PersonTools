@@ -8,7 +8,7 @@ namespace PersonalTools
     /// <summary>
     /// PE文件解析器核心类
     /// </summary>
-    public static partial class PEParser
+    internal static partial class PEParser
     {
         /// <summary>
         /// 解析PE文件
@@ -19,8 +19,8 @@ namespace PersonalTools
         {
             PEInfo peInfo = new() { FilePath = filePath };
 
-            FileStream fs = new(filePath, FileMode.Open, FileAccess.Read);
-            BinaryReader reader = new(fs);
+            using FileStream fs = new(filePath, FileMode.Open, FileAccess.Read);
+            using BinaryReader reader = new(fs);
             // 解析DOS头
             peInfo.DosHeader = ParseDosHeader(reader);
             if (peInfo.DosHeader.e_magic != 0x5A4D)

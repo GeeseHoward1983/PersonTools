@@ -1,6 +1,6 @@
 namespace PersonalTools.ELFAnalyzer.Models
 {
-    public class ProgramHeaderInfo
+    internal sealed class ProgramHeaderInfo
     {
         public required string Type { get; set; }
         public required string Offset { get; set; }

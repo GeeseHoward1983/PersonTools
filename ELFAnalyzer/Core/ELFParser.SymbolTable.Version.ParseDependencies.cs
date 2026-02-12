@@ -3,7 +3,7 @@ using PersonalTools.Enums;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public partial class VersionSymbleTable
+    internal static partial class VersionSymbleTable
     {
         private static void ParseVersionDependencies(ELFParser parser)
         {

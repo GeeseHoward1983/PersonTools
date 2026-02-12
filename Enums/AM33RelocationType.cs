@@ -6,7 +6,7 @@ namespace PersonalTools.Enums
     /// AM33 (MN10300) Relocation Types
     /// </summary>
     [Flags]
-    public enum AM33RelocationType : uint
+    internal enum AM33RelocationType : uint
     {
         R_MN10300_NONE = 0,        /* No reloc. */
         R_MN10300_32 = 1,          /* Direct 32 bit. */

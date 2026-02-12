@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 namespace PersonalTools.ELFAnalyzer.Models
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct ELFHeader
+    internal struct ELFHeader
     {
         public byte EI_MAG0;      // 0x7F
         public byte EI_MAG1;      // 'E'

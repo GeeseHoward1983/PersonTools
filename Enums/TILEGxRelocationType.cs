@@ -6,7 +6,7 @@ namespace PersonalTools.Enums
     /// TILE-Gx Relocation Types
     /// </summary>
     [Flags]
-    public enum TILEGxRelocationType : uint
+    internal enum TILEGxRelocationType : uint
     {
         R_TILEGX_NONE = 0,                     /* No reloc */
         R_TILEGX_64 = 1,                       /* Direct 64 bit */

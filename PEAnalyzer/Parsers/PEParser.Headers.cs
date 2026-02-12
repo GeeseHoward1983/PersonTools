@@ -7,7 +7,7 @@ namespace PersonalTools
     /// PE文件头解析器
     /// 专门负责解析PE文件的各种头结构
     /// </summary>
-    public static partial class PEParser
+    internal static partial class PEParser
     {
         /// <summary>
         /// 解析DOS头

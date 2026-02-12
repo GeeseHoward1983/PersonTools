@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 namespace PersonalTools.ELFAnalyzer.Models
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct ELFProgramHeader
+    internal struct ELFProgramHeader
     {
         public uint p_type { get; set; }    // Segment type
         public uint p_flags { get; set; }    // Segment flags

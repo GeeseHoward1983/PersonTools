@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace PersonalTools.ELFAnalyzer.Models
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct ELFSymbol
+    internal struct ELFSymbol
     {
         public uint StName { get; set; }    // Symbol name (index into string table)
         public ulong StValue { get; set; }   // Symbol value (address)

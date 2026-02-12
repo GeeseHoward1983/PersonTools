@@ -3,9 +3,9 @@ using PersonalTools.Enums;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public class SymbleName
+    internal static class SymbleName
     {
-        public static string GetSymbolName(ELFParser parser, ELFSymbol symbol, SectionType sectionType)
+        internal static string GetSymbolName(ELFParser parser, ELFSymbol symbol, SectionType sectionType)
         {
             uint linkedStrTabIdx32 = parser.LinkedStrTabIdx.GetValueOrDefault(sectionType);
             if (parser.SectionHeaders == null || linkedStrTabIdx32 >= parser.SectionHeaders.Count)
@@ -99,7 +99,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             return false;
         }
 
-        public static string GetSectionName(ELFParser parser, int index)
+        internal static string GetSectionName(ELFParser parser, int index)
         {
             if (parser.SectionHeaders == null || index >= parser.SectionHeaders.Count)
             {

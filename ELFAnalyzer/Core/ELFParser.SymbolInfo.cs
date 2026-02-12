@@ -2,7 +2,7 @@ using PersonalTools.Enums;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    public static class ELFSymbolInfo
+    internal static class ELFSymbolInfo
     {
         public static string GetSymbolType(byte stInfo)
         {

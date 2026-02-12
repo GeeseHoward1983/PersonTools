@@ -6,7 +6,7 @@ namespace PersonalTools.Enums
     /// PowerPC64 Relocation Types
     /// </summary>
     [Flags]
-    public enum PowerPC64RelocationType : uint
+    internal enum PowerPC64RelocationType : uint
     {
         R_PPC64_NONE = 0,
         R_PPC64_ADDR32 = 1,            /* 32bit absolute address */

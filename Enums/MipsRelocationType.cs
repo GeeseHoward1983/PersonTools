@@ -3,7 +3,7 @@ namespace PersonalTools.Enums
     /// <summary>
     /// MIPS架构的重定位类型枚举
     /// </summary>
-    public enum MipsRelocationType : uint
+    internal enum MipsRelocationType : uint
     {
         R_MIPS_NONE = 0,            /* No reloc */
         R_MIPS_16 = 1,              /* Direct 16 bit */

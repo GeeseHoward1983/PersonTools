@@ -8,7 +8,7 @@ namespace PersonalTools.PEAnalyzer.Resources
     /// PE资源解析器核心功能
     /// 包含基础的资源解析方法和通用工具方法
     /// </summary>
-    public static class PEResourceParserCore
+    internal static class PEResourceParserCore
     {
         /// <summary>
         /// 将RVA转换为文件偏移量
@@ -16,7 +16,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <param name="rva">相对虚拟地址</param>
         /// <param name="sections">节头列表</param>
         /// <returns>文件偏移量</returns>
-        public static long RvaToOffset(uint rva, List<IMAGESECTIONHEADER> sections)
+        internal static long RvaToOffset(uint rva, List<IMAGESECTIONHEADER> sections)
         {
             // 添加对RVA的基本验证
             if (rva == 0)

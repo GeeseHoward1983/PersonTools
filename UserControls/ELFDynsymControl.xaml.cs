@@ -12,7 +12,7 @@ namespace PersonalTools.UserControls
             InitializeComponent();
         }
 
-        public void SetDynsymData(List<ELFSymbolTableInfo> dynsymTable)
+        internal void SetDynsymData(List<ELFSymbolTableInfo> dynsymTable)
         {
             ELFDynsymDataGrid.ItemsSource = dynsymTable;
         }

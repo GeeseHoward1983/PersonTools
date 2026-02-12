@@ -3,7 +3,7 @@ using PersonalTools.Enums;
 
 namespace PersonalTools.ConstString
 {
-    public static partial class SqlServerErrors
+    internal static partial class SqlServerErrors
     {
         // SQL Server 错误码 - 英文
         private static readonly Dictionary<long, string> SqlServerErrorsMapEnglish = new()

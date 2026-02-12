@@ -5,7 +5,7 @@ namespace PersonalTools.Enums
     /// <summary>
     /// 高级SIMD架构枚举
     /// </summary>
-    public enum AdvancedSIMDArch : byte
+    internal enum AdvancedSIMDArch : byte
     {
         No = 0,
         NEONv1 = 1,

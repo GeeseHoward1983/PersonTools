@@ -5,7 +5,7 @@ namespace PersonalTools.Enums
     /// <summary>
     /// ABI浮点16位格式枚举
     /// </summary>
-    public enum ABIFP16BitFormat : byte
+    internal enum ABIFP16BitFormat : byte
     {
         None = 0,
         IEEE_754 = 1,

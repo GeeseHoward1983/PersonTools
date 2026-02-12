@@ -1,6 +1,6 @@
 namespace PersonalTools.ELFAnalyzer.Models
 {
-    public class ELFSectionHeaderInfo
+    internal sealed class ELFSectionHeaderInfo
     {
         public int Index { get; set; }
         public required string Name { get; set; }

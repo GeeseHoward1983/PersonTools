@@ -6,6 +6,20 @@ using System.Windows.Controls;
 
 namespace PersonalTools.UserControls
 {
+    // AES加密模式选项类
+    internal sealed class AesModeOption
+    {
+        public required string Name { get; set; }
+        public CipherMode Mode { get; set; }
+    }
+
+    // AES填充方式选项类
+    internal sealed class AesPaddingOption
+    {
+        public required string Name { get; set; }
+        public PaddingMode Padding { get; set; }
+    }
+
     /// <summary>
     /// AesEncryptionControl.xaml 的交互逻辑
     /// </summary>
@@ -20,20 +34,6 @@ namespace PersonalTools.UserControls
         private void Grid_PreviewDragOver(object sender, System.Windows.DragEventArgs e)
         {
             e.Handled = true;
-        }
-
-        // AES加密模式选项类
-        public class AesModeOption
-        {
-            public required string Name { get; set; }
-            public CipherMode Mode { get; set; }
-        }
-
-        // AES填充方式选项类
-        public class AesPaddingOption
-        {
-            public required string Name { get; set; }
-            public PaddingMode Padding { get; set; }
         }
 
         // 初始化AES下拉框选项

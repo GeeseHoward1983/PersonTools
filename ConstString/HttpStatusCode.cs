@@ -2,7 +2,7 @@ using PersonalTools.Enums;
 
 namespace PersonalTools.ConstString
 {
-    public static partial class HttpStatus
+    internal static partial class HttpStatus
     {
         // 英文 HTTP 状态码描述
         private static readonly Dictionary<long, string> HttpStatusMapEnglish = new()

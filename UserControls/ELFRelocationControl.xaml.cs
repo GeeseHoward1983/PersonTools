@@ -10,7 +10,7 @@ namespace PersonalTools.UserControls
             InitializeComponent();
         }
 
-        public void SetRelaDynData(List<ELFRelocationInfo> relaDynTable)
+        internal void SetRelaDynData(List<ELFRelocationInfo> relaDynTable)
         {
             ELFRelaDynDataGrid.ItemsSource = relaDynTable;
         }

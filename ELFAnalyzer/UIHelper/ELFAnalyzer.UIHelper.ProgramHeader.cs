@@ -6,9 +6,9 @@ using System.Text;
 
 namespace PersonalTools.ELFAnalyzer.UIHelper
 {
-    public class ProgrameHeaderHelper
+    internal static class ProgrameHeaderHelper
     {
-        public static List<ProgramHeaderInfo> GetProgramHeaderInfoList(ELFParser Parser)
+        internal static List<ProgramHeaderInfo> GetProgramHeaderInfoList(ELFParser Parser)
         {
             List<ProgramHeaderInfo> result = [];
 
@@ -33,7 +33,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             return result;
         }
 
-        public static string GetSectionToSegmentMappingInfo(ELFParser Parser)
+        internal static string GetSectionToSegmentMappingInfo(ELFParser Parser)
         {
             StringBuilder sb = new();
             sb.AppendLine(" Section to Segment mapping:");
@@ -96,7 +96,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             return sections;
         }
 
-        public static string GetInterpreterInfo(ELFParser Parser)
+        internal static string GetInterpreterInfo(ELFParser Parser)
         {
             if (Parser.ProgramHeaders != null)
             {
