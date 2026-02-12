@@ -68,9 +68,22 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 fs.Position = originalPosition;
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 Console.WriteLine($"直接图标资源解析错误: {ex.Message}");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine($"直接图标资源解析错误: {ex.Message}");
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                Console.WriteLine($"直接图标资源解析错误: {ex.Message}");
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -124,9 +137,22 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 fs.Position = originalPosition;
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 Console.WriteLine($"直接图标资源数据项解析错误: {ex.Message}");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine($"直接图标资源数据项解析错误: {ex.Message}");
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                Console.WriteLine($"直接图标资源数据项解析错误: {ex.Message}");
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
     }

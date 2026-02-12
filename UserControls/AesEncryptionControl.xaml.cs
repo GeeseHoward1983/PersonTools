@@ -113,9 +113,18 @@ namespace PersonalTools.UserControls
                     AesResult.Text = result;
                 }
             }
-            catch (Exception ex)
+            catch (CryptographicException ex)
             {
                 MessageBox.Show($"AES加密时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show($"AES加密时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -177,9 +186,18 @@ namespace PersonalTools.UserControls
                     AesInput.Text = result;
                 }
             }
-            catch (Exception ex)
+            catch (CryptographicException ex)
             {
                 MessageBox.Show($"AES解密时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show($"AES解密时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -361,9 +379,18 @@ namespace PersonalTools.UserControls
                 // 同时切换到Hex字符串模式
                 AesInputHexRadio.IsChecked = true;
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 

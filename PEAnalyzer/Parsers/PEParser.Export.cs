@@ -157,10 +157,25 @@ namespace PersonalTools
                     }
                 }
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 // 忽略导出表解析错误
                 Console.WriteLine($"导出表解析错误: {ex.Message}");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                // 忽略导出表解析错误
+                Console.WriteLine($"导出表解析错误: {ex.Message}");
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                // 忽略导出表解析错误
+                Console.WriteLine($"导出表解析错误: {ex.Message}");
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
     }

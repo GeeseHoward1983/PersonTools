@@ -1,4 +1,4 @@
-using System.Net;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -22,16 +22,21 @@ namespace PersonalTools.UserControls
                 string input = UrlInput.Text;
                 if (string.IsNullOrEmpty(input))
                 {
-                    MessageBox.Show("请输入要编码的文本", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("请输入要编码的URL", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
 
-                string result = WebUtility.UrlEncode(input);
-                UrlResult.Text = result;
+                string encoded = Uri.EscapeDataString(input);
+                UrlResult.Text = encoded;
             }
-            catch (Exception ex)
+            catch (ArgumentNullException ex)
             {
                 MessageBox.Show($"URL编码时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -43,16 +48,25 @@ namespace PersonalTools.UserControls
                 string input = UrlResult.Text;
                 if (string.IsNullOrEmpty(input))
                 {
-                    MessageBox.Show("请输入要解码的文本", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("输出框中没有可解码的内容", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
 
-                string result = WebUtility.UrlDecode(input);
-                UrlInput.Text = result;
+                string decoded = Uri.UnescapeDataString(input);
+                UrlInput.Text = decoded;
             }
-            catch (Exception ex)
+            catch (ArgumentNullException ex)
             {
                 MessageBox.Show($"URL解码时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (UriFormatException ex)
+            {
+                MessageBox.Show($"URL解码时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 

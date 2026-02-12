@@ -62,10 +62,25 @@ namespace PersonalTools.PEAnalyzer.Resources
                     fs.Position = nextPosition;
                 }
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
-                // 忽略StringFileInfo解析错误，但可以记录日志用于调试
+                // 忽略StringFileInfo解析错误
                 peInfo.AdditionalInfo.FileVersion += $"; StringFileInfo解析错误: {ex.Message}";
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                // 忽略StringFileInfo解析错误
+                peInfo.AdditionalInfo.FileVersion += $"; StringFileInfo解析错误: {ex.Message}";
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                // 忽略StringFileInfo解析错误
+                peInfo.AdditionalInfo.FileVersion += $"; StringFileInfo解析错误: {ex.Message}";
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
     }

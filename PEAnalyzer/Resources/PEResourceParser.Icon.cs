@@ -40,10 +40,25 @@ namespace PersonalTools.PEAnalyzer.Resources
                     ParseDotNetIcons(fs, reader, peInfo);
                 }
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 Console.WriteLine($"图标信息解析错误: {ex.Message}");
                 // 图标信息解析错误不中断程序执行
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine($"图标信息解析错误: {ex.Message}");
+                // 图标信息解析错误不中断程序执行
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                Console.WriteLine($"图标信息解析错误: {ex.Message}");
+                // 图标信息解析错误不中断程序执行
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -64,9 +79,22 @@ namespace PersonalTools.PEAnalyzer.Resources
                     ParseDotNetResourcesForIcons(fs, reader, peInfo);
                 }
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 Console.WriteLine($".NET图标解析错误: {ex.Message}");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine($".NET图标解析错误: {ex.Message}");
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                Console.WriteLine($".NET图标解析错误: {ex.Message}");
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -90,9 +118,22 @@ namespace PersonalTools.PEAnalyzer.Resources
                     PEResourceParserIconNamed.ParseResourceDirectoryForNamedIcons(fs, reader, peInfo, resourceOffset);
                 }
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 Console.WriteLine($".NET资源图标解析错误: {ex.Message}");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine($".NET资源图标解析错误: {ex.Message}");
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                Console.WriteLine($".NET资源图标解析错误: {ex.Message}");
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -190,9 +231,22 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 fs.Position = originalPosition;
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 Console.WriteLine($"解析资源目录以查找图标信息错误: {ex.Message}");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine($"解析资源目录以查找图标信息错误: {ex.Message}");
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                Console.WriteLine($"解析资源目录以查找图标信息错误: {ex.Message}");
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
     }

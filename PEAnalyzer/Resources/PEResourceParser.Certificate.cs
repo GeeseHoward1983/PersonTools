@@ -15,7 +15,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <param name="fs">文件流</param>
         /// <param name="reader">二进制读取器</param>
         /// <param name="peInfo">PE文件信息</param>
-        internal static void ParseCertificateInfo(FileStream fs, BinaryReader reader, PEInfo peInfo)
+internal static void ParseCertificateInfo(FileStream fs, BinaryReader reader, PEInfo peInfo)
         {
             try
             {
@@ -78,9 +78,22 @@ namespace PersonalTools.PEAnalyzer.Resources
                     peInfo.AdditionalInfo.CertificateInfo = "文件未签名";
                 }
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 peInfo.AdditionalInfo.CertificateInfo = $"解析错误: {ex.Message}";
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                peInfo.AdditionalInfo.CertificateInfo = $"解析错误: {ex.Message}";
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                peInfo.AdditionalInfo.CertificateInfo = $"解析错误: {ex.Message}";
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
     }

@@ -24,7 +24,7 @@ namespace PersonalTools.UserControls
         }
 
         // RSA密钥长度选项类
-        public class RsaKeySizeOption
+        private sealed class RsaKeySizeOption
         {
             public required string Name { get; set; }
             public int KeySize { get; set; }
@@ -55,14 +55,32 @@ namespace PersonalTools.UserControls
                     string result = RsaEncryptString(input, publicKey, RsaInputStringRadio.IsChecked == true);
                     RsaResult.Text = result;
                 }
-                catch (Exception ex)
+                catch (CryptographicException ex)
                 {
                     MessageBox.Show($"RSA加密失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
+                catch (ArgumentException ex)
+                {
+                    MessageBox.Show($"RSA加密失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                // 其他异常重新抛出
+                catch (Exception)
+                {
+                    throw;
+                }
             }
-            catch (Exception ex)
+            catch (CryptographicException ex)
             {
                 MessageBox.Show($"RSA加密时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show($"RSA加密时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -91,14 +109,32 @@ namespace PersonalTools.UserControls
                     string result = RsaDecryptString(input, privateKey);
                     RsaInput.Text = result;
                 }
-                catch (Exception ex)
+                catch (CryptographicException ex)
                 {
                     MessageBox.Show($"RSA解密失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
+                catch (ArgumentException ex)
+                {
+                    MessageBox.Show($"RSA解密失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                // 其他异常重新抛出
+                catch (Exception)
+                {
+                    throw;
+                }
             }
-            catch (Exception ex)
+            catch (CryptographicException ex)
             {
                 MessageBox.Show($"RSA解密时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show($"RSA解密时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -127,14 +163,32 @@ namespace PersonalTools.UserControls
                     string result = RsaSignData(input, privateKey, RsaInputStringRadio.IsChecked == true);
                     RsaResult.Text = result;
                 }
-                catch (Exception ex)
+                catch (CryptographicException ex)
                 {
                     MessageBox.Show($"RSA签名失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
+                catch (ArgumentException ex)
+                {
+                    MessageBox.Show($"RSA签名失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                // 其他异常重新抛出
+                catch (Exception)
+                {
+                    throw;
+                }
             }
-            catch (Exception ex)
+            catch (CryptographicException ex)
             {
                 MessageBox.Show($"RSA签名时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show($"RSA签名时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -177,14 +231,32 @@ namespace PersonalTools.UserControls
                         MessageBox.Show("验签失败！", "结果", MessageBoxButton.OK, MessageBoxImage.Warning);
                     }
                 }
-                catch (Exception ex)
+                catch (CryptographicException ex)
                 {
                     MessageBox.Show($"RSA验签失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
+                catch (ArgumentException ex)
+                {
+                    MessageBox.Show($"RSA验签失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                // 其他异常重新抛出
+                catch (Exception)
+                {
+                    throw;
+                }
             }
-            catch (Exception ex)
+            catch (CryptographicException ex)
             {
                 MessageBox.Show($"RSA验签时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show($"RSA验签时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -209,9 +281,18 @@ namespace PersonalTools.UserControls
 
                 MessageBox.Show("密钥对生成成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-            catch (Exception ex)
+            catch (CryptographicException ex)
             {
                 MessageBox.Show($"生成密钥对时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                MessageBox.Show($"生成密钥对时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -238,15 +319,33 @@ namespace PersonalTools.UserControls
                         RsaPublicKey.Text = publicKey;
                         MessageBox.Show("公钥导入成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
-                    catch (Exception)
+                    catch (CryptographicException)
                     {
                         MessageBox.Show("选择的文件不是有效的公钥文件！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
+                    catch (ArgumentException)
+                    {
+                        MessageBox.Show("选择的文件不是有效的公钥文件！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                    // 其他异常重新抛出
+                    catch (Exception)
+                    {
+                        throw;
+                    }
                 }
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 MessageBox.Show($"导入公钥时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                MessageBox.Show($"导入公钥时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -273,15 +372,33 @@ namespace PersonalTools.UserControls
                         RsaPrivateKey.Text = privateKey;
                         MessageBox.Show("私钥导入成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
-                    catch (Exception)
+                    catch (CryptographicException)
                     {
                         MessageBox.Show("选择的文件不是有效的私钥文件！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
+                    catch (ArgumentException)
+                    {
+                        MessageBox.Show("选择的文件不是有效的私钥文件！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                    // 其他异常重新抛出
+                    catch (Exception)
+                    {
+                        throw;
+                    }
                 }
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 MessageBox.Show($"导入私钥时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                MessageBox.Show($"导入私钥时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -442,9 +559,18 @@ namespace PersonalTools.UserControls
                 // 使用SHA256作为哈希算法进行验签
                 return rsa.VerifyData(inputBytes, signatureBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
             }
-            catch
+            catch (CryptographicException)
             {
                 return false;
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -481,9 +607,18 @@ namespace PersonalTools.UserControls
                 // 同时切换到Hex字符串模式
                 RsaInputHexRadio.IsChecked = true;
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 

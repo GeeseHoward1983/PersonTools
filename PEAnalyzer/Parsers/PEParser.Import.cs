@@ -103,10 +103,25 @@ namespace PersonalTools
                 // 将延迟加载的导入函数添加到主列表中
                 peInfo.ImportFunctions.AddRange(delayLoadedImports);
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 // 忽略导入表解析错误
                 Console.WriteLine($"导入表解析错误: {ex.Message}");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                // 忽略导入表解析错误
+                Console.WriteLine($"导入表解析错误: {ex.Message}");
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                // 忽略导入表解析错误
+                Console.WriteLine($"导入表解析错误: {ex.Message}");
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -187,10 +202,25 @@ namespace PersonalTools
                     fs.Position = originalPosition;
                 }
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 // 忽略导入函数解析错误
                 Console.WriteLine($"导入函数解析错误: {ex.Message}");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                // 忽略导入函数解析错误
+                Console.WriteLine($"导入函数解析错误: {ex.Message}");
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                // 忽略导入函数解析错误
+                Console.WriteLine($"导入函数解析错误: {ex.Message}");
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -370,7 +400,19 @@ namespace PersonalTools
                                                     importFunc.IsOrdinalImport = false;
                                                 }
                                             }
-                                            catch (Exception ex)
+                                            catch (IOException ex)
+                                            {
+                                                importFunc.FunctionName = $"READ_ERROR: {ex.Message}";
+                                                importFunc.Ordinal = 0;
+                                                importFunc.IsOrdinalImport = false;
+                                            }
+                                            catch (UnauthorizedAccessException ex)
+                                            {
+                                                importFunc.FunctionName = $"READ_ERROR: {ex.Message}";
+                                                importFunc.Ordinal = 0;
+                                                importFunc.IsOrdinalImport = false;
+                                            }
+                                            catch (ArgumentOutOfRangeException ex)
                                             {
                                                 importFunc.FunctionName = $"READ_ERROR: {ex.Message}";
                                                 importFunc.Ordinal = 0;

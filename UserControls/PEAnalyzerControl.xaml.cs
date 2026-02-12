@@ -70,9 +70,26 @@ namespace PersonalTools.UserControls
                 DisplayAdditionalInfo();
                 DisplayIcons();
             }
-            catch (Exception ex)
+            catch (FileNotFoundException ex)
             {
                 MessageBox.Show($"加载文件时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                MessageBox.Show($"加载文件时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (IOException ex)
+            {
+                MessageBox.Show($"加载文件时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show($"加载文件时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -283,7 +300,19 @@ namespace PersonalTools.UserControls
                                 bitmap.Freeze(); // 提高性能
                                 iconViewModel.ImageSource = bitmap;
                             }
-                            catch (Exception ex)
+                            catch (IOException ex)
+                            {
+                                // 如果图像解码失败，记录日志但不中断其他图标显示
+                                Console.WriteLine($"图标解码失败: {ex.Message}");
+                                continue;
+                            }
+                            catch (UnauthorizedAccessException ex)
+                            {
+                                // 如果图像解码失败，记录日志但不中断其他图标显示
+                                Console.WriteLine($"图标解码失败: {ex.Message}");
+                                continue;
+                            }
+                            catch (ArgumentException ex)
                             {
                                 // 如果图像解码失败，记录日志但不中断其他图标显示
                                 Console.WriteLine($"图标解码失败: {ex.Message}");
@@ -293,7 +322,17 @@ namespace PersonalTools.UserControls
 
                         iconViewModels.Add(iconViewModel);
                     }
-                    catch (Exception ex)
+                    catch (IOException ex)
+                    {
+                        // 图标加载失败时跳过该图标
+                        Console.WriteLine($"图标加载失败: {ex.Message}");
+                    }
+                    catch (UnauthorizedAccessException ex)
+                    {
+                        // 图标加载失败时跳过该图标
+                        Console.WriteLine($"图标加载失败: {ex.Message}");
+                    }
+                    catch (ArgumentException ex)
                     {
                         // 图标加载失败时跳过该图标
                         Console.WriteLine($"图标加载失败: {ex.Message}");

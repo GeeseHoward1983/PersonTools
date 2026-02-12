@@ -110,9 +110,22 @@ namespace PersonalTools.PEAnalyzer.Resources
                     }
                 }
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 peInfo.AdditionalInfo.FileVersion = $"版本信息结构解析错误: {ex.Message}";
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                peInfo.AdditionalInfo.FileVersion = $"版本信息结构解析错误: {ex.Message}";
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                peInfo.AdditionalInfo.FileVersion = $"版本信息结构解析错误: {ex.Message}";
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -168,9 +181,22 @@ namespace PersonalTools.PEAnalyzer.Resources
                     fs.Position = nextChildPos;
                 }
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 peInfo.AdditionalInfo.FileVersion += $"; 版本子项解析错误: {ex.Message}";
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                peInfo.AdditionalInfo.FileVersion += $"; 版本子项解析错误: {ex.Message}";
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                peInfo.AdditionalInfo.FileVersion += $"; 版本子项解析错误: {ex.Message}";
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
     }

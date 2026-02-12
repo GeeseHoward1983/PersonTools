@@ -95,10 +95,25 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 return sb.ToString();
             }
-            catch (Exception)
+            catch (IOException)
             {
                 // 记录异常但不中断
                 return string.Empty;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // 记录异常但不中断
+                return string.Empty;
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                // 记录异常但不中断
+                return string.Empty;
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
     }

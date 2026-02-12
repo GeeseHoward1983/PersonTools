@@ -54,9 +54,18 @@ namespace PersonalTools.PEAnalyzer.Resources
                     ConvertDibToIco(peInfo, iconData);
                 }
             }
-            catch (Exception ex)
+            catch (ArgumentException ex)
             {
                 Console.WriteLine($"处理图标数据错误: {ex.Message}");
+            }
+            catch (IndexOutOfRangeException ex)
+            {
+                Console.WriteLine($"处理图标数据错误: {ex.Message}");
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -132,9 +141,18 @@ namespace PersonalTools.PEAnalyzer.Resources
                     peInfo.Icons.Add(iconInfo);
                 }
             }
-            catch (Exception ex)
+            catch (ArgumentException ex)
             {
                 Console.WriteLine($"转换DIB到ICO错误: {ex.Message}");
+            }
+            catch (IndexOutOfRangeException ex)
+            {
+                Console.WriteLine($"转换DIB到ICO错误: {ex.Message}");
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -173,7 +191,11 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 return false;
             }
-            catch
+            catch (ArgumentException)
+            {
+                return false;
+            }
+            catch (IndexOutOfRangeException)
             {
                 return false;
             }

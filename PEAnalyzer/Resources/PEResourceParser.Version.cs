@@ -43,10 +43,25 @@ namespace PersonalTools.PEAnalyzer.Resources
                     peInfo.AdditionalInfo.FileVersion = "文件不包含版本资源";
                 }
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 // 解析版本信息时出现异常，记录日志但不中断程序执行
                 peInfo.AdditionalInfo.FileVersion = $"解析错误: {ex.Message}";
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                // 解析版本信息时出现异常，记录日志但不中断程序执行
+                peInfo.AdditionalInfo.FileVersion = $"解析错误: {ex.Message}";
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                // 解析版本信息时出现异常，记录日志但不中断程序执行
+                peInfo.AdditionalInfo.FileVersion = $"解析错误: {ex.Message}";
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -99,9 +114,22 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 fs.Position = originalPosition;
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 peInfo.AdditionalInfo.FileVersion = $"资源目录解析错误: {ex.Message}";
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                peInfo.AdditionalInfo.FileVersion = $"资源目录解析错误: {ex.Message}";
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                peInfo.AdditionalInfo.FileVersion = $"资源目录解析错误: {ex.Message}";
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -164,9 +192,22 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 fs.Position = originalPosition;
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 peInfo.AdditionalInfo.FileVersion = $"版本资源解析错误: {ex.Message}";
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                peInfo.AdditionalInfo.FileVersion = $"版本资源解析错误: {ex.Message}";
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                peInfo.AdditionalInfo.FileVersion = $"版本资源解析错误: {ex.Message}";
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -217,9 +258,22 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 fs.Position = originalPosition;
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 peInfo.AdditionalInfo.FileVersion = $"数据项解析错误: {ex.Message}";
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                peInfo.AdditionalInfo.FileVersion = $"数据项解析错误: {ex.Message}";
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                peInfo.AdditionalInfo.FileVersion = $"数据项解析错误: {ex.Message}";
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
     }

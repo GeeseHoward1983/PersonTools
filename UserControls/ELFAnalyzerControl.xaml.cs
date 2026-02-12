@@ -117,11 +117,20 @@ namespace PersonalTools.UserControls
                 // 显示Exidx信息
                 string exidxInfo = ExidxInfoHelper.GetExidxInfo(analyzer.Parser);
                 ELFExidxInfoControl.SetExidxInfo(exidxInfo);
-                ELFExidxInfoTabItem.Visibility = !exidxInfo.Contains("There are no exception index entries") ? Visibility.Visible : Visibility.Collapsed;
+                ELFExidxInfoTabItem.Visibility = !exidxInfo.Contains("There are no exception index entries", StringComparison.CurrentCulture) ? Visibility.Visible : Visibility.Collapsed;
             }
-            catch (Exception ex)
+            catch (UnauthorizedAccessException ex)
             {
                 MessageBox.Show($"分析ELF文件时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show($"分析ELF文件时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
     }

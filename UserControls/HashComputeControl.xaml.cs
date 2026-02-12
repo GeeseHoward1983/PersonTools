@@ -6,7 +6,7 @@ using System.Windows.Controls;
 
 namespace PersonalTools.UserControls
 {
-    public class SHA3AlgorithmOption(string name, int value)
+    internal sealed class SHA3AlgorithmOption(string name, int value)
     {
         public required string Name { get; set; } = name;
         public required int Value { get; set; } = value;
@@ -72,9 +72,18 @@ namespace PersonalTools.UserControls
                 byte[] hashBytes = MD5.HashData(inputBytes);
                 MD5ResultLabel.Content = Utils.ToHexString(hashBytes);  // 恢复：使用Label的Content属性
             }
-            catch (Exception ex)
+            catch (FormatException ex)
             {
                 MessageBox.Show($"计算MD5时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (ArgumentNullException ex)
+            {
+                MessageBox.Show($"计算MD5时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -117,9 +126,18 @@ namespace PersonalTools.UserControls
                 byte[] hashBytes = SHA1.HashData(inputBytes);
                 SHA1ResultLabel.Content = Utils.ToHexString(hashBytes);
             }
-            catch (Exception ex)
+            catch (FormatException ex)
             {
                 MessageBox.Show($"计算SHA1时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (ArgumentNullException ex)
+            {
+                MessageBox.Show($"计算SHA1时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -165,9 +183,18 @@ namespace PersonalTools.UserControls
                 Array.Copy(hashBytes, sha224Bytes, 28);
                 SHA224ResultLabel.Content = Utils.ToHexString(hashBytes);
             }
-            catch (Exception ex)
+            catch (FormatException ex)
             {
                 MessageBox.Show($"计算SHA224时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (ArgumentNullException ex)
+            {
+                MessageBox.Show($"计算SHA224时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -210,9 +237,18 @@ namespace PersonalTools.UserControls
                 byte[] hashBytes = SHA256.HashData(inputBytes);
                 SHA256ResultLabel.Content = Utils.ToHexString(hashBytes);
             }
-            catch (Exception ex)
+            catch (FormatException ex)
             {
                 MessageBox.Show($"计算SHA256时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (ArgumentNullException ex)
+            {
+                MessageBox.Show($"计算SHA256时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -255,9 +291,18 @@ namespace PersonalTools.UserControls
                 byte[] hashBytes = SHA384.HashData(inputBytes);
                 SHA384ResultLabel.Content = Utils.ToHexString(hashBytes);
             }
-            catch (Exception ex)
+            catch (FormatException ex)
             {
                 MessageBox.Show($"计算SHA384时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (ArgumentNullException ex)
+            {
+                MessageBox.Show($"计算SHA384时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -300,9 +345,18 @@ namespace PersonalTools.UserControls
                 byte[] hashBytes = SHA512.HashData(inputBytes);
                 SHA512ResultLabel.Content = Utils.ToHexString(hashBytes);
             }
-            catch (Exception ex)
+            catch (FormatException ex)
             {
                 MessageBox.Show($"计算SHA512时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (ArgumentNullException ex)
+            {
+                MessageBox.Show($"计算SHA512时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -355,9 +409,22 @@ namespace PersonalTools.UserControls
                 byte[] hashBytes = sha3.ComputeHash(inputBytes);
                 SHA3ResultLabel.Content = Utils.ToHexString(hashBytes);
             }
-            catch (Exception ex)
+            catch (FormatException ex)
             {
                 MessageBox.Show($"计算SHA3时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (ArgumentNullException ex)
+            {
+                MessageBox.Show($"计算SHA3时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                MessageBox.Show($"计算SHA3时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -409,9 +476,18 @@ namespace PersonalTools.UserControls
                 // 更新提示文本
                 FileDropHint.Text = $"已加载文件: {Path.GetFileName(filePath)}，请在下方选择SHA3算法类型并计算";
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 

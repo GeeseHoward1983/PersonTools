@@ -75,7 +75,15 @@ namespace PersonalTools.PEAnalyzer.Resources
                 fs.Position = originalPosition;
                 return -1;
             }
-            catch (Exception)
+            catch (IOException)
+            {
+                return -1;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return -1;
+            }
+            catch (ArgumentOutOfRangeException)
             {
                 return -1;
             }
@@ -131,7 +139,15 @@ namespace PersonalTools.PEAnalyzer.Resources
                 fs.Position = originalPosition;
                 return -1;
             }
-            catch
+            catch (IOException)
+            {
+                return -1;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return -1;
+            }
+            catch (ArgumentOutOfRangeException)
             {
                 return -1;
             }
@@ -180,7 +196,15 @@ namespace PersonalTools.PEAnalyzer.Resources
                 fs.Position = originalPosition;
                 return dataOffset;
             }
-            catch
+            catch (IOException)
+            {
+                return -1;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return -1;
+            }
+            catch (ArgumentOutOfRangeException)
             {
                 return -1;
             }
@@ -256,7 +280,15 @@ namespace PersonalTools.PEAnalyzer.Resources
                 fs.Position = originalPosition;
                 return -1;
             }
-            catch (Exception)
+            catch (IOException)
+            {
+                return -1;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return -1;
+            }
+            catch (ArgumentOutOfRangeException)
             {
                 return -1;
             }
@@ -297,7 +329,15 @@ namespace PersonalTools.PEAnalyzer.Resources
                 fs.Position = originalPosition;
                 return resourceName;
             }
-            catch
+            catch (IOException)
+            {
+                return string.Empty;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return string.Empty;
+            }
+            catch (ArgumentOutOfRangeException)
             {
                 return string.Empty;
             }

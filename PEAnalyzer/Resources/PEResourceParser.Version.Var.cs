@@ -37,9 +37,9 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 if (key.Equals("VarFileInfo", StringComparison.OrdinalIgnoreCase))
                 {
-                    // 计算Var结构的位置
+                    // 计算Var块的位置
                     long keyLengthInBytes = (key.Length + 1) * 2; // Unicode字符串长度 + null终止符
-                    long afterKeyPosition = startPosition + 6 + keyLengthInBytes; // 6是头部大小
+                    long afterKeyPosition = startPosition + 6 + keyLengthInBytes;
                     long varPosition = afterKeyPosition + 3 & ~3; // 对齐到4字节边界
 
                     long varFileInfoEndPosition = Math.Min(startPosition + wLength, endPosition);
@@ -58,15 +58,31 @@ namespace PersonalTools.PEAnalyzer.Resources
                     fs.Position = nextPosition;
                 }
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 // 忽略VarFileInfo解析错误
                 peInfo.AdditionalInfo.FileVersion += $"; VarFileInfo解析错误: {ex.Message}";
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                // 忽略VarFileInfo解析错误
+                peInfo.AdditionalInfo.FileVersion += $"; VarFileInfo解析错误: {ex.Message}";
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                // 忽略VarFileInfo解析错误
+                peInfo.AdditionalInfo.FileVersion += $"; VarFileInfo解析错误: {ex.Message}";
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
         /// <summary>
         /// 解析Var部分（VarFileInfo的子项）
+        /// 支持循环解析多个Var项
         /// </summary>
         /// <param name="fs">文件流</param>
         /// <param name="reader">二进制读取器</param>
@@ -76,61 +92,97 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             try
             {
-                long startPosition = fs.Position;
-
-                // 检查是否还有足够的数据
-                if (fs.Position + 6 > fs.Length)
+                while (fs.Position < endPosition)
                 {
-                    return;
-                }
+                    long startPosition = fs.Position;
 
-                ushort wLength = reader.ReadUInt16();
-                ushort wValueLength = reader.ReadUInt16();
-                ushort wType = reader.ReadUInt16();
-
-                // 读取变量名（通常是"Translation"）
-                string varName = PEResourceParserCore.ReadUnicodeStringWithMaxLength(reader, wLength);
-
-                // 计算值的位置
-                long keyLengthInBytes = (varName.Length + 1) * 2; // Unicode字符串长度 + null终止符
-                long afterVarNamePosition = startPosition + 6 + keyLengthInBytes;
-                long valuePosition = afterVarNamePosition + 3 & ~3; // 对齐到4字节边界
-
-                if (valuePosition >= fs.Length || valuePosition >= endPosition)
-                {
-                    return;
-                }
-
-                fs.Position = valuePosition;
-
-                // 解析值（对于Translation，通常是语言和代码页的DWORD对）
-                if (varName.Equals("Translation", StringComparison.OrdinalIgnoreCase) && wValueLength >= 4)
-                {
-                    // 读取语言和代码页信息
-                    if (valuePosition + wValueLength <= fs.Length && valuePosition + wValueLength <= endPosition)
+                    // 检查是否还有足够的数据
+                    if (fs.Position + 6 > fs.Length)
                     {
-                        // 读取第一个DWORD对（语言ID和代码页）
-                        uint translation = reader.ReadUInt32();
-                        uint languageId = translation & 0xFFFF;
-                        uint codePage = translation >> 16 & 0xFFFF;
+                        break;
+                    }
 
-                        // 存储翻译信息（转换为可读格式）
-                        peInfo.AdditionalInfo.TranslationInfo = PEResourceParserVersionLanguage.GetReadableTranslationInfo(languageId, codePage);
+                    ushort wLength = reader.ReadUInt16();
+                    ushort wValueLength = reader.ReadUInt16();
+                    ushort wType = reader.ReadUInt16();
+
+                    if (wLength == 0)
+                    {
+                        // 如果长度为0，尝试跳转到下一个4字节边界
+                        long alignedPos = (startPosition + 3) & ~3;
+                        if (alignedPos < fs.Length)
+                        {
+                            fs.Position = alignedPos;
+                        }
+                        break;
+                    }
+
+                    // 读取变量名（通常是"Translation"）
+                    string varName = PEResourceParserCore.ReadUnicodeStringWithMaxLength(reader, wLength);
+
+                    // 计算值的位置（对齐到4字节边界）
+                    long keyLengthInBytes = (varName.Length + 1) * 2; // Unicode字符串长度 + null终止符
+                    long afterVarNamePosition = startPosition + 6 + keyLengthInBytes;
+                    long valuePosition = (afterVarNamePosition + 3) & ~3; // 对齐到4字节边界
+
+                    if (valuePosition >= fs.Length || valuePosition >= endPosition)
+                    {
+                        break;
+                    }
+
+                    fs.Position = valuePosition;
+
+                    // 解析值（对于Translation，通常是语言和代码页的DWORD对）
+                    if (varName.Equals("Translation", StringComparison.OrdinalIgnoreCase) && wValueLength >= 4)
+                    {
+                        // 确保有足够的数据可读
+                        if (valuePosition + wValueLength <= fs.Length && valuePosition + wValueLength <= endPosition)
+                        {
+                            // 读取语言和代码页信息
+                            byte[] translationBytes = reader.ReadBytes(wValueLength);
+                            
+                            // 将字节数组转换为语言和代码页信息
+                            if (translationBytes.Length >= 4)
+                            {
+                                uint languageId = BitConverter.ToUInt32(translationBytes, 0) & 0xFFFF;
+                                uint codePage = (BitConverter.ToUInt32(translationBytes, 0) >> 16) & 0xFFFF;
+                                
+                                // 存储翻译信息（转换为可读格式）
+                                peInfo.AdditionalInfo.TranslationInfo = PEResourceParserVersionLanguage.GetReadableTranslationInfo(languageId, codePage);
+                            }
+                        }
+                    }
+
+                    // 确保位置正确前进到下一个兄弟节点（对齐到4字节边界）
+                    long nextPosition = (startPosition + wLength + 3) & ~3;
+                    if (nextPosition < endPosition && nextPosition > fs.Position && nextPosition < fs.Length)
+                    {
+                        fs.Position = nextPosition;
+                    }
+                    else
+                    {
+                        break;
                     }
                 }
-
-                // 移动到下一个Var（如果有）
-                long nextPosition = startPosition + wLength + 3 & ~3;
-                if (nextPosition < endPosition && nextPosition < fs.Length)
-                {
-                    fs.Position = nextPosition;
-                    // 可以继续解析更多的Var项，但在实践中很少见
-                }
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 // 忽略Var解析错误
                 peInfo.AdditionalInfo.FileVersion += $"; Var解析错误: {ex.Message}";
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                // 忽略Var解析错误
+                peInfo.AdditionalInfo.FileVersion += $"; Var解析错误: {ex.Message}";
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                // 忽略Var解析错误
+                peInfo.AdditionalInfo.FileVersion += $"; Var解析错误: {ex.Message}";
+            }
+            catch (Exception)
+            {
+                throw;
             }
         }
     }

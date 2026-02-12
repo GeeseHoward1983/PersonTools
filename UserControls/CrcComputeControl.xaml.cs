@@ -140,9 +140,22 @@ namespace PersonalTools.UserControls
                 string formatString = selectedAlgorithm.Width <= 8 ? "X2" : selectedAlgorithm.Width <= 16 ? "X4" : "X8";
                 CRCResultLabel.Content = crcResult.ToString(formatString, CultureInfo.InvariantCulture);
             }
-            catch (Exception ex)
+            catch (FormatException ex)
             {
                 System.Windows.MessageBox.Show($"计算CRC时发生错误: {ex.Message}", "错误", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+            catch (ArgumentNullException ex)
+            {
+                System.Windows.MessageBox.Show($"计算CRC时发生错误: {ex.Message}", "错误", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                System.Windows.MessageBox.Show($"计算CRC时发生错误: {ex.Message}", "错误", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -195,9 +208,18 @@ namespace PersonalTools.UserControls
                 CRCHexInputRadio.IsChecked = true;
 
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 System.Windows.MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                System.Windows.MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 

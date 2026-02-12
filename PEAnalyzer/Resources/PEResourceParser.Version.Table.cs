@@ -1,4 +1,5 @@
 using PersonalTools.PEAnalyzer.Models;
+using System.Globalization;
 using System.IO;
 using System.Text;
 
@@ -76,10 +77,25 @@ namespace PersonalTools.PEAnalyzer.Resources
                     ParseStringPair(fs, reader, peInfo, tableEndPosition);
                 }
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 // 忽略StringTable解析错误
                 peInfo.AdditionalInfo.FileVersion += $"; StringTable解析错误: {ex.Message}";
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                // 忽略StringTable解析错误
+                peInfo.AdditionalInfo.FileVersion += $"; StringTable解析错误: {ex.Message}";
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                // 忽略StringTable解析错误
+                peInfo.AdditionalInfo.FileVersion += $"; StringTable解析错误: {ex.Message}";
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -166,7 +182,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 string value = valueSb.ToString();
 
                 // 根据键名设置相应的属性
-                switch (keyValue.ToLower(System.Globalization.CultureInfo.CurrentCulture))
+                switch (keyValue.ToLower(CultureInfo.CurrentCulture))
                 {
                     case "companyname":
                         peInfo.AdditionalInfo.CompanyName = value;
@@ -175,27 +191,13 @@ namespace PersonalTools.PEAnalyzer.Resources
                         peInfo.AdditionalInfo.FileDescription = value;
                         break;
                     case "fileversion":
-                        if (string.IsNullOrEmpty(peInfo.AdditionalInfo.FileVersion) || !peInfo.AdditionalInfo.FileVersion.Contains('.', StringComparison.CurrentCulture))
-                        {
-                            peInfo.AdditionalInfo.FileVersion = value;
-                        }
-
+                        peInfo.AdditionalInfo.FileVersion = value;
                         break;
                     case "productname":
                         peInfo.AdditionalInfo.ProductName = value;
                         break;
                     case "productversion":
-                        if (string.IsNullOrEmpty(peInfo.AdditionalInfo.ProductVersion) || !peInfo.AdditionalInfo.ProductVersion.Contains('.', StringComparison.CurrentCulture))
-                        {
-                            peInfo.AdditionalInfo.ProductVersion = value;
-                        }
-
-                        break;
-                    case "originalfilename":
-                        peInfo.AdditionalInfo.OriginalFileName = value;
-                        break;
-                    case "internalname":
-                        peInfo.AdditionalInfo.InternalName = value;
+                        peInfo.AdditionalInfo.ProductVersion = value;
                         break;
                     case "legalcopyright":
                         peInfo.AdditionalInfo.LegalCopyright = value;
@@ -203,21 +205,43 @@ namespace PersonalTools.PEAnalyzer.Resources
                     case "legaltrademarks":
                         peInfo.AdditionalInfo.LegalTrademarks = value;
                         break;
+                    case "originalfilename":
+                        peInfo.AdditionalInfo.OriginalFileName = value;
+                        break;
+                    case "internalname":
+                        peInfo.AdditionalInfo.InternalName = value;
+                        break;
+                    case "copyright":
+                        peInfo.AdditionalInfo.Copyright = value;
+                        break;
                 }
 
-                // 移动到下一个字符串对
-                fs.Position = startPosition + wLength + 3 & ~3;
-
-                // 确保不超出边界
-                if (fs.Position > endPosition)
+                // 确保位置正确前进到下一个兄弟节点
+                long nextPosition = startPosition + wLength + 3 & ~3;
+                if (nextPosition < endPosition && nextPosition > fs.Position)
                 {
-                    fs.Position = endPosition;
+                    fs.Position = nextPosition;
                 }
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
-                // 忽略单个字符串对解析错误
+                // 忽略StringPair解析错误
                 peInfo.AdditionalInfo.FileVersion += $"; StringPair解析错误: {ex.Message}";
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                // 忽略StringPair解析错误
+                peInfo.AdditionalInfo.FileVersion += $"; StringPair解析错误: {ex.Message}";
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                // 忽略StringPair解析错误
+                peInfo.AdditionalInfo.FileVersion += $"; StringPair解析错误: {ex.Message}";
+            }
+            // 其他异常重新抛出
+            catch (Exception)
+            {
+                throw;
             }
         }
     }
