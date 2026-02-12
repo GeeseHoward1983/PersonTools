@@ -43,9 +43,11 @@ namespace PersonalTools.UserControls
         {
             // 初始化加密模式下拉框
             AesModeComboBox.Items.Add(new AesModeOption { Name = "CBC (默认)", Mode = CipherMode.CBC });
+#pragma warning disable CA5358
             AesModeComboBox.Items.Add(new AesModeOption { Name = "ECB", Mode = CipherMode.ECB });
             AesModeComboBox.Items.Add(new AesModeOption { Name = "CFB", Mode = CipherMode.CFB });
             AesModeComboBox.Items.Add(new AesModeOption { Name = "OFB", Mode = CipherMode.OFB });
+#pragma warning restore CA5358
             AesModeComboBox.SelectedIndex = 0; // 默认选择CBC
 
             // 初始化填充方式下拉框
@@ -90,7 +92,9 @@ namespace PersonalTools.UserControls
 
                 // 对于CBC和CFB等模式，需要IV向量
                 AesModeOption selectedMode = (AesModeOption)AesModeComboBox.SelectedItem;
+#pragma warning disable CA5358
                 if (selectedMode.Mode is CipherMode.CBC or CipherMode.CFB or CipherMode.OFB)
+#pragma warning restore CA5358
                 {
                     if (string.IsNullOrEmpty(ivInput))
                     {
@@ -163,6 +167,7 @@ namespace PersonalTools.UserControls
 
                 // 对于CBC和CFB等模式，需要IV向量
                 AesModeOption selectedMode = (AesModeOption)AesModeComboBox.SelectedItem;
+#pragma warning disable CA5358
                 if (selectedMode.Mode is CipherMode.CBC or CipherMode.CFB or CipherMode.OFB)
                 {
                     if (string.IsNullOrEmpty(ivInput))
@@ -239,9 +244,9 @@ namespace PersonalTools.UserControls
                 // Hex字符串模式
                 inputBytes = Utils.HexStringToByteArray(input);
             }
-
+#pragma warning disable CA5401
             ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
-
+#pragma warning restore CA5401
             using MemoryStream msEncrypt = new();
             using CryptoStream csEncrypt = new(msEncrypt, encryptor, CryptoStreamMode.Write);
             csEncrypt.Write(inputBytes, 0, inputBytes.Length);

@@ -21,6 +21,7 @@ namespace PersonalTools.UserControls
         public static readonly DependencyProperty QueryCommandProperty =
             DependencyProperty.Register("QueryCommand", typeof(ICommand), typeof(ErrorCodeQueryItem));
 
+        #pragma warning disable CA2227 // 符合WPF依赖属性要求，需要公共setter
         public Dictionary<long, string> ErrorCodeMap
         {
             get => (Dictionary<long, string>)GetValue(ErrorCodeMapLongProperty);
@@ -32,6 +33,7 @@ namespace PersonalTools.UserControls
             get => (Dictionary<string, string>)GetValue(ErrorCodeMapStringProperty);
             set => SetValue(ErrorCodeMapStringProperty, value);
         }
+        #pragma warning restore CA2227
 
         public ICommand QueryCommand
         {
