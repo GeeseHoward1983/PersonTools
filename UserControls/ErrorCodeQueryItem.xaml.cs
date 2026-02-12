@@ -7,8 +7,10 @@ namespace PersonalTools.UserControls
     /// <summary>
     /// ErrorCodeQueryItem.xaml 的交互逻辑
     /// </summary>
+    #pragma warning disable CA1515 // 符合WPF框架要求，需要保持public访问修饰符
     public partial class ErrorCodeQueryItem : UserControl
     {
+        #pragma warning restore CA1515
         // 依赖属性定义
         public static readonly DependencyProperty ErrorCodeMapLongProperty =
             DependencyProperty.Register("ErrorCodeMap", typeof(Dictionary<long, string>), typeof(ErrorCodeQueryItem));

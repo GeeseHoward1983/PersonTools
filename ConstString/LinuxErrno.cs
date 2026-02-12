@@ -1,4 +1,3 @@
-using PersonalTools;
 using PersonalTools.Enums;
 
 namespace PersonalTools.ConstString

@@ -138,7 +138,7 @@ namespace PersonalTools.ConstString
         };
 
         // Windows标准C库 errno 错误码 (Windows平台支持的errno值)
-        public static Dictionary<long, string> WindowsStandardErrnoMap => GlobalState.CurrentLanguageType switch
+        internal static Dictionary<long, string> WindowsStandardErrnoMap => GlobalState.CurrentLanguageType switch
         {
             LanguageType.SimplifiedChinese => WindowsStandardErrnoMapSimplifiedChinese,
             LanguageType.TraditionalChinese => WindowsStandardErrnoMapTraditionalChinese,

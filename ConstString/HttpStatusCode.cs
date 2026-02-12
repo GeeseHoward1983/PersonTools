@@ -212,7 +212,7 @@ namespace PersonalTools.ConstString
         };
 
         // HTTP 状态码
-        public static Dictionary<long, string> HttpStatusMap => GlobalState.CurrentLanguageType switch
+        internal static Dictionary<long, string> HttpStatusMap => GlobalState.CurrentLanguageType switch
         {
             LanguageType.SimplifiedChinese => HttpStatusMapSimplifiedChinese,
             LanguageType.TraditionalChinese => HttpStatusMapTraditionalChinese,

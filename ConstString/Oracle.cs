@@ -108,7 +108,7 @@ namespace PersonalTools.ConstString
         };
 
         // Oracle SQLCODE
-        public static Dictionary<long, string> OracleSqlCodeMap => GlobalState.CurrentLanguageType switch
+        internal static Dictionary<long, string> OracleSqlCodeMap => GlobalState.CurrentLanguageType switch
         {
             LanguageType.SimplifiedChinese => OracleSqlCodeMapSimplifiedChinese,
             LanguageType.TraditionalChinese => OracleSqlCodeMapTraditionalChinese,

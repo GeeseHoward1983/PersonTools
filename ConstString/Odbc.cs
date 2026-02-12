@@ -3,7 +3,7 @@ using PersonalTools.Enums;
 
 namespace PersonalTools.ConstString
 {
-    internal static partial class OdbcErrors
+    internal static class OdbcErrors
     {
         // ODBC 错误码 - 英文
         private static readonly Dictionary<string, string> OdbcErrorsMapEnglish = new()
@@ -306,7 +306,7 @@ namespace PersonalTools.ConstString
         };
 
         // ODBC 错误码
-        public static Dictionary<string, string> OdbcErrorsMap => GlobalState.CurrentLanguageType switch
+        internal static Dictionary<string, string> OdbcErrorsMap => GlobalState.CurrentLanguageType switch
         {
             LanguageType.SimplifiedChinese => OdbcErrorsMapSimplifiedChinese,
             LanguageType.TraditionalChinese => OdbcErrorsMapTraditionalChinese,

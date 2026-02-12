@@ -1,31 +1,32 @@
 using PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.Enums;
+using System.Text;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
     internal static class HeaderInfo
     {
-        public static string GetArchitectureName(ELFHeader header)
+        internal static string GetArchitectureName(ELFHeader header)
         {
             return ELFParserUtils.GetTypeName(typeof(EMachine), header.e_machine, "");
         }
 
-        public static string GetELFClassName(ELFHeader header)
+        internal static string GetELFClassName(ELFHeader header)
         {
             return ELFParserUtils.GetTypeName(typeof(ELFClass), header.EI_CLASS, "");
         }
 
-        public static string GetELFDataName(ELFHeader header)
+        internal static string GetELFDataName(ELFHeader header)
         {
             return ELFParserUtils.GetTypeName(typeof(ELFData), header.EI_DATA, "");
         }
 
-        public static string GetELFTypeName(ELFHeader header)
+        internal static string GetELFTypeName(ELFHeader header)
         {
             return ELFParserUtils.GetTypeName(typeof(ELFType), header.e_type, "");
         }
 
-        public static string GetOSABIName(ELFHeader header)
+        internal static string GetOSABIName(ELFHeader header)
         {
             return header.EI_OSABI switch
             {
@@ -51,12 +52,12 @@ namespace PersonalTools.ELFAnalyzer.Core
             };
         }
 
-        public static string GetReadableVersion(ELFHeader header)
+        internal static string GetReadableVersion(ELFHeader header)
         {
             return $"{header.e_version}";
         }
 
-        public static string GetMachineDescription(ELFHeader header)
+        internal static string GetMachineDescription(ELFHeader header)
         {
             return header.e_machine switch
             {
@@ -257,7 +258,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             };
         }
 
-        public static string GetFileTypeDescription(ELFHeader header)
+        internal static string GetFileTypeDescription(ELFHeader header)
         {
             return (ELFType)header.e_type switch
             {
@@ -270,12 +271,12 @@ namespace PersonalTools.ELFAnalyzer.Core
             };
         }
 
-        public static string GetEntryPointAddress(ELFHeader header)
+        internal static string GetEntryPointAddress(ELFHeader header)
         {
             return ELFParserUtils.FormatAddress(header.e_entry);
         }
 
-        public static string GetHeaderSize(ELFHeader header)
+        internal static string GetHeaderSize(ELFHeader header)
         {
             return $"{header.e_ehsize} (bytes)";
         }
@@ -436,7 +437,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             return descriptions;
         }
 
-        public static string GetFormattedELFFlags(ELFHeader header)
+        internal static string GetFormattedELFFlags(ELFHeader header)
         {
             // 根据架构类型解析不同的标志
             return Utils.EnumerableToString(", ",

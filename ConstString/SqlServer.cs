@@ -66,7 +66,8 @@ namespace PersonalTools.ConstString
             { 17187, "SQL Server not configured to accept remote connections" },
             { 18452, "Cannot use Windows authentication" },
             { 23294, "Object is being used by another process" },
-            { 26024, "Failed to start service" }
+            { 26024, "Failed to start service" },
+            { 99999, "SQL Server error - unknown error" }
         };
 
         // SQL Server 错误码 - 简体中文
@@ -130,7 +131,8 @@ namespace PersonalTools.ConstString
             { 17187, "SQL Server尚未配置为接受远程连接" },
             { 18452, "无法使用 Windows 身份验证" },
             { 23294, "对象正被另一进程使用" },
-            { 26024, "启动服务失败" }
+            { 26024, "启动服务失败" },
+            { 99999, "SQL Server error - unknown error" }
         };
 
         // SQL Server 错误码 - 繁体中文
@@ -194,11 +196,11 @@ namespace PersonalTools.ConstString
             { 17187, "SQL Server尚未配置為接受遠程連接" },
             { 18452, "無法使用 Windows 身份驗證" },
             { 23294, "物件正被另一進程使用" },
-            { 26024, "啟動服務失敗" }
+            { 26024, "啟動服務失敗" },
+            { 99999, "SQL Server error - unknown error" }
         };
 
-        // SQL Server 错误码
-        public static Dictionary<long, string> SqlServerErrorsMap => GlobalState.CurrentLanguageType switch
+        internal static Dictionary<long, string> SqlServerErrorsMap => GlobalState.CurrentLanguageType switch
         {
             LanguageType.SimplifiedChinese => SqlServerErrorsMapSimplifiedChinese,
             LanguageType.TraditionalChinese => SqlServerErrorsMapTraditionalChinese,
