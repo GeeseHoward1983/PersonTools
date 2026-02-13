@@ -3,6 +3,7 @@ using PersonalTools.PEAnalyzer.Parsers;
 using PersonalTools.PEAnalyzer.Resources;
 using System.IO;
 using System.Reflection.PortableExecutable;
+using System.Windows;
 
 namespace PersonalTools
 {
@@ -60,7 +61,7 @@ namespace PersonalTools
 
                             // 获取DLL名称
                             long nameOffset = PEResourceParserCore.RvaToOffset(importDesc.Name, peInfo.SectionHeaders);
-                            if (nameOffset != -1 && nameOffset < fs.Length)
+                            if (nameOffset < fs.Length)
                             {
                                 long tempPosition = fs.Position;
                                 fs.Position = nameOffset;
@@ -72,21 +73,17 @@ namespace PersonalTools
                                 if (!string.IsNullOrEmpty(dllName))
                                 {
                                     // 检查是否已存在相同的依赖项
-                                    bool alreadyExists = false;
                                     foreach (DependencyInfo dep in peInfo.Dependencies)
                                     {
                                         if (dep.Name.Equals(dllName, StringComparison.OrdinalIgnoreCase))
                                         {
-                                            alreadyExists = true;
                                             break;
                                         }
-                                    }
-
-                                    // 如果不存在，则添加新的依赖项
-                                    if (!alreadyExists)
-                                    {
-                                        DependencyInfo dependency = new() { Name = dllName };
-                                        peInfo.Dependencies.Add(dependency);
+                                        else
+                                        {
+                                            DependencyInfo dependency = new() { Name = dllName };
+                                            peInfo.Dependencies.Add(dependency);
+                                        }
                                     }
                                 }
 
@@ -107,17 +104,17 @@ namespace PersonalTools
             catch (IOException ex)
             {
                 // 忽略导入表解析错误
-                Console.WriteLine($"导入表解析错误: {ex.Message}");
+                MessageBox.Show($"导入表解析错误: {ex.Message}");
             }
             catch (UnauthorizedAccessException ex)
             {
                 // 忽略导入表解析错误
-                Console.WriteLine($"导入表解析错误: {ex.Message}");
+                MessageBox.Show($"导入表解析错误: {ex.Message}");
             }
             catch (ArgumentOutOfRangeException ex)
             {
                 // 忽略导入表解析错误
-                Console.WriteLine($"导入表解析错误: {ex.Message}");
+                MessageBox.Show($"导入表解析错误: {ex.Message}");
             }
             // 其他异常重新抛出
             catch (Exception)
@@ -225,6 +222,13 @@ namespace PersonalTools
             }
         }
 
+        private static void SetImportFunc(ImportFunctionInfo importFunc, string functionNm, int ordinal, bool isOrdinalImport)
+        {
+            importFunc.FunctionName = functionNm;
+            importFunc.Ordinal = ordinal;
+            importFunc.IsOrdinalImport = isOrdinalImport;
+        }
+
         private static void ImportByName(List<IMAGESECTIONHEADER> sections, ulong thunkRva, FileStream fs, BinaryReader reader, ImportFunctionInfo importFunc)
         {
             long nameOffset = PEResourceParserCore.RvaToOffset((uint)thunkRva, sections);
@@ -244,42 +248,29 @@ namespace PersonalTools
                         string functionName = Utilties.ReadNullTerminatedString(reader);
                         fs.Position = savePos; // 恢复位置
 
-                        importFunc.FunctionName = !string.IsNullOrEmpty(functionName) ? functionName : $"EMPTY_NAME";
-                        // 使用Hint字段作为序号
-                        importFunc.Ordinal = hint;
-                        importFunc.IsOrdinalImport = false;
+                        SetImportFunc(importFunc, !string.IsNullOrEmpty(functionName) ? functionName : $"EMPTY_NAME", hint, false);
                     }
                     else
                     {
-                        importFunc.FunctionName = $"NAME_TOO_SHORT";
-                        importFunc.Ordinal = 0;
-                        importFunc.IsOrdinalImport = false;
+                        SetImportFunc(importFunc, $"NAME_TOO_SHORT", 0, false);
                     }
                 }
                 catch (IOException ex)
                 {
-                    importFunc.FunctionName = $"READ_ERROR: {ex.Message}";
-                    importFunc.Ordinal = 0;
-                    importFunc.IsOrdinalImport = false;
+                    SetImportFunc(importFunc, $"READ_ERROR: {ex.Message}", 0, false);
                 }
                 catch (UnauthorizedAccessException ex)
                 {
-                    importFunc.FunctionName = $"READ_ERROR: {ex.Message}";
-                    importFunc.Ordinal = 0;
-                    importFunc.IsOrdinalImport = false;
+                    SetImportFunc(importFunc, $"READ_ERROR: {ex.Message}", 0, false);
                 }
                 catch (ArgumentOutOfRangeException ex)
                 {
-                    importFunc.FunctionName = $"READ_ERROR: {ex.Message}";
-                    importFunc.Ordinal = 0;
-                    importFunc.IsOrdinalImport = false;
+                    SetImportFunc(importFunc, $"READ_ERROR: {ex.Message}", 0, false);
                 }
             }
             else
             {
-                importFunc.FunctionName = $"INVALID_RVA_{thunkRva:X8}";
-                importFunc.Ordinal = 0;
-                importFunc.IsOrdinalImport = false;
+                SetImportFunc(importFunc, $"INVALID_RVA_{thunkRva:X8}", 0, false);
             }
         }
 
@@ -299,121 +290,117 @@ namespace PersonalTools
             const int DELAY_LOAD_IMPORT_INDEX = 13;
             bool is64Bit = Utilties.Is64Bit(peInfo.OptionalHeader);
             bool is32Bit = Utilties.Is32Bit(peInfo.OptionalHeader);
-            if (peInfo.OptionalHeader.DataDirectory.Length > DELAY_LOAD_IMPORT_INDEX &&
-                peInfo.OptionalHeader.DataDirectory[DELAY_LOAD_IMPORT_INDEX].VirtualAddress != 0)
+            uint delayLoadImportRVA = peInfo.OptionalHeader.DataDirectory[DELAY_LOAD_IMPORT_INDEX].VirtualAddress;
+            long delayLoadImportOffset = PEResourceParserCore.RvaToOffset(delayLoadImportRVA, peInfo.SectionHeaders);
+
+            if (delayLoadImportOffset != -1 && delayLoadImportOffset < fs.Length)
             {
-                uint delayLoadImportRVA = peInfo.OptionalHeader.DataDirectory[DELAY_LOAD_IMPORT_INDEX].VirtualAddress;
-                long delayLoadImportOffset = PEResourceParserCore.RvaToOffset(delayLoadImportRVA, peInfo.SectionHeaders);
+                long delayLoadImportStartOffset = delayLoadImportOffset; // 记录起始位置
+                int descriptorCount = 0;
 
-                if (delayLoadImportOffset != -1 && delayLoadImportOffset < fs.Length)
+                while (delayLoadImportStartOffset + (descriptorCount + 1) * 32 <= fs.Length)
                 {
-                    long delayLoadImportStartOffset = delayLoadImportOffset; // 记录起始位置
-                    int descriptorCount = 0;
+                    // 定位到当前描述符位置
+                    fs.Position = delayLoadImportStartOffset + descriptorCount * 32;
 
-                    while (delayLoadImportStartOffset + (descriptorCount + 1) * 32 <= fs.Length)
+                    IMAGEDELAYLOADDESCRIPTOR delayLoadDesc = new()
                     {
-                        // 定位到当前描述符位置
-                        fs.Position = delayLoadImportStartOffset + descriptorCount * 32;
+                        Attributes = reader.ReadUInt32(),
+                        DllNameRVA = reader.ReadUInt32(),
+                        ModuleHandleRVA = reader.ReadUInt32(),
+                        ImportAddressTableRVA = reader.ReadUInt32(),
+                        ImportNameTableRVA = reader.ReadUInt32(),
+                        BoundImportAddressTableRVA = reader.ReadUInt32(),
+                        UnloadInformationTableRVA = reader.ReadUInt32(),
+                        TimeDateStamp = reader.ReadUInt32()
+                    };
 
-                        IMAGEDELAYLOADDESCRIPTOR delayLoadDesc = new()
+                    descriptorCount++;
+                    long nameOffset = PEResourceParserCore.RvaToOffset(delayLoadDesc.DllNameRVA, peInfo.SectionHeaders);
+
+                    // 获取DLL名称
+                    string dllName = string.Empty;
+                    if (nameOffset != -1)
+                    {
+                        if (nameOffset < fs.Length)
                         {
-                            Attributes = reader.ReadUInt32(),
-                            DllNameRVA = reader.ReadUInt32(),
-                            ModuleHandleRVA = reader.ReadUInt32(),
-                            ImportAddressTableRVA = reader.ReadUInt32(),
-                            ImportNameTableRVA = reader.ReadUInt32(),
-                            BoundImportAddressTableRVA = reader.ReadUInt32(),
-                            UnloadInformationTableRVA = reader.ReadUInt32(),
-                            TimeDateStamp = reader.ReadUInt32()
-                        };
+                            long savePos = fs.Position;
+                            fs.Position = nameOffset;
+                            dllName = Utilties.ReadNullTerminatedString(reader);
+                            fs.Position = savePos; // 恢复位置
+                        }
+                    }
+                    else
+                    {
+                        break; // 如果DLL名称RVA为0，说明没有更多的描述符了
+                    }
 
-                        descriptorCount++;
+                    // 如果DLL名称为空，跳过这个延迟加载描述符
+                    if (string.IsNullOrEmpty(dllName))
+                    {
+                        continue;
+                    }
 
-                        // 获取DLL名称
-                        string dllName = "";
-                        if (delayLoadDesc.DllNameRVA != 0)
+                    // 添加到依赖信息列表（如果尚未存在）
+                    foreach (DependencyInfo dep in peInfo.Dependencies)
+                    {
+                        if (dep.Name.Equals(dllName, StringComparison.OrdinalIgnoreCase))
                         {
-                            long nameOffset = PEResourceParserCore.RvaToOffset(delayLoadDesc.DllNameRVA, peInfo.SectionHeaders);
-                            if (nameOffset != -1 && nameOffset < fs.Length)
-                            {
-                                long savePos = fs.Position;
-                                fs.Position = nameOffset;
-                                dllName = Utilties.ReadNullTerminatedString(reader);
-                                fs.Position = savePos; // 恢复位置
-                            }
+                            break;
                         }
                         else
                         {
-                            break; // 如果DLL名称RVA为0，说明没有更多的描述符了
+                            DependencyInfo dependency = new() { Name = dllName };
+                            peInfo.Dependencies.Add(dependency);
                         }
+                    }
 
-                        // 如果DLL名称为空，跳过这个延迟加载描述符
-                        if (string.IsNullOrEmpty(dllName))
+                    // 解析延迟加载导入函数 - 使用ImportNameTableRVA
+                    if (delayLoadDesc.ImportNameTableRVA != 0)
+                    {
+                        long nameTableOffset = PEResourceParserCore.RvaToOffset(delayLoadDesc.ImportNameTableRVA, peInfo.SectionHeaders);
+                        if (nameTableOffset != -1 && nameTableOffset < fs.Length)
                         {
-                            continue;
-                        }
+                            long nameTableStartPos = nameTableOffset;
+                            fs.Position = nameTableOffset;
+                            int thunkCount = 0;
 
-                        // 添加到依赖信息列表（如果尚未存在）
-                        foreach (DependencyInfo dep in peInfo.Dependencies)
-                        {
-                            if (dep.Name.Equals(dllName, StringComparison.OrdinalIgnoreCase))
+                            while (fs.Position + (is32Bit ? 4 : 8) <= fs.Length)
                             {
-                                break;
-                            }
-                            else
-                            {
-                                DependencyInfo dependency = new() { Name = dllName };
-                                peInfo.Dependencies.Add(dependency);
-                            }
-                        }
+                                ulong thunkRva = (is32Bit) ?
+                                    reader.ReadUInt32() : reader.ReadUInt64();
 
-                        // 解析延迟加载导入函数 - 使用ImportNameTableRVA
-                        if (delayLoadDesc.ImportNameTableRVA != 0)
-                        {
-                            long nameTableOffset = PEResourceParserCore.RvaToOffset(delayLoadDesc.ImportNameTableRVA, peInfo.SectionHeaders);
-                            if (nameTableOffset != -1 && nameTableOffset < fs.Length)
-                            {
-                                long nameTableStartPos = nameTableOffset;
-                                fs.Position = nameTableOffset;
-                                int thunkCount = 0;
+                                thunkCount++;
 
-                                while (fs.Position + (is32Bit ? 4 : 8) <= fs.Length)
+                                if (thunkRva == 0)
                                 {
-                                    ulong thunkRva = (is32Bit) ?
-                                        reader.ReadUInt32() : reader.ReadUInt64();
-
-                                    thunkCount++;
-
-                                    if (thunkRva == 0)
-                                    {
-                                        break;
-                                    }
-
-                                    ImportFunctionInfo importFunc = new()
-                                    {
-                                        DllName = dllName,
-                                        IsDelayLoaded = true  // 标记为延迟加载
-                                    };
-
-                                    if ((is32Bit && (thunkRva & 0x80000000) != 0) ||
-                                        (is64Bit && (thunkRva & 0x8000000000000000) != 0))
-                                    {
-                                        // 按序号导入
-                                        importFunc.Ordinal = (int)(thunkRva & 0xFFFF);
-                                        importFunc.FunctionName = $"#{importFunc.Ordinal}";
-                                        importFunc.IsOrdinalImport = true;
-                                    }
-                                    else
-                                    {
-                                        // 按名称导入
-                                        ImportByName(peInfo.SectionHeaders, thunkRva, fs, reader, importFunc);
-                                    }
-
-                                    delayLoadImportFunctions.Add(importFunc);
-
-                                    // 恢复到name table的下一个位置
-                                    fs.Position = nameTableStartPos + (peInfo.OptionalHeader.Magic == 0x10b ? 4 : 8) * (thunkCount + 1);
+                                    break;
                                 }
+
+                                ImportFunctionInfo importFunc = new()
+                                {
+                                    DllName = dllName,
+                                    IsDelayLoaded = true  // 标记为延迟加载
+                                };
+
+                                if ((is32Bit && (thunkRva & 0x80000000) != 0) ||
+                                    (is64Bit && (thunkRva & 0x8000000000000000) != 0))
+                                {
+                                    // 按序号导入
+                                    importFunc.Ordinal = (int)(thunkRva & 0xFFFF);
+                                    importFunc.FunctionName = $"#{importFunc.Ordinal}";
+                                    importFunc.IsOrdinalImport = true;
+                                }
+                                else
+                                {
+                                    // 按名称导入
+                                    ImportByName(peInfo.SectionHeaders, thunkRva, fs, reader, importFunc);
+                                }
+
+                                delayLoadImportFunctions.Add(importFunc);
+
+                                // 恢复到name table的下一个位置
+                                fs.Position = nameTableStartPos + (peInfo.OptionalHeader.Magic == 0x10b ? 4 : 8) * (thunkCount + 1);
                             }
                         }
                     }

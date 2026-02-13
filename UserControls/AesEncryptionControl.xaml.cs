@@ -304,16 +304,7 @@ namespace PersonalTools.UserControls
                 // 普通字符串模式
                 // 对于IV，如果是字符串模式，我们只取前16个字节
                 byte[] ivBytes = Encoding.UTF8.GetBytes(ivInput);
-                if (ivBytes.Length < 16)
-                {
-                    // 如果长度不足16字节，用0填充
-                    Array.Resize(ref ivBytes, 16);
-                }
-                else if (ivBytes.Length > 16)
-                {
-                    // 如果长度超过16字节，截取前16字节
-                    Array.Resize(ref ivBytes, 16);
-                }
+                Array.Resize(ref ivBytes, 16);
                 return ivBytes;
             }
             else
@@ -326,31 +317,13 @@ namespace PersonalTools.UserControls
         // 验证密钥长度是否正确
         private static bool IsValidKeyLength(string key, bool isString)
         {
-            if (isString)
-            {
-                // 如果是字符串，检查字符长度
-                return key.Length is 16 or 24 or 32;
-            }
-            else
-            {
-                // 如果是十六进制字符串，检查字符长度（每个字节需要2个字符）
-                return key.Length is 32 or 48 or 64; // 16*2, 24*2, 32*2
-            }
+            return isString ? key.Length is 16 or 24 or 32 : key.Length is 32 or 48 or 64;
         }
 
         // 验证IV长度是否正确
         private static bool IsValidIVLength(string iv, bool isString)
         {
-            if (isString)
-            {
-                // 如果是字符串，长度应该是16字节
-                return iv.Length == 16;
-            }
-            else
-            {
-                // 如果是十六进制字符串，长度应该是32字符（16字节）
-                return iv.Length == 32;
-            }
+            return isString ? iv.Length == 16 : iv.Length == 32;
         }
 
         // 处理AES标签页的文件拖放事件
@@ -359,7 +332,7 @@ namespace PersonalTools.UserControls
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
                 string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                if (files != null && files.Length > 0)
+                if (files?.Length > 0)
                 {
                     string filePath = files[0]; // 只处理第一个文件
                     ProcessFileForAesEncryption(filePath);
@@ -386,14 +359,14 @@ namespace PersonalTools.UserControls
                 // 同时切换到Hex字符串模式
                 AesInputHexRadio.IsChecked = true;
             }
-            catch (IOException ex)
-            {
-                MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            //catch (IOException ex)
+            //{
+            //    MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            //}
+            //catch (UnauthorizedAccessException ex)
+            //{
+            //    MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            //}
             // 其他异常重新抛出
             catch (Exception)
             {

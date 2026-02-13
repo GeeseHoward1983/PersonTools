@@ -61,26 +61,24 @@ namespace PersonalTools.UserControls
         ];
 
         // CRC计算器
-        private sealed class CRCCalculator(CRCAlgorithm algorithm)
+        private static class CRCCalculator
         {
-            private readonly CRCAlgorithm _algorithm = algorithm;
-
-            public uint Compute(byte[] data)
+            public static uint Compute(byte[] data, CRCAlgorithm selectedAlgorithm)
             {
-                uint crc = _algorithm.InitialValue;
-                uint mask = (uint)((1UL << _algorithm.Width) - 1);
-                uint topBit = (uint)(1UL << (_algorithm.Width - 1));
+                uint crc = selectedAlgorithm.InitialValue;
+                uint mask = (uint)((1UL << selectedAlgorithm.Width) - 1);
+                uint topBit = (uint)(1UL << (selectedAlgorithm.Width - 1));
 
                 for (int i = 0; i < data.Length; i++)
                 {
-                    byte value = (byte)(_algorithm.ReverseInput ? Utils.ReverseBits(data[i], 8) : data[i]);
-                    crc ^= (uint)(value << (_algorithm.Width - 8));
+                    byte value = (byte)(selectedAlgorithm.ReverseInput ? Utils.ReverseBits(data[i], 8) : data[i]);
+                    crc ^= (uint)(value << (selectedAlgorithm.Width - 8));
 
                     for (int j = 0; j < 8; j++)
                     {
                         if ((crc & topBit) != 0)
                         {
-                            crc = (crc << 1) ^ _algorithm.Polynomial;
+                            crc = (crc << 1) ^ selectedAlgorithm.Polynomial;
                         }
                         else
                         {
@@ -90,12 +88,12 @@ namespace PersonalTools.UserControls
                     }
                 }
 
-                if (_algorithm.ReverseOutput)
+                if (selectedAlgorithm.ReverseOutput)
                 {
-                    crc = Utils.ReverseBits(crc, _algorithm.Width);
+                    crc = Utils.ReverseBits(crc, selectedAlgorithm.Width);
                 }
 
-                crc ^= _algorithm.FinalXor;
+                crc ^= selectedAlgorithm.FinalXor;
                 crc &= mask;
 
                 return crc;
@@ -135,8 +133,7 @@ namespace PersonalTools.UserControls
                     inputBytes = Encoding.UTF8.GetBytes(input);
                 }
 
-                CRCCalculator calculator = new(selectedAlgorithm);
-                uint crcResult = calculator.Compute(inputBytes);
+                uint crcResult = CRCCalculator.Compute(inputBytes, selectedAlgorithm);
 
                 // 根据算法宽度格式化输出
                 string formatString = selectedAlgorithm.Width <= 8 ? "X2" : selectedAlgorithm.Width <= 16 ? "X4" : "X8";

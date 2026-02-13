@@ -156,7 +156,6 @@ namespace PersonalTools.UserControls
                 // 更新各控件的信息
                 SetELFHeaderInfo(analyzer);
                 SetInterpreterInfo(analyzer);
-
                 // 显示程序头信息
                 SetProgramHeadersData(analyzer);
                 // 显示节头信息

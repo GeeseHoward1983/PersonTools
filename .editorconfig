@@ -11,3 +11,6 @@ dotnet_diagnostic.CA1505.severity = warning
 
 # CA1506: 避免过度的类耦合
 dotnet_diagnostic.CA1506.severity = warning
+
+# CA1509: 代码度量规则规范文件中的条目无效
+dotnet_diagnostic.CA1509.severity = warning
