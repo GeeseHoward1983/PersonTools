@@ -1,4 +1,5 @@
 using PersonalTools.Enums;
+using PersonalTools.PEAnalyzer.Parsers;
 using System.Globalization;
 using System.Text;
 
@@ -300,16 +301,58 @@ namespace PersonalTools.ELFAnalyzer.Core
             return sb.Length > 0 ? "File Attributes:\n" + sb.ToString() : string.Empty;
         }
 
+        private static int DealWithSingleByteAttribute(byte[] data, int offset, StringBuilder sb, int tag)
+        {
+            if (offset < data.Length)
+            {
+                byte value = data[offset];
+                sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetTagName(tag)}: {value}");
+                return 1;
+            }
+            else
+            {
+                sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetTagName(tag)}: <error reading value>");
+                return 0;
+            }
+        }
+
+        private static int DealWithNullTerminatedString(byte[] data, int offset, StringBuilder sb, int tag)
+        {
+            string value = ELFParserUtils.ExtractStringFromBytes(data, offset);
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetTagName(tag)}: \"{value}\"");
+            return value.Length + 1; // 包括null终止符
+        }
+
+        private static int DealWithLengthPrefixedValue(byte[] data, int offset, StringBuilder sb, int tag)
+        {
+            int bytesRead = ReadULEB128(data, offset, out int valueLen);
+            if (bytesRead == 0)
+            {
+                return 0;
+            }
+            offset += bytesRead;
+            if (offset + valueLen > data.Length)
+            {
+                sb.AppendLine($"  Error: Attribute value length exceeds data bounds");
+                return bytesRead; // 只返回已读取的长度
+            }
+            string value = Encoding.UTF8.GetString(data, offset, valueLen);
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetTagName(tag)}: {value}");
+            return bytesRead + valueLen;
+        }
+
+        private static int DealWithFlagAttribute(StringBuilder sb, int tag)
+        {
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetTagName(tag)}: Flag");
+            return 0; // 标志类型没有值长度
+        }
+
         private static void ParseGenericAttributes(byte[] data, ref int offset, int endOffset, StringBuilder sb)
         {
             // 根据供应商名称选择不同的处理方式
-            while (offset < endOffset)
+            while (offset < Math.Min(endOffset, data.Length))
             {
                 int bytesRead = ReadULEB128(data, offset, out int attrTag);
-                if (bytesRead == 0)
-                {
-                    break;
-                }
 
                 offset += bytesRead;
 
@@ -317,114 +360,13 @@ namespace PersonalTools.ELFAnalyzer.Core
                 {
                     break; // 标签序列结束
                 }
-
-                // 判断属性值的类型
-                switch (attrTag)
+                offset += attrTag switch
                 {
-                    // 处理标志类型的标签（没有显式的长度，直接是标志）
-                    case 2: // Tag_File
-                    case 32: // Tag_nodefaults
-                    case 65: // Tag_also_compatible_at
-                    case 70: // Tag_T2EE_use
-                    case 73: // Tag_Virtualization_use
-                    case 76: // Tag_FP_HP_extension
-                    case 77: // Tag_IDIV_use
-                    case 78: // Tag_VEC_use
-                    case 79: // Tag_DSP_use
-                    case 80: // Tag_MVE_arch
-                    case 81: // Tag_MVE_use
-                        // 标志类型，没有值，只是标记存在
-                        sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetTagName(attrTag)}: Flag");
-                        offset++; // 移动到下一个属性
-                        break;
-
-                    // 处理字符串类型的标签
-                    case 1: // Tag_Section
-                    case 3: // Tag_Symbol
-                    case 4: // Tag_CPU_name
-                    case 66: // Tag_also_compatible_with
-                    case 68: // Tag_conformance
-                        // 读取字符串（以null结尾）
-                        int stringStart = offset;
-                        while (offset < data.Length && offset < endOffset && data[offset] != 0)
-                        {
-                            offset++;
-                        }
-                        string stringValue = Encoding.UTF8.GetString(data, stringStart, offset - stringStart);
-                        sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetTagName(attrTag)}: \"{stringValue}\"");
-                        offset++; // 跳过null终止符
-                        break;
-
-                    // 处理整数类型的标签
-                    case 5: // Tag_CPU_arch
-                    case 6: // Tag_CPU_arch_profile
-                    case 7: // Tag_ARM_ISA_use
-                    case 8: // Tag_THUMB_ISA_use
-                    case 9: // Tag_FP_arch
-                    case 10: // Tag_WMMX_arch
-                    case 11: // Tag_Advanced_SIMD_arch
-                    case 12: // Tag_Virtualization_use
-                    case 16: // Tag_ABI_PCS_GOT_use
-                    case 17: // Tag_ABI_PCS_wchar_t
-                    case 18: // Tag_ABI_FP_roundings
-                    case 19: // Tag_ABI_FP_denormal
-                    case 20: // Tag_ABI_FP_exceptions
-                    case 21: // Tag_ABI_FP_number_model
-                    case 22: // Tag_ABI_align_needed
-                    case 23: // Tag_ABI_align_preserved
-                    case 24: // Tag_ABI_enum_size
-                    case 25: // Tag_ABI_HardFP_use
-                    case 26: // Tag_ABI_VFP_args
-                    case 27: // Tag_ABI_WMMX_args
-                    case 28: // Tag_ABI_optimization_goals
-                    case 34: // Tag_CPU_unaligned_access
-                    case 36: // Tag_FP_HP_extension
-                    case 38: // Tag_ABI_FP_16bit_format
-                    case 39: // Tag_DSP_extension
-                    case 40: // Tag_MVE_arch
-                    case 42: // Tag_also_compatible_el
-                    case 69: // Tag_CPU_arch
-                    case 71: // Tag_also_compatible_with
-                    case 72: // Tag_conformance
-                    case 74: // Tag_MPextension_use
-                    case 75: // Tag_DIV_use
-                        // 读取单字节整数值
-                        if (offset < data.Length)
-                        {
-                            byte intValue = data[offset];
-                            sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetTagName(attrTag)}: {intValue}");
-                            offset++;
-                        }
-                        else
-                        {
-                            sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetTagName(attrTag)}: <error reading value>");
-                        }
-                        break;
-
-                    default:
-                        // 尝试读取长度和值（保持向后兼容）
-                        int attrValueLen;
-                        bytesRead = ReadULEB128(data, offset, out attrValueLen);
-                        if (bytesRead == 0)
-                        {
-                            break;
-                        }
-
-                        offset += bytesRead;
-
-                        if (offset + attrValueLen > data.Length)
-                        {
-                            sb.AppendLine($"  Error: Attribute value length exceeds data bounds");
-                            break;
-                        }
-
-                        string attrValue = Encoding.UTF8.GetString(data, offset, attrValueLen);
-
-                        sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetTagName(attrTag)}: {attrValue}");
-
-                        offset += attrValueLen;
-                        break;
-                }
+                    2 or 32 or 65 or 70 or 73 or 76 or 77 or 78 or 79 or 80 or 81 => DealWithFlagAttribute(sb, attrTag),
+                    1 or 3 or 4 or 66 or 68 => DealWithNullTerminatedString(data, offset, sb, attrTag),
+                    5 or 6 or 7 or 8 or 9 or 10 or 11 or 12 or 16 or 17 or 18 or 19 or 20 or 21 or 22 or 23 or 24 or 25 or 26 or 27 or 28 or 34 or 36 or 38 or 39 or 40 or 42 or 69 or 71 or 72 or 74 or 75 => DealWithSingleByteAttribute(data, offset, sb, attrTag),
+                    _ => DealWithLengthPrefixedValue(data, offset, sb, attrTag)
+                };
             }
         }
 

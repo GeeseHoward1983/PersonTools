@@ -247,6 +247,12 @@ namespace PersonalTools.PEAnalyzer.Parsers
             return optionalHeader.Magic == 0x20b;
         }
 
+        internal static bool Is32Bit(IMAGEOPTIONALHEADER optionalHeader)
+        {
+            return optionalHeader.Magic == 0x10b;
+        }
+
+
         // 判断文件类型
         public static string GetFileType(ushort characteristics)
         {

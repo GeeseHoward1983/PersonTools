@@ -130,13 +130,8 @@ namespace PersonalTools.PEAnalyzer.Resources
                 // 读取键名
                 StringBuilder keySb = new();
                 char ch;
-                while (fs.Position < fs.Length && fs.Position < endPosition && fs.Position < startPosition + wLength)
+                while (fs.Position + 2 <= fs.Length && fs.Position < endPosition && fs.Position < startPosition + wLength)
                 {
-                    if (fs.Position + 2 > fs.Length)
-                    {
-                        break;
-                    }
-
                     ch = (char)reader.ReadUInt16();
                     if (ch == '\0')
                     {
@@ -163,13 +158,8 @@ namespace PersonalTools.PEAnalyzer.Resources
                 // 读取值
                 StringBuilder valueSb = new();
                 long valueEndPosition = Math.Min(startPosition + wLength, endPosition);
-                while (fs.Position < fs.Length && fs.Position < valueEndPosition)
+                while (fs.Position + 2 < fs.Length && fs.Position < valueEndPosition)
                 {
-                    if (fs.Position + 2 > fs.Length)
-                    {
-                        break;
-                    }
-
                     ch = (char)reader.ReadUInt16();
                     if (ch == '\0')
                     {

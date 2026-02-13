@@ -2,6 +2,7 @@ using PersonalTools.PEAnalyzer.Models;
 using PersonalTools.PEAnalyzer.Parsers;
 using PersonalTools.PEAnalyzer.Resources;
 using System.IO;
+using System.Reflection.PortableExecutable;
 
 namespace PersonalTools
 {
@@ -224,6 +225,64 @@ namespace PersonalTools
             }
         }
 
+        private static void ImportByName(List<IMAGESECTIONHEADER> sections, ulong thunkRva, FileStream fs, BinaryReader reader, ImportFunctionInfo importFunc)
+        {
+            long nameOffset = PEResourceParserCore.RvaToOffset((uint)thunkRva, sections);
+            if (nameOffset != -1 && nameOffset < fs.Length)
+            {
+                try
+                {
+                    // 检查是否有足够空间读取 hint 和名称
+                    long remainingLength = fs.Length - nameOffset;
+                    if (remainingLength > 2) // 至少需要2字节的hint
+                    {
+                        long savePos = fs.Position; // 保存当前位置
+                        fs.Position = nameOffset;
+                        // 读取Hint字段（2字节）
+                        ushort hint = reader.ReadUInt16();
+                        // 读取函数名称
+                        string functionName = Utilties.ReadNullTerminatedString(reader);
+                        fs.Position = savePos; // 恢复位置
+
+                        importFunc.FunctionName = !string.IsNullOrEmpty(functionName) ? functionName : $"EMPTY_NAME";
+                        // 使用Hint字段作为序号
+                        importFunc.Ordinal = hint;
+                        importFunc.IsOrdinalImport = false;
+                    }
+                    else
+                    {
+                        importFunc.FunctionName = $"NAME_TOO_SHORT";
+                        importFunc.Ordinal = 0;
+                        importFunc.IsOrdinalImport = false;
+                    }
+                }
+                catch (IOException ex)
+                {
+                    importFunc.FunctionName = $"READ_ERROR: {ex.Message}";
+                    importFunc.Ordinal = 0;
+                    importFunc.IsOrdinalImport = false;
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    importFunc.FunctionName = $"READ_ERROR: {ex.Message}";
+                    importFunc.Ordinal = 0;
+                    importFunc.IsOrdinalImport = false;
+                }
+                catch (ArgumentOutOfRangeException ex)
+                {
+                    importFunc.FunctionName = $"READ_ERROR: {ex.Message}";
+                    importFunc.Ordinal = 0;
+                    importFunc.IsOrdinalImport = false;
+                }
+            }
+            else
+            {
+                importFunc.FunctionName = $"INVALID_RVA_{thunkRva:X8}";
+                importFunc.Ordinal = 0;
+                importFunc.IsOrdinalImport = false;
+            }
+        }
+
         /// <summary>
         /// 解析延迟加载导入表
         /// </summary>
@@ -238,7 +297,8 @@ namespace PersonalTools
             // 延迟加载导入表通常在数据目录的第14项（索引为13）
             // IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT = 13 (从0开始计数为索引13)
             const int DELAY_LOAD_IMPORT_INDEX = 13;
-
+            bool is64Bit = Utilties.Is64Bit(peInfo.OptionalHeader);
+            bool is32Bit = Utilties.Is32Bit(peInfo.OptionalHeader);
             if (peInfo.OptionalHeader.DataDirectory.Length > DELAY_LOAD_IMPORT_INDEX &&
                 peInfo.OptionalHeader.DataDirectory[DELAY_LOAD_IMPORT_INDEX].VirtualAddress != 0)
             {
@@ -276,15 +336,10 @@ namespace PersonalTools
                             long nameOffset = PEResourceParserCore.RvaToOffset(delayLoadDesc.DllNameRVA, peInfo.SectionHeaders);
                             if (nameOffset != -1 && nameOffset < fs.Length)
                             {
-                                // 检查是否有足够的空间读取名称
-                                long remainingLength = fs.Length - nameOffset;
-                                if (remainingLength > 0)
-                                {
-                                    long savePos = fs.Position;
-                                    fs.Position = nameOffset;
-                                    dllName = Utilties.ReadNullTerminatedString(reader);
-                                    fs.Position = savePos; // 恢复位置
-                                }
+                                long savePos = fs.Position;
+                                fs.Position = nameOffset;
+                                dllName = Utilties.ReadNullTerminatedString(reader);
+                                fs.Position = savePos; // 恢复位置
                             }
                         }
                         else
@@ -322,9 +377,9 @@ namespace PersonalTools
                                 fs.Position = nameTableOffset;
                                 int thunkCount = 0;
 
-                                while (fs.Position + (peInfo.OptionalHeader.Magic == 0x10b ? 4 : 8) <= fs.Length)
+                                while (fs.Position + (is32Bit ? 4 : 8) <= fs.Length)
                                 {
-                                    ulong thunkRva = (peInfo.OptionalHeader.Magic == 0x10b) ?
+                                    ulong thunkRva = (is32Bit) ?
                                         reader.ReadUInt32() : reader.ReadUInt64();
 
                                     thunkCount++;
@@ -340,8 +395,8 @@ namespace PersonalTools
                                         IsDelayLoaded = true  // 标记为延迟加载
                                     };
 
-                                    if ((peInfo.OptionalHeader.Magic == 0x10b && (thunkRva & 0x80000000) != 0) ||
-                                        (peInfo.OptionalHeader.Magic == 0x20b && (thunkRva & 0x8000000000000000) != 0))
+                                    if ((is32Bit && (thunkRva & 0x80000000) != 0) ||
+                                        (is64Bit && (thunkRva & 0x8000000000000000) != 0))
                                     {
                                         // 按序号导入
                                         importFunc.Ordinal = (int)(thunkRva & 0xFFFF);
@@ -351,60 +406,7 @@ namespace PersonalTools
                                     else
                                     {
                                         // 按名称导入
-                                        long nameOffset = PEResourceParserCore.RvaToOffset((uint)thunkRva, peInfo.SectionHeaders);
-                                        if (nameOffset != -1 && nameOffset < fs.Length)
-                                        {
-                                            try
-                                            {
-                                                // 检查是否有足够空间读取 hint 和名称
-                                                long remainingLength = fs.Length - nameOffset;
-                                                if (remainingLength > 2) // 至少需要2字节的hint
-                                                {
-                                                    long savePos = fs.Position; // 保存当前位置
-                                                    fs.Position = nameOffset;
-                                                    // 读取Hint字段（2字节）
-                                                    ushort hint = reader.ReadUInt16();
-                                                    // 读取函数名称
-                                                    string functionName = Utilties.ReadNullTerminatedString(reader);
-                                                    fs.Position = savePos; // 恢复位置
-
-                                                    importFunc.FunctionName = !string.IsNullOrEmpty(functionName) ? functionName : $"EMPTY_NAME";
-                                                    // 使用Hint字段作为序号
-                                                    importFunc.Ordinal = hint;
-                                                    importFunc.IsOrdinalImport = false;
-                                                }
-                                                else
-                                                {
-                                                    importFunc.FunctionName = $"NAME_TOO_SHORT";
-                                                    importFunc.Ordinal = 0;
-                                                    importFunc.IsOrdinalImport = false;
-                                                }
-                                            }
-                                            catch (IOException ex)
-                                            {
-                                                importFunc.FunctionName = $"READ_ERROR: {ex.Message}";
-                                                importFunc.Ordinal = 0;
-                                                importFunc.IsOrdinalImport = false;
-                                            }
-                                            catch (UnauthorizedAccessException ex)
-                                            {
-                                                importFunc.FunctionName = $"READ_ERROR: {ex.Message}";
-                                                importFunc.Ordinal = 0;
-                                                importFunc.IsOrdinalImport = false;
-                                            }
-                                            catch (ArgumentOutOfRangeException ex)
-                                            {
-                                                importFunc.FunctionName = $"READ_ERROR: {ex.Message}";
-                                                importFunc.Ordinal = 0;
-                                                importFunc.IsOrdinalImport = false;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            importFunc.FunctionName = $"INVALID_RVA_{thunkRva:X8}";
-                                            importFunc.Ordinal = 0;
-                                            importFunc.IsOrdinalImport = false;
-                                        }
+                                        ImportByName(peInfo.SectionHeaders, thunkRva, fs, reader, importFunc);
                                     }
 
                                     delayLoadImportFunctions.Add(importFunc);
