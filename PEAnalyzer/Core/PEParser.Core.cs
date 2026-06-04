@@ -10,6 +10,20 @@ namespace PersonalTools
     internal static partial class PEParser
     {
         /// <summary>
+        /// 内容目录解析步骤（在头部解析完成后按顺序执行；每一步自行处理异常，互不影响）。
+        /// 以数据形式集中表达对各解析模块的依赖，便于增删与降低核心方法的耦合。
+        /// </summary>
+        private static readonly Action<FileStream, BinaryReader, PEInfo>[] ContentParsers =
+        [
+            ParseImportTable,
+            ParseExportTable,
+            PEResourceParserVersion.ParseVersionInfo,
+            PEResourceParserCertificate.ParseCertificateInfo,
+            PEParserCLR.ParseCLRHeaderInfo,
+            PEResourceParserIcon.ParseIconInfo,
+        ];
+
+        /// <summary>
         /// 解析PE文件
         /// </summary>
         /// <param name="filePath">文件路径</param>
@@ -21,9 +35,20 @@ namespace PersonalTools
             using FileStream fs = new(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             using BinaryReader reader = new(fs);
 
+            ParseHeaders(fs, reader, peInfo);
+            ParseContentDirectories(fs, reader, peInfo);
+
+            return peInfo;
+        }
+
+        /// <summary>
+        /// 解析并校验 DOS 头、NT 头、可选头与节头。
+        /// </summary>
+        private static void ParseHeaders(FileStream fs, BinaryReader reader, PEInfo peInfo)
+        {
             // 解析DOS头
             peInfo.DosHeader = ParseDosHeader(reader);
-            if (peInfo.DosHeader.e_magic != 0x5A4D)
+            if (peInfo.DosHeader.e_magic != PEConstants.DosSignature)
             {
                 throw new InvalidDataException("文件不是有效的PE文件: DOS头签名错误。");
             }
@@ -42,7 +67,7 @@ namespace PersonalTools
 
             // 解析NT头
             peInfo.NtHeaders = ParseNtHeaders(reader);
-            if (peInfo.NtHeaders.Signature != 0x00004550)
+            if (peInfo.NtHeaders.Signature != PEConstants.NtSignature)
             {
                 throw new InvalidDataException("文件不是有效的PE文件: NT头签名错误。");
             }
@@ -56,7 +81,7 @@ namespace PersonalTools
             // 解析可选头
             peInfo.OptionalHeader = ParseOptionalHeader(reader, peInfo.NtHeaders.FileHeader.SizeOfOptionalHeader);
 
-            long sectionHeadersLength = peInfo.NtHeaders.FileHeader.NumberOfSections * 40L;
+            long sectionHeadersLength = peInfo.NtHeaders.FileHeader.NumberOfSections * (long)PEConstants.SectionHeaderSize;
             if (sectionHeadersLength > 0 && fs.Position + sectionHeadersLength > fs.Length)
             {
                 throw new InvalidDataException("文件不是有效的PE文件: 节头不完整。");
@@ -64,26 +89,17 @@ namespace PersonalTools
 
             // 解析节头
             peInfo.SectionHeaders = ParseSectionHeaders(reader, peInfo.NtHeaders.FileHeader.NumberOfSections);
+        }
 
-            // 解析导入表
-            ParseImportTable(fs, reader, peInfo);
-
-            // 解析导出表
-            ParseExportTable(fs, reader, peInfo);
-
-            // 解析资源信息（包括版本信息）
-            PEResourceParserVersion.ParseVersionInfo(fs, reader, peInfo);
-
-            // 解析证书信息
-            PEResourceParserCertificate.ParseCertificateInfo(fs, reader, peInfo);
-
-            // 解析CLR运行时头信息
-            PEParserCLR.ParseCLRHeaderInfo(fs, reader, peInfo);
-
-            // 解析图标信息
-            PEResourceParserIcon.ParseIconInfo(fs, reader, peInfo);
-
-            return peInfo;
+        /// <summary>
+        /// 依次执行各内容目录（导入/导出/版本/证书/CLR/图标）的解析。
+        /// </summary>
+        private static void ParseContentDirectories(FileStream fs, BinaryReader reader, PEInfo peInfo)
+        {
+            foreach (Action<FileStream, BinaryReader, PEInfo> parse in ContentParsers)
+            {
+                parse(fs, reader, peInfo);
+            }
         }
     }
 }

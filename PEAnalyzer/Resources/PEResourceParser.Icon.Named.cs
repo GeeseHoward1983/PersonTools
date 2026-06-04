@@ -1,3 +1,4 @@
+using PersonalTools.PEAnalyzer.Parsers;
 using PersonalTools.PEAnalyzer.Models;
 using System.IO;
 
@@ -80,11 +81,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             catch (ArgumentOutOfRangeException ex)
             {
                 Console.WriteLine($"解析资源目录以查找命名图标错误: {ex.Message}");
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
 
@@ -196,11 +192,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 Console.WriteLine($"解析命名资源目录错误: {ex.Message}");
             }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
-            }
         }
 
         /// <summary>
@@ -238,7 +229,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 };
 
                 // 计算实际数据偏移（注意：资源数据的OffsetToData是RVA）
-                long dataOffset = PEResourceParserCore.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
+                long dataOffset = Utilities.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
                 if (dataOffset != -1 && dataOffset >= 0 && dataEntry.Size > 0 && dataEntry.Size <= int.MaxValue && dataOffset + dataEntry.Size <= fs.Length)
                 {
                     // 读取资源数据
@@ -266,11 +257,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             catch (ArgumentOutOfRangeException ex)
             {
                 Console.WriteLine($"解析命名资源数据项错误: {ex.Message}");
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
     }

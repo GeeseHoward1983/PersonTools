@@ -1,3 +1,4 @@
+using PersonalTools.PEAnalyzer.Parsers;
 using PersonalTools.PEAnalyzer.Models;
 using System.Globalization;
 using System.IO;
@@ -41,7 +42,7 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 // 读取语言和代码页标识符（通常是8位十六进制字符串）
                 int maxLangIdBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
-                string langId = PEResourceParserCore.ReadUnicodeStringWithMaxBytes(reader, maxLangIdBytes); // 读取直到找到null终止符
+                string langId = Utilities.ReadUnicodeStringWithMaxBytes(reader, maxLangIdBytes); // 读取直到找到null终止符
 
                 // 计算Strings的位置
                 long afterLangIdPosition = fs.Position;
@@ -96,11 +97,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 // 忽略StringTable解析错误
                 peInfo.AdditionalInfo.FileVersion += $"; StringTable解析错误: {ex.Message}";
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
 
@@ -232,11 +228,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 // 忽略StringPair解析错误
                 peInfo.AdditionalInfo.FileVersion += $"; StringPair解析错误: {ex.Message}";
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
     }

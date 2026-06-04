@@ -1,3 +1,4 @@
+using PersonalTools.PEAnalyzer.Parsers;
 using PersonalTools.PEAnalyzer.Models;
 using System.IO;
 
@@ -39,7 +40,7 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 // 读取szKey (UNICODE字符串 "StringFileInfo")
                 int maxKeyBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
-                string key = PEResourceParserCore.ReadUnicodeStringWithMaxBytes(reader, maxKeyBytes);
+                string key = Utilities.ReadUnicodeStringWithMaxBytes(reader, maxKeyBytes);
 
                 if (key.Equals("StringFileInfo", StringComparison.OrdinalIgnoreCase))
                 {
@@ -54,10 +55,6 @@ namespace PersonalTools.PEAnalyzer.Resources
                         fs.Position = stringTablePosition;
                         PEResourceParserVersionTable.ParseStringTable(fs, reader, peInfo, stringFileInfoEndPosition);
                     }
-
-                    // 记录StringTable解析完成的位置，便于后续处理
-                    peInfo.AdditionalInfo.StringTableParsed = true;
-                    peInfo.AdditionalInfo.StringTableEndPosition = stringFileInfoEndPosition;
                 }
 
                 // 确保位置正确前进到下一个兄弟节点
@@ -81,11 +78,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 // 忽略StringFileInfo解析错误
                 peInfo.AdditionalInfo.FileVersion += $"; StringFileInfo解析错误: {ex.Message}";
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
     }

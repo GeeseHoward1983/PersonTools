@@ -23,13 +23,11 @@ namespace PersonalTools
             try
             {
                 // 导出表在数据目录的第1项 (IMAGE_DIRECTORY_ENTRY_EXPORT)
-                const int EXPORT_DIRECTORY_INDEX = 0;
-
-                if (peInfo.OptionalHeader.DataDirectory.Length > EXPORT_DIRECTORY_INDEX &&
-                    peInfo.OptionalHeader.DataDirectory[EXPORT_DIRECTORY_INDEX].VirtualAddress != 0)
+                if (peInfo.OptionalHeader.DataDirectory.Length > PEConstants.DirectoryExport &&
+                    peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryExport].VirtualAddress != 0)
                 {
-                    uint exportRVA = peInfo.OptionalHeader.DataDirectory[EXPORT_DIRECTORY_INDEX].VirtualAddress;
-                    long exportOffset = PEResourceParserCore.RvaToOffset(exportRVA, peInfo.SectionHeaders);
+                    uint exportRVA = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryExport].VirtualAddress;
+                    long exportOffset = Utilities.RvaToOffset(exportRVA, peInfo.SectionHeaders);
 
                     if (exportOffset != -1 && exportOffset < fs.Length)
                     {
@@ -38,7 +36,7 @@ namespace PersonalTools
                         {
                             fs.Position = exportOffset;
 
-                            if (fs.Position + 40 > fs.Length)
+                            if (fs.Position + PEConstants.ExportDirectorySize > fs.Length)
                             {
                                 return;
                             }
@@ -99,11 +97,6 @@ namespace PersonalTools
                 // 忽略导出表解析错误
                 Console.WriteLine($"导出表解析错误: {ex.Message}");
             }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
-            }
         }
 
         private static List<uint> ReadUInt32ListAtRva(FileStream fs, BinaryReader reader, List<IMAGESECTIONHEADER> sections, uint rva, uint count)
@@ -114,7 +107,7 @@ namespace PersonalTools
                 return result;
             }
 
-            long offset = PEResourceParserCore.RvaToOffset(rva, sections);
+            long offset = Utilities.RvaToOffset(rva, sections);
             if (offset == -1 || offset >= fs.Length)
             {
                 return result;
@@ -145,7 +138,7 @@ namespace PersonalTools
                 return result;
             }
 
-            long offset = PEResourceParserCore.RvaToOffset(rva, sections);
+            long offset = Utilities.RvaToOffset(rva, sections);
             if (offset == -1 || offset >= fs.Length)
             {
                 return result;
@@ -176,7 +169,7 @@ namespace PersonalTools
             for (int i = 0; i < entryCount; i++)
             {
                 uint nameRVA = nameRVAs[i];
-                long nameOffset = PEResourceParserCore.RvaToOffset(nameRVA, sections);
+                long nameOffset = Utilities.RvaToOffset(nameRVA, sections);
                 if (nameOffset == -1 || nameOffset >= fs.Length)
                 {
                     continue;
@@ -186,7 +179,7 @@ namespace PersonalTools
                 try
                 {
                     fs.Position = nameOffset;
-                    string functionName = Utilties.ReadNullTerminatedString(reader);
+                    string functionName = Utilities.ReadNullTerminatedString(reader);
                     if (!string.IsNullOrEmpty(functionName))
                     {
                         result[ordinals[i]] = functionName;

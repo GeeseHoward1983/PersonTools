@@ -5,136 +5,81 @@ namespace PersonalTools
 {
     /// <summary>
     /// PE文件解析器CLR辅助函数模块
-    /// 专门提供.NET程序集解析所需的辅助函数
+    /// 依据 ECMA-335 提供 .NET 元数据表解析所需的索引宽度计算与堆字符串读取。
     /// </summary>
     internal static partial class PEParserCLR
     {
+        // ECMA-335 II.24.2.6 编码索引族：用于计算可变索引宽度
+        private static readonly int[] ResolutionScopeTables = [0, 26, 35, 1]; // Module, ModuleRef, AssemblyRef, TypeRef
+        private static readonly int[] TypeDefOrRefTables = [2, 1, 27];        // TypeDef, TypeRef, TypeSpec
+
+        // 简单索引涉及的表
+        private const int FieldTableIndex = 4;
+        private const int MethodDefTableIndex = 6;
+
         /// <summary>
-        /// 计算String堆的偏移
+        /// 堆索引宽度：heapSizes 对应位为 0 时为 2 字节，否则为 4 字节。
+        /// bit0 = #Strings，bit1 = #GUID，bit2 = #Blob。
         /// </summary>
-        /// <param name="fs">文件流</param>
-        /// <param name="tablesOffset">表偏移</param>
-        /// <param name="heapSizes">堆大小标志</param>
-        /// <param name="maskValid">有效表掩码</param>
-        /// <param name="rowCounts">行数数组</param>
-        /// <returns>String堆的偏移</returns>
-        private static long CalculateStringHeapOffset(long tablesOffset, byte heapSizes, ulong maskValid, uint[] rowCounts)
+        private static int HeapIndexSize(byte heapSizes, int heapBit)
         {
-            try
-            {
-                // 计算所有表的大小
-                long position = tablesOffset + 24; // 跳过表头(24字节)
-
-                // 跳过行数数组
-                for (int i = 0; i < 64; i++)
-                {
-                    if ((maskValid & ((ulong)1 << i)) != 0)
-                    {
-                        position += 4;
-                    }
-                }
-
-                // 跳过所有表的数据
-                for (int i = 0; i < 64; i++)
-                {
-                    if ((maskValid & ((ulong)1 << i)) != 0)
-                    {
-                        uint rowCount = rowCounts[i];
-
-                        // 根据表类型计算表大小
-                        int rowSize = GetTableRowSize(i, heapSizes, maskValid, rowCounts);
-                        position += (long)rowCount * rowSize;
-                    }
-                }
-
-                return position;
-            }
-            catch (IOException)
-            {
-                return -1;
-            }
-            catch (IndexOutOfRangeException)
-            {
-                return -1;
-            }
+            return (heapSizes & (1 << heapBit)) == 0 ? 2 : 4;
         }
 
         /// <summary>
-        /// 获取表行大小
+        /// 简单表索引宽度：目标表行数 &lt; 2^16 时为 2 字节，否则为 4 字节。
         /// </summary>
-        /// <param name="tableIndex">表索引</param>
-        /// <param name="heapSizes">堆大小标志</param>
-        /// <param name="maskValid">有效表掩码</param>
-        /// <param name="rowCounts">行数数组</param>
-        /// <returns>行大小</returns>
-        private static int GetTableRowSize(int tableIndex, byte heapSizes, ulong maskValid, uint[] rowCounts)
+        private static int SimpleIndexSize(uint[] rowCounts, int tableIndex)
         {
-            // 简化的行大小计算，实际实现需要根据ECMA-335规范
-            int heapSizes1 = IsSmallIndex(heapSizes, 1) ? 2 : 4;
-            int heapSizes0 = IsSmallIndex(heapSizes, 0) ? 2 : 4;
-            int heapSizes2 = IsSmallIndex(heapSizes, 0) ? 2 : 4;
-            int codeIndexSize1 = GetCodedIndexSize(1, maskValid, rowCounts);
-            int codeIndexSize2 = GetCodedIndexSize(1, maskValid, rowCounts);
-
-            return tableIndex switch
-            {
-                // Module
-                0 => 2 + heapSizes1 + heapSizes2 + heapSizes0 + heapSizes0,
-                // TypeRef
-                1 => heapSizes1 + heapSizes2 + heapSizes2,
-                // TypeDef
-                2 => 4 + heapSizes2 + heapSizes2 + codeIndexSize1 + codeIndexSize2 + codeIndexSize2,
-                _ => 16,// 默认大小
-            };
+            return rowCounts[tableIndex] < 0x10000 ? 2 : 4;
         }
 
         /// <summary>
-        /// 获取编码索引大小
+        /// 编码索引宽度：当索引族中各表的最大行数 &lt; 2^(16 - tagBits) 时为 2 字节，否则为 4 字节。
         /// </summary>
-        /// <param name="tagBits">标签位数</param>
-        /// <param name="maskValid">有效表掩码</param>
-        /// <param name="rowCounts">行数数组</param>
-        /// <returns>编码索引大小</returns>
-        private static int GetCodedIndexSize(int tagBits, ulong maskValid, uint[] rowCounts)
+        private static int CodedIndexSize(int tagBits, uint[] rowCounts, int[] familyTables)
         {
-            // 计算编码索引的最大值
             uint maxRowCount = 0;
-            for (int i = 0; i < 64; i++)
+            foreach (int table in familyTables)
             {
-                if ((maskValid & ((ulong)1 << i)) != 0)
+                if (table >= 0 && table < rowCounts.Length)
                 {
-                    maxRowCount = Math.Max(maxRowCount, rowCounts[i]);
+                    maxRowCount = Math.Max(maxRowCount, rowCounts[table]);
                 }
             }
 
-            // 如果最大行数小于2^(16-tagBits)，则使用2字节；否则使用4字节
-            return (maxRowCount < (1 << (16 - tagBits))) ? 2 : 4;
+            return maxRowCount < (1u << (16 - tagBits)) ? 2 : 4;
         }
 
         /// <summary>
-        /// 检查是否使用小索引
+        /// 按给定宽度读取一个索引（2 或 4 字节）。
         /// </summary>
-        /// <param name="heapSizes">堆大小标志</param>
-        /// <param name="heapIndex">堆索引</param>
-        /// <returns>是否使用小索引</returns>
-        private static bool IsSmallIndex(byte heapSizes, int heapIndex)
+        private static uint ReadHeapIndex(BinaryReader reader, int indexSize)
         {
-            return (heapSizes & (1 << heapIndex)) == 0;
+            return indexSize == 2 ? reader.ReadUInt16() : reader.ReadUInt32();
         }
 
         /// <summary>
-        /// 从堆中读取字符串
+        /// 判断指定索引的元数据表是否存在于有效表掩码中。
+        /// </summary>
+        private static bool IsTablePresent(ulong maskValid, int tableIndex)
+        {
+            return (maskValid & ((ulong)1 << tableIndex)) != 0;
+        }
+
+        /// <summary>
+        /// 从 #Strings 堆中读取以 null 结尾的字符串。
         /// </summary>
         /// <param name="fs">文件流</param>
         /// <param name="reader">二进制读取器</param>
-        /// <param name="heapOffset">堆偏移</param>
-        /// <param name="index">索引</param>
+        /// <param name="heapOffset">#Strings 堆的文件偏移</param>
+        /// <param name="index">堆内索引</param>
         /// <returns>字符串</returns>
         private static string ReadStringFromHeap(FileStream fs, BinaryReader reader, long heapOffset, uint index)
         {
             try
             {
-                if (heapOffset == -1 || index == 0)
+                if (heapOffset < 0 || index == 0)
                 {
                     return string.Empty;
                 }

@@ -18,11 +18,5 @@ namespace PersonalTools.PEAnalyzer.Models
 
         // 翻译信息（来自VarFileInfo）
         public string TranslationInfo { get; set; } = string.Empty;
-
-        // 是否已解析StringTable
-        public bool StringTableParsed { get; set; }
-
-        // StringTable结束位置
-        public long StringTableEndPosition { get; set; }
     }
 }

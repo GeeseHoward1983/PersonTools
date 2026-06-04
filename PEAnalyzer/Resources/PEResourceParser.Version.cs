@@ -1,3 +1,4 @@
+using PersonalTools.PEAnalyzer.Parsers;
 using PersonalTools.PEAnalyzer.Models;
 using System.IO;
 
@@ -20,13 +21,12 @@ namespace PersonalTools.PEAnalyzer.Resources
             try
             {
                 // 版本信息通常在资源节中，数据目录索引为#2 (IMAGE_DIRECTORY_ENTRY_RESOURCE)
-                const int RESOURCE_DIRECTORY_INDEX = 2; // IMAGE_DIRECTORY_ENTRY_RESOURCE
 
-                if (peInfo.OptionalHeader.DataDirectory.Length > RESOURCE_DIRECTORY_INDEX &&
-                    peInfo.OptionalHeader.DataDirectory[RESOURCE_DIRECTORY_INDEX].VirtualAddress != 0)
+                if (peInfo.OptionalHeader.DataDirectory.Length > PEConstants.DirectoryResource &&
+                    peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryResource].VirtualAddress != 0)
                 {
-                    uint resourceRVA = peInfo.OptionalHeader.DataDirectory[RESOURCE_DIRECTORY_INDEX].VirtualAddress;
-                    long resourceOffset = PEResourceParserCore.RvaToOffset(resourceRVA, peInfo.SectionHeaders);
+                    uint resourceRVA = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryResource].VirtualAddress;
+                    long resourceOffset = Utilities.RvaToOffset(resourceRVA, peInfo.SectionHeaders);
 
                     if (resourceOffset != -1 && resourceOffset < fs.Length)
                     {
@@ -57,11 +57,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 // 解析版本信息时出现异常，记录日志但不中断程序执行
                 peInfo.AdditionalInfo.FileVersion = $"解析错误: {ex.Message}";
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
 
@@ -139,11 +134,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             catch (ArgumentOutOfRangeException ex)
             {
                 peInfo.AdditionalInfo.FileVersion = $"资源目录解析错误: {ex.Message}";
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
 
@@ -228,11 +218,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 peInfo.AdditionalInfo.FileVersion = $"版本资源解析错误: {ex.Message}";
             }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
-            }
         }
 
         /// <summary>
@@ -273,7 +258,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 };
 
                 // 计算实际数据偏移（注意：资源数据的OffsetToData是RVA）
-                long dataOffset = PEResourceParserCore.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
+                long dataOffset = Utilities.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
                 if (dataOffset != -1 && dataOffset >= 0 && dataEntry.Size > 0 && dataEntry.Size <= int.MaxValue && dataOffset + dataEntry.Size <= fs.Length)
                 {
                     fs.Position = dataOffset;
@@ -299,11 +284,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             catch (ArgumentOutOfRangeException ex)
             {
                 peInfo.AdditionalInfo.FileVersion = $"数据项解析错误: {ex.Message}";
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
     }

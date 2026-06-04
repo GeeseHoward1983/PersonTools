@@ -1,3 +1,4 @@
+using PersonalTools.PEAnalyzer.Parsers;
 using PersonalTools.PEAnalyzer.Models;
 using System.IO;
 using System.Text;
@@ -205,7 +206,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 };
 
                 // 计算实际数据偏移
-                long dataOffset = PEResourceParserCore.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
+                long dataOffset = Utilities.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
 
                 // 验证数据偏移和大小的有效性
                 long endOffset = dataOffset + (long)dataEntry.Size;
@@ -249,15 +250,14 @@ namespace PersonalTools.PEAnalyzer.Resources
                 const int RT_ICON_TYPE = 3;
 
                 // 获取资源目录的RVA
-                const int RESOURCE_DIRECTORY_INDEX = 2;
-                if (peInfo.OptionalHeader.DataDirectory.Length <= RESOURCE_DIRECTORY_INDEX ||
-                    peInfo.OptionalHeader.DataDirectory[RESOURCE_DIRECTORY_INDEX].VirtualAddress == 0)
+                if (peInfo.OptionalHeader.DataDirectory.Length <= PEConstants.DirectoryResource ||
+                    peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryResource].VirtualAddress == 0)
                 {
                     return -1;
                 }
 
-                uint resourceRVA = peInfo.OptionalHeader.DataDirectory[RESOURCE_DIRECTORY_INDEX].VirtualAddress;
-                long resourceOffset = PEResourceParserCore.RvaToOffset(resourceRVA, peInfo.SectionHeaders);
+                uint resourceRVA = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryResource].VirtualAddress;
+                long resourceOffset = Utilities.RvaToOffset(resourceRVA, peInfo.SectionHeaders);
                 if (resourceOffset == -1 || resourceOffset + 16 > fs.Length)
                 {
                     return -1;

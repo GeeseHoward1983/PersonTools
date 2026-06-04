@@ -20,14 +20,13 @@ internal static void ParseCertificateInfo(FileStream fs, BinaryReader reader, PE
             try
             {
                 // 证书信息在数据目录的第5项 (IMAGE_DIRECTORY_ENTRY_SECURITY)
-                const int SECURITY_DIRECTORY_INDEX = 4;
 
-                if (peInfo.OptionalHeader.DataDirectory.Length > SECURITY_DIRECTORY_INDEX &&
-                    peInfo.OptionalHeader.DataDirectory[SECURITY_DIRECTORY_INDEX].VirtualAddress != 0)
+                if (peInfo.OptionalHeader.DataDirectory.Length > PEConstants.DirectorySecurity &&
+                    peInfo.OptionalHeader.DataDirectory[PEConstants.DirectorySecurity].VirtualAddress != 0)
                 {
                     // 注意：安全目录的VirtualAddress实际上是文件偏移量，不是RVA
-                    uint certificateOffset = peInfo.OptionalHeader.DataDirectory[SECURITY_DIRECTORY_INDEX].VirtualAddress;
-                    uint certificateSize = peInfo.OptionalHeader.DataDirectory[SECURITY_DIRECTORY_INDEX].Size;
+                    uint certificateOffset = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectorySecurity].VirtualAddress;
+                    uint certificateSize = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectorySecurity].Size;
 
                     if (certificateOffset != 0 && certificateSize != 0 &&
                         certificateOffset < fs.Length &&
@@ -89,11 +88,6 @@ internal static void ParseCertificateInfo(FileStream fs, BinaryReader reader, PE
             catch (ArgumentOutOfRangeException ex)
             {
                 peInfo.AdditionalInfo.CertificateInfo = $"解析错误: {ex.Message}";
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
     }

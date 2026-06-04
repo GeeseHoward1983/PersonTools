@@ -62,11 +62,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 Console.WriteLine($"处理图标数据错误: {ex.Message}");
             }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
-            }
         }
 
         /// <summary>
@@ -154,11 +149,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             catch (IndexOutOfRangeException ex)
             {
                 Console.WriteLine($"转换DIB到ICO错误: {ex.Message}");
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
 

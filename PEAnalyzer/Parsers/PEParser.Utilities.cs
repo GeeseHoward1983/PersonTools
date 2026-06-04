@@ -4,7 +4,7 @@ using System.Text;
 
 namespace PersonalTools.PEAnalyzer.Parsers
 {
-    internal static class Utilties
+    internal static class Utilities
     {
         public static string ReadNullTerminatedString(BinaryReader reader)
         {
@@ -45,7 +45,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
         {
             return machine switch
             {
-                0x014c => "Intel 386 (x88)",
+                0x014c => "Intel 386 (x86)",
                 0x0162 => "MIPS R3000",
                 0x0166 => "MIPS R4000",
                 0x0168 => "MIPS R10000",
@@ -146,7 +146,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
                     : (minorVersion is >= 26 and <= 29) ? "Microsoft Visual C++ 2019"
                     : (minorVersion >= 30) ? "Microsoft Visual C++ 2022"
                     : "Microsoft Visual C++ 2015/2017/2019",
-                15 => "Microsoft Visual C++ ???",
+                15 => "Microsoft Visual C++ (未知版本)",
                 _ =>
                     isNetAssembly ? "Microsoft .NET Compiler" :
                     majorVersion > 15 ? "Microsoft Visual C++ (较新版本)" : "Microsoft Visual C++ (未知版本)"
@@ -243,12 +243,12 @@ namespace PersonalTools.PEAnalyzer.Parsers
         // 判断是否为64位PE
         internal static bool Is64Bit(IMAGEOPTIONALHEADER optionalHeader)
         {
-            return optionalHeader.Magic == 0x20b;
+            return optionalHeader.Magic == PEConstants.Pe32PlusMagic;
         }
 
         internal static bool Is32Bit(IMAGEOPTIONALHEADER optionalHeader)
         {
-            return optionalHeader.Magic == 0x10b;
+            return optionalHeader.Magic == PEConstants.Pe32Magic;
         }
 
 
@@ -321,6 +321,118 @@ namespace PersonalTools.PEAnalyzer.Parsers
             }
 
             return driverType;
+        }
+
+        /// <summary>
+        /// 将RVA转换为文件偏移量。该原语与位数无关（仅使用 32 位节表字段），供导入/导出/CLR/资源解析共用。
+        /// </summary>
+        /// <param name="rva">相对虚拟地址</param>
+        /// <param name="sections">节头列表</param>
+        /// <returns>文件偏移量；无法解析时返回 -1</returns>
+        internal static long RvaToOffset(uint rva, List<IMAGESECTIONHEADER> sections)
+        {
+            // 添加对RVA的基本验证
+            if (rva == 0 || sections == null || sections.Count == 0)
+            {
+                return -1;
+            }
+
+            foreach (IMAGESECTIONHEADER section in sections)
+            {
+                // 确保节头有效并具有文件数据
+                if (section.VirtualSize == 0 || section.SizeOfRawData == 0 || section.PointerToRawData == 0)
+                {
+                    continue;
+                }
+
+                // 检查RVA是否在当前节的范围内
+                // 使用VirtualSize作为节在内存中的大小
+                // 使用SizeOfRawData作为节在文件中的大小
+                if (rva >= section.VirtualAddress && rva < (long)section.VirtualAddress + section.VirtualSize)
+                {
+                    // 计算相对于节起始地址的偏移量
+                    uint relativeOffset = rva - section.VirtualAddress;
+
+                    // 如果偏移量超出了文件中节的大小，则返回-1
+                    // 这种情况常见于未初始化数据节(.bss等)
+                    if (relativeOffset >= section.SizeOfRawData)
+                    {
+                        return -1;
+                    }
+
+                    // 使用 long 运算避免溢出
+                    long offset = (long)section.PointerToRawData + relativeOffset;
+                    if (offset >= 0)
+                    {
+                        return offset;
+                    }
+                }
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        /// 读取UNICODE字符串（带最大字符数限制）。
+        /// </summary>
+        /// <param name="reader">二进制读取器</param>
+        /// <param name="maxLength">最大字符数</param>
+        /// <returns>读取的字符串</returns>
+        internal static string ReadUnicodeStringWithMaxLength(BinaryReader reader, int maxLength)
+        {
+            try
+            {
+                StringBuilder sb = new();
+                int count = 0;
+
+                // 限制最大读取次数以防止死循环
+                int maxReadAttempts = Math.Min(maxLength, 1000);
+
+                while (count < maxReadAttempts)
+                {
+                    // 检查是否还有数据可读
+                    if (reader.BaseStream.Position + 2 > reader.BaseStream.Length)
+                    {
+                        break;
+                    }
+
+                    ushort ch = reader.ReadUInt16();
+                    if (ch == 0) // NULL终止符
+                    {
+                        break;
+                    }
+
+                    sb.Append((char)ch);
+                    count++;
+                }
+
+                return sb.ToString();
+            }
+            catch (IOException)
+            {
+                return string.Empty;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return string.Empty;
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// 读取UNICODE字符串（带最大字节数限制）。
+        /// </summary>
+        internal static string ReadUnicodeStringWithMaxBytes(BinaryReader reader, int maxBytes)
+        {
+            if (maxBytes <= 0)
+            {
+                return string.Empty;
+            }
+
+            return ReadUnicodeStringWithMaxLength(reader, maxBytes / 2);
         }
     }
 }

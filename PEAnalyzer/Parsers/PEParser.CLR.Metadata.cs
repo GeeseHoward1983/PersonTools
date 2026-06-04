@@ -1,5 +1,5 @@
+using PersonalTools.PEAnalyzer.Parsers;
 using PersonalTools.PEAnalyzer.Models;
-using PersonalTools.PEAnalyzer.Resources;
 using System.IO;
 using System.Text;
 
@@ -22,7 +22,7 @@ namespace PersonalTools
         {
             try
             {
-                long metaDataOffset = PEResourceParserCore.RvaToOffset(metaDataRVA, peInfo.SectionHeaders);
+                long metaDataOffset = Utilities.RvaToOffset(metaDataRVA, peInfo.SectionHeaders);
                 if (metaDataOffset == -1 || metaDataOffset >= fs.Length)
                 {
                     return;
@@ -39,9 +39,9 @@ namespace PersonalTools
 
                 // 读取元数据头
                 uint signature = reader.ReadUInt32();
-                ushort majorVersion = reader.ReadUInt16();
-                ushort minorVersion = reader.ReadUInt16();
-                uint reserved = reader.ReadUInt32();
+                reader.ReadUInt16(); // MajorVersion
+                reader.ReadUInt16(); // MinorVersion
+                reader.ReadUInt32(); // Reserved
                 uint length = reader.ReadUInt32();
 
                 // 检查签名是否正确 (BSJB = 0x42534A42)
@@ -50,30 +50,29 @@ namespace PersonalTools
                     return;
                 }
 
-                // 读取版本字符串
-                if (length > fs.Length - fs.Position)
+                // 跳过版本字符串（其长度 length 已按 4 字节对齐，直接定位到 Flags/Streams）
+                long versionStart = fs.Position;
+                if (length > fs.Length - versionStart)
                 {
-                    length = (uint)(fs.Length - fs.Position);
+                    length = (uint)(fs.Length - versionStart);
                 }
 
-                string versionString = PEResourceParserCore.ReadUnicodeStringWithMaxBytes(reader, (int)length);
+                fs.Position = versionStart + length;
 
-                // 跳过对齐填充
-                long alignedPosition = (fs.Position + 3) & ~3;
-                if (alignedPosition < fs.Length)
-                {
-                    fs.Position = alignedPosition;
-                }
-
-                // 读取流数量
-                if (fs.Position + 2 > fs.Length)
+                // 读取 Flags(2) 与 Streams(2)
+                if (fs.Position + 4 > fs.Length)
                 {
                     return;
                 }
 
+                reader.ReadUInt16(); // Flags
                 ushort streams = reader.ReadUInt16();
 
-                // 读取流信息
+                // 先收集所有流的位置（#Strings 流可能位于 #~ 表流之后，必须先读全）
+                long tablesStreamOffset = -1;
+                uint tablesStreamSize = 0;
+                long stringHeapOffset = -1;
+
                 for (int i = 0; i < streams; i++)
                 {
                     if (fs.Position + 8 > fs.Length)
@@ -83,34 +82,22 @@ namespace PersonalTools
 
                     uint offset = reader.ReadUInt32();
                     uint size = reader.ReadUInt32();
+                    string streamName = ReadStreamName(fs, reader);
 
-                    // 读取流名称
-                    StringBuilder nameBuilder = new();
-                    byte b;
-                    while ((b = reader.ReadByte()) != 0)
-                    {
-                        nameBuilder.Append((char)b);
-                        if (fs.Position >= fs.Length)
-                        {
-                            break;
-                        }
-                    }
-
-                    // 对齐到4字节边界
-                    alignedPosition = (fs.Position + 3) & ~3;
-                    if (alignedPosition < fs.Length && alignedPosition > fs.Position)
-                    {
-                        fs.Position = alignedPosition;
-                    }
-
-                    string streamName = nameBuilder.ToString();
-
-                    // 如果是导出类型流 (#~ 或 #-)
                     if (streamName is "#~" or "#-")
                     {
-                        // 解析元数据表以获取类型信息
-                        ParseMetadataTables(fs, reader, peInfo, metaDataOffset + offset, size);
+                        tablesStreamOffset = metaDataOffset + offset;
+                        tablesStreamSize = size;
                     }
+                    else if (streamName == "#Strings")
+                    {
+                        stringHeapOffset = metaDataOffset + offset;
+                    }
+                }
+
+                if (tablesStreamOffset != -1 && stringHeapOffset != -1)
+                {
+                    ParseMetadataTables(fs, reader, peInfo, tablesStreamOffset, tablesStreamSize, stringHeapOffset);
                 }
 
                 fs.Position = originalPosition;
@@ -123,22 +110,45 @@ namespace PersonalTools
             {
                 Console.WriteLine($"元数据解析权限错误: {ex.Message}");
             }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
-            }
         }
 
         /// <summary>
-        /// 解析元数据表
+        /// 读取一个元数据流目录项中的流名称（以 null 结尾，按 4 字节对齐）。
+        /// </summary>
+        private static string ReadStreamName(FileStream fs, BinaryReader reader)
+        {
+            StringBuilder nameBuilder = new();
+            while (fs.Position < fs.Length)
+            {
+                byte b = reader.ReadByte();
+                if (b == 0)
+                {
+                    break;
+                }
+
+                nameBuilder.Append((char)b);
+            }
+
+            // 对齐到4字节边界
+            long alignedPosition = (fs.Position + 3) & ~3;
+            if (alignedPosition < fs.Length && alignedPosition > fs.Position)
+            {
+                fs.Position = alignedPosition;
+            }
+
+            return nameBuilder.ToString();
+        }
+
+        /// <summary>
+        /// 解析元数据表流（#~ / #-）。
         /// </summary>
         /// <param name="fs">文件流</param>
         /// <param name="reader">二进制读取器</param>
         /// <param name="peInfo">PE文件信息</param>
-        /// <param name="tablesOffset">表偏移</param>
-        /// <param name="size">表大小</param>
-        private static void ParseMetadataTables(FileStream fs, BinaryReader reader, PEInfo peInfo, long tablesOffset, uint size)
+        /// <param name="tablesOffset">表流偏移</param>
+        /// <param name="size">表流大小</param>
+        /// <param name="stringHeapOffset">#Strings 堆的文件偏移</param>
+        private static void ParseMetadataTables(FileStream fs, BinaryReader reader, PEInfo peInfo, long tablesOffset, uint size, long stringHeapOffset)
         {
             try
             {
@@ -150,49 +160,42 @@ namespace PersonalTools
                 long originalPosition = fs.Position;
                 fs.Position = tablesOffset;
 
-                // 读取表头
+                // 读取表头（24 字节）
                 if (fs.Position + 24 > fs.Length)
                 {
                     return;
                 }
 
-                uint reserved1 = reader.ReadUInt32();
-                byte majorVersion = reader.ReadByte();
-                byte minorVersion = reader.ReadByte();
+                reader.ReadUInt32();              // Reserved
+                reader.ReadByte();                // MajorVersion
+                reader.ReadByte();                // MinorVersion
                 byte heapSizes = reader.ReadByte();
-                byte reserved2 = reader.ReadByte();
+                reader.ReadByte();                // Reserved
                 ulong maskValid = reader.ReadUInt64();
-                ulong maskSorted = reader.ReadUInt64();
+                reader.ReadUInt64();              // MaskSorted
 
-                // 计算有多少个表
-                int tableCount = 0;
-                for (int i = 0; i < 64; i++)
-                {
-                    if ((maskValid & ((ulong)1 << i)) != 0)
-                    {
-                        tableCount++;
-                    }
-                }
-
-                // 读取每个表的行数
+                // 读取每个有效表的行数
                 uint[] rowCounts = new uint[64];
-                int rowIndex = 0;
                 for (int i = 0; i < 64; i++)
                 {
-                    if ((maskValid & ((ulong)1 << i)) != 0)
+                    if (IsTablePresent(maskValid, i))
                     {
+                        if (fs.Position + 4 > fs.Length)
+                        {
+                            return;
+                        }
+
                         rowCounts[i] = reader.ReadUInt32();
-                        rowIndex++;
                     }
                 }
 
-                // TypeDef 表的索引是2
-                const int TYPE_DEF_TABLE_INDEX = 2;
-                if ((maskValid & ((ulong)1 << TYPE_DEF_TABLE_INDEX)) != 0)
+                // 行数数组之后即为表数据起始位置
+                long tablesDataOffset = fs.Position;
+
+                const int TypeDefTableIndex = 2;
+                if (IsTablePresent(maskValid, TypeDefTableIndex))
                 {
-                    uint typeDefCount = rowCounts[TYPE_DEF_TABLE_INDEX];
-                    // 解析TypeDef表获取公开类型信息
-                    ParseTypeDefTable(fs, reader, peInfo, typeDefCount, tablesOffset, heapSizes, maskValid, rowCounts);
+                    ParseTypeDefTable(fs, reader, peInfo, tablesDataOffset, stringHeapOffset, heapSizes, maskValid, rowCounts);
                 }
 
                 fs.Position = originalPosition;
@@ -205,71 +208,81 @@ namespace PersonalTools
             {
                 Console.WriteLine($"元数据表解析权限错误: {ex.Message}");
             }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
-            }
         }
 
         /// <summary>
-        /// 解析TypeDef表
+        /// 解析 TypeDef 表，收集公开可见类型的全名。
+        /// 依据 ECMA-335 计算各表的可变行宽，跳过位于 TypeDef 之前的 Module/TypeRef 表，
+        /// 并以正确的索引宽度读取每一行。
         /// </summary>
         /// <param name="fs">文件流</param>
         /// <param name="reader">二进制读取器</param>
         /// <param name="peInfo">PE文件信息</param>
-        /// <param name="typeDefCount">类型定义数量</param>
-        /// <param name="tablesOffset">元数据表偏移</param>
+        /// <param name="tablesDataOffset">表数据起始偏移</param>
+        /// <param name="stringHeapOffset">#Strings 堆偏移</param>
         /// <param name="heapSizes">堆大小标志</param>
         /// <param name="maskValid">有效表掩码</param>
         /// <param name="rowCounts">行数数组</param>
-        private static void ParseTypeDefTable(FileStream fs, BinaryReader reader, PEInfo peInfo, uint typeDefCount, long tablesOffset, byte heapSizes, ulong maskValid, uint[] rowCounts)
+        private static void ParseTypeDefTable(FileStream fs, BinaryReader reader, PEInfo peInfo, long tablesDataOffset, long stringHeapOffset, byte heapSizes, ulong maskValid, uint[] rowCounts)
         {
             try
             {
-                // 计算String堆的偏移
-                long stringHeapOffset = CalculateStringHeapOffset(tablesOffset, heapSizes, maskValid, rowCounts);
+                int stringIndexSize = HeapIndexSize(heapSizes, 0);
+                int guidIndexSize = HeapIndexSize(heapSizes, 1);
+                int resolutionScopeSize = CodedIndexSize(2, rowCounts, ResolutionScopeTables);
+                int typeDefOrRefSize = CodedIndexSize(2, rowCounts, TypeDefOrRefTables);
+                int fieldIndexSize = SimpleIndexSize(rowCounts, FieldTableIndex);
+                int methodIndexSize = SimpleIndexSize(rowCounts, MethodDefTableIndex);
 
-                // TypeDef表结构:
-                // Flags (4 bytes)
-                // TypeName (index into String heap)
-                // TypeNamespace (index into String heap)
-                // Extends (index into TypeDef, TypeRef, or TypeSpec table)
-                // FieldList (index into Field table)
-                // MethodList (index into MethodDef table)
+                // 各相关表的行大小（ECMA-335 II.22）
+                long moduleRowSize = 2L + stringIndexSize + (3L * guidIndexSize);
+                long typeRefRowSize = (long)resolutionScopeSize + (2L * stringIndexSize);
+                long typeDefRowSize = 4L + (2L * stringIndexSize) + typeDefOrRefSize + fieldIndexSize + methodIndexSize;
 
-                for (int i = 0; i < typeDefCount; i++)
+                // 跳过位于 TypeDef(2) 之前的 Module(0)、TypeRef(1) 表，定位到 TypeDef 表数据起始
+                long typeDefStart = tablesDataOffset;
+                if (IsTablePresent(maskValid, 0))
                 {
-                    if (fs.Position + 14 > fs.Length) // 最小大小检查
+                    typeDefStart += rowCounts[0] * moduleRowSize;
+                }
+
+                if (IsTablePresent(maskValid, 1))
+                {
+                    typeDefStart += rowCounts[1] * typeRefRowSize;
+                }
+
+                uint typeDefCount = rowCounts[2];
+                for (uint i = 0; i < typeDefCount; i++)
+                {
+                    long rowStart = typeDefStart + (long)i * typeDefRowSize;
+                    if (rowStart < 0 || rowStart + typeDefRowSize > fs.Length)
                     {
                         break;
                     }
 
+                    fs.Position = rowStart;
                     uint flags = reader.ReadUInt32();
-                    uint typeNameIndex = reader.ReadUInt32();
-                    uint typeNamespaceIndex = reader.ReadUInt32();
-                    reader.ReadUInt32(); // Extends索引
-                    reader.ReadUInt32(); // FieldList索引
-                    reader.ReadUInt32(); // MethodList索引
+                    uint nameIndex = ReadHeapIndex(reader, stringIndexSize);
+                    uint namespaceIndex = ReadHeapIndex(reader, stringIndexSize);
+                    // Extends/FieldList/MethodList 无需读取：下一行由 rowStart 推进
 
-                    // 检查类型是否公开 (IsPublic flag)
-                    if ((flags & 0x00000001) != 0)
+                    // 仅收集公开可见类型：VisibilityMask = 0x7，Public = 1，NestedPublic = 2
+                    uint visibility = flags & 0x7;
+                    if (visibility is 1u or 2u)
                     {
-                        // 这是一个公开类型，获取类型名称
-                        string typeName = ReadStringFromHeap(fs, reader, stringHeapOffset, typeNameIndex);
-
-                        // 获取命名空间名称
-                        string namespaceName = ReadStringFromHeap(fs, reader, stringHeapOffset, typeNamespaceIndex);
-
+                        string typeName = ReadStringFromHeap(fs, reader, stringHeapOffset, nameIndex);
+                        string namespaceName = ReadStringFromHeap(fs, reader, stringHeapOffset, namespaceIndex);
                         string fullName = string.IsNullOrEmpty(namespaceName) ? typeName : $"{namespaceName}.{typeName}";
 
-                        ExportFunctionInfo exportFunc = new()
+                        if (!string.IsNullOrEmpty(fullName))
                         {
-                            Name = fullName,
-                            Ordinal = i,
-                            RVA = 0 // 对于.NET程序集，RVA不适用
-                        };
-                        peInfo.ExportFunctions.Add(exportFunc);
+                            peInfo.ExportFunctions.Add(new ExportFunctionInfo
+                            {
+                                Name = fullName,
+                                Ordinal = (int)i,
+                                RVA = 0 // 对于.NET程序集，RVA不适用
+                            });
+                        }
                     }
                 }
             }
@@ -280,11 +293,6 @@ namespace PersonalTools
             catch (UnauthorizedAccessException ex)
             {
                 Console.WriteLine($"TypeDef表解析权限错误: {ex.Message}");
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
     }

@@ -1,3 +1,4 @@
+using PersonalTools.PEAnalyzer.Parsers;
 using PersonalTools.PEAnalyzer.Models;
 using System.IO;
 
@@ -39,7 +40,7 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 // 读取szKey (UNICODE字符串 "VarFileInfo")
                 int maxKeyBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
-                string key = PEResourceParserCore.ReadUnicodeStringWithMaxBytes(reader, maxKeyBytes);
+                string key = Utilities.ReadUnicodeStringWithMaxBytes(reader, maxKeyBytes);
 
                 if (key.Equals("VarFileInfo", StringComparison.OrdinalIgnoreCase))
                 {
@@ -77,11 +78,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 // 忽略VarFileInfo解析错误
                 peInfo.AdditionalInfo.FileVersion += $"; VarFileInfo解析错误: {ex.Message}";
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
 
@@ -124,7 +120,7 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                     // 读取变量名（通常是"Translation"）
                     int maxVarNameBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
-                    string varName = PEResourceParserCore.ReadUnicodeStringWithMaxBytes(reader, maxVarNameBytes);
+                    string varName = Utilities.ReadUnicodeStringWithMaxBytes(reader, maxVarNameBytes);
 
                     // 计算值的位置（对齐到4字节边界）
                     long keyLengthInBytes = (varName.Length + 1) * 2; // Unicode字符串长度 + null终止符
@@ -185,10 +181,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 // 忽略Var解析错误
                 peInfo.AdditionalInfo.FileVersion += $"; Var解析错误: {ex.Message}";
-            }
-            catch (Exception)
-            {
-                throw;
             }
         }
     }

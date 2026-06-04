@@ -1,3 +1,4 @@
+using PersonalTools.PEAnalyzer.Parsers;
 using PersonalTools.PEAnalyzer.Models;
 using PersonalTools.PEAnalyzer.Resources;
 using System.IO;
@@ -21,14 +22,13 @@ namespace PersonalTools
             try
             {
                 // CLR运行时头在数据目录中的索引是14 (从0开始计数)
-                const int CLR_RUNTIME_HEADER_INDEX = 14;
 
                 // 检查是否存在CLR运行时头
-                if (peInfo.OptionalHeader.DataDirectory.Length > CLR_RUNTIME_HEADER_INDEX &&
-                    peInfo.OptionalHeader.DataDirectory[CLR_RUNTIME_HEADER_INDEX].VirtualAddress != 0)
+                if (peInfo.OptionalHeader.DataDirectory.Length > PEConstants.DirectoryClrHeader &&
+                    peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryClrHeader].VirtualAddress != 0)
                 {
-                    uint clrHeaderRVA = peInfo.OptionalHeader.DataDirectory[CLR_RUNTIME_HEADER_INDEX].VirtualAddress;
-                    long clrHeaderOffset = PEResourceParserCore.RvaToOffset(clrHeaderRVA, peInfo.SectionHeaders);
+                    uint clrHeaderRVA = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryClrHeader].VirtualAddress;
+                    long clrHeaderOffset = Utilities.RvaToOffset(clrHeaderRVA, peInfo.SectionHeaders);
 
                     if (clrHeaderOffset != -1 && clrHeaderOffset < fs.Length)
                     {
@@ -64,7 +64,7 @@ namespace PersonalTools
                 fs.Position = clrHeaderOffset;
 
                 // 检查是否有足够的数据读取IMAGE_COR20_HEADER
-                if (fs.Position + 72 > fs.Length) // IMAGE_COR20_HEADER最小大小为72字节
+                if (fs.Position + PEConstants.Cor20HeaderMinSize > fs.Length) // IMAGE_COR20_HEADER最小大小为72字节
                 {
                     return;
                 }

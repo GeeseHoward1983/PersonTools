@@ -1,3 +1,4 @@
+using PersonalTools.PEAnalyzer.Parsers;
 using PersonalTools.PEAnalyzer.Models;
 using System.IO;
 
@@ -20,13 +21,12 @@ namespace PersonalTools.PEAnalyzer.Resources
             try
             {
                 // 图标信息在资源目录中，数据目录索引为#2 (IMAGE_DIRECTORY_ENTRY_RESOURCE)
-                const int RESOURCE_DIRECTORY_INDEX = 2; // IMAGE_DIRECTORY_ENTRY_RESOURCE
 
-                if (peInfo.OptionalHeader.DataDirectory.Length > RESOURCE_DIRECTORY_INDEX &&
-                    peInfo.OptionalHeader.DataDirectory[RESOURCE_DIRECTORY_INDEX].VirtualAddress != 0)
+                if (peInfo.OptionalHeader.DataDirectory.Length > PEConstants.DirectoryResource &&
+                    peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryResource].VirtualAddress != 0)
                 {
-                    uint resourceRVA = peInfo.OptionalHeader.DataDirectory[RESOURCE_DIRECTORY_INDEX].VirtualAddress;
-                    long resourceOffset = PEResourceParserCore.RvaToOffset(resourceRVA, peInfo.SectionHeaders);
+                    uint resourceRVA = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryResource].VirtualAddress;
+                    long resourceOffset = Utilities.RvaToOffset(resourceRVA, peInfo.SectionHeaders);
 
                     if (resourceOffset != -1 && resourceOffset < fs.Length)
                     {
@@ -54,11 +54,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 Console.WriteLine($"图标信息解析错误: {ex.Message}");
                 // 图标信息解析错误不中断程序执行
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
 
@@ -91,11 +86,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 Console.WriteLine($".NET图标解析错误: {ex.Message}");
             }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
-            }
         }
 
         /// <summary>
@@ -109,15 +99,14 @@ namespace PersonalTools.PEAnalyzer.Resources
             try
             {
                 // 获取资源RVA并转换为文件偏移
-                const int RESOURCE_DIRECTORY_INDEX = 2;
-                if (peInfo.OptionalHeader.DataDirectory.Length <= RESOURCE_DIRECTORY_INDEX ||
-                    peInfo.OptionalHeader.DataDirectory[RESOURCE_DIRECTORY_INDEX].VirtualAddress == 0)
+                if (peInfo.OptionalHeader.DataDirectory.Length <= PEConstants.DirectoryResource ||
+                    peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryResource].VirtualAddress == 0)
                 {
                     return;
                 }
 
-                uint resourceRVA = peInfo.OptionalHeader.DataDirectory[RESOURCE_DIRECTORY_INDEX].VirtualAddress;
-                long resourceOffset = PEResourceParserCore.RvaToOffset(resourceRVA, peInfo.SectionHeaders);
+                uint resourceRVA = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryResource].VirtualAddress;
+                long resourceOffset = Utilities.RvaToOffset(resourceRVA, peInfo.SectionHeaders);
 
                 if (resourceOffset != -1 && resourceOffset < fs.Length)
                 {
@@ -136,11 +125,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             catch (ArgumentOutOfRangeException ex)
             {
                 Console.WriteLine($".NET资源图标解析错误: {ex.Message}");
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
 
@@ -278,11 +262,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             catch (ArgumentOutOfRangeException ex)
             {
                 Console.WriteLine($"解析资源目录以查找图标信息错误: {ex.Message}");
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
     }

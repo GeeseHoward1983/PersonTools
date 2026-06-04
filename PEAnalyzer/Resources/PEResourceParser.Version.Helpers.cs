@@ -1,3 +1,4 @@
+using PersonalTools.PEAnalyzer.Parsers;
 using PersonalTools.PEAnalyzer.Models;
 using System.IO;
 
@@ -42,7 +43,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     }
 
                     int maxStringBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
-                    string vsVersionInfoKey = PEResourceParserCore.ReadUnicodeStringWithMaxBytes(reader, maxStringBytes);
+                    string vsVersionInfoKey = Utilities.ReadUnicodeStringWithMaxBytes(reader, maxStringBytes);
 
                     // 验证键名
                     if (!vsVersionInfoKey.Equals("VS_VERSION_INFO", StringComparison.OrdinalIgnoreCase))
@@ -128,11 +129,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 peInfo.AdditionalInfo.FileVersion = $"版本信息结构解析错误: {ex.Message}";
             }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
-            }
         }
 
         /// <summary>
@@ -163,7 +159,7 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                     // 读取键名
                     int maxKeyBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
-                    string key = PEResourceParserCore.ReadUnicodeStringWithMaxBytes(reader, maxKeyBytes);
+                    string key = Utilities.ReadUnicodeStringWithMaxBytes(reader, maxKeyBytes);
 
                     // 重置位置以便正确解析
                     fs.Position = childStartPos;
@@ -199,11 +195,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             catch (ArgumentOutOfRangeException ex)
             {
                 peInfo.AdditionalInfo.FileVersion += $"; 版本子项解析错误: {ex.Message}";
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
     }
