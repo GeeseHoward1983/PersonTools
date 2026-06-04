@@ -34,126 +34,53 @@ namespace PersonalTools
                     if (exportOffset != -1 && exportOffset < fs.Length)
                     {
                         long originalPosition = fs.Position;
-                        fs.Position = exportOffset;
-
-                        // 读取导出目录
-                        IMAGEEXPORTDIRECTORY exportDir = new()
+                        try
                         {
-                            Characteristics = reader.ReadUInt32(),
-                            TimeDateStamp = reader.ReadUInt32(),
-                            MajorVersion = reader.ReadUInt16(),
-                            MinorVersion = reader.ReadUInt16(),
-                            Name = reader.ReadUInt32(),
-                            Base = reader.ReadUInt32(),
-                            NumberOfFunctions = reader.ReadUInt32(),
-                            NumberOfNames = reader.ReadUInt32(),
-                            AddressOfFunctions = reader.ReadUInt32(),
-                            AddressOfNames = reader.ReadUInt32(),
-                            AddressOfNameOrdinals = reader.ReadUInt32()
-                        };
+                            fs.Position = exportOffset;
 
-                        // 获取函数地址表
-                        List<uint> functionAddresses = [];
-                        long funcAddrOffset = PEResourceParserCore.RvaToOffset(exportDir.AddressOfFunctions, peInfo.SectionHeaders);
-                        if (funcAddrOffset != -1 && funcAddrOffset < fs.Length)
-                        {
-                            long tempPosition = fs.Position;
-                            fs.Position = funcAddrOffset;
-
-                            for (int i = 0; i < exportDir.NumberOfFunctions; i++)
+                            if (fs.Position + 40 > fs.Length)
                             {
-                                functionAddresses.Add(reader.ReadUInt32());
+                                return;
                             }
 
-                            fs.Position = tempPosition;
-                        }
-
-                        // 获取函数名称表
-                        List<uint> functionNameRVAs = [];
-                        long funcNameOffset = PEResourceParserCore.RvaToOffset(exportDir.AddressOfNames, peInfo.SectionHeaders);
-                        if (funcNameOffset != -1 && funcNameOffset < fs.Length)
-                        {
-                            long tempPosition = fs.Position;
-                            fs.Position = funcNameOffset;
-
-                            for (int i = 0; i < exportDir.NumberOfNames; i++)
+                            IMAGEEXPORTDIRECTORY exportDir = new()
                             {
-                                functionNameRVAs.Add(reader.ReadUInt32());
-                            }
-
-                            fs.Position = tempPosition;
-                        }
-
-                        // 获取名称序号表
-                        List<ushort> nameOrdinals = [];
-                        long nameOrdinalOffset = PEResourceParserCore.RvaToOffset(exportDir.AddressOfNameOrdinals, peInfo.SectionHeaders);
-                        if (nameOrdinalOffset != -1 && nameOrdinalOffset < fs.Length)
-                        {
-                            long tempPosition = fs.Position;
-                            fs.Position = nameOrdinalOffset;
-
-                            for (int i = 0; i < exportDir.NumberOfNames; i++)
-                            {
-                                nameOrdinals.Add(reader.ReadUInt16());
-                            }
-
-                            fs.Position = tempPosition;
-                        }
-
-                        // 解析函数名称
-                        Dictionary<int, string> functionNames = [];
-                        for (int i = 0; i < functionNameRVAs.Count; i++)
-                        {
-                            uint nameRVA = functionNameRVAs[i];
-                            long nameOffset = PEResourceParserCore.RvaToOffset(nameRVA, peInfo.SectionHeaders);
-
-                            if (nameOffset != -1 && nameOffset < fs.Length)
-                            {
-                                long tempPosition = fs.Position;
-                                fs.Position = nameOffset;
-
-                                string functionName = Utilties.ReadNullTerminatedString(reader);
-                                functionNames[nameOrdinals[i]] = functionName;
-
-                                fs.Position = tempPosition;
-                            }
-                        }
-
-                        // 构建导出函数列表
-                        for (int i = 0; i < functionAddresses.Count; i++)
-                        {
-                            uint functionRVA = functionAddresses[i];
-
-                            // 检查是否是转发函数（RVA指向非导出节）
-                            //bool isForwarded = false;
-                            foreach (IMAGESECTIONHEADER section in peInfo.SectionHeaders)
-                            {
-                                if (functionRVA >= section.VirtualAddress &&
-                                    functionRVA < section.VirtualAddress + section.VirtualSize)
-                                {
-                                    // 检查该节是否是导出节
-                                    string sectionName = Encoding.UTF8.GetString(section.Name).Trim('\0');
-                                    if (sectionName.Equals(".edata", StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        //isForwarded = true;
-                                        break;
-                                    }
-                                }
-                            }
-
-                            ExportFunctionInfo exportFunc = new()
-                            {
-                                Ordinal = (int)(i + exportDir.Base),
-                                RVA = functionRVA
+                                Characteristics = reader.ReadUInt32(),
+                                TimeDateStamp = reader.ReadUInt32(),
+                                MajorVersion = reader.ReadUInt16(),
+                                MinorVersion = reader.ReadUInt16(),
+                                Name = reader.ReadUInt32(),
+                                Base = reader.ReadUInt32(),
+                                NumberOfFunctions = reader.ReadUInt32(),
+                                NumberOfNames = reader.ReadUInt32(),
+                                AddressOfFunctions = reader.ReadUInt32(),
+                                AddressOfNames = reader.ReadUInt32(),
+                                AddressOfNameOrdinals = reader.ReadUInt32()
                             };
 
-                            // 查找对应的函数名称
-                            exportFunc.Name = functionNames.TryGetValue(i, out string? value) ? value : $"Ordinal_{exportFunc.Ordinal}";
+                            List<uint> functionAddresses = ReadUInt32ListAtRva(fs, reader, peInfo.SectionHeaders, exportDir.AddressOfFunctions, exportDir.NumberOfFunctions);
+                            List<uint> functionNameRVAs = ReadUInt32ListAtRva(fs, reader, peInfo.SectionHeaders, exportDir.AddressOfNames, exportDir.NumberOfNames);
+                            List<ushort> nameOrdinals = ReadUInt16ListAtRva(fs, reader, peInfo.SectionHeaders, exportDir.AddressOfNameOrdinals, exportDir.NumberOfNames);
+                            Dictionary<int, string> functionNames = BuildExportFunctionNameMap(fs, reader, peInfo.SectionHeaders, functionNameRVAs, nameOrdinals);
 
-                            peInfo.ExportFunctions.Add(exportFunc);
+                            for (int i = 0; i < functionAddresses.Count; i++)
+                            {
+                                uint functionRVA = functionAddresses[i];
+
+                                ExportFunctionInfo exportFunc = new()
+                                {
+                                    Ordinal = (int)(i + exportDir.Base),
+                                    RVA = functionRVA
+                                };
+
+                                exportFunc.Name = functionNames.TryGetValue(i, out string? value) ? value : $"Ordinal_{exportFunc.Ordinal}";
+                                peInfo.ExportFunctions.Add(exportFunc);
+                            }
                         }
-
-                        fs.Position = originalPosition;
+                        finally
+                        {
+                            fs.Position = originalPosition;
+                        }
                     }
                 }
             }
@@ -177,6 +104,101 @@ namespace PersonalTools
             {
                 throw;
             }
+        }
+
+        private static List<uint> ReadUInt32ListAtRva(FileStream fs, BinaryReader reader, List<IMAGESECTIONHEADER> sections, uint rva, uint count)
+        {
+            List<uint> result = [];
+            if (rva == 0 || count == 0)
+            {
+                return result;
+            }
+
+            long offset = PEResourceParserCore.RvaToOffset(rva, sections);
+            if (offset == -1 || offset >= fs.Length)
+            {
+                return result;
+            }
+
+            long originalPosition = fs.Position;
+            try
+            {
+                fs.Position = offset;
+                for (int i = 0; i < count && fs.Position + 4 <= fs.Length; i++)
+                {
+                    result.Add(reader.ReadUInt32());
+                }
+            }
+            finally
+            {
+                fs.Position = originalPosition;
+            }
+
+            return result;
+        }
+
+        private static List<ushort> ReadUInt16ListAtRva(FileStream fs, BinaryReader reader, List<IMAGESECTIONHEADER> sections, uint rva, uint count)
+        {
+            List<ushort> result = [];
+            if (rva == 0 || count == 0)
+            {
+                return result;
+            }
+
+            long offset = PEResourceParserCore.RvaToOffset(rva, sections);
+            if (offset == -1 || offset >= fs.Length)
+            {
+                return result;
+            }
+
+            long originalPosition = fs.Position;
+            try
+            {
+                fs.Position = offset;
+                for (int i = 0; i < count && fs.Position + 2 <= fs.Length; i++)
+                {
+                    result.Add(reader.ReadUInt16());
+                }
+            }
+            finally
+            {
+                fs.Position = originalPosition;
+            }
+
+            return result;
+        }
+
+        private static Dictionary<int, string> BuildExportFunctionNameMap(FileStream fs, BinaryReader reader, List<IMAGESECTIONHEADER> sections, List<uint> nameRVAs, List<ushort> ordinals)
+        {
+            Dictionary<int, string> result = [];
+            int entryCount = Math.Min(nameRVAs.Count, ordinals.Count);
+
+            for (int i = 0; i < entryCount; i++)
+            {
+                uint nameRVA = nameRVAs[i];
+                long nameOffset = PEResourceParserCore.RvaToOffset(nameRVA, sections);
+                if (nameOffset == -1 || nameOffset >= fs.Length)
+                {
+                    continue;
+                }
+
+                long originalPosition = fs.Position;
+                try
+                {
+                    fs.Position = nameOffset;
+                    string functionName = Utilties.ReadNullTerminatedString(reader);
+                    if (!string.IsNullOrEmpty(functionName))
+                    {
+                        result[ordinals[i]] = functionName;
+                    }
+                }
+                finally
+                {
+                    fs.Position = originalPosition;
+                }
+            }
+
+            return result;
         }
     }
 }

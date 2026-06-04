@@ -76,6 +76,11 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             try
             {
+                if (resourceOffset < 0 || resourceOffset + 16 > fs.Length)
+                {
+                    return;
+                }
+
                 long originalPosition = fs.Position;
                 fs.Position = resourceOffset;
 
@@ -95,7 +100,13 @@ namespace PersonalTools.PEAnalyzer.Resources
                 // 遍历资源目录项
                 for (int i = 0; i < totalEntries; i++)
                 {
-                    fs.Position = resourceOffset + 16 + i * 8; // 16是IMAGE_RESOURCE_DIRECTORY大小，每项8字节
+                    long entryOffset = resourceOffset + 16 + i * 8;
+                    if (entryOffset + 8 > fs.Length)
+                    {
+                        break;
+                    }
+
+                    fs.Position = entryOffset; // 16是IMAGE_RESOURCE_DIRECTORY大小，每项8字节
 
                     IMAGERESOURCEDIRECTORYENTRY entry = new()
                     {
@@ -107,7 +118,10 @@ namespace PersonalTools.PEAnalyzer.Resources
                     if ((entry.NameOrId & 0xFFFF) == 16) // RT_VERSION = 16
                     {
                         long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
-                        ParseVersionResource(fs, reader, peInfo, nextLevelOffset, resourceOffset);
+                        if (nextLevelOffset >= 0 && nextLevelOffset + 16 <= fs.Length)
+                        {
+                            ParseVersionResource(fs, reader, peInfo, nextLevelOffset, resourceOffset);
+                        }
                         break;
                     }
                 }
@@ -145,6 +159,11 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             try
             {
+                if (directoryOffset < 0 || directoryOffset + 16 > fs.Length)
+                {
+                    return;
+                }
+
                 long originalPosition = fs.Position;
                 fs.Position = directoryOffset;
 
@@ -163,7 +182,13 @@ namespace PersonalTools.PEAnalyzer.Resources
                 int totalEntries = directory.NumberOfNamedEntries + directory.NumberOfIdEntries;
                 for (int i = 0; i < totalEntries; i++)
                 {
-                    fs.Position = directoryOffset + 16 + i * 8; // 跳过目录头(16字节)，每项8字节
+                    long entryOffset = directoryOffset + 16 + i * 8;
+                    if (entryOffset + 8 > fs.Length)
+                    {
+                        break;
+                    }
+
+                    fs.Position = entryOffset; // 跳过目录头(16字节)，每项8字节
 
                     IMAGERESOURCEDIRECTORYENTRY entry = new()
                     {
@@ -176,15 +201,14 @@ namespace PersonalTools.PEAnalyzer.Resources
                     // 我们需要处理两种情况
                     if ((entry.OffsetToData & 0x80000000) != 0)
                     {
-                        // 最高位为1，表示指向下一级目录
-                        // 清除最高位得到实际偏移
                         long nextLevelOffset = resourceBaseOffset + (entry.OffsetToData & 0x7FFFFFFF);
-                        // 递归处理下一级目录
-                        ParseVersionResource(fs, reader, peInfo, nextLevelOffset, resourceBaseOffset);
+                        if (nextLevelOffset >= 0 && nextLevelOffset + 16 <= fs.Length)
+                        {
+                            ParseVersionResource(fs, reader, peInfo, nextLevelOffset, resourceBaseOffset);
+                        }
                     }
                     else
                     {
-                        // 最高位为0，表示指向数据条目
                         long dataEntryOffset = resourceBaseOffset + entry.OffsetToData;
                         ParseVersionDataEntry(fs, reader, peInfo, dataEntryOffset);
                     }
@@ -223,6 +247,12 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             try
             {
+                if (dataEntryOffset < 0 || dataEntryOffset + 16 > fs.Length)
+                {
+                    peInfo.AdditionalInfo.FileVersion = "资源数据条目不完整";
+                    return;
+                }
+
                 long originalPosition = fs.Position;
                 fs.Position = dataEntryOffset;
 
@@ -244,7 +274,7 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 // 计算实际数据偏移（注意：资源数据的OffsetToData是RVA）
                 long dataOffset = PEResourceParserCore.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
-                if (dataOffset != -1 && dataOffset < fs.Length)
+                if (dataOffset != -1 && dataOffset >= 0 && dataEntry.Size > 0 && dataEntry.Size <= int.MaxValue && dataOffset + dataEntry.Size <= fs.Length)
                 {
                     fs.Position = dataOffset;
 

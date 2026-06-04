@@ -94,13 +94,27 @@ namespace PersonalTools
 
             if (is32Bit)
             {
+                if (sizeOfOptionalHeader < 96)
+                {
+                    throw new InvalidDataException("文件不是有效的PE文件: PE32 可选头过短。");
+                }
+
                 optionalHeader.BaseOfData = reader.ReadUInt32();
                 optionalHeader.ImageBase = reader.ReadUInt32();
             }
             else if (is64Bit)
             {
+                if (sizeOfOptionalHeader < 112)
+                {
+                    throw new InvalidDataException("文件不是有效的PE文件: PE32+ 可选头过短。");
+                }
+
                 optionalHeader.BaseOfData = 0; // PE32+没有BaseOfData字段
                 optionalHeader.ImageBase = reader.ReadUInt64();
+            }
+            else
+            {
+                throw new InvalidDataException($"文件不是有效的PE文件: Unsupported optional header magic 0x{optionalHeader.Magic:X4}.");
             }
 
             optionalHeader.SectionAlignment = reader.ReadUInt32();

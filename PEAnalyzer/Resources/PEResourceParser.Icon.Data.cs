@@ -100,6 +100,12 @@ namespace PersonalTools.PEAnalyzer.Resources
                 // 从BITMAPINFOHEADER中提取色深
                 ushort bitCount = BitConverter.ToUInt16(dibData, 14);
 
+                // 验证基本图像参数
+                if (width <= 0 || height <= 0 || bitCount == 0)
+                {
+                    return;
+                }
+
                 // 构建完整的ICO文件数据
                 int fullIconDataSize = 6 + 16 + dibData.Length;
                 if (fullIconDataSize is > 0 and < (10 * 1024 * 1024)) // 限制最大10MB

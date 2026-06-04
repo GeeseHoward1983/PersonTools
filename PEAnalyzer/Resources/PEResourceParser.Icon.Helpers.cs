@@ -24,6 +24,11 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             try
             {
+                if (directoryOffset < 0 || directoryOffset + 16 > fs.Length)
+                {
+                    return -1;
+                }
+
                 long originalPosition = fs.Position;
                 fs.Position = directoryOffset;
 
@@ -43,7 +48,13 @@ namespace PersonalTools.PEAnalyzer.Resources
                 // 查找指定ID的资源
                 for (int i = 0; i < totalEntries; i++)
                 {
-                    fs.Position = directoryOffset + 16 + i * 8;
+                    long entryOffset = directoryOffset + 16 + i * 8;
+                    if (entryOffset + 8 > fs.Length)
+                    {
+                        break;
+                    }
+
+                    fs.Position = entryOffset;
 
                     IMAGERESOURCEDIRECTORYENTRY entry = new()
                     {
@@ -102,6 +113,11 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             try
             {
+                if (directoryOffset < 0 || directoryOffset + 16 > fs.Length)
+                {
+                    return -1;
+                }
+
                 long originalPosition = fs.Position;
                 fs.Position = directoryOffset;
 
@@ -130,6 +146,12 @@ namespace PersonalTools.PEAnalyzer.Resources
                     if ((entry.OffsetToData & 0x80000000) == 0)
                     {
                         long dataEntryOffset = resourceBaseOffset + entry.OffsetToData;
+                        if (dataEntryOffset < 0 || dataEntryOffset + 16 > fs.Length)
+                        {
+                            fs.Position = originalPosition;
+                            return -1;
+                        }
+
                         long dataOffset = GetIconDataFromEntry(fs, reader, peInfo, dataEntryOffset);
                         fs.Position = originalPosition;
                         return dataOffset;
@@ -165,14 +187,13 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             try
             {
-                long originalPosition = fs.Position;
-                fs.Position = dataEntryOffset;
-
-                if (fs.Position + 16 > fs.Length)
+                if (dataEntryOffset < 0 || dataEntryOffset + 16 > fs.Length)
                 {
-                    fs.Position = originalPosition;
                     return -1;
                 }
+
+                long originalPosition = fs.Position;
+                fs.Position = dataEntryOffset;
 
                 // 读取资源数据项
                 IMAGERESOURCEDATAENTRY dataEntry = new()
@@ -187,7 +208,8 @@ namespace PersonalTools.PEAnalyzer.Resources
                 long dataOffset = PEResourceParserCore.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
 
                 // 验证数据偏移和大小的有效性
-                if (dataOffset == -1 || dataOffset >= fs.Length || dataEntry.Size == 0)
+                long endOffset = dataOffset + (long)dataEntry.Size;
+                if (dataOffset == -1 || dataOffset < 0 || dataEntry.Size == 0 || dataEntry.Size > int.MaxValue || endOffset > fs.Length)
                 {
                     fs.Position = originalPosition;
                     return -1;
@@ -236,7 +258,7 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 uint resourceRVA = peInfo.OptionalHeader.DataDirectory[RESOURCE_DIRECTORY_INDEX].VirtualAddress;
                 long resourceOffset = PEResourceParserCore.RvaToOffset(resourceRVA, peInfo.SectionHeaders);
-                if (resourceOffset == -1 || resourceOffset >= fs.Length)
+                if (resourceOffset == -1 || resourceOffset + 16 > fs.Length)
                 {
                     return -1;
                 }
@@ -260,7 +282,13 @@ namespace PersonalTools.PEAnalyzer.Resources
                 // 查找RT_ICON资源类型
                 for (int i = 0; i < totalEntries; i++)
                 {
-                    fs.Position = resourceOffset + 16 + i * 8;
+                    long entryOffset = resourceOffset + 16 + i * 8;
+                    if (entryOffset + 8 > fs.Length)
+                    {
+                        break;
+                    }
+
+                    fs.Position = entryOffset;
 
                     IMAGERESOURCEDIRECTORYENTRY entry = new()
                     {
@@ -271,6 +299,11 @@ namespace PersonalTools.PEAnalyzer.Resources
                     if ((entry.NameOrId & 0xFFFF) == RT_ICON_TYPE)
                     {
                         long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
+                        if (nextLevelOffset < 0 || nextLevelOffset + 16 > fs.Length)
+                        {
+                            continue;
+                        }
+
                         long iconDataOffset = FindSpecificIconData(fs, reader, peInfo, nextLevelOffset, resourceBaseOffset, resourceId);
                         fs.Position = originalPosition;
                         return iconDataOffset;
@@ -305,6 +338,11 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             try
             {
+                if (nameOffset < 0 || nameOffset + 2 > fs.Length)
+                {
+                    return string.Empty;
+                }
+
                 long originalPosition = fs.Position;
                 fs.Position = nameOffset;
 

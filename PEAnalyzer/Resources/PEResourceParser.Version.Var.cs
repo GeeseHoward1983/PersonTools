@@ -32,15 +32,20 @@ namespace PersonalTools.PEAnalyzer.Resources
                 ushort wValueLength = reader.ReadUInt16();
                 ushort wType = reader.ReadUInt16();
 
+                if (wLength < 6 || fs.Position + wLength - 6 > fs.Length)
+                {
+                    return;
+                }
+
                 // 读取szKey (UNICODE字符串 "VarFileInfo")
-                string key = PEResourceParserCore.ReadUnicodeStringWithMaxLength(reader, wLength);
+                int maxKeyBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
+                string key = PEResourceParserCore.ReadUnicodeStringWithMaxBytes(reader, maxKeyBytes);
 
                 if (key.Equals("VarFileInfo", StringComparison.OrdinalIgnoreCase))
                 {
                     // 计算Var块的位置
-                    long keyLengthInBytes = (key.Length + 1) * 2; // Unicode字符串长度 + null终止符
-                    long afterKeyPosition = startPosition + 6 + keyLengthInBytes;
-                    long varPosition = afterKeyPosition + 3 & ~3; // 对齐到4字节边界
+                    long afterKeyPosition = fs.Position;
+                    long varPosition = (afterKeyPosition + 3) & ~3; // 对齐到4字节边界
 
                     long varFileInfoEndPosition = Math.Min(startPosition + wLength, endPosition);
 
@@ -118,7 +123,8 @@ namespace PersonalTools.PEAnalyzer.Resources
                     }
 
                     // 读取变量名（通常是"Translation"）
-                    string varName = PEResourceParserCore.ReadUnicodeStringWithMaxLength(reader, wLength);
+                    int maxVarNameBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
+                    string varName = PEResourceParserCore.ReadUnicodeStringWithMaxBytes(reader, maxVarNameBytes);
 
                     // 计算值的位置（对齐到4字节边界）
                     long keyLengthInBytes = (varName.Length + 1) * 2; // Unicode字符串长度 + null终止符

@@ -34,13 +34,18 @@ namespace PersonalTools.PEAnalyzer.Resources
                 ushort wValueLength = reader.ReadUInt16();
                 ushort wType = reader.ReadUInt16();
 
+                if (wLength < 6 || fs.Position + wLength - 6 > fs.Length)
+                {
+                    return;
+                }
+
                 // 读取语言和代码页标识符（通常是8位十六进制字符串）
-                string langId = PEResourceParserCore.ReadUnicodeStringWithMaxLength(reader, wLength); // 读取直到找到null终止符
+                int maxLangIdBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
+                string langId = PEResourceParserCore.ReadUnicodeStringWithMaxBytes(reader, maxLangIdBytes); // 读取直到找到null终止符
 
                 // 计算Strings的位置
-                long keyLengthInBytes = (langId.Length + 1) * 2; // Unicode字符串长度 + null终止符
-                long afterLangIdPosition = startPosition + 6 + keyLengthInBytes;
-                long stringsPosition = afterLangIdPosition + 3 & ~3; // 对齐到4字节边界
+                long afterLangIdPosition = fs.Position;
+                long stringsPosition = (afterLangIdPosition + 3) & ~3; // 对齐到4字节边界
 
                 if (stringsPosition >= fs.Length || stringsPosition >= endPosition)
                 {

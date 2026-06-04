@@ -1,7 +1,6 @@
 using PersonalTools.PEAnalyzer.Models;
 using System.IO;
 using System.Text;
-using System.Windows.Markup;
 
 namespace PersonalTools.PEAnalyzer.Parsers
 {
@@ -14,7 +13,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
             {
                 byte b;
 
-                while ((b = reader.ReadByte()) != 0)
+                while (reader.BaseStream.Position < reader.BaseStream.Length && (b = reader.ReadByte()) != 0)
                 {
                     // 确保是有效的ASCII字符
                     if (b is >= 32 and <= 126)
@@ -33,9 +32,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
                     }
                 }
             }
-            catch (ArgumentNullException)
+            catch (EndOfStreamException)
             {
-                // 发生异常时返回已读取的部分字符串
+                // 遇到文件末尾时返回已读取的部分字符串
             }
 
             return sb.ToString();

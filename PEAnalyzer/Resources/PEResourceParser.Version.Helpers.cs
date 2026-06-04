@@ -30,13 +30,19 @@ namespace PersonalTools.PEAnalyzer.Resources
                     ushort wType = reader.ReadUInt16();
 
                     // 检查基本的有效性
-                    if (wLength == 0)
+                    if (wLength < 6)
                     {
                         return;
                     }
 
                     // 读取szKey (UNICODE字符串 "VS_VERSION_INFO")
-                    string vsVersionInfoKey = PEResourceParserCore.ReadUnicodeStringWithMaxLength(reader, wLength);
+                    if (startPosition + wLength > fs.Length)
+                    {
+                        return;
+                    }
+
+                    int maxStringBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
+                    string vsVersionInfoKey = PEResourceParserCore.ReadUnicodeStringWithMaxBytes(reader, maxStringBytes);
 
                     // 验证键名
                     if (!vsVersionInfoKey.Equals("VS_VERSION_INFO", StringComparison.OrdinalIgnoreCase))
@@ -156,7 +162,8 @@ namespace PersonalTools.PEAnalyzer.Resources
                     }
 
                     // 读取键名
-                    string key = PEResourceParserCore.ReadUnicodeStringWithMaxLength(reader, wLength);
+                    int maxKeyBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
+                    string key = PEResourceParserCore.ReadUnicodeStringWithMaxBytes(reader, maxKeyBytes);
 
                     // 重置位置以便正确解析
                     fs.Position = childStartPos;

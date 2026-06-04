@@ -139,19 +139,26 @@ namespace PersonalTools
                     return string.Empty;
                 }
 
+                long targetPosition = heapOffset + index;
+                if (targetPosition < 0 || targetPosition >= fs.Length)
+                {
+                    return string.Empty;
+                }
+
                 long originalPosition = fs.Position;
-                fs.Position = heapOffset + index;
+                fs.Position = targetPosition;
 
                 // 读取以null结尾的字符串
                 StringBuilder sb = new();
-                byte b;
-                while ((b = reader.ReadByte()) != 0)
+                while (fs.Position < fs.Length)
                 {
-                    sb.Append((char)b);
-                    if (fs.Position >= fs.Length)
+                    byte b = reader.ReadByte();
+                    if (b == 0)
                     {
                         break;
                     }
+
+                    sb.Append((char)b);
                 }
 
                 fs.Position = originalPosition;

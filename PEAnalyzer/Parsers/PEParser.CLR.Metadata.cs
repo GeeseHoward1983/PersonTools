@@ -51,7 +51,12 @@ namespace PersonalTools
                 }
 
                 // 读取版本字符串
-                string versionString = PEResourceParserCore.ReadUnicodeStringWithMaxLength(reader, (int)length);
+                if (length > fs.Length - fs.Position)
+                {
+                    length = (uint)(fs.Length - fs.Position);
+                }
+
+                string versionString = PEResourceParserCore.ReadUnicodeStringWithMaxBytes(reader, (int)length);
 
                 // 跳过对齐填充
                 long alignedPosition = (fs.Position + 3) & ~3;
@@ -137,7 +142,7 @@ namespace PersonalTools
         {
             try
             {
-                if (tablesOffset >= fs.Length || tablesOffset + size > fs.Length)
+                if (tablesOffset >= fs.Length || tablesOffset + size > fs.Length || size < 24)
                 {
                     return;
                 }
@@ -146,6 +151,11 @@ namespace PersonalTools
                 fs.Position = tablesOffset;
 
                 // 读取表头
+                if (fs.Position + 24 > fs.Length)
+                {
+                    return;
+                }
+
                 uint reserved1 = reader.ReadUInt32();
                 byte majorVersion = reader.ReadByte();
                 byte minorVersion = reader.ReadByte();

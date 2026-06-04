@@ -21,6 +21,11 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             try
             {
+                if (directoryOffset < 0 || directoryOffset + 16 > fs.Length)
+                {
+                    return;
+                }
+
                 long originalPosition = fs.Position;
                 fs.Position = directoryOffset;
 
@@ -39,7 +44,13 @@ namespace PersonalTools.PEAnalyzer.Resources
                 int totalEntries = directory.NumberOfNamedEntries + directory.NumberOfIdEntries;
                 for (int i = 0; i < totalEntries; i++)
                 {
-                    fs.Position = directoryOffset + 16 + i * 8; // 跳过目录头(16字节)，每项8字节
+                    long entryOffset = directoryOffset + 16 + i * 8;
+                    if (entryOffset + 8 > fs.Length)
+                    {
+                        break;
+                    }
+
+                    fs.Position = entryOffset; // 跳过目录头(16字节)，每项8字节
 
                     IMAGERESOURCEDIRECTORYENTRY entry = new()
                     {
@@ -52,15 +63,14 @@ namespace PersonalTools.PEAnalyzer.Resources
                     // 我们需要处理两种情况
                     if ((entry.OffsetToData & 0x80000000) != 0)
                     {
-                        // 最高位为1，表示指向下一级目录
-                        // 清除最高位得到实际偏移
                         long nextLevelOffset = resourceBaseOffset + (entry.OffsetToData & 0x7FFFFFFF);
-                        // 递归处理下一级目录
-                        ParseGroupIconResource(fs, reader, peInfo, nextLevelOffset, resourceBaseOffset);
+                        if (nextLevelOffset >= 0 && nextLevelOffset + 16 <= fs.Length)
+                        {
+                            ParseGroupIconResource(fs, reader, peInfo, nextLevelOffset, resourceBaseOffset);
+                        }
                     }
                     else
                     {
-                        // 最高位为0，表示指向数据条目
                         long dataEntryOffset = resourceBaseOffset + entry.OffsetToData;
                         ParseGroupIconDataEntry(fs, reader, peInfo, dataEntryOffset, resourceBaseOffset);
                     }
@@ -99,6 +109,11 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             try
             {
+                if (dataEntryOffset < 0 || dataEntryOffset + 16 > fs.Length)
+                {
+                    return;
+                }
+
                 long originalPosition = fs.Position;
                 fs.Position = dataEntryOffset;
 
@@ -119,7 +134,7 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 // 计算实际数据偏移（注意：资源数据的OffsetToData是RVA）
                 long dataOffset = PEResourceParserCore.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
-                if (dataOffset != -1 && dataOffset < fs.Length && dataEntry.Size > 0)
+                if (dataOffset != -1 && dataOffset >= 0 && dataEntry.Size > 0 && dataEntry.Size <= int.MaxValue && dataOffset + dataEntry.Size <= fs.Length && dataOffset + 6 <= fs.Length)
                 {
                     fs.Position = dataOffset;
 
@@ -137,109 +152,17 @@ namespace PersonalTools.PEAnalyzer.Resources
                     };
 
                     // 检查是否为有效的图标资源
-                    if (iconDirHeader.Type != 1 || iconDirHeader.Count == 0)
+                    if (iconDirHeader.Type != 1 || iconDirHeader.Count == 0 || iconDirHeader.Count > 256)
                     {
                         return;
                     }
 
-                    // 读取图标目录项
-                    ICONDIRENTRY[] iconDirEntries = new ICONDIRENTRY[iconDirHeader.Count];
-                    for (int i = 0; i < iconDirHeader.Count; i++)
+                    if (!TryReadIconDirEntries(fs, reader, iconDirHeader.Count, out ICONDIRENTRY[] iconDirEntries))
                     {
-                        if (fs.Position + 16 > fs.Length)
-                        {
-                            break;
-                        }
-
-                        iconDirEntries[i] = new ICONDIRENTRY
-                        {
-                            Width = reader.ReadByte(),
-                            Height = reader.ReadByte(),
-                            ColorCount = reader.ReadByte(),
-                            Reserved = reader.ReadByte(),
-                            Planes = reader.ReadUInt16(),
-                            BitCount = reader.ReadUInt16(),
-                            BytesInRes = reader.ReadUInt32(),
-                            ImageOffset = reader.ReadUInt32()
-                        };
+                        return;
                     }
 
-                    // 为每个图标目录项解析实际的图标数据
-                    foreach (ICONDIRENTRY entry in iconDirEntries)
-                    {
-                        // 查找对应ID的RT_ICON资源
-                        long iconDataOffset = PEResourceParserIconHelpers.FindIconDataByResourceId(fs, reader, peInfo, entry.ImageOffset, resourceBaseOffset);
-                        if (iconDataOffset != -1)
-                        {
-                            // 验证图标尺寸，避免添加无效图标
-                            int width = entry.Width == 0 ? 256 : entry.Width;
-                            int height = entry.Height == 0 ? 256 : entry.Height;
-
-                            if (width <= 0 || height <= 0)
-                            {
-                                continue;
-                            }
-
-                            IconInfo iconInfo = new()
-                            {
-                                Width = width,
-                                Height = height,
-                                BitsPerPixel = entry.BitCount,
-                                Size = 6 + 16 + (int)entry.BytesInRes  // ICO文件头(6字节) + 目录项(16字节) + 图像数据
-                            };
-
-                            // 构建完整的ICO文件数据
-                            // ICO文件结构: 6字节文件头 + 16字节目录项 + 图像数据
-                            int fullIconDataSize = 6 + 16 + (int)entry.BytesInRes;
-                            if (fullIconDataSize is > 0 and < (10 * 1024 * 1024)) // 限制最大10MB
-                            {
-                                byte[] fullIconData = new byte[fullIconDataSize];
-
-                                // 写入ICO文件头 (6字节)
-                                fullIconData[0] = 0x00; // Reserved
-                                fullIconData[1] = 0x00; // Reserved
-                                fullIconData[2] = 0x01; // Type (1 = ICO)
-                                fullIconData[3] = 0x00; // Type
-                                fullIconData[4] = 0x01; // Count (1个图标)
-                                fullIconData[5] = 0x00; // Count
-
-                                // 写入目录项 (16字节)
-                                fullIconData[6] = entry.Width;
-                                fullIconData[7] = entry.Height;
-                                fullIconData[8] = entry.ColorCount;
-                                fullIconData[9] = entry.Reserved;
-                                BitConverter.GetBytes(entry.Planes).CopyTo(fullIconData, 10);
-                                BitConverter.GetBytes(entry.BitCount).CopyTo(fullIconData, 12);
-                                BitConverter.GetBytes(entry.BytesInRes).CopyTo(fullIconData, 14);
-                                // 图像数据偏移量 (从文件开始到图像数据的偏移量)
-                                uint imageDataOffset = 6 + 16; // 文件头 + 目录项
-                                BitConverter.GetBytes(imageDataOffset).CopyTo(fullIconData, 18);
-
-                                // 读取并写入图像数据
-                                if (entry.BytesInRes > 0 && entry.BytesInRes <= fs.Length && iconDataOffset + entry.BytesInRes <= fs.Length)
-                                {
-                                    fs.Position = iconDataOffset;
-                                    byte[] imageData = reader.ReadBytes((int)entry.BytesInRes);
-                                    Array.Copy(imageData, 0, fullIconData, 6 + 16, imageData.Length);
-                                    iconInfo.Data = fullIconData;
-                                }
-                                else if (entry.BytesInRes > 0 && entry.BytesInRes <= fs.Length)
-                                {
-                                    // 如果计算出的大小超过了文件长度，尝试读取从iconDataOffset到文件末尾的所有数据
-                                    long remainingBytes = fs.Length - iconDataOffset;
-                                    if (remainingBytes > 0 && iconDataOffset < fs.Length)
-                                    {
-                                        fs.Position = iconDataOffset;
-                                        byte[] imageData = reader.ReadBytes((int)Math.Min(remainingBytes, entry.BytesInRes));
-                                        Array.Copy(imageData, 0, fullIconData, 6 + 16, imageData.Length);
-                                        iconInfo.Data = fullIconData;
-                                    }
-                                }
-
-                                peInfo.Icons.Add(iconInfo);
-                            }
-                        }
-                    }
+                    ProcessGroupIconEntries(fs, reader, peInfo, iconDirEntries, resourceBaseOffset);
                 }
 
                 fs.Position = originalPosition;
@@ -260,6 +183,121 @@ namespace PersonalTools.PEAnalyzer.Resources
             catch (Exception)
             {
                 throw;
+            }
+        }
+
+        private static bool TryReadIconDirEntries(FileStream fs, BinaryReader reader, ushort count, out ICONDIRENTRY[] iconDirEntries)
+        {
+            iconDirEntries = Array.Empty<ICONDIRENTRY>();
+            if (count == 0 || count > 256)
+            {
+                return false;
+            }
+
+            iconDirEntries = new ICONDIRENTRY[count];
+            for (int i = 0; i < count; i++)
+            {
+                if (fs.Position + 16 > fs.Length)
+                {
+                    iconDirEntries = iconDirEntries[0..i];
+                    return false;
+                }
+
+                iconDirEntries[i] = new ICONDIRENTRY
+                {
+                    Width = reader.ReadByte(),
+                    Height = reader.ReadByte(),
+                    ColorCount = reader.ReadByte(),
+                    Reserved = reader.ReadByte(),
+                    Planes = reader.ReadUInt16(),
+                    BitCount = reader.ReadUInt16(),
+                    BytesInRes = reader.ReadUInt32(),
+                    ImageOffset = reader.ReadUInt32()
+                };
+            }
+
+            return true;
+        }
+
+        private static void ProcessGroupIconEntries(FileStream fs, BinaryReader reader, PEInfo peInfo, ICONDIRENTRY[] iconDirEntries, long resourceBaseOffset)
+        {
+            foreach (ICONDIRENTRY entry in iconDirEntries)
+            {
+                long iconDataOffset = PEResourceParserIconHelpers.FindIconDataByResourceId(fs, reader, peInfo, entry.ImageOffset, resourceBaseOffset);
+                if (iconDataOffset == -1)
+                {
+                    continue;
+                }
+
+                int width = entry.Width == 0 ? 256 : entry.Width;
+                int height = entry.Height == 0 ? 256 : entry.Height;
+                if (width <= 0 || height <= 0)
+                {
+                    continue;
+                }
+
+                if (entry.BytesInRes == 0 || entry.BytesInRes > int.MaxValue)
+                {
+                    continue;
+                }
+
+                int fullIconDataSize = 6 + 16 + (int)entry.BytesInRes;
+                if (fullIconDataSize <= 0 || fullIconDataSize >= 10 * 1024 * 1024)
+                {
+                    continue;
+                }
+
+                IconInfo iconInfo = new()
+                {
+                    Width = width,
+                    Height = height,
+                    BitsPerPixel = entry.BitCount,
+                    Size = fullIconDataSize
+                };
+
+                byte[] fullIconData = new byte[fullIconDataSize];
+                fullIconData[0] = 0x00;
+                fullIconData[1] = 0x00;
+                fullIconData[2] = 0x01;
+                fullIconData[3] = 0x00;
+                fullIconData[4] = 0x01;
+                fullIconData[5] = 0x00;
+                fullIconData[6] = entry.Width;
+                fullIconData[7] = entry.Height;
+                fullIconData[8] = entry.ColorCount;
+                fullIconData[9] = entry.Reserved;
+                BitConverter.GetBytes(entry.Planes).CopyTo(fullIconData, 10);
+                BitConverter.GetBytes(entry.BitCount).CopyTo(fullIconData, 12);
+                BitConverter.GetBytes(entry.BytesInRes).CopyTo(fullIconData, 14);
+                uint imageDataOffset = 6 + 16;
+                BitConverter.GetBytes(imageDataOffset).CopyTo(fullIconData, 18);
+
+                if (iconDataOffset >= 0 && iconDataOffset + entry.BytesInRes <= fs.Length)
+                {
+                    fs.Position = iconDataOffset;
+                    byte[] imageData = reader.ReadBytes((int)entry.BytesInRes);
+                    if (imageData.Length == entry.BytesInRes)
+                    {
+                        Array.Copy(imageData, 0, fullIconData, 6 + 16, imageData.Length);
+                        iconInfo.Data = fullIconData;
+                        peInfo.Icons.Add(iconInfo);
+                    }
+                }
+                else
+                {
+                    long remainingBytes = fs.Length - iconDataOffset;
+                    if (remainingBytes > 0 && iconDataOffset < fs.Length)
+                    {
+                        fs.Position = iconDataOffset;
+                        byte[] imageData = reader.ReadBytes((int)Math.Min(remainingBytes, entry.BytesInRes));
+                        if (imageData.Length == remainingBytes && imageData.Length > 0)
+                        {
+                            Array.Copy(imageData, 0, fullIconData, 6 + 16, imageData.Length);
+                            iconInfo.Data = fullIconData;
+                            peInfo.Icons.Add(iconInfo);
+                        }
+                    }
+                }
             }
         }
     }

@@ -32,15 +32,20 @@ namespace PersonalTools.PEAnalyzer.Resources
                 ushort wValueLength = reader.ReadUInt16();
                 ushort wType = reader.ReadUInt16();
 
+                if (wLength < 6 || fs.Position + wLength - 6 > fs.Length)
+                {
+                    return;
+                }
+
                 // 读取szKey (UNICODE字符串 "StringFileInfo")
-                string key = PEResourceParserCore.ReadUnicodeStringWithMaxLength(reader, wLength);
+                int maxKeyBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
+                string key = PEResourceParserCore.ReadUnicodeStringWithMaxBytes(reader, maxKeyBytes);
 
                 if (key.Equals("StringFileInfo", StringComparison.OrdinalIgnoreCase))
                 {
                     // 计算StringTable的位置
-                    long keyLengthInBytes = (key.Length + 1) * 2; // Unicode字符串长度 + null终止符
-                    long afterKeyPosition = startPosition + 6 + keyLengthInBytes; // 6是头部大小
-                    long stringTablePosition = afterKeyPosition + 3 & ~3; // 对齐到4字节边界
+                    long afterKeyPosition = fs.Position;
+                    long stringTablePosition = (afterKeyPosition + 3) & ~3; // 对齐到4字节边界
 
                     long stringFileInfoEndPosition = Math.Min(startPosition + wLength, endPosition);
 

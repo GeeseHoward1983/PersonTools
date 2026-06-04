@@ -19,15 +19,15 @@ namespace PersonalTools.PEAnalyzer.Resources
         internal static long RvaToOffset(uint rva, List<IMAGESECTIONHEADER> sections)
         {
             // 添加对RVA的基本验证
-            if (rva == 0)
+            if (rva == 0 || sections == null || sections.Count == 0)
             {
                 return -1;
             }
 
             foreach (IMAGESECTIONHEADER section in sections)
             {
-                // 确保VirtualSize不为0，避免除零错误
-                if (section.VirtualSize == 0)
+                // 确保节头有效并具有文件数据
+                if (section.VirtualSize == 0 || section.SizeOfRawData == 0 || section.PointerToRawData == 0)
                 {
                     continue;
                 }
@@ -115,6 +115,16 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 throw;
             }
+        }
+
+        internal static string ReadUnicodeStringWithMaxBytes(BinaryReader reader, int maxBytes)
+        {
+            if (maxBytes <= 0)
+            {
+                return string.Empty;
+            }
+
+            return ReadUnicodeStringWithMaxLength(reader, maxBytes / 2);
         }
     }
 }

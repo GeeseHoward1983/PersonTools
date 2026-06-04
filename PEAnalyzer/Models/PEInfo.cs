@@ -1,5 +1,3 @@
-using System.Windows.Media.Imaging;
-
 namespace PersonalTools.PEAnalyzer.Models
 {
     // PE信息类

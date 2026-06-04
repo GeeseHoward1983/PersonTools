@@ -978,10 +978,12 @@ namespace PersonalTools.PEAnalyzer.Resources
                 _ => englishLanguageNames
             };
 
-            // 常见的语言ID映射
-            return languageId switch
+            try
             {
-                0x0400 => languageNames[0],
+                // 常见的语言ID映射
+                return languageId switch
+                {
+                    0x0400 => languageNames[0],
                 0x0401 => languageNames[1],
                 0x0402 => languageNames[2],
                 0x0403 => languageNames[3],
@@ -1213,8 +1215,15 @@ namespace PersonalTools.PEAnalyzer.Resources
                 0x780C => languageNames[229],
                 0x7C0A => languageNames[230],
                 0x7C0C => languageNames[231],
-                _ => string.Format(CultureInfo.InvariantCulture, languageNames[232], languageId)
+                _ => string.Format(CultureInfo.InvariantCulture, languageNames[^1], languageId)
             };
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return languageNames.Length > 0
+                    ? string.Format(CultureInfo.InvariantCulture, languageNames[^1], languageId)
+                    : $"Unknown Language (0x{languageId:X4})";
+            }
         }
 
         /// <summary>
@@ -1232,10 +1241,12 @@ namespace PersonalTools.PEAnalyzer.Resources
                 _ => englishCodePageNames
             };
 
-            // 常见的代码页映射
-            return codePage switch
+            try
             {
-                0 => codePageNames[0],
+                // 常见的代码页映射
+                return codePage switch
+                {
+                    0 => codePageNames[0],
                 37 => codePageNames[1],
                 437 => codePageNames[2],
                 500 => codePageNames[3],
@@ -1306,8 +1317,15 @@ namespace PersonalTools.PEAnalyzer.Resources
                 54936 => codePageNames[68],
                 65000 => codePageNames[69],
                 65001 => codePageNames[70],
-                _ => string.Format(CultureInfo.InvariantCulture, codePageNames[71], codePage)
+                _ => string.Format(CultureInfo.InvariantCulture, codePageNames[^1], codePage)
             };
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return codePageNames.Length > 0
+                    ? string.Format(CultureInfo.InvariantCulture, codePageNames[^1], codePage)
+                    : $"Unknown Code Page ({codePage})";
+            }
         }
     }
 }

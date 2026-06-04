@@ -20,6 +20,11 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             try
             {
+                if (resourceOffset < 0 || resourceOffset + 16 > fs.Length)
+                {
+                    return;
+                }
+
                 long originalPosition = fs.Position;
                 fs.Position = resourceOffset;
 
@@ -37,7 +42,13 @@ namespace PersonalTools.PEAnalyzer.Resources
                 // 遍历命名资源项
                 for (int i = 0; i < rootDirectory.NumberOfNamedEntries; i++)
                 {
-                    fs.Position = resourceOffset + 16 + i * 8; // 16是IMAGE_RESOURCE_DIRECTORY大小，每项8字节
+                    long entryOffset = resourceOffset + 16 + i * 8;
+                    if (entryOffset + 8 > fs.Length)
+                    {
+                        break;
+                    }
+
+                    fs.Position = entryOffset; // 16是IMAGE_RESOURCE_DIRECTORY大小，每项8字节
 
                     IMAGERESOURCEDIRECTORYENTRY entry = new()
                     {
@@ -49,7 +60,10 @@ namespace PersonalTools.PEAnalyzer.Resources
                     if ((entry.NameOrId & 0x80000000) != 0)
                     {
                         long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
-                        ParseNamedResourceDirectory(fs, reader, peInfo, nextLevelOffset, resourceOffset, entry.NameOrId & 0x7FFFFFFF);
+                        if (nextLevelOffset >= 0 && nextLevelOffset + 16 <= fs.Length)
+                        {
+                            ParseNamedResourceDirectory(fs, reader, peInfo, nextLevelOffset, resourceOffset, entry.NameOrId & 0x7FFFFFFF);
+                        }
                     }
                 }
 
@@ -89,15 +103,37 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 long originalPosition = fs.Position;
 
-                // 读取资源名称
-                string resourceName = PEResourceParserIconHelpers.ReadResourceName(fs, reader, resourceBaseOffset + nameOffset);
+                if (directoryOffset < 0 || directoryOffset + 16 > fs.Length)
+                {
+                    return;
+                }
 
-                // 检查资源名称是否可能包含图标（如包含"icon"、".ico"等关键字）
-                if (!string.IsNullOrEmpty(resourceName) &&
+                long nameStringOffset = resourceBaseOffset + nameOffset;
+                string resourceName = string.Empty;
+                if (nameOffset != 0)
+                {
+                    if (nameStringOffset < 0 || nameStringOffset + 2 > fs.Length)
+                    {
+                        return;
+                    }
+
+                    // 读取资源名称
+                    resourceName = PEResourceParserIconHelpers.ReadResourceName(fs, reader, nameStringOffset);
+                }
+
+                // 只有当存在名称且资源名称匹配图标关键字时才进行进一步处理
+                bool nameHintsAtIcon = !string.IsNullOrEmpty(resourceName) &&
                     (resourceName.Contains("icon", StringComparison.OrdinalIgnoreCase) ||
                      resourceName.Contains(".ico", StringComparison.OrdinalIgnoreCase) ||
-                     resourceName.Contains("app", StringComparison.OrdinalIgnoreCase)))
+                     resourceName.Contains("app", StringComparison.OrdinalIgnoreCase));
+
+                if (nameOffset == 0 || nameHintsAtIcon)
                 {
+                    if (directoryOffset < 0 || directoryOffset + 16 > fs.Length)
+                    {
+                        return;
+                    }
+
                     fs.Position = directoryOffset;
 
                     // 读取资源目录
@@ -115,7 +151,13 @@ namespace PersonalTools.PEAnalyzer.Resources
                     int totalEntries = directory.NumberOfNamedEntries + directory.NumberOfIdEntries;
                     for (int i = 0; i < totalEntries; i++)
                     {
-                        fs.Position = directoryOffset + 16 + i * 8;
+                        long entryOffset = directoryOffset + 16 + i * 8;
+                        if (entryOffset + 8 > fs.Length)
+                        {
+                            break;
+                        }
+
+                        fs.Position = entryOffset;
 
                         IMAGERESOURCEDIRECTORYENTRY entry = new()
                         {
@@ -126,13 +168,14 @@ namespace PersonalTools.PEAnalyzer.Resources
                         // 检查是否是叶子节点
                         if ((entry.OffsetToData & 0x80000000) != 0)
                         {
-                            // 继续下一级目录
                             long nextLevelOffset = resourceBaseOffset + (entry.OffsetToData & 0x7FFFFFFF);
-                            ParseNamedResourceDirectory(fs, reader, peInfo, nextLevelOffset, resourceBaseOffset, 0);
+                            if (nextLevelOffset >= 0 && nextLevelOffset + 16 <= fs.Length)
+                            {
+                                ParseNamedResourceDirectory(fs, reader, peInfo, nextLevelOffset, resourceBaseOffset, 0);
+                            }
                         }
                         else
                         {
-                            // 处理数据条目
                             long dataEntryOffset = resourceBaseOffset + entry.OffsetToData;
                             ParseNamedResourceDataEntry(fs, reader, peInfo, dataEntryOffset);
                         }
@@ -171,6 +214,11 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             try
             {
+                if (dataEntryOffset < 0 || dataEntryOffset + 16 > fs.Length)
+                {
+                    return;
+                }
+
                 long originalPosition = fs.Position;
                 fs.Position = dataEntryOffset;
 
@@ -191,21 +239,18 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 // 计算实际数据偏移（注意：资源数据的OffsetToData是RVA）
                 long dataOffset = PEResourceParserCore.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
-                if (dataOffset != -1 && dataOffset < fs.Length && dataEntry.Size > 0)
+                if (dataOffset != -1 && dataOffset >= 0 && dataEntry.Size > 0 && dataEntry.Size <= int.MaxValue && dataOffset + dataEntry.Size <= fs.Length)
                 {
                     // 读取资源数据
                     fs.Position = dataOffset;
-                    if (dataEntry.Size <= fs.Length && dataOffset + dataEntry.Size <= fs.Length)
-                    {
-                        byte[] resourceData = reader.ReadBytes((int)dataEntry.Size);
+                    byte[] resourceData = reader.ReadBytes((int)dataEntry.Size);
 
-                        // 检查数据是否可能是图标数据
-                        if (PEResourceParserIconData.IsIconData(resourceData))
-                        {
-                            // 处理图标数据
-                            PEResourceParserIconData.ProcessIconData(peInfo, resourceData);
-                        }
-                    }
+                    // 检查数据是否可能是图标数据
+                    if (PEResourceParserIconData.IsIconData(resourceData))
+                    {
+                        // 处理图标数据
+                        PEResourceParserIconData.ProcessIconData(peInfo, resourceData);
+                    }         
                 }
 
                 fs.Position = originalPosition;

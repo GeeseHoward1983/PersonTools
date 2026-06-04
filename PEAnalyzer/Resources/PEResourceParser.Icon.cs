@@ -109,7 +109,14 @@ namespace PersonalTools.PEAnalyzer.Resources
             try
             {
                 // 获取资源RVA并转换为文件偏移
-                uint resourceRVA = peInfo.OptionalHeader.DataDirectory[2].VirtualAddress; // IMAGE_DIRECTORY_ENTRY_RESOURCE
+                const int RESOURCE_DIRECTORY_INDEX = 2;
+                if (peInfo.OptionalHeader.DataDirectory.Length <= RESOURCE_DIRECTORY_INDEX ||
+                    peInfo.OptionalHeader.DataDirectory[RESOURCE_DIRECTORY_INDEX].VirtualAddress == 0)
+                {
+                    return;
+                }
+
+                uint resourceRVA = peInfo.OptionalHeader.DataDirectory[RESOURCE_DIRECTORY_INDEX].VirtualAddress;
                 long resourceOffset = PEResourceParserCore.RvaToOffset(resourceRVA, peInfo.SectionHeaders);
 
                 if (resourceOffset != -1 && resourceOffset < fs.Length)
@@ -148,6 +155,11 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             try
             {
+                if (resourceOffset < 0 || resourceOffset + 16 > fs.Length)
+                {
+                    return;
+                }
+
                 long originalPosition = fs.Position;
                 fs.Position = resourceOffset;
 
@@ -168,8 +180,13 @@ namespace PersonalTools.PEAnalyzer.Resources
                 bool foundGroupIcon = false;
                 for (int i = 0; i < totalEntries; i++)
                 {
-                    fs.Position = resourceOffset + 16 + i * 8; // 16是IMAGE_RESOURCE_DIRECTORY大小，每项8字节
+                    long entryOffset = resourceOffset + 16 + i * 8;
+                    if (entryOffset + 8 > fs.Length)
+                    {
+                        break;
+                    }
 
+                    fs.Position = entryOffset;
                     IMAGERESOURCEDIRECTORYENTRY entry = new()
                     {
                         NameOrId = reader.ReadUInt32(),
@@ -180,7 +197,10 @@ namespace PersonalTools.PEAnalyzer.Resources
                     if ((entry.NameOrId & 0xFFFF) == 14) // RT_GROUP_ICON = 14
                     {
                         long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
-                        PEResourceParserIconGroup.ParseGroupIconResource(fs, reader, peInfo, nextLevelOffset, resourceOffset);
+                        if (nextLevelOffset >= 0 && nextLevelOffset < fs.Length)
+                        {
+                            PEResourceParserIconGroup.ParseGroupIconResource(fs, reader, peInfo, nextLevelOffset, resourceOffset);
+                        }
                         foundGroupIcon = true;
                     }
                 }
@@ -191,8 +211,13 @@ namespace PersonalTools.PEAnalyzer.Resources
                     // 尝试查找RT_ICON资源类型 (ID = 3)
                     for (int i = 0; i < totalEntries; i++)
                     {
-                        fs.Position = resourceOffset + 16 + i * 8;
+                        long entryOffset = resourceOffset + 16 + i * 8;
+                        if (entryOffset + 8 > fs.Length)
+                        {
+                            break;
+                        }
 
+                        fs.Position = entryOffset;
                         IMAGERESOURCEDIRECTORYENTRY entry = new()
                         {
                             NameOrId = reader.ReadUInt32(),
@@ -204,15 +229,23 @@ namespace PersonalTools.PEAnalyzer.Resources
                         {
                             // 处理直接的RT_ICON资源
                             long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
-                            PEResourceParserIconDirect.ParseDirectIconResource(fs, reader, peInfo, nextLevelOffset, resourceOffset);
+                            if (nextLevelOffset >= 0 && nextLevelOffset < fs.Length)
+                            {
+                                PEResourceParserIconDirect.ParseDirectIconResource(fs, reader, peInfo, nextLevelOffset, resourceOffset);
+                            }
                         }
                     }
 
                     // 尝试查找命名资源（WPF和其他.NET程序可能将图标存储为命名资源）
                     for (int i = 0; i < rootDirectory.NumberOfNamedEntries; i++)
                     {
-                        fs.Position = resourceOffset + 16 + i * 8;
+                        long entryOffset = resourceOffset + 16 + i * 8;
+                        if (entryOffset + 8 > fs.Length)
+                        {
+                            break;
+                        }
 
+                        fs.Position = entryOffset;
                         IMAGERESOURCEDIRECTORYENTRY entry = new()
                         {
                             NameOrId = reader.ReadUInt32(),
@@ -224,7 +257,10 @@ namespace PersonalTools.PEAnalyzer.Resources
                         {
                             // 这是一个命名资源，需要进一步检查
                             long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
-                            PEResourceParserIconNamed.ParseResourceDirectoryForNamedIcons(fs, reader, peInfo, nextLevelOffset);
+                            if (nextLevelOffset >= 0 && nextLevelOffset < fs.Length)
+                            {
+                                PEResourceParserIconNamed.ParseResourceDirectoryForNamedIcons(fs, reader, peInfo, nextLevelOffset);
+                            }
                         }
                     }
                 }
