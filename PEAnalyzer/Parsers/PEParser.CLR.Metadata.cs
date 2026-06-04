@@ -69,31 +69,8 @@ namespace PersonalTools
                 ushort streams = reader.ReadUInt16();
 
                 // 先收集所有流的位置（#Strings 流可能位于 #~ 表流之后，必须先读全）
-                long tablesStreamOffset = -1;
-                uint tablesStreamSize = 0;
-                long stringHeapOffset = -1;
-
-                for (int i = 0; i < streams; i++)
-                {
-                    if (fs.Position + 8 > fs.Length)
-                    {
-                        break;
-                    }
-
-                    uint offset = reader.ReadUInt32();
-                    uint size = reader.ReadUInt32();
-                    string streamName = ReadStreamName(fs, reader);
-
-                    if (streamName is "#~" or "#-")
-                    {
-                        tablesStreamOffset = metaDataOffset + offset;
-                        tablesStreamSize = size;
-                    }
-                    else if (streamName == "#Strings")
-                    {
-                        stringHeapOffset = metaDataOffset + offset;
-                    }
-                }
+                (long tablesStreamOffset, uint tablesStreamSize, long stringHeapOffset) =
+                    CollectStreamDirectory(fs, reader, streams, metaDataOffset);
 
                 if (tablesStreamOffset != -1 && stringHeapOffset != -1)
                 {
@@ -110,6 +87,42 @@ namespace PersonalTools
             {
                 Console.WriteLine($"元数据解析权限错误: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// 读取元数据流目录，定位表流（#~ / #-）与 #Strings 堆。
+        /// </summary>
+        /// <returns>(表流偏移, 表流大小, #Strings 堆偏移)；未找到的项为 -1 / 0。</returns>
+        private static (long tablesStreamOffset, uint tablesStreamSize, long stringHeapOffset) CollectStreamDirectory(
+            FileStream fs, BinaryReader reader, ushort streams, long metaDataOffset)
+        {
+            long tablesStreamOffset = -1;
+            uint tablesStreamSize = 0;
+            long stringHeapOffset = -1;
+
+            for (int i = 0; i < streams; i++)
+            {
+                if (fs.Position + 8 > fs.Length)
+                {
+                    break;
+                }
+
+                uint offset = reader.ReadUInt32();
+                uint size = reader.ReadUInt32();
+                string streamName = ReadStreamName(fs, reader);
+
+                if (streamName is "#~" or "#-")
+                {
+                    tablesStreamOffset = metaDataOffset + offset;
+                    tablesStreamSize = size;
+                }
+                else if (streamName == "#Strings")
+                {
+                    stringHeapOffset = metaDataOffset + offset;
+                }
+            }
+
+            return (tablesStreamOffset, tablesStreamSize, stringHeapOffset);
         }
 
         /// <summary>

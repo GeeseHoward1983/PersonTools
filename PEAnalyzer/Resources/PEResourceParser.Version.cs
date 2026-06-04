@@ -71,7 +71,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             try
             {
-                if (resourceOffset < 0 || resourceOffset + 16 > fs.Length)
+                if (resourceOffset < 0 || resourceOffset + ResourceDirectoryReader.DirectoryHeaderSize > fs.Length)
                 {
                     return;
                 }
@@ -79,46 +79,29 @@ namespace PersonalTools.PEAnalyzer.Resources
                 long originalPosition = fs.Position;
                 fs.Position = resourceOffset;
 
-                // 读取根资源目录
-                IMAGERESOURCEDIRECTORY rootDirectory = new()
-                {
-                    Characteristics = reader.ReadUInt32(),
-                    TimeDateStamp = reader.ReadUInt32(),
-                    MajorVersion = reader.ReadUInt16(),
-                    MinorVersion = reader.ReadUInt16(),
-                    NumberOfNamedEntries = reader.ReadUInt16(),
-                    NumberOfIdEntries = reader.ReadUInt16()
-                };
-
+                IMAGERESOURCEDIRECTORY rootDirectory = ResourceDirectoryReader.ReadDirectory(reader);
                 int totalEntries = rootDirectory.NumberOfNamedEntries + rootDirectory.NumberOfIdEntries;
 
-                // 遍历资源目录项
+                // 查找 RT_VERSION 资源类型 (ID = 16)，命中后下钻并结束
                 for (int i = 0; i < totalEntries; i++)
                 {
-                    long entryOffset = resourceOffset + 16 + i * 8;
-                    if (entryOffset + 8 > fs.Length)
+                    if (!ResourceDirectoryReader.TryReadEntry(fs, reader, resourceOffset, i, out IMAGERESOURCEDIRECTORYENTRY entry))
                     {
                         break;
                     }
 
-                    fs.Position = entryOffset; // 16是IMAGE_RESOURCE_DIRECTORY大小，每项8字节
-
-                    IMAGERESOURCEDIRECTORYENTRY entry = new()
+                    if ((entry.NameOrId & 0xFFFF) != 16) // RT_VERSION = 16
                     {
-                        NameOrId = reader.ReadUInt32(),
-                        OffsetToData = reader.ReadUInt32()
-                    };
-
-                    // 检查是否是RT_VERSION资源类型 (ID = 16)
-                    if ((entry.NameOrId & 0xFFFF) == 16) // RT_VERSION = 16
-                    {
-                        long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
-                        if (nextLevelOffset >= 0 && nextLevelOffset + 16 <= fs.Length)
-                        {
-                            ParseVersionResource(fs, reader, peInfo, nextLevelOffset, resourceOffset);
-                        }
-                        break;
+                        continue;
                     }
+
+                    long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
+                    if (nextLevelOffset >= 0 && nextLevelOffset + ResourceDirectoryReader.DirectoryHeaderSize <= fs.Length)
+                    {
+                        ParseVersionResource(fs, reader, peInfo, nextLevelOffset, resourceOffset);
+                    }
+
+                    break;
                 }
 
                 fs.Position = originalPosition;
@@ -138,71 +121,22 @@ namespace PersonalTools.PEAnalyzer.Resources
         }
 
         /// <summary>
-        /// 解析版本资源
+        /// 解析版本资源（递归遍历目录，叶子节点交给数据项解析）。
         /// </summary>
-        /// <param name="fs">文件流</param>
-        /// <param name="reader">二进制读取器</param>
-        /// <param name="peInfo">PE文件信息</param>
-        /// <param name="directoryOffset">目录偏移</param>
-        /// <param name="resourceBaseOffset">资源基址偏移</param>
         private static void ParseVersionResource(FileStream fs, BinaryReader reader, PEInfo peInfo, long directoryOffset, long resourceBaseOffset)
         {
             try
             {
-                if (directoryOffset < 0 || directoryOffset + 16 > fs.Length)
+                if (directoryOffset < 0 || directoryOffset + ResourceDirectoryReader.DirectoryHeaderSize > fs.Length)
                 {
                     return;
                 }
 
                 long originalPosition = fs.Position;
-                fs.Position = directoryOffset;
 
-                // 读取资源目录
-                IMAGERESOURCEDIRECTORY directory = new()
-                {
-                    Characteristics = reader.ReadUInt32(),
-                    TimeDateStamp = reader.ReadUInt32(),
-                    MajorVersion = reader.ReadUInt16(),
-                    MinorVersion = reader.ReadUInt16(),
-                    NumberOfNamedEntries = reader.ReadUInt16(),
-                    NumberOfIdEntries = reader.ReadUInt16()
-                };
-
-                // 遍历子项查找语言节点
-                int totalEntries = directory.NumberOfNamedEntries + directory.NumberOfIdEntries;
-                for (int i = 0; i < totalEntries; i++)
-                {
-                    long entryOffset = directoryOffset + 16 + i * 8;
-                    if (entryOffset + 8 > fs.Length)
-                    {
-                        break;
-                    }
-
-                    fs.Position = entryOffset; // 跳过目录头(16字节)，每项8字节
-
-                    IMAGERESOURCEDIRECTORYENTRY entry = new()
-                    {
-                        NameOrId = reader.ReadUInt32(),
-                        OffsetToData = reader.ReadUInt32()
-                    };
-
-                    // 检查是否是叶子节点
-                    // 最高位为1表示指向下一级目录，为0表示指向数据条目
-                    // 我们需要处理两种情况
-                    if ((entry.OffsetToData & 0x80000000) != 0)
-                    {
-                        long nextLevelOffset = resourceBaseOffset + (entry.OffsetToData & 0x7FFFFFFF);
-                        if (nextLevelOffset >= 0 && nextLevelOffset + 16 <= fs.Length)
-                        {
-                            ParseVersionResource(fs, reader, peInfo, nextLevelOffset, resourceBaseOffset);
-                        }
-                    }
-                    else
-                    {
-                        long dataEntryOffset = resourceBaseOffset + entry.OffsetToData;
-                        ParseVersionDataEntry(fs, reader, peInfo, dataEntryOffset);
-                    }
-                }
+                ResourceDirectoryReader.WalkEntries(fs, reader, directoryOffset, resourceBaseOffset,
+                    subdirectoryOffset => ParseVersionResource(fs, reader, peInfo, subdirectoryOffset, resourceBaseOffset),
+                    dataEntryOffset => ParseVersionDataEntry(fs, reader, peInfo, dataEntryOffset));
 
                 fs.Position = originalPosition;
             }
@@ -221,13 +155,8 @@ namespace PersonalTools.PEAnalyzer.Resources
         }
 
         /// <summary>
-        /// 解析资源数据项
+        /// 解析资源数据项（定位 VS_VERSIONINFO 并交给结构解析器）。
         /// </summary>
-        /// <param name="fs">文件流</param>
-        /// <param name="reader">二进制读取器</param>
-        /// <param name="peInfo">PE文件信息</param>
-        /// <param name="dataEntryOffset">数据项偏移</param>
-        /// <param name="resourceBaseOffset">资源基址偏移</param>
         private static void ParseVersionDataEntry(FileStream fs, BinaryReader reader, PEInfo peInfo, long dataEntryOffset)
         {
             try
@@ -241,29 +170,13 @@ namespace PersonalTools.PEAnalyzer.Resources
                 long originalPosition = fs.Position;
                 fs.Position = dataEntryOffset;
 
-                // 检查是否有足够的数据读取IMAGE_RESOURCE_DATA_ENTRY
-                if (fs.Position + 16 > fs.Length)
-                {
-                    peInfo.AdditionalInfo.FileVersion = "资源数据条目不完整";
-                    return;
-                }
+                IMAGERESOURCEDATAENTRY dataEntry = ResourceDirectoryReader.ReadDataEntry(reader);
 
-                // 读取资源数据项
-                IMAGERESOURCEDATAENTRY dataEntry = new()
-                {
-                    OffsetToData = reader.ReadUInt32(),
-                    Size = reader.ReadUInt32(),
-                    CodePage = reader.ReadUInt32(),
-                    Reserved = reader.ReadUInt32()
-                };
-
-                // 计算实际数据偏移（注意：资源数据的OffsetToData是RVA）
+                // OffsetToData 为 RVA
                 long dataOffset = Utilities.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
-                if (dataOffset != -1 && dataOffset >= 0 && dataEntry.Size > 0 && dataEntry.Size <= int.MaxValue && dataOffset + dataEntry.Size <= fs.Length)
+                if (ResourceDirectoryReader.IsReadableData(dataOffset, dataEntry.Size, fs))
                 {
                     fs.Position = dataOffset;
-
-                    // 读取版本信息结构
                     PEResourceParserVersionHelpers.ParseVersionInfoStructure(fs, reader, peInfo);
                 }
                 else

@@ -24,97 +24,46 @@ namespace PersonalTools.PEAnalyzer.Resources
                 long startPosition = fs.Position;
 
                 // 读取VS_VERSIONINFO头
-                if (fs.Position + 6 <= fs.Length)
+                if (fs.Position + 6 > fs.Length)
                 {
-                    ushort wLength = reader.ReadUInt16();
-                    ushort wValueLength = reader.ReadUInt16();
-                    ushort wType = reader.ReadUInt16();
+                    return;
+                }
 
-                    // 检查基本的有效性
-                    if (wLength < 6)
-                    {
-                        return;
-                    }
+                ushort wLength = reader.ReadUInt16();
+                ushort wValueLength = reader.ReadUInt16();
+                reader.ReadUInt16(); // wType
 
-                    // 读取szKey (UNICODE字符串 "VS_VERSION_INFO")
-                    if (startPosition + wLength > fs.Length)
-                    {
-                        return;
-                    }
+                if (wLength < 6 || startPosition + wLength > fs.Length)
+                {
+                    return;
+                }
 
-                    int maxStringBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
-                    string vsVersionInfoKey = Utilities.ReadUnicodeStringWithMaxBytes(reader, maxStringBytes);
+                // 读取szKey (UNICODE字符串 "VS_VERSION_INFO") 并校验
+                int maxStringBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
+                string vsVersionInfoKey = Utilities.ReadUnicodeStringWithMaxBytes(reader, maxStringBytes);
+                if (!vsVersionInfoKey.Equals("VS_VERSION_INFO", StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
 
-                    // 验证键名
-                    if (!vsVersionInfoKey.Equals("VS_VERSION_INFO", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return;
-                    }
+                // VS_FIXEDFILEINFO 紧随其后（对齐到4字节边界），大小 52 字节
+                long alignedPosition = Utilities.AlignTo4(fs.Position);
+                if (wValueLength < 52 || alignedPosition + 52 > fs.Length)
+                {
+                    peInfo.AdditionalInfo.FileVersion = $"版本信息数据不完整: wValueLength={wValueLength}, 需要>=52";
+                    return;
+                }
 
-                    // 对齐到4字节边界
-                    long alignedPosition = fs.Position + 3 & ~3;
+                fs.Position = alignedPosition;
+                VSFIXEDFILEINFO fixedFileInfo = ReadFixedFileInfo(reader);
+                ApplyFixedFileVersions(peInfo, fixedFileInfo);
 
-                    // 检查是否有足够的空间读取VS_FIXEDFILEINFO
-                    // VS_FIXEDFILEINFO大小为52字节，但我们需要检查wValueLength是否有效
-                    if (wValueLength >= 52 && alignedPosition + 52 <= fs.Length)
-                    {
-                        fs.Position = alignedPosition;
-
-                        // 读取VS_FIXEDFILEINFO结构
-                        VSFIXEDFILEINFO fixedFileInfo = new()
-                        {
-                            dwSignature = reader.ReadUInt32(),
-                            dwStrucVersion = reader.ReadUInt32(),
-                            dwFileVersionMS = reader.ReadUInt32(),
-                            dwFileVersionLS = reader.ReadUInt32(),
-                            dwProductVersionMS = reader.ReadUInt32(),
-                            dwProductVersionLS = reader.ReadUInt32(),
-                            dwFileFlagsMask = reader.ReadUInt32(),
-                            dwFileFlags = reader.ReadUInt32(),
-                            dwFileOS = reader.ReadUInt32(),
-                            dwFileType = reader.ReadUInt32(),
-                            dwFileSubtype = reader.ReadUInt32(),
-                            dwFileDateMS = reader.ReadUInt32(),
-                            dwFileDateLS = reader.ReadUInt32()
-                        };
-
-                        // 验证签名
-                        if (fixedFileInfo.dwSignature == 0xFEEF04BD) // VS_VERSIONINFO签名
-                        {
-                            uint fileVersionMajor = fixedFileInfo.dwFileVersionMS >> 16 & 0xFFFF;
-                            uint fileVersionMinor = fixedFileInfo.dwFileVersionMS & 0xFFFF;
-                            uint fileVersionBuild = fixedFileInfo.dwFileVersionLS >> 16 & 0xFFFF;
-                            uint fileVersionRev = fixedFileInfo.dwFileVersionLS & 0xFFFF;
-                            peInfo.AdditionalInfo.FileVersion = $"{fileVersionMajor}.{fileVersionMinor}.{fileVersionBuild}.{fileVersionRev}";
-
-                            uint productVersionMajor = fixedFileInfo.dwProductVersionMS >> 16 & 0xFFFF;
-                            uint productVersionMinor = fixedFileInfo.dwProductVersionMS & 0xFFFF;
-                            uint productVersionBuild = fixedFileInfo.dwProductVersionLS >> 16 & 0xFFFF;
-                            uint productVersionRev = fixedFileInfo.dwProductVersionLS & 0xFFFF;
-                            peInfo.AdditionalInfo.ProductVersion = $"{productVersionMajor}.{productVersionMinor}.{productVersionBuild}.{productVersionRev}";
-                        }
-                        else
-                        {
-                            // 签名无效，记录日志
-                            peInfo.AdditionalInfo.FileVersion = $"无效的版本信息签名: 0x{fixedFileInfo.dwSignature:X8}";
-                        }
-
-                        // 继续解析StringFileInfo和VarFileInfo部分
-                        // 它们都紧跟在VS_FIXEDFILEINFO之后
-                        long childrenStartPos = alignedPosition + 52; // 跳过FIXEDFILEINFO
-                        childrenStartPos = childrenStartPos + 3 & ~3; // 对齐到4字节边界
-
-                        if (childrenStartPos < fs.Length && childrenStartPos < startPosition + wLength)
-                        {
-                            fs.Position = childrenStartPos;
-                            ParseVersionChildren(fs, reader, peInfo, startPosition + wLength);
-                        }
-                    }
-                    else
-                    {
-                        // wValueLength太小或没有足够的数据
-                        peInfo.AdditionalInfo.FileVersion = $"版本信息数据不完整: wValueLength={wValueLength}, 需要>=52";
-                    }
+                // 子项（StringFileInfo / VarFileInfo）紧跟在 VS_FIXEDFILEINFO 之后
+                long childrenStartPos = Utilities.AlignTo4(alignedPosition + 52);
+                if (childrenStartPos < fs.Length && childrenStartPos < startPosition + wLength)
+                {
+                    fs.Position = childrenStartPos;
+                    ParseVersionChildren(fs, reader, peInfo, startPosition + wLength);
                 }
             }
             catch (IOException ex)
@@ -129,6 +78,52 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 peInfo.AdditionalInfo.FileVersion = $"版本信息结构解析错误: {ex.Message}";
             }
+        }
+
+        /// <summary>
+        /// 读取 VS_FIXEDFILEINFO 结构（52 字节，13 个 DWORD）。
+        /// </summary>
+        private static VSFIXEDFILEINFO ReadFixedFileInfo(BinaryReader reader)
+        {
+            return new VSFIXEDFILEINFO
+            {
+                dwSignature = reader.ReadUInt32(),
+                dwStrucVersion = reader.ReadUInt32(),
+                dwFileVersionMS = reader.ReadUInt32(),
+                dwFileVersionLS = reader.ReadUInt32(),
+                dwProductVersionMS = reader.ReadUInt32(),
+                dwProductVersionLS = reader.ReadUInt32(),
+                dwFileFlagsMask = reader.ReadUInt32(),
+                dwFileFlags = reader.ReadUInt32(),
+                dwFileOS = reader.ReadUInt32(),
+                dwFileType = reader.ReadUInt32(),
+                dwFileSubtype = reader.ReadUInt32(),
+                dwFileDateMS = reader.ReadUInt32(),
+                dwFileDateLS = reader.ReadUInt32()
+            };
+        }
+
+        /// <summary>
+        /// 校验签名并将 VS_FIXEDFILEINFO 中的文件/产品版本写入 PEInfo。
+        /// </summary>
+        private static void ApplyFixedFileVersions(PEInfo peInfo, VSFIXEDFILEINFO info)
+        {
+            if (info.dwSignature != 0xFEEF04BD) // VS_VERSIONINFO签名
+            {
+                peInfo.AdditionalInfo.FileVersion = $"无效的版本信息签名: 0x{info.dwSignature:X8}";
+                return;
+            }
+
+            peInfo.AdditionalInfo.FileVersion = FormatVersion(info.dwFileVersionMS, info.dwFileVersionLS);
+            peInfo.AdditionalInfo.ProductVersion = FormatVersion(info.dwProductVersionMS, info.dwProductVersionLS);
+        }
+
+        /// <summary>
+        /// 将 MS/LS 两个 DWORD 格式化为 "主.次.编译.修订" 版本字符串。
+        /// </summary>
+        private static string FormatVersion(uint ms, uint ls)
+        {
+            return $"{(ms >> 16) & 0xFFFF}.{ms & 0xFFFF}.{(ls >> 16) & 0xFFFF}.{ls & 0xFFFF}";
         }
 
         /// <summary>

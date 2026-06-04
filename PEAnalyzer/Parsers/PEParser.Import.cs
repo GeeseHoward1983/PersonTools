@@ -324,18 +324,30 @@ namespace PersonalTools
                 AddDependencyIfMissing(peInfo, dllName);
 
                 // 使用 ImportNameTableRVA 解析延迟加载导入函数
-                if (delayLoadDesc.ImportNameTableRVA != 0)
-                {
-                    long nameTableOffset = Utilities.RvaToOffset(delayLoadDesc.ImportNameTableRVA, peInfo.SectionHeaders);
-                    if (nameTableOffset != -1 && nameTableOffset < fs.Length)
-                    {
-                        delayLoadImportFunctions.AddRange(
-                            WalkThunkTable(fs, reader, peInfo, nameTableOffset, is64Bit, dllName, isDelayLoaded: true));
-                    }
-                }
+                delayLoadImportFunctions.AddRange(
+                    ParseDelayLoadFunctions(fs, reader, peInfo, delayLoadDesc.ImportNameTableRVA, is64Bit, dllName));
             }
 
             return delayLoadImportFunctions;
+        }
+
+        /// <summary>
+        /// 解析单个延迟加载描述符的导入名表（ImportNameTableRVA），返回其导入函数列表。
+        /// </summary>
+        private static List<ImportFunctionInfo> ParseDelayLoadFunctions(FileStream fs, BinaryReader reader, PEInfo peInfo, uint importNameTableRVA, bool is64Bit, string dllName)
+        {
+            if (importNameTableRVA == 0)
+            {
+                return [];
+            }
+
+            long nameTableOffset = Utilities.RvaToOffset(importNameTableRVA, peInfo.SectionHeaders);
+            if (nameTableOffset == -1 || nameTableOffset >= fs.Length)
+            {
+                return [];
+            }
+
+            return WalkThunkTable(fs, reader, peInfo, nameTableOffset, is64Bit, dllName, isDelayLoaded: true);
         }
 
         private static IMAGEDELAYLOADDESCRIPTOR ReadDelayLoadDescriptor(BinaryReader reader)

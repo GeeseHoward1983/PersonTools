@@ -1,8 +1,6 @@
 using PersonalTools.PEAnalyzer.Parsers;
 using PersonalTools.PEAnalyzer.Models;
-using System.Globalization;
 using System.IO;
-using System.Text;
 
 namespace PersonalTools.PEAnalyzer.Resources
 {
@@ -12,6 +10,24 @@ namespace PersonalTools.PEAnalyzer.Resources
     /// </summary>
     internal static class PEResourceParserVersionTable
     {
+        /// <summary>
+        /// 版本字符串键 -> PEAdditionalInfo 赋值器（大小写不敏感），取代原先的大型 switch。
+        /// </summary>
+        private static readonly Dictionary<string, Action<PEAdditionalInfo, string>> VersionFieldSetters =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                ["CompanyName"] = (info, v) => info.CompanyName = v,
+                ["FileDescription"] = (info, v) => info.FileDescription = v,
+                ["FileVersion"] = (info, v) => info.FileVersion = v,
+                ["ProductName"] = (info, v) => info.ProductName = v,
+                ["ProductVersion"] = (info, v) => info.ProductVersion = v,
+                ["LegalCopyright"] = (info, v) => info.LegalCopyright = v,
+                ["LegalTrademarks"] = (info, v) => info.LegalTrademarks = v,
+                ["OriginalFilename"] = (info, v) => info.OriginalFileName = v,
+                ["InternalName"] = (info, v) => info.InternalName = v,
+                ["Copyright"] = (info, v) => info.Copyright = v,
+            };
+
         /// <summary>
         /// 解析StringTable部分
         /// </summary>
@@ -32,22 +48,19 @@ namespace PersonalTools.PEAnalyzer.Resources
                 }
 
                 ushort wLength = reader.ReadUInt16();
-                ushort wValueLength = reader.ReadUInt16();
-                ushort wType = reader.ReadUInt16();
+                reader.ReadUInt16(); // wValueLength
+                reader.ReadUInt16(); // wType
 
                 if (wLength < 6 || fs.Position + wLength - 6 > fs.Length)
                 {
                     return;
                 }
 
-                // 读取语言和代码页标识符（通常是8位十六进制字符串）
+                // 读取语言和代码页标识符（通常是8位十六进制字符串），随后对齐到 Strings 起始
                 int maxLangIdBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
-                string langId = Utilities.ReadUnicodeStringWithMaxBytes(reader, maxLangIdBytes); // 读取直到找到null终止符
+                _ = Utilities.ReadUnicodeStringWithMaxBytes(reader, maxLangIdBytes);
 
-                // 计算Strings的位置
-                long afterLangIdPosition = fs.Position;
-                long stringsPosition = (afterLangIdPosition + 3) & ~3; // 对齐到4字节边界
-
+                long stringsPosition = Utilities.AlignTo4(fs.Position);
                 if (stringsPosition >= fs.Length || stringsPosition >= endPosition)
                 {
                     return;
@@ -55,180 +68,108 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 fs.Position = stringsPosition;
 
-                // 解析字符串对
+                // 逐个解析字符串对，直到表尾或遇到长度为 0 的项
                 long tableEndPosition = Math.Min(startPosition + wLength, endPosition);
-
                 while (fs.Position < tableEndPosition && fs.Position + 6 <= fs.Length)
                 {
-                    long stringStartPos = fs.Position;
-
-                    // 先读取头部信息判断长度
-                    if (fs.Position + 6 > fs.Length)
+                    long before = fs.Position;
+                    if (!ParseStringPair(fs, reader, peInfo, tableEndPosition) || fs.Position <= before)
                     {
                         break;
                     }
-
-                    ushort strLength = reader.ReadUInt16();
-                    ushort strValueLength = reader.ReadUInt16();
-                    ushort strType = reader.ReadUInt16();
-
-                    if (strLength == 0)
-                    {
-                        fs.Position = stringStartPos;
-                        break;
-                    }
-
-                    // 重新定位到开始位置继续解析
-                    fs.Position = stringStartPos;
-                    ParseStringPair(fs, reader, peInfo, tableEndPosition);
                 }
             }
             catch (IOException ex)
             {
-                // 忽略StringTable解析错误
                 peInfo.AdditionalInfo.FileVersion += $"; StringTable解析错误: {ex.Message}";
             }
             catch (UnauthorizedAccessException ex)
             {
-                // 忽略StringTable解析错误
                 peInfo.AdditionalInfo.FileVersion += $"; StringTable解析错误: {ex.Message}";
             }
             catch (ArgumentOutOfRangeException ex)
             {
-                // 忽略StringTable解析错误
                 peInfo.AdditionalInfo.FileVersion += $"; StringTable解析错误: {ex.Message}";
             }
         }
 
         /// <summary>
-        /// 解析单个字符串对
+        /// 解析单个字符串对。
         /// </summary>
-        /// <param name="fs">文件流</param>
-        /// <param name="reader">二进制读取器</param>
-        /// <param name="peInfo">PE文件信息</param>
-        /// <param name="endPosition">StringTable块的结束位置</param>
-        internal static void ParseStringPair(FileStream fs, BinaryReader reader, PEInfo peInfo, long endPosition)
+        /// <returns>true 表示成功解析了一项（且已前进到下一项）；false 表示遇到终止项或越界，应停止。</returns>
+        internal static bool ParseStringPair(FileStream fs, BinaryReader reader, PEInfo peInfo, long endPosition)
         {
             try
             {
                 long startPosition = fs.Position;
-
-                // 检查是否还有足够的数据
                 if (fs.Position + 6 > fs.Length)
                 {
-                    return;
+                    return false;
                 }
 
                 ushort wLength = reader.ReadUInt16();
-                ushort wValueLength = reader.ReadUInt16();
-                ushort wType = reader.ReadUInt16();
+                reader.ReadUInt16(); // wValueLength
+                reader.ReadUInt16(); // wType
 
                 if (wLength == 0 || startPosition + wLength > endPosition)
                 {
-                    return;
+                    return false;
                 }
 
-                // 读取键名
-                StringBuilder keySb = new();
-                char ch;
-                while (fs.Position + 2 <= fs.Length && fs.Position < endPosition && fs.Position < startPosition + wLength)
-                {
-                    ch = (char)reader.ReadUInt16();
-                    if (ch == '\0')
-                    {
-                        break;
-                    }
+                // 块内上界：键与值都不超过 startPosition + wLength（同时不超过 endPosition）
+                long blockEnd = Math.Min(startPosition + wLength, endPosition);
 
-                    keySb.Append(ch);
-                }
+                // 读取键名（Unicode，至 null 或块尾）
+                string keyValue = ReadUnicodeWithin(fs, reader, blockEnd);
 
-                string keyValue = keySb.ToString();
-
-                // 跳过可能的额外null字符并对齐到4字节边界
-                long currentPosition = fs.Position;
-                long valuePosition = currentPosition + 3 & ~3;
-
-                // 确保valuePosition不超过边界
+                // 值对齐到 4 字节边界
+                long valuePosition = Utilities.AlignTo4(fs.Position);
                 if (valuePosition >= endPosition || valuePosition >= fs.Length)
                 {
-                    return;
+                    return false;
                 }
 
                 fs.Position = valuePosition;
+                string value = ReadUnicodeWithin(fs, reader, blockEnd);
 
-                // 读取值
-                StringBuilder valueSb = new();
-                long valueEndPosition = Math.Min(startPosition + wLength, endPosition);
-                while (fs.Position + 2 < fs.Length && fs.Position < valueEndPosition)
+                if (VersionFieldSetters.TryGetValue(keyValue, out Action<PEAdditionalInfo, string>? setter))
                 {
-                    ch = (char)reader.ReadUInt16();
-                    if (ch == '\0')
-                    {
-                        break;
-                    }
-
-                    valueSb.Append(ch);
+                    setter(peInfo.AdditionalInfo, value);
                 }
 
-                string value = valueSb.ToString();
-
-                // 根据键名设置相应的属性
-                switch (keyValue.ToLower(CultureInfo.CurrentCulture))
-                {
-                    case "companyname":
-                        peInfo.AdditionalInfo.CompanyName = value;
-                        break;
-                    case "filedescription":
-                        peInfo.AdditionalInfo.FileDescription = value;
-                        break;
-                    case "fileversion":
-                        peInfo.AdditionalInfo.FileVersion = value;
-                        break;
-                    case "productname":
-                        peInfo.AdditionalInfo.ProductName = value;
-                        break;
-                    case "productversion":
-                        peInfo.AdditionalInfo.ProductVersion = value;
-                        break;
-                    case "legalcopyright":
-                        peInfo.AdditionalInfo.LegalCopyright = value;
-                        break;
-                    case "legaltrademarks":
-                        peInfo.AdditionalInfo.LegalTrademarks = value;
-                        break;
-                    case "originalfilename":
-                        peInfo.AdditionalInfo.OriginalFileName = value;
-                        break;
-                    case "internalname":
-                        peInfo.AdditionalInfo.InternalName = value;
-                        break;
-                    case "copyright":
-                        peInfo.AdditionalInfo.Copyright = value;
-                        break;
-                }
-
-                // 确保位置正确前进到下一个兄弟节点
-                long nextPosition = startPosition + wLength + 3 & ~3;
+                // 前进到下一个兄弟节点
+                long nextPosition = Utilities.AlignTo4(startPosition + wLength);
                 if (nextPosition < endPosition && nextPosition > fs.Position)
                 {
                     fs.Position = nextPosition;
                 }
+
+                return true;
             }
             catch (IOException ex)
             {
-                // 忽略StringPair解析错误
                 peInfo.AdditionalInfo.FileVersion += $"; StringPair解析错误: {ex.Message}";
+                return false;
             }
             catch (UnauthorizedAccessException ex)
             {
-                // 忽略StringPair解析错误
                 peInfo.AdditionalInfo.FileVersion += $"; StringPair解析错误: {ex.Message}";
+                return false;
             }
             catch (ArgumentOutOfRangeException ex)
             {
-                // 忽略StringPair解析错误
                 peInfo.AdditionalInfo.FileVersion += $"; StringPair解析错误: {ex.Message}";
+                return false;
             }
+        }
+
+        /// <summary>
+        /// 从当前位置读取 Unicode 字符串，直到 null 终止符或到达上界 <paramref name="limit"/>。
+        /// </summary>
+        private static string ReadUnicodeWithin(FileStream fs, BinaryReader reader, long limit)
+        {
+            int maxBytes = (int)Math.Max(0, Math.Min(limit, fs.Length) - fs.Position);
+            return Utilities.ReadUnicodeStringWithMaxBytes(reader, maxBytes);
         }
     }
 }

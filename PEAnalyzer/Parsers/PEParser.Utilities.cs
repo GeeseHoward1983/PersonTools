@@ -251,6 +251,12 @@ namespace PersonalTools.PEAnalyzer.Parsers
             return optionalHeader.Magic == PEConstants.Pe32Magic;
         }
 
+        // 向上对齐到 4 字节边界（版本资源结构广泛使用）
+        internal static long AlignTo4(long position)
+        {
+            return (position + 3) & ~3;
+        }
+
 
         // 判断文件类型
         public static string GetFileType(ushort characteristics)

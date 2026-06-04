@@ -1,4 +1,6 @@
 using PersonalTools.PEAnalyzer.Models;
+using PersonalTools.PEAnalyzer.Parsers;
+using System.IO;
 
 namespace PersonalTools.PEAnalyzer.Resources
 {
@@ -8,6 +10,52 @@ namespace PersonalTools.PEAnalyzer.Resources
     /// </summary>
     internal static class PEResourceParserIconData
     {
+        /// <summary>
+        /// 读取一个资源数据项（IMAGE_RESOURCE_DATA_ENTRY），若其内容像图标数据则处理之。
+        /// 供直接图标与命名图标解析器共用（消除两处重复逻辑）。
+        /// </summary>
+        public static void ReadAndProcessIconDataEntry(FileStream fs, BinaryReader reader, PEInfo peInfo, long dataEntryOffset)
+        {
+            try
+            {
+                if (dataEntryOffset < 0 || dataEntryOffset + 16 > fs.Length)
+                {
+                    return;
+                }
+
+                long originalPosition = fs.Position;
+                fs.Position = dataEntryOffset;
+
+                IMAGERESOURCEDATAENTRY dataEntry = ResourceDirectoryReader.ReadDataEntry(reader);
+
+                // OffsetToData 为 RVA
+                long dataOffset = Utilities.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
+                if (ResourceDirectoryReader.IsReadableData(dataOffset, dataEntry.Size, fs))
+                {
+                    fs.Position = dataOffset;
+                    byte[] resourceData = reader.ReadBytes((int)dataEntry.Size);
+                    if (IsIconData(resourceData))
+                    {
+                        ProcessIconData(peInfo, resourceData);
+                    }
+                }
+
+                fs.Position = originalPosition;
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine($"图标资源数据项解析错误: {ex.Message}");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine($"图标资源数据项解析错误: {ex.Message}");
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                Console.WriteLine($"图标资源数据项解析错误: {ex.Message}");
+            }
+        }
+
         /// <summary>
         /// 处理图标数据
         /// </summary>
@@ -153,48 +201,25 @@ namespace PersonalTools.PEAnalyzer.Resources
         }
 
         /// <summary>
-        /// 检查数据是否可能是图标数据
+        /// 检查数据是否可能是图标数据（ICO 文件头或 BITMAPINFOHEADER）。
         /// </summary>
         /// <param name="data">数据</param>
         /// <returns>是否可能是图标数据</returns>
         public static bool IsIconData(byte[] data)
         {
-            try
-            {
-                if (data == null || data.Length < 4)
-                {
-                    return false;
-                }
-
-                // 检查是否是ICO文件头
-                if (data.Length >= 4 &&
-                    data[0] == 0x00 && data[1] == 0x00 && // Reserved
-                    data[2] == 0x01 && data[3] == 0x00)   // Type (1 = ICO)
-                {
-                    return true;
-                }
-
-                // 检查是否是有效的DIB数据（以BITMAPINFOHEADER开始）
-                if (data.Length >= 4)
-                {
-                    // BITMAPINFOHEADER的biSize字段应该是40字节
-                    uint biSize = BitConverter.ToUInt32(data, 0);
-                    if (biSize == 40 && data.Length >= 16)
-                    {
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-            catch (ArgumentException)
+            if (data == null || data.Length < 4)
             {
                 return false;
             }
-            catch (IndexOutOfRangeException)
+
+            // ICO 文件头: 00 00 01 00（Reserved=0, Type=1）
+            if (data[0] == 0x00 && data[1] == 0x00 && data[2] == 0x01 && data[3] == 0x00)
             {
-                return false;
+                return true;
             }
+
+            // DIB 数据：以 BITMAPINFOHEADER 开始（biSize == 40）
+            return data.Length >= 16 && BitConverter.ToUInt32(data, 0) == 40;
         }
     }
 }

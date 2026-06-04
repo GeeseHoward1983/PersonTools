@@ -139,7 +139,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             try
             {
-                if (resourceOffset < 0 || resourceOffset + 16 > fs.Length)
+                if (resourceOffset < 0 || resourceOffset + ResourceDirectoryReader.DirectoryHeaderSize > fs.Length)
                 {
                     return;
                 }
@@ -147,106 +147,21 @@ namespace PersonalTools.PEAnalyzer.Resources
                 long originalPosition = fs.Position;
                 fs.Position = resourceOffset;
 
-                // 读取根资源目录
-                IMAGERESOURCEDIRECTORY rootDirectory = new()
-                {
-                    Characteristics = reader.ReadUInt32(),
-                    TimeDateStamp = reader.ReadUInt32(),
-                    MajorVersion = reader.ReadUInt16(),
-                    MinorVersion = reader.ReadUInt16(),
-                    NumberOfNamedEntries = reader.ReadUInt16(),
-                    NumberOfIdEntries = reader.ReadUInt16()
-                };
-
+                IMAGERESOURCEDIRECTORY rootDirectory = ResourceDirectoryReader.ReadDirectory(reader);
                 int totalEntries = rootDirectory.NumberOfNamedEntries + rootDirectory.NumberOfIdEntries;
 
-                // 遍历资源目录项查找RT_GROUP_ICON资源类型 (ID = 14)
-                bool foundGroupIcon = false;
-                for (int i = 0; i < totalEntries; i++)
-                {
-                    long entryOffset = resourceOffset + 16 + i * 8;
-                    if (entryOffset + 8 > fs.Length)
-                    {
-                        break;
-                    }
+                // 优先查找 RT_GROUP_ICON (ID=14)
+                bool foundGroupIcon = ScanTypeEntries(fs, reader, resourceOffset, totalEntries, 14,
+                    nextLevelOffset => PEResourceParserIconGroup.ParseGroupIconResource(fs, reader, peInfo, nextLevelOffset, resourceOffset));
 
-                    fs.Position = entryOffset;
-                    IMAGERESOURCEDIRECTORYENTRY entry = new()
-                    {
-                        NameOrId = reader.ReadUInt32(),
-                        OffsetToData = reader.ReadUInt32()
-                    };
-
-                    // 检查是否是RT_GROUP_ICON资源类型 (ID = 14)
-                    if ((entry.NameOrId & 0xFFFF) == 14) // RT_GROUP_ICON = 14
-                    {
-                        long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
-                        if (nextLevelOffset >= 0 && nextLevelOffset < fs.Length)
-                        {
-                            PEResourceParserIconGroup.ParseGroupIconResource(fs, reader, peInfo, nextLevelOffset, resourceOffset);
-                        }
-                        foundGroupIcon = true;
-                    }
-                }
-
-                // 如果没有找到RT_GROUP_ICON，尝试其他方法
+                // 未找到时回退到 RT_ICON (ID=3) 与命名资源
                 if (!foundGroupIcon)
                 {
-                    // 尝试查找RT_ICON资源类型 (ID = 3)
-                    for (int i = 0; i < totalEntries; i++)
-                    {
-                        long entryOffset = resourceOffset + 16 + i * 8;
-                        if (entryOffset + 8 > fs.Length)
-                        {
-                            break;
-                        }
+                    ScanTypeEntries(fs, reader, resourceOffset, totalEntries, 3,
+                        nextLevelOffset => PEResourceParserIconDirect.ParseDirectIconResource(fs, reader, peInfo, nextLevelOffset, resourceOffset));
 
-                        fs.Position = entryOffset;
-                        IMAGERESOURCEDIRECTORYENTRY entry = new()
-                        {
-                            NameOrId = reader.ReadUInt32(),
-                            OffsetToData = reader.ReadUInt32()
-                        };
-
-                        // 检查是否是RT_ICON资源类型 (ID = 3)
-                        if ((entry.NameOrId & 0xFFFF) == 3) // RT_ICON = 3
-                        {
-                            // 处理直接的RT_ICON资源
-                            long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
-                            if (nextLevelOffset >= 0 && nextLevelOffset < fs.Length)
-                            {
-                                PEResourceParserIconDirect.ParseDirectIconResource(fs, reader, peInfo, nextLevelOffset, resourceOffset);
-                            }
-                        }
-                    }
-
-                    // 尝试查找命名资源（WPF和其他.NET程序可能将图标存储为命名资源）
-                    for (int i = 0; i < rootDirectory.NumberOfNamedEntries; i++)
-                    {
-                        long entryOffset = resourceOffset + 16 + i * 8;
-                        if (entryOffset + 8 > fs.Length)
-                        {
-                            break;
-                        }
-
-                        fs.Position = entryOffset;
-                        IMAGERESOURCEDIRECTORYENTRY entry = new()
-                        {
-                            NameOrId = reader.ReadUInt32(),
-                            OffsetToData = reader.ReadUInt32()
-                        };
-
-                        // 检查是否是命名资源（最高位为1）
-                        if ((entry.NameOrId & 0x80000000) != 0)
-                        {
-                            // 这是一个命名资源，需要进一步检查
-                            long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
-                            if (nextLevelOffset >= 0 && nextLevelOffset < fs.Length)
-                            {
-                                PEResourceParserIconNamed.ParseResourceDirectoryForNamedIcons(fs, reader, peInfo, nextLevelOffset);
-                            }
-                        }
-                    }
+                    ScanNamedEntries(fs, reader, resourceOffset, rootDirectory.NumberOfNamedEntries,
+                        nextLevelOffset => PEResourceParserIconNamed.ParseResourceDirectoryForNamedIcons(fs, reader, peInfo, nextLevelOffset));
                 }
 
                 fs.Position = originalPosition;
@@ -262,6 +177,61 @@ namespace PersonalTools.PEAnalyzer.Resources
             catch (ArgumentOutOfRangeException ex)
             {
                 Console.WriteLine($"解析资源目录以查找图标信息错误: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 扫描根目录中指定类型ID的资源条目，命中即对其下一级偏移回调；返回是否命中过。
+        /// </summary>
+        private static bool ScanTypeEntries(FileStream fs, BinaryReader reader, long resourceOffset, int totalEntries, uint typeId, Action<long> onMatch)
+        {
+            bool found = false;
+            for (int i = 0; i < totalEntries; i++)
+            {
+                if (!ResourceDirectoryReader.TryReadEntry(fs, reader, resourceOffset, i, out IMAGERESOURCEDIRECTORYENTRY entry))
+                {
+                    break;
+                }
+
+                if ((entry.NameOrId & 0xFFFF) != typeId)
+                {
+                    continue;
+                }
+
+                long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
+                if (nextLevelOffset >= 0 && nextLevelOffset < fs.Length)
+                {
+                    onMatch(nextLevelOffset);
+                }
+
+                found = true;
+            }
+
+            return found;
+        }
+
+        /// <summary>
+        /// 扫描根目录中的命名资源条目（最高位为1），对其下一级偏移回调。
+        /// </summary>
+        private static void ScanNamedEntries(FileStream fs, BinaryReader reader, long resourceOffset, int namedEntries, Action<long> onMatch)
+        {
+            for (int i = 0; i < namedEntries; i++)
+            {
+                if (!ResourceDirectoryReader.TryReadEntry(fs, reader, resourceOffset, i, out IMAGERESOURCEDIRECTORYENTRY entry))
+                {
+                    break;
+                }
+
+                if ((entry.NameOrId & 0x80000000) == 0)
+                {
+                    continue;
+                }
+
+                long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
+                if (nextLevelOffset >= 0 && nextLevelOffset < fs.Length)
+                {
+                    onMatch(nextLevelOffset);
+                }
             }
         }
     }

@@ -1,0 +1,112 @@
+using PersonalTools.PEAnalyzer.Models;
+using System.IO;
+
+namespace PersonalTools.PEAnalyzer.Resources
+{
+    /// <summary>
+    /// 资源目录（IMAGE_RESOURCE_DIRECTORY / _ENTRY）的共享读取原语。
+    /// 供图标与版本资源解析器复用，避免各处重复手写目录遍历逻辑。
+    /// </summary>
+    internal static class ResourceDirectoryReader
+    {
+        /// <summary>资源目录头大小（字节）。</summary>
+        public const int DirectoryHeaderSize = 16;
+
+        /// <summary>资源目录项大小（字节）。</summary>
+        public const int DirectoryEntrySize = 8;
+
+        /// <summary>
+        /// 从当前位置读取一个 IMAGE_RESOURCE_DIRECTORY（16 字节）。
+        /// </summary>
+        public static IMAGERESOURCEDIRECTORY ReadDirectory(BinaryReader reader)
+        {
+            return new IMAGERESOURCEDIRECTORY
+            {
+                Characteristics = reader.ReadUInt32(),
+                TimeDateStamp = reader.ReadUInt32(),
+                MajorVersion = reader.ReadUInt16(),
+                MinorVersion = reader.ReadUInt16(),
+                NumberOfNamedEntries = reader.ReadUInt16(),
+                NumberOfIdEntries = reader.ReadUInt16()
+            };
+        }
+
+        /// <summary>
+        /// 读取目录头之后第 <paramref name="index"/> 项目录条目（8 字节）。
+        /// 越界返回 false。
+        /// </summary>
+        public static bool TryReadEntry(FileStream fs, BinaryReader reader, long directoryOffset, int index, out IMAGERESOURCEDIRECTORYENTRY entry)
+        {
+            entry = default;
+            long entryOffset = directoryOffset + DirectoryHeaderSize + ((long)index * DirectoryEntrySize);
+            if (entryOffset + DirectoryEntrySize > fs.Length)
+            {
+                return false;
+            }
+
+            fs.Position = entryOffset;
+            entry = new IMAGERESOURCEDIRECTORYENTRY
+            {
+                NameOrId = reader.ReadUInt32(),
+                OffsetToData = reader.ReadUInt32()
+            };
+            return true;
+        }
+
+        /// <summary>
+        /// 从当前位置读取一个 IMAGE_RESOURCE_DATA_ENTRY（16 字节）。
+        /// </summary>
+        public static IMAGERESOURCEDATAENTRY ReadDataEntry(BinaryReader reader)
+        {
+            return new IMAGERESOURCEDATAENTRY
+            {
+                OffsetToData = reader.ReadUInt32(),
+                Size = reader.ReadUInt32(),
+                CodePage = reader.ReadUInt32(),
+                Reserved = reader.ReadUInt32()
+            };
+        }
+
+        /// <summary>
+        /// 判断由 RVA 解析得到的数据偏移与大小是否落在文件范围内、可安全读取。
+        /// </summary>
+        public static bool IsReadableData(long dataOffset, uint size, FileStream fs)
+        {
+            return dataOffset >= 0 && size > 0 && size <= int.MaxValue && dataOffset + size <= fs.Length;
+        }
+
+        /// <summary>
+        /// 遍历目录的所有条目，按"子目录 / 数据条目"分派回调。
+        /// 子目录偏移使用低 31 位（相对资源基址），数据条目偏移使用完整 32 位。
+        /// 越界由各回调自行校验。
+        /// </summary>
+        public static void WalkEntries(FileStream fs, BinaryReader reader, long directoryOffset, long resourceBaseOffset, Action<long> onSubdirectory, Action<long> onDataEntry)
+        {
+            if (directoryOffset < 0 || directoryOffset + DirectoryHeaderSize > fs.Length)
+            {
+                return;
+            }
+
+            fs.Position = directoryOffset;
+            IMAGERESOURCEDIRECTORY directory = ReadDirectory(reader);
+            int totalEntries = directory.NumberOfNamedEntries + directory.NumberOfIdEntries;
+
+            for (int i = 0; i < totalEntries; i++)
+            {
+                if (!TryReadEntry(fs, reader, directoryOffset, i, out IMAGERESOURCEDIRECTORYENTRY entry))
+                {
+                    break;
+                }
+
+                if ((entry.OffsetToData & 0x80000000) != 0)
+                {
+                    onSubdirectory(resourceBaseOffset + (entry.OffsetToData & 0x7FFFFFFF));
+                }
+                else
+                {
+                    onDataEntry(resourceBaseOffset + entry.OffsetToData);
+                }
+            }
+        }
+    }
+}

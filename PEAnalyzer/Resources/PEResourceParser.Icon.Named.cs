@@ -11,17 +11,13 @@ namespace PersonalTools.PEAnalyzer.Resources
     internal static class PEResourceParserIconNamed
     {
         /// <summary>
-        /// 解析资源目录以查找命名图标资源
+        /// 解析资源目录以查找命名图标资源。
         /// </summary>
-        /// <param name="fs">文件流</param>
-        /// <param name="reader">二进制读取器</param>
-        /// <param name="peInfo">PE文件信息</param>
-        /// <param name="resourceOffset">资源节偏移</param>
         public static void ParseResourceDirectoryForNamedIcons(FileStream fs, BinaryReader reader, PEInfo peInfo, long resourceOffset)
         {
             try
             {
-                if (resourceOffset < 0 || resourceOffset + 16 > fs.Length)
+                if (resourceOffset < 0 || resourceOffset + ResourceDirectoryReader.DirectoryHeaderSize > fs.Length)
                 {
                     return;
                 }
@@ -29,42 +25,25 @@ namespace PersonalTools.PEAnalyzer.Resources
                 long originalPosition = fs.Position;
                 fs.Position = resourceOffset;
 
-                // 读取根资源目录
-                IMAGERESOURCEDIRECTORY rootDirectory = new()
-                {
-                    Characteristics = reader.ReadUInt32(),
-                    TimeDateStamp = reader.ReadUInt32(),
-                    MajorVersion = reader.ReadUInt16(),
-                    MinorVersion = reader.ReadUInt16(),
-                    NumberOfNamedEntries = reader.ReadUInt16(),
-                    NumberOfIdEntries = reader.ReadUInt16()
-                };
+                IMAGERESOURCEDIRECTORY rootDirectory = ResourceDirectoryReader.ReadDirectory(reader);
 
-                // 遍历命名资源项
+                // 命名条目位于目录前部，仅遍历这部分
                 for (int i = 0; i < rootDirectory.NumberOfNamedEntries; i++)
                 {
-                    long entryOffset = resourceOffset + 16 + i * 8;
-                    if (entryOffset + 8 > fs.Length)
+                    if (!ResourceDirectoryReader.TryReadEntry(fs, reader, resourceOffset, i, out IMAGERESOURCEDIRECTORYENTRY entry))
                     {
                         break;
                     }
 
-                    fs.Position = entryOffset; // 16是IMAGE_RESOURCE_DIRECTORY大小，每项8字节
-
-                    IMAGERESOURCEDIRECTORYENTRY entry = new()
+                    if ((entry.NameOrId & 0x80000000) == 0)
                     {
-                        NameOrId = reader.ReadUInt32(),
-                        OffsetToData = reader.ReadUInt32()
-                    };
+                        continue;
+                    }
 
-                    // 检查是否是命名资源（最高位为1）
-                    if ((entry.NameOrId & 0x80000000) != 0)
+                    long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
+                    if (nextLevelOffset >= 0 && nextLevelOffset + ResourceDirectoryReader.DirectoryHeaderSize <= fs.Length)
                     {
-                        long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
-                        if (nextLevelOffset >= 0 && nextLevelOffset + 16 <= fs.Length)
-                        {
-                            ParseNamedResourceDirectory(fs, reader, peInfo, nextLevelOffset, resourceOffset, entry.NameOrId & 0x7FFFFFFF);
-                        }
+                        ParseNamedResourceDirectory(fs, reader, peInfo, nextLevelOffset, resourceOffset, entry.NameOrId & 0x7FFFFFFF);
                     }
                 }
 
@@ -85,97 +64,24 @@ namespace PersonalTools.PEAnalyzer.Resources
         }
 
         /// <summary>
-        /// 解析命名资源目录
+        /// 解析命名资源目录：仅当无名（已下钻）或资源名暗示为图标时，递归遍历其条目。
         /// </summary>
-        /// <param name="fs">文件流</param>
-        /// <param name="reader">二进制读取器</param>
-        /// <param name="peInfo">PE文件信息</param>
-        /// <param name="directoryOffset">目录偏移</param>
-        /// <param name="resourceBaseOffset">资源基址偏移</param>
-        /// <param name="nameOffset">名称偏移</param>
         private static void ParseNamedResourceDirectory(FileStream fs, BinaryReader reader, PEInfo peInfo, long directoryOffset, long resourceBaseOffset, uint nameOffset)
         {
             try
             {
-                long originalPosition = fs.Position;
-
-                if (directoryOffset < 0 || directoryOffset + 16 > fs.Length)
+                if (directoryOffset < 0 || directoryOffset + ResourceDirectoryReader.DirectoryHeaderSize > fs.Length)
                 {
                     return;
                 }
 
-                long nameStringOffset = resourceBaseOffset + nameOffset;
-                string resourceName = string.Empty;
-                if (nameOffset != 0)
+                long originalPosition = fs.Position;
+
+                if (ShouldProcessNamedResource(fs, reader, resourceBaseOffset, nameOffset))
                 {
-                    if (nameStringOffset < 0 || nameStringOffset + 2 > fs.Length)
-                    {
-                        return;
-                    }
-
-                    // 读取资源名称
-                    resourceName = PEResourceParserIconHelpers.ReadResourceName(fs, reader, nameStringOffset);
-                }
-
-                // 只有当存在名称且资源名称匹配图标关键字时才进行进一步处理
-                bool nameHintsAtIcon = !string.IsNullOrEmpty(resourceName) &&
-                    (resourceName.Contains("icon", StringComparison.OrdinalIgnoreCase) ||
-                     resourceName.Contains(".ico", StringComparison.OrdinalIgnoreCase) ||
-                     resourceName.Contains("app", StringComparison.OrdinalIgnoreCase));
-
-                if (nameOffset == 0 || nameHintsAtIcon)
-                {
-                    if (directoryOffset < 0 || directoryOffset + 16 > fs.Length)
-                    {
-                        return;
-                    }
-
-                    fs.Position = directoryOffset;
-
-                    // 读取资源目录
-                    IMAGERESOURCEDIRECTORY directory = new()
-                    {
-                        Characteristics = reader.ReadUInt32(),
-                        TimeDateStamp = reader.ReadUInt32(),
-                        MajorVersion = reader.ReadUInt16(),
-                        MinorVersion = reader.ReadUInt16(),
-                        NumberOfNamedEntries = reader.ReadUInt16(),
-                        NumberOfIdEntries = reader.ReadUInt16()
-                    };
-
-                    // 遍历子项
-                    int totalEntries = directory.NumberOfNamedEntries + directory.NumberOfIdEntries;
-                    for (int i = 0; i < totalEntries; i++)
-                    {
-                        long entryOffset = directoryOffset + 16 + i * 8;
-                        if (entryOffset + 8 > fs.Length)
-                        {
-                            break;
-                        }
-
-                        fs.Position = entryOffset;
-
-                        IMAGERESOURCEDIRECTORYENTRY entry = new()
-                        {
-                            NameOrId = reader.ReadUInt32(),
-                            OffsetToData = reader.ReadUInt32()
-                        };
-
-                        // 检查是否是叶子节点
-                        if ((entry.OffsetToData & 0x80000000) != 0)
-                        {
-                            long nextLevelOffset = resourceBaseOffset + (entry.OffsetToData & 0x7FFFFFFF);
-                            if (nextLevelOffset >= 0 && nextLevelOffset + 16 <= fs.Length)
-                            {
-                                ParseNamedResourceDirectory(fs, reader, peInfo, nextLevelOffset, resourceBaseOffset, 0);
-                            }
-                        }
-                        else
-                        {
-                            long dataEntryOffset = resourceBaseOffset + entry.OffsetToData;
-                            ParseNamedResourceDataEntry(fs, reader, peInfo, dataEntryOffset);
-                        }
-                    }
+                    ResourceDirectoryReader.WalkEntries(fs, reader, directoryOffset, resourceBaseOffset,
+                        subdirectoryOffset => ParseNamedResourceDirectory(fs, reader, peInfo, subdirectoryOffset, resourceBaseOffset, 0),
+                        dataEntryOffset => PEResourceParserIconData.ReadAndProcessIconDataEntry(fs, reader, peInfo, dataEntryOffset));
                 }
 
                 fs.Position = originalPosition;
@@ -195,69 +101,27 @@ namespace PersonalTools.PEAnalyzer.Resources
         }
 
         /// <summary>
-        /// 解析命名资源数据项
+        /// 判断该命名资源是否应继续解析：无名条目（nameOffset==0，表示已进入子目录）始终处理；
+        /// 否则仅当资源名包含 icon/.ico/app 等关键字时才处理。
         /// </summary>
-        /// <param name="fs">文件流</param>
-        /// <param name="reader">二进制读取器</param>
-        /// <param name="peInfo">PE文件信息</param>
-        /// <param name="dataEntryOffset">数据项偏移</param>
-        private static void ParseNamedResourceDataEntry(FileStream fs, BinaryReader reader, PEInfo peInfo, long dataEntryOffset)
+        private static bool ShouldProcessNamedResource(FileStream fs, BinaryReader reader, long resourceBaseOffset, uint nameOffset)
         {
-            try
+            if (nameOffset == 0)
             {
-                if (dataEntryOffset < 0 || dataEntryOffset + 16 > fs.Length)
-                {
-                    return;
-                }
-
-                long originalPosition = fs.Position;
-                fs.Position = dataEntryOffset;
-
-                // 检查是否有足够的数据读取IMAGE_RESOURCE_DATA_ENTRY
-                if (fs.Position + 16 > fs.Length)
-                {
-                    return;
-                }
-
-                // 读取资源数据项
-                IMAGERESOURCEDATAENTRY dataEntry = new()
-                {
-                    OffsetToData = reader.ReadUInt32(),
-                    Size = reader.ReadUInt32(),
-                    CodePage = reader.ReadUInt32(),
-                    Reserved = reader.ReadUInt32()
-                };
-
-                // 计算实际数据偏移（注意：资源数据的OffsetToData是RVA）
-                long dataOffset = Utilities.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
-                if (dataOffset != -1 && dataOffset >= 0 && dataEntry.Size > 0 && dataEntry.Size <= int.MaxValue && dataOffset + dataEntry.Size <= fs.Length)
-                {
-                    // 读取资源数据
-                    fs.Position = dataOffset;
-                    byte[] resourceData = reader.ReadBytes((int)dataEntry.Size);
-
-                    // 检查数据是否可能是图标数据
-                    if (PEResourceParserIconData.IsIconData(resourceData))
-                    {
-                        // 处理图标数据
-                        PEResourceParserIconData.ProcessIconData(peInfo, resourceData);
-                    }         
-                }
-
-                fs.Position = originalPosition;
+                return true;
             }
-            catch (IOException ex)
+
+            long nameStringOffset = resourceBaseOffset + nameOffset;
+            if (nameStringOffset < 0 || nameStringOffset + 2 > fs.Length)
             {
-                Console.WriteLine($"解析命名资源数据项错误: {ex.Message}");
+                return false;
             }
-            catch (UnauthorizedAccessException ex)
-            {
-                Console.WriteLine($"解析命名资源数据项错误: {ex.Message}");
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                Console.WriteLine($"解析命名资源数据项错误: {ex.Message}");
-            }
+
+            string resourceName = PEResourceParserIconHelpers.ReadResourceName(fs, reader, nameStringOffset);
+            return !string.IsNullOrEmpty(resourceName) &&
+                (resourceName.Contains("icon", StringComparison.OrdinalIgnoreCase) ||
+                 resourceName.Contains(".ico", StringComparison.OrdinalIgnoreCase) ||
+                 resourceName.Contains("app", StringComparison.OrdinalIgnoreCase));
         }
     }
 }
