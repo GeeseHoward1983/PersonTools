@@ -126,6 +126,17 @@ namespace PersonalTools.UserControls
             ELFRelaPltTabItem.Visibility = relaPltTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         }
 
+        private void SetGotData(ELFAnalyzer.ELFAnalyzer analyzer)
+        {
+            List<ELFGotInfo> gotPltTable = GotHelper.GetGotInfoList(analyzer.Parser, ".got.plt");
+            ELFGotPltControl.SetGotData(gotPltTable, "GOT.PLT 表 (.got.plt)");
+            ELFGotPltTabItem.Visibility = gotPltTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+            List<ELFGotInfo> gotTable = GotHelper.GetGotInfoList(analyzer.Parser, ".got");
+            ELFGotControl.SetGotData(gotTable, "GOT 表 (.got)");
+            ELFGotTabItem.Visibility = gotTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+
         private void SetNoteInfo(ELFAnalyzer.ELFAnalyzer analyzer)
         {
             string noteInfo = analyzer.GetFormattedNotesInfo();
@@ -176,6 +187,8 @@ namespace PersonalTools.UserControls
                 SetRelaDynData(analyzer);
                 // 显示plt重定位信息
                 SetRelaPltData(analyzer);
+                // 显示GOT信息
+                SetGotData(analyzer);
                 // 显示note信息
                 SetNoteInfo(analyzer);
                 // 显示属性信息

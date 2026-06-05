@@ -67,8 +67,8 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 if (parser.VersionDependencies != null)
                 {
-                    sb.AppendLine(CultureInfo.InvariantCulture, $"Version needs section '.gnu.version_r' contains {parser.VersionDependencies.Count} entries:");
-                    sb.AppendLine(CultureInfo.InvariantCulture, $"  地址: 0x{verNeedSection.Value.sh_addr:x16}  Offset: 0x{verNeedSection.Value.sh_offset:x6}  Link: {verNeedSection.Value.sh_link} (.dynstr)");
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"Version needs section '.gnu.version_r' contains {verNeedSection.Value.sh_info} entries:");
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"  地址: 0x{verNeedSection.Value.sh_addr:x16}  Offset: 0x{verNeedSection.Value.sh_offset:x8}  Link: {verNeedSection.Value.sh_link} (.dynstr)");
 
                     // 这里需要实际解析版本需求表的内容
                     ParseAndAppendVersionNeeds(parser, verNeedSection.Value, sb);
@@ -104,7 +104,8 @@ namespace PersonalTools.ELFAnalyzer.Core
             byte[] strTabData = parser.GetSectionData(strTabIdx);
             bool isLittleEndian = parser.Header.IsLittleEndian();
 
-            long offset = (long)section.sh_offset;
+            long sectionStart = (long)section.sh_offset;
+            long offset = sectionStart;
             int processed = 0;
 
             // 遍历所有版本需求项（每个项代表一个库）
@@ -120,7 +121,8 @@ namespace PersonalTools.ELFAnalyzer.Core
                 // 获取库名称
                 string libName = ELFParserUtils.ExtractStringFromBytes(strTabData, (int)vn_file);
 
-                sb.AppendLine(CultureInfo.InvariantCulture, $"  000000: 版本: {vn_version}  文件: {libName}  计数: {vn_cnt}");
+                // 偏移为相对节起始的连续偏移（与 readelf 一致）
+                sb.AppendLine(CultureInfo.InvariantCulture, $"  {FormatVersionOffset((int)(offset - sectionStart))}: 版本: {vn_version}  文件: {libName}  计数: {vn_cnt}");
 
                 long auxOffset = offset + vn_aux;
                 int auxProcessed = 0;
@@ -128,14 +130,16 @@ namespace PersonalTools.ELFAnalyzer.Core
                 // 遍历该库的所有版本依赖
                 while (auxProcessed < vn_cnt && auxOffset < parser.FileData.Length)
                 {
-                    ushort flags = ELFParserUtils.ReadUInt16(parser.FileData, (int)auxOffset + 6, isLittleEndian);
+                    // vernaux: vna_hash(+0) vna_flags(+4) vna_other(+6) vna_name(+8) vna_next(+12)
+                    ushort vnaFlags = ELFParserUtils.ReadUInt16(parser.FileData, (int)auxOffset + 4, isLittleEndian);
+                    ushort vnaOther = ELFParserUtils.ReadUInt16(parser.FileData, (int)auxOffset + 6, isLittleEndian);
                     uint auxNext = ELFParserUtils.ReadUInt32(parser.FileData, (int)auxOffset + 12, isLittleEndian);
 
-                    // 使用版本索引作为键来获取版本信息
-                    ushort verIndex = (ushort)(flags & 0x7fff); // 去除隐藏标志
+                    // vna_other 的低 15 位是版本索引
+                    ushort verIndex = (ushort)(vnaOther & 0x7fff);
                     string actualVersionName = GetVersionInfoByIndex(parser, verIndex);
 
-                    sb.AppendLine(CultureInfo.InvariantCulture, $"  0x{0x10 * (auxProcessed + 1):x4}: 名称: {actualVersionName}  标志: {((flags & 0x1) != 0x00 ? "BASE" : "none")}  版本: {verIndex}");
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"  {FormatVersionOffset((int)(auxOffset - sectionStart))}: 名称: {actualVersionName}  标志: {GetVerneedFlags(vnaFlags)}  版本: {verIndex}");
 
                     auxProcessed++;
                     if (auxNext == 0)
@@ -159,6 +163,37 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 sb.AppendLine("  No version dependencies found.");
             }
+        }
+
+        // 节内偏移格式：0 → "000000"，否则 → "0x00NN"（与 readelf %#06x 一致）
+        private static string FormatVersionOffset(int offset)
+        {
+            return offset == 0 ? "000000" : $"0x{offset:x4}";
+        }
+
+        // 解析 vna_flags（VER_FLG_BASE=0x1, VER_FLG_WEAK=0x2）
+        private static string GetVerneedFlags(ushort flags)
+        {
+            if (flags == 0)
+            {
+                return "none";
+            }
+
+            List<string> parts = [];
+            if ((flags & 0x1) != 0)
+            {
+                parts.Add("BASE");
+            }
+            if ((flags & 0x2) != 0)
+            {
+                parts.Add("WEAK");
+            }
+            ushort unknown = (ushort)(flags & ~0x3);
+            if (unknown != 0)
+            {
+                parts.Add($"<unknown: {unknown:x}>");
+            }
+            return string.Join(" | ", parts);
         }
     }
 }

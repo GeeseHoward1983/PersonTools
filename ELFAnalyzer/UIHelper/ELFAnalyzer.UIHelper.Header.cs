@@ -50,6 +50,11 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             magic.Append(CultureInfo.InvariantCulture, $"{header.EI_MAG1:X2} ");
             magic.Append(CultureInfo.InvariantCulture, $"{header.EI_MAG2:X2} ");
             magic.Append(CultureInfo.InvariantCulture, $"{header.EI_MAG3:X2} ");
+            magic.Append(CultureInfo.InvariantCulture, $"{header.EI_CLASS:X2} ");
+            magic.Append(CultureInfo.InvariantCulture, $"{header.EI_DATA:X2} ");
+            magic.Append(CultureInfo.InvariantCulture, $"{header.EI_VERSION:X2} ");
+            magic.Append(CultureInfo.InvariantCulture, $"{header.EI_OSABI:X2} ");
+            magic.Append(CultureInfo.InvariantCulture, $"{header.EI_ABIVERSION:X2} ");
 
             magic.Append(CultureInfo.InvariantCulture, $"{Utils.ToHexString(header.EI_PAD)} ");
             return magic.ToString().Trim();

@@ -131,7 +131,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 
             Models.ELFSectionHeader vd = verdefSection.Value;
             StringBuilder sb = new();
-            sb.AppendLine(CultureInfo.InvariantCulture, $"Version definition section '.gnu.version_d' contains {parser.VersionDefinitions.Count} entries:");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"Version definition section '.gnu.version_d' contains {vd.sh_info} entries:");
 
             int entryIndex = 0;
             foreach (KeyValuePair<ushort, string> kvp in parser.VersionDefinitions.OrderBy(k => k.Key))

@@ -50,7 +50,8 @@ namespace PersonalTools.ELFAnalyzer.Core
 
                 while (offset < data.Length)
                 {
-                    // 解析子节长度 (4字节整数)
+                    // 子节长度字段：含本 4 字节长度 + 供应商名 + 数据（ARM/GNU 规范）
+                    int subSectionStart = offset;
                     uint subSectionLength = ELFParserUtils.ReadUInt32(data, offset, isLittleEndian);
                     offset += 4;
 
@@ -70,10 +71,9 @@ namespace PersonalTools.ELFAnalyzer.Core
 
                     sb.AppendLine(CultureInfo.InvariantCulture, $"Attribute Section: {vendorName}");
 
-                    // 继续解析属性内容直到达到子节末尾
-                    // subSectionLength 是供应商名称之后的属性数据长度
-                    int subSectionEnd = (int)(offset + subSectionLength); // 修正：不再减去4，subSectionLength已经是剩余数据长度
-                    if (subSectionEnd > data.Length)
+                    // 子节结束位置 = 子节起始 + 子节长度（length 字段含其自身与 vendor 名）
+                    int subSectionEnd = subSectionStart + (int)subSectionLength;
+                    if (subSectionEnd > data.Length || subSectionLength == 0)
                     {
                         subSectionEnd = data.Length;
                     }
@@ -82,14 +82,14 @@ namespace PersonalTools.ELFAnalyzer.Core
                     {
                         ParseAEABIAttributes(data, ref offset, subSectionEnd, sb);
                     }
-                    else if (vendorName.Contains("gnu", StringComparison.CurrentCulture) && parser.Header.e_machine == (ushort)EMachine.EM_MIPS)
+                    else if (vendorName == "riscv")
                     {
-                        // 专门处理GNU属性
-                        ParseMipsGNUAttributes(parser, data, ref offset, subSectionEnd, sb);
+                        ParseRiscvAttributes(data, ref offset, subSectionEnd, sb);
                     }
                     else
                     {
-                        ParseGenericAttributes(data, ref offset, subSectionEnd, sb);
+                        // 通用 GNU 方言：MIPS/PowerPC/LoongArch/S390/SPARC 等（vendor 通常为 "gnu"）
+                        ParseGnuAttributes(parser, data, ref offset, subSectionEnd, sb);
                     }
 
                     // 确保offset不会倒退
@@ -421,246 +421,275 @@ namespace PersonalTools.ELFAnalyzer.Core
             }
         }
 
-        private static int DealWithSingleByteAttribute(byte[] data, int offset, StringBuilder sb, int tag)
+        // 通用取值规则（readelf display_tag_value）：奇数 tag→字符串，偶数 tag→ULEB128
+        private static int FormatGenericTagValue(string name, int tag, byte[] data, int offset, int endOffset, StringBuilder sb)
         {
-            if (offset < data.Length)
+            if ((tag & 1) != 0)
             {
-                byte value = data[offset];
-                sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetTagName(tag)}: {value}");
-                return 1;
+                string value = ELFParserUtils.ExtractStringFromBytes(data, offset);
+                sb.AppendLine(CultureInfo.InvariantCulture, $"  {name}: \"{value}\"");
+                return value.Length + 1;
             }
-            else
-            {
-                sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetTagName(tag)}: <error reading value>");
-                return 0;
-            }
+
+            int bytesRead = ReadULEB128(data, offset, endOffset, out int val);
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  {name}: {val} (0x{val:x})");
+            return bytesRead;
         }
 
-        private static int DealWithNullTerminatedString(byte[] data, int offset, StringBuilder sb, int tag)
+        // Tag_compatibility (32)：ULEB128 flag + null 终止的 vendor 字符串
+        private static int AppendGnuCompatibility(byte[] data, int offset, int endOffset, StringBuilder sb)
         {
-            string value = ELFParserUtils.ExtractStringFromBytes(data, offset);
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetTagName(tag)}: \"{value}\"");
-            return value.Length + 1; // 包括null终止符
+            int start = offset;
+            offset += ReadULEB128(data, offset, endOffset, out int flag);
+            string vendor = ELFParserUtils.ExtractStringFromBytes(data, offset);
+            offset += vendor.Length + 1;
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_compatibility: flag = {flag}, vendor = {vendor}");
+            return offset - start;
         }
 
-        private static int DealWithLengthPrefixedValue(byte[] data, int offset, StringBuilder sb, int tag)
+        // MIPS GNU 属性取值表（与 binutils display_mips_gnu_attribute 一致）
+        private static readonly string[] s_mipsFpAbi = ["Hard or soft float", "Hard float (double precision)", "Hard float (single precision)", "Soft float", "Hard float (MIPS32r2 64-bit FPU 12 callee-saved)", "Hard float (32-bit CPU, Any FPU)", "Hard float (32-bit CPU, 64-bit FPU)", "Hard float compat (32-bit CPU, 64-bit FPU)"];
+        private static readonly string[] s_mipsMsa = ["Any", "128-bit MSA"];
+
+        // 返回消费字节数；返回 -1 表示该 tag 非 MIPS 专属，交给通用规则
+        private static int TryFormatMipsAttr(int tag, byte[] data, int offset, int endOffset, StringBuilder sb)
         {
-            int bytesRead = ReadULEB128(data, offset, out int valueLen);
-            if (bytesRead == 0)
+            switch (tag)
             {
-                return 0;
-            }
-            offset += bytesRead;
-            if (offset + valueLen > data.Length)
-            {
-                sb.AppendLine($"  Error: Attribute value length exceeds data bounds");
-                return bytesRead; // 只返回已读取的长度
-            }
-            string value = Encoding.UTF8.GetString(data, offset, valueLen);
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetTagName(tag)}: {value}");
-            return bytesRead + valueLen;
-        }
-
-        private static int DealWithFlagAttribute(StringBuilder sb, int tag)
-        {
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetTagName(tag)}: Flag");
-            return 0; // 标志类型没有值长度
-        }
-
-        private static void ParseGenericAttributes(byte[] data, ref int offset, int endOffset, StringBuilder sb)
-        {
-            // 根据供应商名称选择不同的处理方式
-            while (offset < Math.Min(endOffset, data.Length))
-            {
-                int bytesRead = ReadULEB128(data, offset, out int attrTag);
-
-                offset += bytesRead;
-
-                if (attrTag == 0)
+                case 4: // Tag_GNU_MIPS_ABI_FP
                 {
-                    break; // 标签序列结束
+                    int bytesRead = ReadULEB128(data, offset, endOffset, out int val);
+                    string text = val >= 0 && val < s_mipsFpAbi.Length ? s_mipsFpAbi[val] : $"??? ({val})";
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_GNU_MIPS_ABI_FP: {text}");
+                    return bytesRead;
                 }
-                offset += attrTag switch
+                case 8: // Tag_GNU_MIPS_ABI_MSA
                 {
-                    2 or 32 or 65 or 70 or 73 or 76 or 77 or 78 or 79 or 80 or 81 => DealWithFlagAttribute(sb, attrTag),
-                    1 or 3 or 4 or 66 or 68 => DealWithNullTerminatedString(data, offset, sb, attrTag),
-                    5 or 6 or 7 or 8 or 9 or 10 or 11 or 12 or 16 or 17 or 18 or 19 or 20 or 21 or 22 or 23 or 24 or 25 or 26 or 27 or 28 or 34 or 36 or 38 or 39 or 40 or 42 or 69 or 71 or 72 or 74 or 75 => DealWithSingleByteAttribute(data, offset, sb, attrTag),
-                    _ => DealWithLengthPrefixedValue(data, offset, sb, attrTag)
+                    int bytesRead = ReadULEB128(data, offset, endOffset, out int val);
+                    string text = val >= 0 && val < s_mipsMsa.Length ? s_mipsMsa[val] : $"??? ({val})";
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_GNU_MIPS_ABI_MSA: {text}");
+                    return bytesRead;
+                }
+                default:
+                    return -1;
+            }
+        }
+
+        // PowerPC GNU 属性取值（与 binutils display_power_gnu_attribute 一致）
+        // 返回消费字节数；返回 -1 表示该 tag 非 PowerPC 专属，交给通用规则
+        private static int TryFormatPowerAttr(int tag, byte[] data, int offset, int endOffset, StringBuilder sb)
+        {
+            switch (tag)
+            {
+                case 4: // Tag_GNU_Power_ABI_FP
+                {
+                    int bytesRead = ReadULEB128(data, offset, endOffset, out int val);
+                    string fp = (val & 3) switch
+                    {
+                        0 => "unspecified hard/soft float",
+                        1 => "hard float",
+                        2 => "soft float",
+                        _ => "single-precision hard float"
+                    };
+                    string ld = (val & 0xC) switch
+                    {
+                        0 => "unspecified long double",
+                        4 => "128-bit IBM long double",
+                        8 => "64-bit long double",
+                        _ => "128-bit IEEE long double"
+                    };
+                    string prefix = val > 15 ? $"(0x{val:x}), " : "";
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_GNU_Power_ABI_FP: {prefix}{fp}, {ld}");
+                    return bytesRead;
+                }
+                case 8: // Tag_GNU_Power_ABI_Vector
+                {
+                    int bytesRead = ReadULEB128(data, offset, endOffset, out int val);
+                    string vec = (val & 3) switch
+                    {
+                        0 => "unspecified",
+                        1 => "generic",
+                        2 => "AltiVec",
+                        _ => "SPE"
+                    };
+                    string prefix = val > 3 ? $"(0x{val:x}), " : "";
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_GNU_Power_ABI_Vector: {prefix}{vec}");
+                    return bytesRead;
+                }
+                case 12: // Tag_GNU_Power_ABI_Struct_Return
+                {
+                    int bytesRead = ReadULEB128(data, offset, endOffset, out int val);
+                    string sr = val switch
+                    {
+                        0 => "unspecified",
+                        1 => "r3/r4",
+                        2 => "memory",
+                        _ => $"(0x{val:x})"
+                    };
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_GNU_Power_ABI_Struct_Return: {sr}");
+                    return bytesRead;
+                }
+                default:
+                    return -1;
+            }
+        }
+
+        // 通用 GNU 方言（vendor "gnu"）：作用域头 + (tag, value)*，按 e_machine 选用各架构取值表
+        private static void ParseGnuAttributes(ELFParser parser, byte[] data, ref int offset, int endOffset, StringBuilder sb)
+        {
+            int limit = Math.Min(endOffset, data.Length);
+
+            // 子-子节头：作用域标签(1字节: Tag_File=1/Section=2/Symbol=3) + 长度(uint32)
+            if (offset + 5 > limit)
+            {
+                return;
+            }
+
+            byte scopeTag = data[offset];
+            offset += 5; // 跳过作用域标签 + 长度字段
+            if (scopeTag != 1) // 仅展开 Tag_File 作用域
+            {
+                return;
+            }
+
+            sb.AppendLine("File Attributes");
+            ushort machine = parser.Header.e_machine;
+
+            while (offset < limit)
+            {
+                offset += ReadULEB128(data, offset, limit, out int tag);
+                if (tag == 0)
+                {
+                    break; // 结束 / 填充
+                }
+
+                if (tag == 32) // Tag_compatibility（唯一通用特殊标签）
+                {
+                    offset += AppendGnuCompatibility(data, offset, limit, sb);
+                    continue;
+                }
+
+                int consumed = machine switch
+                {
+                    (ushort)EMachine.EM_MIPS => TryFormatMipsAttr(tag, data, offset, limit, sb),
+                    (ushort)EMachine.EM_PPC or (ushort)EMachine.EM_PPC64 => TryFormatPowerAttr(tag, data, offset, limit, sb),
+                    _ => -1
                 };
+
+                if (consumed < 0)
+                {
+                    // 未知/无专属表：按通用规则（奇数字符串、偶数 ULEB128），标签名 Tag_unknown_N
+                    consumed = FormatGenericTagValue($"Tag_unknown_{tag}", tag, data, offset, limit, sb);
+                }
+
+                offset += consumed;
             }
         }
 
-        // 专门处理GNU属性的函数
-        private static void ParseMipsGNUAttributes(ELFParser parser, byte[] data, ref int offset, int endOffset, StringBuilder sb)
+        // RISC-V 属性方言（vendor "riscv"，与 binutils display_riscv_attribute 一致）
+        private static void ParseRiscvAttributes(byte[] data, ref int offset, int endOffset, StringBuilder sb)
         {
-            // 按照readelf的输出格式，首先添加"File Attributes"标题
-            sb.AppendLine("  File Attributes");
+            int limit = Math.Min(endOffset, data.Length);
 
-            while (offset < endOffset)
+            if (offset + 5 > limit)
             {
-                int attrTag = data[offset++];  // 读取一个字节作为标签类型
+                return;
+            }
 
-                if (attrTag == 0)
+            byte scopeTag = data[offset];
+            offset += 5; // 作用域标签 + 长度
+            if (scopeTag != 1)
+            {
+                return;
+            }
+
+            sb.AppendLine("File Attributes");
+
+            while (offset < limit)
+            {
+                offset += ReadULEB128(data, offset, limit, out int tag);
+                if (tag == 0)
                 {
-                    break; // 标签序列结束
+                    break;
                 }
 
-                // 根据标签类型处理
-                switch (attrTag)
+                switch (tag)
                 {
-                    case 1: // Tag_File - 这种情况下需要读取长度
-                        {
-                            int bytesRead = ReadULEB128(data, offset, out _);
-                            if (bytesRead == 0)
-                            {
-                                break;
-                            }
-
-                            offset += bytesRead;
-                        }
+                    case 5: // Tag_RISCV_arch（字符串）
+                    {
+                        string value = ELFParserUtils.ExtractStringFromBytes(data, offset);
+                        offset += value.Length + 1;
+                        sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_RISCV_arch: \"{value}\"");
                         break;
-
-                    case 3: // Tag_GNU_ABI_TAG
-                        if (offset + 4 <= endOffset)  // 需要至少4字节
-                        {
-                            // 读取4个字节的版本信息
-                            int osNum = ELFParserUtils.ReadInt32(data, offset, parser.Header.IsLittleEndian());
-
-                            string osName = osNum switch
-                            {
-                                0 => "linux",
-                                1 => "hurd",
-                                2 => "unix",
-                                3 => "standalone",
-                                _ => $"unknown({osNum})"
-                            };
-
-                            sb.AppendLine(CultureInfo.InvariantCulture, $"    Tag_GNU_ABI_TAG: {osName}");
-                            offset += 4; // 跳过4字节数据
-                        }
+                    }
+                    case 4: // Tag_RISCV_stack_align
+                    {
+                        offset += ReadULEB128(data, offset, limit, out int val);
+                        sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_RISCV_stack_align: {val}-bytes");
                         break;
-
-                    case 4: // Tag_GNU_MIPS_ABI_FP (MIPS架构)
-                        if (offset < endOffset)
+                    }
+                    case 6: // Tag_RISCV_unaligned_access
+                    {
+                        offset += ReadULEB128(data, offset, limit, out int val);
+                        string text = val switch
                         {
-                            int fpAbi = data[offset++] + 1;
-                            string fpAbiDesc = fpAbi switch
-                            {
-                                0 => "任意浮点ABI",              // Val_GNU_MIPS_ABI_FP_ANY
-                                1 => "硬浮点 (双精度)",          // Val_GNU_MIPS_ABI_FP_DOUBLE
-                                2 => "硬浮点 (单精度)",          // Val_GNU_MIPS_ABI_FP_SINGLE
-                                3 => "软浮点",                   // Val_GNU_MIPS_ABI_FP_SOFT
-                                4 => "旧64位浮点",               // Val_GNU_MIPS_ABI_FP_OLD_64
-                                5 => "未知浮点扩展",             // Val_GNU_MIPS_ABI_FP_XX
-                                6 => "64位浮点",                 // Val_GNU_MIPS_ABI_FP_64
-                                7 => "64位浮点增强",             // Val_GNU_MIPS_ABI_FP_64A
-                                _ => $"未知({fpAbi})"
-                            };
-
-                            sb.AppendLine(CultureInfo.InvariantCulture, $"    Tag_GNU_MIPS_ABI_FP: {fpAbiDesc}");
-                        }
+                            0 => "No unaligned access",
+                            1 => "Unaligned access",
+                            _ => $"??? ({val})"
+                        };
+                        sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_RISCV_unaligned_access: {text}");
                         break;
-
-                    case 8: // Tag_GNU_MIPS_ABI_MSA (MIPS架构)
-                        if (offset < endOffset)
-                        {
-                            int msaAbi = data[offset++];
-                            string msaAbiDesc = msaAbi switch
-                            {
-                                0 => "任意MSA ABI",        // Val_GNU_MIPS_ABI_MSA_ANY
-                                1 => "MSA 128-bit",       // Val_GNU_MIPS_ABI_MSA_128
-                                _ => $"未知({msaAbi})"
-                            };
-
-                            sb.AppendLine(CultureInfo.InvariantCulture, $"    Tag_GNU_MIPS_ABI_MSA: {msaAbiDesc}");
-                        }
+                    }
+                    case 8 or 10 or 12 or 14 or 16: // priv_spec / minor / revision / atomic_abi / x3_reg_usage
+                    {
+                        offset += ReadULEB128(data, offset, limit, out int val);
+                        sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetRiscvTagName(tag)}: {val}");
                         break;
-
+                    }
                     default:
-                        // 对于未知标签，尝试读取长度并跳过对应数据
-                        int unknownValueLen;
-                        int unknownBytesRead = ReadULEB128(data, offset, out unknownValueLen);
-                        if (unknownBytesRead > 0)
-                        {
-                            offset += unknownBytesRead;
-                            offset += Math.Min(unknownValueLen, endOffset - offset);
-                        }
+                        offset += FormatGenericTagValue($"Tag_unknown_{tag}", tag, data, offset, limit, sb);
                         break;
                 }
             }
         }
 
-        // 辅助函数：获取标签的名称
-        private static string GetTagName(int tag)
+        // 辅助函数：获取RISC-V标签的名称
+        private static string GetRiscvTagName(int tag)
         {
             return tag switch
             {
-                1 => "Tag_File",
-                2 => "Tag_Section",
-                3 => "Tag_Symbol",
-                4 => "Tag_CPU_name",
-                5 => "Tag_CPU_arch",
-                6 => "Tag_CPU_arch_profile",
-                7 => "Tag_ARM_ISA_use",
-                8 => "Tag_THUMB_ISA_use",
-                9 => "Tag_FP_arch",
-                10 => "Tag_WMMX_arch",
-                11 => "Tag_Advanced_SIMD_arch",
-                12 => "Tag_Virtualization_use",
-                16 => "Tag_ABI_PCS_GOT_use",
-                17 => "Tag_ABI_PCS_wchar_t",
-                18 => "Tag_ABI_FP_roundings",
-                19 => "Tag_ABI_FP_denormal",
-                20 => "Tag_ABI_FP_exceptions",
-                21 => "Tag_ABI_FP_number_model",
-                22 => "Tag_ABI_align_needed",
-                23 => "Tag_ABI_align_preserved",
-                24 => "Tag_ABI_enum_size",
-                25 => "Tag_ABI_HardFP_use",
-                26 => "Tag_ABI_VFP_args",
-                27 => "Tag_ABI_WMMX_args",
-                28 => "Tag_ABI_optimization_goals",
-                32 => "Tag_nodefaults",
-                34 => "Tag_CPU_unaligned_access",
-                36 => "Tag_FP_HP_extension",
-                38 => "Tag_ABI_FP_16bit_format",
-                39 => "Tag_DSP_extension",
-                40 => "Tag_MVE_arch",
-                42 => "Tag_also_compatible_el",
-                65 => "Tag_also_compatible_at",
-                66 => "Tag_also_compatible_with_1",
-                67 => "Tag_conformance_1",
-                68 => "Tag_conformance_2",
-                69 => "Tag_CPU_arch_2",
-                70 => "Tag_T2EE_use",
-                71 => "Tag_also_compatible_with_2",
-                72 => "Tag_conformance_3",
-                74 => "Tag_MPextension_use",
-                75 => "Tag_DIV_use",
-                76 => "Tag_FP_HP_extension_2",
-                77 => "Tag_IDIV_use",
-                78 => "Tag_VEC_use",
-                79 => "Tag_DSP_use",
-                80 => "Tag_MVE_arch_2",
-                81 => "Tag_MVE_use",
-                _ => $"Tag_{tag}"
+                4 => "Tag_RISCV_stack_align",
+                5 => "Tag_RISCV_arch",
+                6 => "Tag_RISCV_unaligned_access",
+                8 => "Tag_RISCV_priv_spec",
+                10 => "Tag_RISCV_priv_spec_minor",
+                12 => "Tag_RISCV_priv_spec_revision",
+                14 => "Tag_RISCV_atomic_abi",
+                16 => "Tag_RISCV_x3_reg_usage",
+                _ => $"Tag_unknown_{tag}"
             };
         }
 
-        private static int ReadULEB128(byte[] data, int offset, out int value)
+        // 读取 ULEB128（遇续位停止），返回消费的字节数；value 通过 out 返回
+        private static int ReadULEB128(byte[] data, int offset, int endOffset, out int value)
         {
             value = 0;
             int shift = 0;
-            int currentOffset = offset;
+            int cur = offset;
+            int max = Math.Min(endOffset, data.Length);
 
-            while (currentOffset < data.Length && currentOffset - offset < 4)
+            while (cur < max)
             {
-                byte b = data[currentOffset++];
+                byte b = data[cur++];
                 value |= (b & 0x7f) << shift;
-                shift += 8;
+                if ((b & 0x80) == 0)
+                {
+                    break;
+                }
+                shift += 7;
             }
 
-            return currentOffset - offset;
+            return cur - offset;
         }
     }
 }

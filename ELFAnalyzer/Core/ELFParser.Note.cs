@@ -142,11 +142,31 @@ namespace PersonalTools.ELFAnalyzer.Core
                 },
                 "Android" => type switch
                 {
-                    1 => $"{description} (版本)",
+                    1 => $"{description} (version)\n   description data: {FormatNoteDescriptionData(data, descOffset, descSize)}",
                     _ => $"Unknown Android note type {type}"
                 },
                 _ => $"{description} (type: {type})"
             };
+        }
+
+        // 以空格分隔的小写十六进制输出 note 描述数据（与 readelf "description data:" 一致）
+        private static string FormatNoteDescriptionData(byte[] data, int descOffset, int descSize)
+        {
+            if (descOffset < 0 || descSize <= 0 || descOffset + descSize > data.Length)
+            {
+                return string.Empty;
+            }
+
+            StringBuilder sb = new(descSize * 3);
+            for (int i = 0; i < descSize; i++)
+            {
+                if (i > 0)
+                {
+                    sb.Append(' ');
+                }
+                sb.Append(data[descOffset + i].ToString("x2", CultureInfo.InvariantCulture));
+            }
+            return sb.ToString();
         }
 
         private static string GetNoteDescription(uint type, string owner)

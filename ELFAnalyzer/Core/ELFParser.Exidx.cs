@@ -94,36 +94,51 @@ namespace PersonalTools.ELFAnalyzer.Core
                     sb.AppendLine(CultureInfo.InvariantCulture, $"{symbolDesc}: @0x{extabOffset:x}");
                     unwindInfo = ELFParserUtils.ReadInt32(parser.FileData, extabOffset, isLittleEndian);
 
-                    int compactIndex = (unwindInfo >> 24) & 0x7F;
-
-                    sb.AppendLine(CultureInfo.InvariantCulture, $"  Compact model index: {compactIndex}");
-                    byte[] bInstruction;
-                    if (compactIndex == 1)
+                    if ((unwindInfo & 0x80000000) == 0)
                     {
-                        int remainDWords = (unwindInfo >> 16) & 0xFF;
-                        bInstruction = new byte[2 + remainDWords * 4];
-                        bInstruction[0] = (byte)(unwindInfo >> 8 & 0xFF);
-                        bInstruction[1] = (byte)(unwindInfo & 0xFF);
-
-                        for (int i = 0; i < remainDWords; i++)
+                        // 通用模型：extab 首字 bit31==0，低31位为指向 personality routine 的 prel31 偏移
+                        int per = unwindInfo & 0x7FFFFFFF;
+                        if ((per & 0x40000000) != 0)
                         {
-                            extabOffset += 4;
-                            Array.Copy(parser.FileData, extabOffset, bInstruction, 2 + i * 4, 4);
-                            if (parser.Header.IsLittleEndian())
-                            {
-                                Array.Reverse(bInstruction, 2 + i * 4, 4);
-                            }
+                            per |= unchecked((int)0x80000000); // bit30 符号扩展
                         }
+                        long personalityAddr = (long)extabOffset + per;
+                        string perName = FindContainingSymbolName(parser, (ulong)personalityAddr);
+                        string perDesc = string.IsNullOrEmpty(perName) ? $"0x{personalityAddr:x}" : $"0x{personalityAddr:x} <{perName}>";
+                        sb.AppendLine(CultureInfo.InvariantCulture, $"  Personality routine: {perDesc}");
                     }
                     else
                     {
-                        bInstruction = new byte[3];
-                        bInstruction[0] = (byte)(unwindInfo >> 16 & 0xFF);
-                        bInstruction[1] = (byte)(unwindInfo >> 8 & 0xFF);
-                        bInstruction[2] = (byte)(unwindInfo & 0xFF);
-                    }
-                    ParseUnwindInstructions(bInstruction, bInstruction.Length, sb);
+                        int compactIndex = (unwindInfo >> 24) & 0x7F;
 
+                        sb.AppendLine(CultureInfo.InvariantCulture, $"  Compact model index: {compactIndex}");
+                        byte[] bInstruction;
+                        if (compactIndex == 1)
+                        {
+                            int remainDWords = (unwindInfo >> 16) & 0xFF;
+                            bInstruction = new byte[2 + remainDWords * 4];
+                            bInstruction[0] = (byte)(unwindInfo >> 8 & 0xFF);
+                            bInstruction[1] = (byte)(unwindInfo & 0xFF);
+
+                            for (int i = 0; i < remainDWords; i++)
+                            {
+                                extabOffset += 4;
+                                Array.Copy(parser.FileData, extabOffset, bInstruction, 2 + i * 4, 4);
+                                if (parser.Header.IsLittleEndian())
+                                {
+                                    Array.Reverse(bInstruction, 2 + i * 4, 4);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            bInstruction = new byte[3];
+                            bInstruction[0] = (byte)(unwindInfo >> 16 & 0xFF);
+                            bInstruction[1] = (byte)(unwindInfo >> 8 & 0xFF);
+                            bInstruction[2] = (byte)(unwindInfo & 0xFF);
+                        }
+                        ParseUnwindInstructions(bInstruction, bInstruction.Length, sb);
+                    }
                 }
 
                 sb.AppendLine(); // 添加空行分隔
@@ -170,6 +185,69 @@ namespace PersonalTools.ELFAnalyzer.Core
             }
 
             return string.Empty;
+        }
+
+        // 查找包含/最接近某地址的命名符号（用于 personality routine 显示 <name+0xoff>）
+        private static string FindContainingSymbolName(ELFParser parser, ulong address)
+        {
+            if (parser.Symbols == null)
+            {
+                return string.Empty;
+            }
+
+            bool found = false;
+            ulong bestStart = 0;
+            string bestName = string.Empty;
+
+            foreach (KeyValuePair<SectionType, List<ELFSymbol>> symbolList in parser.Symbols)
+            {
+                for (int symbolIndex = 0; symbolIndex < symbolList.Value.Count; symbolIndex++)
+                {
+                    ELFSymbol symbol = symbolList.Value[symbolIndex];
+                    if (symbol.StShndx == 0)
+                    {
+                        continue; // 未定义符号
+                    }
+
+                    byte type = (byte)(symbol.StInfo & 0x0F);
+                    if (type is not ((byte)SymbolType.STT_FUNC) and not ((byte)SymbolType.STT_OBJECT) and not ((byte)SymbolType.STT_NOTYPE))
+                    {
+                        continue;
+                    }
+
+                    if (symbol.StValue > address)
+                    {
+                        continue; // 符号在目标地址之后
+                    }
+                    if (symbol.StSize != 0 && address >= symbol.StValue + symbol.StSize)
+                    {
+                        continue; // 超出符号范围
+                    }
+                    if (found && symbol.StValue <= bestStart)
+                    {
+                        continue; // 已有更接近的符号
+                    }
+
+                    string name = SymbleName.GetSymbolName(parser, symbol, symbolList.Key, symbolIndex);
+                    // 跳过 ARM 映射符号（$a/$t/$d/$x 等），与 readelf 一致
+                    if (string.IsNullOrEmpty(name) || name[0] == '$')
+                    {
+                        continue;
+                    }
+
+                    bestStart = symbol.StValue;
+                    bestName = name;
+                    found = true;
+                }
+            }
+
+            if (!found)
+            {
+                return string.Empty;
+            }
+
+            ulong delta = address - bestStart;
+            return delta == 0 ? bestName : $"{bestName}+0x{delta:x}";
         }
 
 

@@ -17,18 +17,24 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                 for (int i = 0; i < symbols?.Count; i++)
                 {
                     ELFSymbol sym = symbols[i];
-                    if (sym.StValue == 0x4064)
+                    byte stType = (byte)(sym.StInfo & 0x0F);
+
+                    string name = SymbleName.GetSymbolName(Parser, sym, sectionType, i);
+                    // SECTION 符号 st_name 通常为 0，按 readelf 显示其所属节名
+                    if (string.IsNullOrEmpty(name) && stType == (byte)SymbolType.STT_SECTION
+                        && sym.StShndx > 0 && sym.StShndx < 0xFF00)
                     {
-                        ;
+                        name = SymbleName.GetSectionName(Parser, sym.StShndx);
                     }
+
                     result.Add(new ELFModels.ELFSymbolTableInfo
                     {
                         Number = i,
                         Value = $"0x{sym.StValue:x12}",
                         Size = $"{sym.StSize}",
-                        Type = ELFSymbolInfo.GetSymbolType(sym.StInfo),
-                        Bind = ELFSymbolInfo.GetSymbolBinding(sym.StInfo),
-                        Vis = ELFSymbolInfo.GetSymbolVisibility(sym.StOther),
+                        Type = StripSymbolPrefix(ELFSymbolInfo.GetSymbolType(sym.StInfo)),
+                        Bind = StripSymbolPrefix(ELFSymbolInfo.GetSymbolBinding(sym.StInfo)),
+                        Vis = StripSymbolPrefix(ELFSymbolInfo.GetSymbolVisibility(sym.StOther)),
                         Ndx = sym.StShndx switch
                         {
                             0 => "UND",
@@ -36,12 +42,25 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                             0xFFF2 => "COM",
                             _ => $"{sym.StShndx}"
                         },
-                        Name = SymbleName.GetSymbolName(Parser, sym, sectionType, i)
+                        Name = name
                     });
                 }
             }
 
             return result;
+        }
+
+        // 去掉 STT_/STB_/STV_ 前缀，与 readelf 输出一致
+        private static string StripSymbolPrefix(string value)
+        {
+            if (value.Length > 4 &&
+                (value.StartsWith("STT_", StringComparison.Ordinal)
+                || value.StartsWith("STB_", StringComparison.Ordinal)
+                || value.StartsWith("STV_", StringComparison.Ordinal)))
+            {
+                return value[4..];
+            }
+            return value;
         }
     }
 }
