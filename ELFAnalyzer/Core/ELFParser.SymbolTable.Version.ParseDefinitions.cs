@@ -47,13 +47,10 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private static void FindAndParseVersionDefinitionSection(ELFParser parser)
         {
-            if (parser.SectionHeaders == null || parser.VersionDefinitions != null)
+            if (parser.SectionHeaders == null)
             {
                 return;
             }
-
-            // 确保_versionDefinitions字典存在
-            parser.VersionDefinitions = [];
 
             // 遍历所有节头查找SHT_GNU_VERDEF类型的节（即.gnu.version_d）
             for (int i = 0; i < parser.SectionHeaders.Count; i++)
@@ -85,50 +82,22 @@ namespace PersonalTools.ELFAnalyzer.Core
                 return;
             }
 
-            Models.ELFSectionHeader strTabSection = parser.SectionHeaders[strTabIdx];
-            byte[] strTabData = new byte[strTabSection.sh_size];
-            Array.Copy(parser.FileData, (long)strTabSection.sh_offset, strTabData, 0, (int)strTabSection.sh_size);
+            byte[] strTabData = parser.GetSectionData(strTabIdx);
 
+            bool isLittleEndian = parser.Header.IsLittleEndian();
             ulong offset = section.sh_offset;
             int processed = 0;
 
             while (processed < count && offset < (ulong)parser.FileData.Length)
             {
-                if (!parser.Header.IsLittleEndian()) // 如果不是小端序
-                {
-                    Array.Reverse(parser.FileData, (int)offset, 2);
-                    Array.Reverse(parser.FileData, (int)offset + 2, 2);
-                    Array.Reverse(parser.FileData, (int)offset + 4, 2);
-                    Array.Reverse(parser.FileData, (int)offset + 6, 2);
-                    if (parser.Is64Bit)
-                    {
-                        Array.Reverse(parser.FileData, (int)offset + 8, 8);
-                        Array.Reverse(parser.FileData, (int)offset + 16, 8);
-                    }
-                    else
-                    {
-                        Array.Reverse(parser.FileData, (int)offset + 12, 4);
-                        Array.Reverse(parser.FileData, (int)offset + 16, 4);
-                    }
-                }
+                ushort vd_ndx = ELFParserUtils.ReadUInt16(parser.FileData, (int)offset + 4, isLittleEndian);
+                // vd_aux 与 vd_next 紧随其后；跳过 offset+8 处的 vd_hash
+                ulong vd_aux = parser.Is64Bit ? ELFParserUtils.ReadUInt64(parser.FileData, (int)offset + 8, isLittleEndian) : ELFParserUtils.ReadUInt32(parser.FileData, (int)offset + 12, isLittleEndian);
+                ulong vd_next = parser.Is64Bit ? ELFParserUtils.ReadUInt64(parser.FileData, (int)offset + 16, isLittleEndian) : ELFParserUtils.ReadUInt32(parser.FileData, (int)offset + 16, isLittleEndian);
 
-                _ = BitConverter.ToUInt16(parser.FileData, (int)offset);
-                _ = BitConverter.ToUInt16(parser.FileData, (int)offset + 2);
-                ushort vd_ndx = BitConverter.ToUInt16(parser.FileData, (int)offset + 4);
-                _ = BitConverter.ToUInt16(parser.FileData, (int)offset + 6);
-                // Skip vd_hash at offset+8
-
-                ulong vd_aux = parser.Is64Bit ? BitConverter.ToUInt64(parser.FileData, (int)offset + 8) : BitConverter.ToUInt32(parser.FileData, (int)offset + 12);  // 64位的vd_aux和vd_next
-                ulong vd_next = parser.Is64Bit ? BitConverter.ToUInt64(parser.FileData, (int)offset + 16) : BitConverter.ToUInt32(parser.FileData, (int)offset + 16);
-
-                // 获取版本名称
-                // vernaux 结构紧跟在 verdef 结构之后
+                // 获取版本名称：vernaux 结构紧跟在 verdef 结构之后
                 ulong nameOffset = offset + vd_aux;
-                if (!parser.Header.IsLittleEndian()) // 如果不是小端序
-                {
-                    Array.Reverse(parser.FileData, (int)nameOffset + 8, 4);
-                }
-                uint nameOffsetInStrTab = BitConverter.ToUInt32(parser.FileData, (int)nameOffset + 8); // vernaux.vna_name
+                uint nameOffsetInStrTab = ELFParserUtils.ReadUInt32(parser.FileData, (int)nameOffset + 8, isLittleEndian); // vernaux.vna_name
                 string versionName = ELFParserUtils.ExtractStringFromBytes(strTabData, (int)nameOffsetInStrTab);
 
                 // 存储版本定义
@@ -153,30 +122,33 @@ namespace PersonalTools.ELFAnalyzer.Core
                 return "";
             }
 
-            StringBuilder sb = new();
-            sb.AppendLine("Version definition section '.gnu.version_d' contains 1 entries:");
-
             // 获取.gnu.version_d节的信息
             Models.ELFSectionHeader? verdefSection = parser.SectionHeaders?.Find(sh => sh.sh_type == (uint)SectionType.SHT_GNU_verdef);
-            if (verdefSection != null)
+            if (verdefSection == null)
             {
-                int entryIndex = 0;
-                foreach (KeyValuePair<ushort, string> kvp in parser.VersionDefinitions.OrderBy(k => k.Key))
-                {
-                    string flags = kvp.Key == 1 ? "BASE" : "";
-                    sb.AppendLine(CultureInfo.InvariantCulture, $"  地址：0x{(kvp.Key == 1 ? ((Models.ELFSectionHeader)verdefSection).sh_addr : ((Models.ELFSectionHeader)verdefSection).sh_addr + ((ulong)entryIndex * ((Models.ELFSectionHeader)verdefSection).sh_entsize)):x8}  Offset: 0x{(kvp.Key == 1 ? ((Models.ELFSectionHeader)verdefSection).sh_offset : ((Models.ELFSectionHeader)verdefSection).sh_offset + ((ulong)entryIndex * ((Models.ELFSectionHeader)verdefSection).sh_entsize)):x6}  Link: {((Models.ELFSectionHeader)verdefSection).sh_link} (.dynstr)  {entryIndex:D4}: Rev: 1  Flags: {flags,-6}   Index: {kvp.Key}  Cnt: 1  名称：{kvp.Value}");
-                    entryIndex++;
-                }
+                return "";
             }
 
-            // 检查是否超出范围（根据用户提供的示例："Version definition past end of section"）
-            if (verdefSection != null)
+            Models.ELFSectionHeader vd = verdefSection.Value;
+            StringBuilder sb = new();
+            sb.AppendLine(CultureInfo.InvariantCulture, $"Version definition section '.gnu.version_d' contains {parser.VersionDefinitions.Count} entries:");
+
+            int entryIndex = 0;
+            foreach (KeyValuePair<ushort, string> kvp in parser.VersionDefinitions.OrderBy(k => k.Key))
             {
-                int verdefsCount = CalculateVerDefEntryCount((Models.ELFSectionHeader)verdefSection);
-                if (parser.VersionDefinitions.Count > verdefsCount)
-                {
-                    sb.AppendLine("  Version definition past end of section");
-                }
+                bool isBase = kvp.Key == 1;
+                string flags = isBase ? "BASE" : "";
+                ulong entryDelta = isBase ? 0UL : (ulong)entryIndex * vd.sh_entsize;
+                ulong addr = vd.sh_addr + entryDelta;
+                ulong fileOffset = vd.sh_offset + entryDelta;
+                sb.AppendLine(CultureInfo.InvariantCulture, $"  地址：0x{addr:x8}  Offset: 0x{fileOffset:x6}  Link: {vd.sh_link} (.dynstr)  {entryIndex:D4}: Rev: 1  Flags: {flags,-6}   Index: {kvp.Key}  Cnt: 1  名称：{kvp.Value}");
+                entryIndex++;
+            }
+
+            // 检查是否超出范围（参考 readelf："Version definition past end of section"）
+            if (parser.VersionDefinitions.Count > CalculateVerDefEntryCount(vd))
+            {
+                sb.AppendLine("  Version definition past end of section");
             }
 
             return sb.ToString();

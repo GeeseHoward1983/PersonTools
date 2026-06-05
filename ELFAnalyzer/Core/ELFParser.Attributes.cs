@@ -1,5 +1,4 @@
 using PersonalTools.Enums;
-using PersonalTools.PEAnalyzer.Parsers;
 using System.Globalization;
 using System.Text;
 
@@ -39,8 +38,8 @@ namespace PersonalTools.ELFAnalyzer.Core
             StringBuilder sb = new();
 
             // 读取属性段的数据
-            byte[] data = new byte[section.sh_size];
-            Array.Copy(parser.FileData, (long)section.sh_offset, data, 0, (int)section.sh_size);
+            byte[] data = parser.CopySectionData(in section);
+            bool isLittleEndian = parser.Header.IsLittleEndian();
 
             int offset = 0;
 
@@ -52,11 +51,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 while (offset < data.Length)
                 {
                     // 解析子节长度 (4字节整数)
-                    if (!parser.Header.IsLittleEndian()) // 如果不是小端序
-                    {
-                        Array.Reverse(data, offset, 4);
-                    }
-                    uint subSectionLength = BitConverter.ToUInt32(data, offset);
+                    uint subSectionLength = ELFParserUtils.ReadUInt32(data, offset, isLittleEndian);
                     offset += 4;
 
                     if (offset >= data.Length)
@@ -85,7 +80,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 
                     if (vendorName == "aeabi")
                     {
-                        sb.Append(ParseAEABIAttributes(data, ref offset, subSectionEnd));
+                        ParseAEABIAttributes(data, ref offset, subSectionEnd, sb);
                     }
                     else if (vendorName.Contains("gnu", StringComparison.CurrentCulture) && parser.Header.e_machine == (ushort)EMachine.EM_MIPS)
                     {
@@ -108,10 +103,46 @@ namespace PersonalTools.ELFAnalyzer.Core
             return sb.ToString();
         }
 
-        private static string GetAttributeNameByTag(int tag)
+        // ---- AEABI (ARM EABI) 属性解析，输出对齐 readelf ----
+        // 各整型标签的取值→名称表（与 binutils arm_attr_tag_* 保持一致）
+        private static readonly string[] s_aeabiCpuArch = ["Pre-v4", "v4", "v4T", "v5T", "v5TE", "v5TEJ", "v6", "v6KZ", "v6T2", "v6K", "v7", "v6-M", "v6S-M", "v7E-M", "v8-A", "v8-R", "v8-M.baseline", "v8-M.mainline", "v8.1-A", "v8.2-A", "v8.3-A", "v8.1-M.mainline", "v9"];
+        private static readonly string[] s_aeabiArmIsaUse = ["No", "Yes"];
+        private static readonly string[] s_aeabiThumbIsaUse = ["No", "Thumb-1", "Thumb-2", "Yes"];
+        private static readonly string[] s_aeabiFpArch = ["No", "VFPv1", "VFPv2", "VFPv3", "VFPv3-D16", "VFPv4", "VFPv4-D16", "FP for ARMv8", "FPv5/FP-D16 for ARMv8"];
+        private static readonly string[] s_aeabiWmmxArch = ["No", "WMMXv1", "WMMXv2"];
+        private static readonly string[] s_aeabiAdvSimdArch = ["No", "NEONv1", "NEONv1 with Fused-MAC", "NEON for ARMv8", "NEON for ARMv8.1"];
+        private static readonly string[] s_aeabiPcsConfig = ["None", "Bare platform", "Linux application", "Linux DSO", "PalmOS 2004", "PalmOS (reserved)", "SymbianOS 2004", "SymbianOS (reserved)"];
+        private static readonly string[] s_aeabiPcsR9Use = ["V6", "SB", "TLS", "Unused"];
+        private static readonly string[] s_aeabiPcsRwData = ["Absolute", "PC-relative", "SB-relative", "None"];
+        private static readonly string[] s_aeabiPcsRoData = ["Absolute", "PC-relative", "None"];
+        private static readonly string[] s_aeabiPcsGotUse = ["None", "direct", "GOT-indirect"];
+        private static readonly string[] s_aeabiPcsWcharT = ["None", "??? 1", "2", "??? 3", "4"];
+        private static readonly string[] s_aeabiFpRounding = ["Unused", "Needed"];
+        private static readonly string[] s_aeabiFpDenormal = ["Unused", "Needed", "Sign only"];
+        private static readonly string[] s_aeabiFpExceptions = ["Unused", "Needed"];
+        private static readonly string[] s_aeabiFpUserExceptions = ["Unused", "Needed"];
+        private static readonly string[] s_aeabiFpNumberModel = ["Unused", "Finite", "RTABI", "IEEE 754"];
+        private static readonly string[] s_aeabiEnumSize = ["Unused", "small", "int", "forced to int"];
+        private static readonly string[] s_aeabiHardFpUse = ["As Tag_FP_arch", "SP only", "Reserved", "Deprecated"];
+        private static readonly string[] s_aeabiVfpArgs = ["AAPCS", "VFP registers", "custom", "compatible"];
+        private static readonly string[] s_aeabiWmmxArgs = ["AAPCS", "WMMX registers", "custom"];
+        private static readonly string[] s_aeabiOptGoals = ["None", "Prefer Speed", "Aggressively prefer Speed", "Prefer Size", "Aggressively prefer Size", "Prefer Debug", "Aggressively prefer Debug", "Reserved"];
+        private static readonly string[] s_aeabiFpOptGoals = ["None", "Prefer Speed", "Aggressively prefer Speed", "Prefer Size", "Aggressively prefer Size", "Prefer Accuracy", "Aggressively prefer Accuracy", "Reserved"];
+        private static readonly string[] s_aeabiCpuUnalignedAccess = ["None", "v6"];
+        private static readonly string[] s_aeabiFp16bitFormat = ["None", "IEEE 754", "Alternative Format"];
+        private static readonly string[] s_aeabiFpHpExtension = ["Not Allowed", "Allowed"];
+        private static readonly string[] s_aeabiT2eeUse = ["Not Allowed", "Allowed"];
+        private static readonly string[] s_aeabiVirtualizationUse = ["Not Allowed", "TrustZone", "Virtualization Extensions", "TrustZone and Virtualization Extensions"];
+        private static readonly string[] s_aeabiMpExtensionUse = ["Not Allowed", "Allowed"];
+        private static readonly string[] s_aeabiDivUse = ["Allowed in Thumb-ISA, v7-R or v7-M", "Not allowed", "Allowed in v7-A with integer division extension"];
+        private static readonly string[] s_aeabiDspExtension = ["Follow architecture", "Allowed"];
+        private static readonly string[] s_aeabiMveArch = ["No MVE", "MVE Integer only", "MVE Integer and Floating Point"];
+
+        private static string GetAEABITagName(int tag)
         {
             return tag switch
             {
+                4 => "Tag_CPU_raw_name",
                 5 => "Tag_CPU_name",
                 6 => "Tag_CPU_arch",
                 7 => "Tag_CPU_arch_profile",
@@ -121,73 +152,273 @@ namespace PersonalTools.ELFAnalyzer.Core
                 11 => "Tag_WMMX_arch",
                 12 => "Tag_Advanced_SIMD_arch",
                 13 => "Tag_PCS_config",
-                14 => "Tag_PCS_R9_use",
-                15 => "Tag_Unknown_15",
-                16 => "Tag_Advanced_SIMD_arch",
+                14 => "Tag_ABI_PCS_R9_use",
+                15 => "Tag_ABI_PCS_RW_data",
+                16 => "Tag_ABI_PCS_RO_data",
                 17 => "Tag_ABI_PCS_GOT_use",
                 18 => "Tag_ABI_PCS_wchar_t",
                 19 => "Tag_ABI_FP_rounding",
                 20 => "Tag_ABI_FP_denormal",
                 21 => "Tag_ABI_FP_exceptions",
+                22 => "Tag_ABI_FP_user_exceptions",
                 23 => "Tag_ABI_FP_number_model",
                 24 => "Tag_ABI_align_needed",
                 25 => "Tag_ABI_align_preserved",
                 26 => "Tag_ABI_enum_size",
                 27 => "Tag_ABI_HardFP_use",
                 28 => "Tag_ABI_VFP_args",
+                29 => "Tag_ABI_WMMX_args",
                 30 => "Tag_ABI_optimization_goals",
+                31 => "Tag_ABI_FP_optimization_goals",
+                32 => "Tag_compatibility",
                 34 => "Tag_CPU_unaligned_access",
+                36 => "Tag_FP_HP_extension",
                 38 => "Tag_ABI_FP_16bit_format",
+                42 => "Tag_MPextension_use",
+                44 => "Tag_DIV_use",
+                46 => "Tag_DSP_extension",
+                48 => "Tag_MVE_arch",
+                64 => "Tag_nodefaults",
+                65 => "Tag_also_compatible_with",
+                66 => "Tag_T2EE_use",
+                67 => "Tag_conformance",
                 68 => "Tag_Virtualization_use",
-                _ => $"Unknown Tag {tag}"
+                70 => "Tag_MPextension_use",
+                _ => $"Tag_unknown_{tag}"
             };
         }
 
-        private static int DealWithAttrSingleByteAttribute(byte[] data, int offset, StringBuilder sb, int tag)
-        {
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetAttributeNameByTag(tag)}: {ELFParserUtils.GetTypeName(typeof(ARMCPUArch), data[offset], "")}");
-            return 1;
-        }
-
-        private static int DealWithAttrNullTerminatedString(byte[] data, int offset, StringBuilder sb, int tag)
-        {
-            string value = ELFParserUtils.ExtractStringFromBytes(data, offset);
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetAttributeNameByTag(tag)}: \"{value}\"");
-            return value.Length;
-        }
-
-        private static int GetAttributeValueNameByTag(int tag, byte[] data, int offset, StringBuilder sb)
+        private static string[]? GetAEABIValueTable(int tag)
         {
             return tag switch
             {
-                6 or 7 or 8 or 9 or 10 or 11 or 12 or 16 or 17 or 18 or 19 or 20 or 21 or 23 or 24 or 25 or 26 or 27 or 28 or 34 or 38 or 68 => DealWithAttrSingleByteAttribute(data, offset, sb, tag),
-                _ => DealWithAttrNullTerminatedString(data, offset, sb, tag) // 对于未知标签，暂时不处理
+                6 => s_aeabiCpuArch,
+                8 => s_aeabiArmIsaUse,
+                9 => s_aeabiThumbIsaUse,
+                10 => s_aeabiFpArch,
+                11 => s_aeabiWmmxArch,
+                12 => s_aeabiAdvSimdArch,
+                13 => s_aeabiPcsConfig,
+                14 => s_aeabiPcsR9Use,
+                15 => s_aeabiPcsRwData,
+                16 => s_aeabiPcsRoData,
+                17 => s_aeabiPcsGotUse,
+                18 => s_aeabiPcsWcharT,
+                19 => s_aeabiFpRounding,
+                20 => s_aeabiFpDenormal,
+                21 => s_aeabiFpExceptions,
+                22 => s_aeabiFpUserExceptions,
+                23 => s_aeabiFpNumberModel,
+                26 => s_aeabiEnumSize,
+                27 => s_aeabiHardFpUse,
+                28 => s_aeabiVfpArgs,
+                29 => s_aeabiWmmxArgs,
+                30 => s_aeabiOptGoals,
+                31 => s_aeabiFpOptGoals,
+                34 => s_aeabiCpuUnalignedAccess,
+                36 => s_aeabiFpHpExtension,
+                38 => s_aeabiFp16bitFormat,
+                42 => s_aeabiMpExtensionUse,
+                44 => s_aeabiDivUse,
+                46 => s_aeabiDspExtension,
+                48 => s_aeabiMveArch,
+                66 => s_aeabiT2eeUse,
+                68 => s_aeabiVirtualizationUse,
+                70 => s_aeabiMpExtensionUse,
+                _ => null
             };
         }
 
-        private static string ParseAEABIAttributes(byte[] data, ref int offset, int endOffset)
+        // 读取 ULEB128，并推进 offset（专用于 AEABI 路径，不影响 MIPS/通用路径的 ReadULEB128）
+        private static int ReadAEABIUleb128(byte[] data, ref int offset, int endOffset)
         {
-            StringBuilder sb = new();
-            offset += 5; // 长度
-            // 现在真正解析属性
-            while (offset + 1 < Math.Min(endOffset, data.Length)) // 至少需要1个字节(tag) + 1个字节长度
+            int value = 0;
+            int shift = 0;
+            while (offset < endOffset && offset < data.Length)
             {
-                int attrTag = data[offset++];
-
-                if (attrTag < 5)
-                {
-                    continue; // 标签序列结束
-                }
-
-                // 对于AEABI，属性值的长度也在第一个字节中编码
-                if (offset >= data.Length)
+                byte b = data[offset++];
+                value |= (b & 0x7f) << shift;
+                if ((b & 0x80) == 0)
                 {
                     break;
                 }
-
-                offset += GetAttributeValueNameByTag(attrTag, data, offset, sb);
+                shift += 7;
             }
-            return sb.Length > 0 ? "File Attributes:\n" + sb.ToString() : string.Empty;
+            return value;
+        }
+
+        private static void AppendAEABIStringAttr(string name, byte[] data, ref int offset, StringBuilder sb)
+        {
+            string value = ELFParserUtils.ExtractStringFromBytes(data, offset);
+            offset += value.Length + 1; // 含 null 终止符
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  {name}: \"{value}\"");
+        }
+
+        private static void AppendAEABIIntAttr(int tag, byte[] data, ref int offset, int endOffset, StringBuilder sb)
+        {
+            string[]? table = GetAEABIValueTable(tag);
+            if (table != null)
+            {
+                int val = ReadAEABIUleb128(data, ref offset, endOffset);
+                string valueText = val >= 0 && val < table.Length ? table[val] : $"??? ({val})";
+                sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetAEABITagName(tag)}: {valueText}");
+            }
+            else if ((tag & 1) != 0)
+            {
+                // 未知奇数标签 → 字符串
+                AppendAEABIStringAttr(GetAEABITagName(tag), data, ref offset, sb);
+            }
+            else
+            {
+                // 未知偶数标签 → ULEB128
+                int val = ReadAEABIUleb128(data, ref offset, endOffset);
+                sb.AppendLine(CultureInfo.InvariantCulture, $"  {GetAEABITagName(tag)}: {val}");
+            }
+        }
+
+        private static void AppendAEABIProfileAttr(byte[] data, ref int offset, int endOffset, StringBuilder sb)
+        {
+            int val = ReadAEABIUleb128(data, ref offset, endOffset);
+            string text = val switch
+            {
+                0 => "None",
+                'A' => "Application",
+                'R' => "Realtime",
+                'M' => "Microcontroller",
+                'S' => "Application or Realtime",
+                _ => $"??? ({val})"
+            };
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_CPU_arch_profile: {text}");
+        }
+
+        private static void AppendAEABIAlignAttr(string name, bool preserved, byte[] data, ref int offset, int endOffset, StringBuilder sb)
+        {
+            int val = ReadAEABIUleb128(data, ref offset, endOffset);
+            string text;
+            if (val == 0)
+            {
+                text = "None";
+            }
+            else if (val == 1)
+            {
+                text = preserved ? "8-byte, except leaf SP" : "8-byte";
+            }
+            else if (val == 2)
+            {
+                text = preserved ? "8-byte" : "4-byte";
+            }
+            else if (val == 3)
+            {
+                text = "??? 3";
+            }
+            else if (val <= 12)
+            {
+                text = preserved
+                    ? $"8-byte and up to {1 << val}-byte extended, except leaf SP"
+                    : $"8-byte and up to {1 << val}-byte extended";
+            }
+            else
+            {
+                text = $"??? ({val})";
+            }
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  {name}: {text}");
+        }
+
+        private static void AppendAEABICompatibilityAttr(byte[] data, ref int offset, int endOffset, StringBuilder sb)
+        {
+            int flag = ReadAEABIUleb128(data, ref offset, endOffset);
+            string vendor = ELFParserUtils.ExtractStringFromBytes(data, offset);
+            offset += vendor.Length + 1;
+            string line = flag == 0
+                ? "  Tag_compatibility: No"
+                : string.Create(CultureInfo.InvariantCulture, $"  Tag_compatibility: flag = {flag}, vendor = {vendor}");
+            sb.AppendLine(line);
+        }
+
+        private static void AppendAEABIAlsoCompatibleAttr(byte[] data, ref int offset, int endOffset, StringBuilder sb)
+        {
+            int innerTag = ReadAEABIUleb128(data, ref offset, endOffset);
+            string text;
+            if (innerTag == 6) // Tag_CPU_arch
+            {
+                int val = ReadAEABIUleb128(data, ref offset, endOffset);
+                text = val >= 0 && val < s_aeabiCpuArch.Length ? s_aeabiCpuArch[val] : $"??? ({val})";
+            }
+            else if (innerTag == 0)
+            {
+                text = "None";
+                if (offset < endOffset && data[offset] == 0)
+                {
+                    offset++; // 跳过空字符串终止符
+                }
+            }
+            else
+            {
+                string s = ELFParserUtils.ExtractStringFromBytes(data, offset);
+                offset += s.Length + 1;
+                text = s;
+            }
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_also_compatible_with: {text}");
+        }
+
+        private static void ParseAEABIFileAttributes(byte[] data, ref int offset, int endOffset, StringBuilder sb)
+        {
+            while (offset < endOffset)
+            {
+                int tag = ReadAEABIUleb128(data, ref offset, endOffset);
+
+                switch (tag)
+                {
+                    case 4: // Tag_CPU_raw_name
+                    case 5: // Tag_CPU_name
+                    case 67: // Tag_conformance
+                        AppendAEABIStringAttr(GetAEABITagName(tag), data, ref offset, sb);
+                        break;
+                    case 7: // Tag_CPU_arch_profile
+                        AppendAEABIProfileAttr(data, ref offset, endOffset, sb);
+                        break;
+                    case 24: // Tag_ABI_align_needed
+                        AppendAEABIAlignAttr("Tag_ABI_align_needed", false, data, ref offset, endOffset, sb);
+                        break;
+                    case 25: // Tag_ABI_align_preserved
+                        AppendAEABIAlignAttr("Tag_ABI_align_preserved", true, data, ref offset, endOffset, sb);
+                        break;
+                    case 32: // Tag_compatibility: ULEB128 + null 终止字符串
+                        AppendAEABICompatibilityAttr(data, ref offset, endOffset, sb);
+                        break;
+                    case 64: // Tag_nodefaults: 取值需读取但忽略
+                        _ = ReadAEABIUleb128(data, ref offset, endOffset);
+                        sb.AppendLine("  Tag_nodefaults: True");
+                        break;
+                    case 65: // Tag_also_compatible_with
+                        AppendAEABIAlsoCompatibleAttr(data, ref offset, endOffset, sb);
+                        break;
+                    default:
+                        AppendAEABIIntAttr(tag, data, ref offset, endOffset, sb);
+                        break;
+                }
+            }
+        }
+
+        private static void ParseAEABIAttributes(byte[] data, ref int offset, int endOffset, StringBuilder sb)
+        {
+            int limit = Math.Min(endOffset, data.Length);
+
+            // 供应商子节内部为若干"子-子节"：作用域标签(1字节: Tag_File=1/Section=2/Symbol=3) + 长度(4字节)
+            // 这里解析 Tag_File 作用域（编译器通常只生成该作用域，与 readelf 输出一致）
+            if (offset + 5 > limit)
+            {
+                return;
+            }
+
+            byte scopeTag = data[offset];
+            offset += 5; // 跳过作用域标签 + 长度字段
+
+            if (scopeTag == 1) // Tag_File
+            {
+                sb.AppendLine("File Attributes");
+                ParseAEABIFileAttributes(data, ref offset, limit, sb);
+            }
         }
 
         private static int DealWithSingleByteAttribute(byte[] data, int offset, StringBuilder sb, int tag)
@@ -293,11 +524,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                         if (offset + 4 <= endOffset)  // 需要至少4字节
                         {
                             // 读取4个字节的版本信息
-                            if (!parser.Header.IsLittleEndian())
-                            {
-                                Array.Reverse(data, offset, 4);
-                            }
-                            int osNum = BitConverter.ToInt32(data, offset);
+                            int osNum = ELFParserUtils.ReadInt32(data, offset, parser.Header.IsLittleEndian());
 
                             string osName = osNum switch
                             {

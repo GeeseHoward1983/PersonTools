@@ -24,6 +24,35 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private ELFHeader _header;
 
+        // 缓存按索引读取的节数据，避免符号名/重定位解析时反复整表拷贝
+        private readonly Dictionary<int, byte[]> _sectionDataCache = [];
+
+        /// <summary>
+        /// 读取指定索引节的原始数据（带缓存），调用方不得就地修改返回的数组。
+        /// </summary>
+        internal byte[] GetSectionData(int sectionIndex)
+        {
+            if (_sectionDataCache.TryGetValue(sectionIndex, out byte[]? cached))
+            {
+                return cached;
+            }
+
+            Models.ELFSectionHeader section = SectionHeaders[sectionIndex];
+            byte[] data = CopySectionData(section);
+            _sectionDataCache[sectionIndex] = data;
+            return data;
+        }
+
+        /// <summary>
+        /// 拷贝指定节的原始数据（不缓存），用于只能拿到节结构而没有索引的场景。
+        /// </summary>
+        internal byte[] CopySectionData(in Models.ELFSectionHeader section)
+        {
+            byte[] data = new byte[section.sh_size];
+            Array.Copy(FileData, (long)section.sh_offset, data, 0, (int)section.sh_size);
+            return data;
+        }
+
         public ELFParser(string filePath)
         {
             FileData = File.ReadAllBytes(filePath);

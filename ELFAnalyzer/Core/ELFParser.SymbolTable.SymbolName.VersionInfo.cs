@@ -101,9 +101,8 @@ namespace PersonalTools.ELFAnalyzer.Core
                 return;
             }
 
-            Models.ELFSectionHeader strTabSection = parser.SectionHeaders[strTabIdx];
-            byte[] strTabData = new byte[strTabSection.sh_size];
-            Array.Copy(parser.FileData, (long)strTabSection.sh_offset, strTabData, 0, (int)strTabSection.sh_size);
+            byte[] strTabData = parser.GetSectionData(strTabIdx);
+            bool isLittleEndian = parser.Header.IsLittleEndian();
 
             long offset = (long)section.sh_offset;
             int processed = 0;
@@ -112,28 +111,16 @@ namespace PersonalTools.ELFAnalyzer.Core
             while (offset < parser.FileData.Length)
             {
                 // 读取版本需求结构
-                if (!parser.Header.IsLittleEndian()) // 如果不是小端序
-                {
-                    Array.Reverse(parser.FileData, (int)offset, 2);
-                    Array.Reverse(parser.FileData, (int)offset + 2, 2);
-                    Array.Reverse(parser.FileData, (int)offset + 4, 4);
-                    Array.Reverse(parser.FileData, (int)offset + 8, 4);
-                    Array.Reverse(parser.FileData, (int)offset + 12, 4);
-                }
-
-                uint vn_version = BitConverter.ToUInt16(parser.FileData, (int)offset);
-                ushort vn_cnt = BitConverter.ToUInt16(parser.FileData, (int)offset + 2);
-                uint vn_file = BitConverter.ToUInt32(parser.FileData, (int)offset + 4);
-                uint vn_aux = BitConverter.ToUInt32(parser.FileData, (int)offset + 8);
-                uint vn_next = BitConverter.ToUInt32(parser.FileData, (int)offset + 12);
+                uint vn_version = ELFParserUtils.ReadUInt16(parser.FileData, (int)offset, isLittleEndian);
+                ushort vn_cnt = ELFParserUtils.ReadUInt16(parser.FileData, (int)offset + 2, isLittleEndian);
+                uint vn_file = ELFParserUtils.ReadUInt32(parser.FileData, (int)offset + 4, isLittleEndian);
+                uint vn_aux = ELFParserUtils.ReadUInt32(parser.FileData, (int)offset + 8, isLittleEndian);
+                uint vn_next = ELFParserUtils.ReadUInt32(parser.FileData, (int)offset + 12, isLittleEndian);
 
                 // 获取库名称
                 string libName = ELFParserUtils.ExtractStringFromBytes(strTabData, (int)vn_file);
 
-                // 计算该库的版本依赖数量
-                int versionCount = vn_cnt;
-
-                sb.AppendLine(CultureInfo.InvariantCulture, $"  000000: 版本: {vn_version}  文件: {libName}  计数: {versionCount}");
+                sb.AppendLine(CultureInfo.InvariantCulture, $"  000000: 版本: {vn_version}  文件: {libName}  计数: {vn_cnt}");
 
                 long auxOffset = offset + vn_aux;
                 int auxProcessed = 0;
@@ -141,16 +128,8 @@ namespace PersonalTools.ELFAnalyzer.Core
                 // 遍历该库的所有版本依赖
                 while (auxProcessed < vn_cnt && auxOffset < parser.FileData.Length)
                 {
-                    if (!parser.Header.IsLittleEndian()) // 如果不是小端序
-                    {
-                        Array.Reverse(parser.FileData, (int)auxOffset + 8, 4);
-                        Array.Reverse(parser.FileData, (int)auxOffset + 6, 2);
-                        Array.Reverse(parser.FileData, (int)auxOffset + 12, 4);
-                    }
-                    uint nameOffset = BitConverter.ToUInt32(parser.FileData, (int)auxOffset + 8);
-                    ushort flags = BitConverter.ToUInt16(parser.FileData, (int)auxOffset + 6);
-                    uint auxNext = BitConverter.ToUInt32(parser.FileData, (int)auxOffset + 12);
-                    _ = ELFParserUtils.ExtractStringFromBytes(strTabData, (int)nameOffset);
+                    ushort flags = ELFParserUtils.ReadUInt16(parser.FileData, (int)auxOffset + 6, isLittleEndian);
+                    uint auxNext = ELFParserUtils.ReadUInt32(parser.FileData, (int)auxOffset + 12, isLittleEndian);
 
                     // 使用版本索引作为键来获取版本信息
                     ushort verIndex = (ushort)(flags & 0x7fff); // 去除隐藏标志

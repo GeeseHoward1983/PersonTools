@@ -1,5 +1,6 @@
+using System.Buffers.Binary;
+using System.Globalization;
 using System.IO;
-using System.Windows;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
@@ -12,7 +13,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         public static string ExtractStringFromBytes(byte[] data, int startOffset)
         {
-            if(data == null || startOffset < 0 || startOffset >= data.Length)
+            if (data == null || startOffset < 0 || startOffset >= data.Length)
             {
                 return string.Empty;
             }
@@ -25,9 +26,9 @@ namespace PersonalTools.ELFAnalyzer.Core
             return endOffset > startOffset ? System.Text.Encoding.UTF8.GetString(data, startOffset, endOffset - startOffset) : string.Empty;
         }
 
-        public static string ExtractStringFromBytes(byte[] data, int startOffset, int maxLength = -1)
+        public static string ExtractStringFromBytes(byte[] data, int startOffset, int maxLength)
         {
-            if(data == null || startOffset < 0 || startOffset >= data.Length)
+            if (data == null || startOffset < 0 || startOffset >= data.Length)
             {
                 return string.Empty;
             }
@@ -39,56 +40,93 @@ namespace PersonalTools.ELFAnalyzer.Core
             return maxLength > 0 ? System.Text.Encoding.UTF8.GetString(data, startOffset, maxLength) : string.Empty;
         }
 
-        private static byte[] ReadBytesWithEndianness(BinaryReader reader, int count, bool isLittleEndian)
-        {
-            byte[] bytes = reader.ReadBytes(count);
-            if (BitConverter.IsLittleEndian != isLittleEndian)
-            {
-                Array.Reverse(bytes);
-            }
-            return bytes;
-        }
+        // ---- Stream-based readers (sequential parse) ----
 
         public static long ReadInt64(BinaryReader reader, bool isLittleEndian)
         {
-            return BitConverter.ToInt64(ReadBytesWithEndianness(reader, 8, isLittleEndian), 0);
+            Span<byte> buffer = stackalloc byte[8];
+            reader.BaseStream.ReadExactly(buffer);
+            return isLittleEndian ? BinaryPrimitives.ReadInt64LittleEndian(buffer) : BinaryPrimitives.ReadInt64BigEndian(buffer);
         }
 
         public static int ReadInt32(BinaryReader reader, bool isLittleEndian)
         {
-            return BitConverter.ToInt32(ReadBytesWithEndianness(reader, 4, isLittleEndian), 0);
+            Span<byte> buffer = stackalloc byte[4];
+            reader.BaseStream.ReadExactly(buffer);
+            return isLittleEndian ? BinaryPrimitives.ReadInt32LittleEndian(buffer) : BinaryPrimitives.ReadInt32BigEndian(buffer);
         }
 
         public static ushort ReadUInt16(BinaryReader reader, bool isLittleEndian)
         {
-            return BitConverter.ToUInt16(ReadBytesWithEndianness(reader, 2, isLittleEndian), 0);
+            Span<byte> buffer = stackalloc byte[2];
+            reader.BaseStream.ReadExactly(buffer);
+            return isLittleEndian ? BinaryPrimitives.ReadUInt16LittleEndian(buffer) : BinaryPrimitives.ReadUInt16BigEndian(buffer);
         }
 
         public static uint ReadUInt32(BinaryReader reader, bool isLittleEndian)
         {
-            return BitConverter.ToUInt32(ReadBytesWithEndianness(reader, 4, isLittleEndian), 0);
+            Span<byte> buffer = stackalloc byte[4];
+            reader.BaseStream.ReadExactly(buffer);
+            return isLittleEndian ? BinaryPrimitives.ReadUInt32LittleEndian(buffer) : BinaryPrimitives.ReadUInt32BigEndian(buffer);
         }
 
         public static ulong ReadUInt64(BinaryReader reader, bool isLittleEndian)
         {
-            return BitConverter.ToUInt64(ReadBytesWithEndianness(reader, 8, isLittleEndian), 0);
+            Span<byte> buffer = stackalloc byte[8];
+            reader.BaseStream.ReadExactly(buffer);
+            return isLittleEndian ? BinaryPrimitives.ReadUInt64LittleEndian(buffer) : BinaryPrimitives.ReadUInt64BigEndian(buffer);
         }
 
-        public static string GetTypeName(Type T, object type, string prefix)
+        // ---- Buffer-based readers (already-loaded data, no mutation of the source) ----
+
+        public static ushort ReadUInt16(byte[] data, int offset, bool isLittleEndian)
+        {
+            ReadOnlySpan<byte> span = data.AsSpan(offset, 2);
+            return isLittleEndian ? BinaryPrimitives.ReadUInt16LittleEndian(span) : BinaryPrimitives.ReadUInt16BigEndian(span);
+        }
+
+        public static uint ReadUInt32(byte[] data, int offset, bool isLittleEndian)
+        {
+            ReadOnlySpan<byte> span = data.AsSpan(offset, 4);
+            return isLittleEndian ? BinaryPrimitives.ReadUInt32LittleEndian(span) : BinaryPrimitives.ReadUInt32BigEndian(span);
+        }
+
+        public static ulong ReadUInt64(byte[] data, int offset, bool isLittleEndian)
+        {
+            ReadOnlySpan<byte> span = data.AsSpan(offset, 8);
+            return isLittleEndian ? BinaryPrimitives.ReadUInt64LittleEndian(span) : BinaryPrimitives.ReadUInt64BigEndian(span);
+        }
+
+        public static int ReadInt32(byte[] data, int offset, bool isLittleEndian)
+        {
+            ReadOnlySpan<byte> span = data.AsSpan(offset, 4);
+            return isLittleEndian ? BinaryPrimitives.ReadInt32LittleEndian(span) : BinaryPrimitives.ReadInt32BigEndian(span);
+        }
+
+        public static string GetTypeName(Type enumType, object type, string prefix)
         {
             try
             {
-                if (Enum.IsDefined(T, type))
+                // 将原始数值转换为枚举的底层类型，避免 Enum.IsDefined 因类型不匹配抛异常（同时省去每次调用的异常开销）
+                object value = Convert.ChangeType(type, Enum.GetUnderlyingType(enumType), CultureInfo.InvariantCulture);
+                if (Enum.IsDefined(enumType, value))
                 {
-                    return Enum.GetName(T, type) ?? $"{prefix}UNKNOWN({type})";
+                    return Enum.GetName(enumType, value) ?? $"{prefix}UNKNOWN({type})";
                 }
             }
-            catch (ArgumentException e)
+            catch (ArgumentException)
             {
-                MessageBox.Show(e.ToString());
+                // 底层类型不匹配，按未知处理
+            }
+            catch (InvalidCastException)
+            {
+                // 数值无法转换为枚举底层类型，按未知处理
+            }
+            catch (OverflowException)
+            {
+                // 数值超出枚举底层类型范围，按未知处理
             }
             return $"{prefix}UNKNOWN({type})";
         }
-
     }
 }

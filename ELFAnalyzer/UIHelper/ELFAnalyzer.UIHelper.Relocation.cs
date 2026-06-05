@@ -36,18 +36,12 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                         // 计算条目数
                         int entryCount = (int)(section.sh_size / section.sh_entsize);
 
-                        // 读取数据
-                        byte[] data = new byte[section.sh_size];
-                        Array.Copy(Parser.FileData, (int)section.sh_offset, data, 0, (int)section.sh_size);
+                        // 读取重定位数据
+                        byte[] data = Parser.CopySectionData(in section);
 
-                        // 读取符号表和字符串表
+                        // 读取关联的符号表
                         Models.ELFSectionHeader symTabSection = Parser.SectionHeaders[(int)section.sh_link];
-                        Models.ELFSectionHeader strTabSection = Parser.SectionHeaders[(int)symTabSection.sh_link];
-                        byte[] strData = new byte[strTabSection.sh_size];
-                        Array.Copy(Parser.FileData, (int)strTabSection.sh_offset, strData, 0, (int)strTabSection.sh_size);
-
-                        byte[] symTabData = new byte[symTabSection.sh_size];
-                        Array.Copy(Parser.FileData, (int)symTabSection.sh_offset, symTabData, 0, (int)symTabSection.sh_size);
+                        byte[] symTabData = Parser.CopySectionData(in symTabSection);
 
                         // 读取符号表
                         List<ELFSymbol> symbols = [];
@@ -140,7 +134,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                                 if (sym < symbols.Count)
                                 {
                                     ELFSymbol symbol = symbols[(int)sym];
-                                    symbolName = SymbleName.GetSymbolName(Parser, symbol, SectionType.SHT_DYNSYM);
+                                    symbolName = SymbleName.GetSymbolName(Parser, symbol, SectionType.SHT_DYNSYM, (int)sym);
                                     symbolValue = $"{symbol.StValue:x8}";
                                 }
                             }
@@ -181,7 +175,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                                 if (sym < symbols.Count)
                                 {
                                     ELFSymbol symbol = symbols[(int)sym];
-                                    symbolName = SymbleName.GetSymbolName(Parser, symbol, SectionType.SHT_DYNSYM);
+                                    symbolName = SymbleName.GetSymbolName(Parser, symbol, SectionType.SHT_DYNSYM, (int)sym);
                                     symbolValue = $"{symbol.StValue:x16}";
                                 }
                             }

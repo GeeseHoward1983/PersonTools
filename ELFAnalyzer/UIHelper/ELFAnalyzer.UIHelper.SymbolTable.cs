@@ -36,7 +36,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                             0xFFF2 => "COM",
                             _ => $"{sym.StShndx}"
                         },
-                        Name = SymbleName.GetSymbolName(Parser, sym, sectionType)
+                        Name = SymbleName.GetSymbolName(Parser, sym, sectionType, i)
                     });
                 }
             }

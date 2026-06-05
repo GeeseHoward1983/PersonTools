@@ -5,7 +5,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 {
     internal static class SymbleName
     {
-        internal static string GetSymbolName(ELFParser parser, ELFSymbol symbol, SectionType sectionType)
+        internal static string GetSymbolName(ELFParser parser, ELFSymbol symbol, SectionType sectionType, int symbolIndex)
         {
             uint linkedStrTabIdx32 = parser.LinkedStrTabIdx.GetValueOrDefault(sectionType);
             if (parser.SectionHeaders == null || linkedStrTabIdx32 >= parser.SectionHeaders.Count)
@@ -19,8 +19,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 return string.Empty;
             }
 
-            byte[] strData = new byte[strSection.sh_size];
-            Array.Copy(parser.FileData, (int)strSection.sh_offset, strData, 0, (int)strData.Length);
+            byte[] strData = parser.GetSectionData((int)linkedStrTabIdx32);
 
             int offset = (int)symbol.StName;
             if (offset >= strData.Length)
@@ -33,24 +32,19 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 return string.Empty;
             }
-            // 如果符号表是动态符号表(SHT_DYNSYM)，尝试获取版本信息
+            // 如果符号表是动态符号表(SHT_DYNSYM)，尝试根据符号下标获取版本信息
             List<ELFSymbol>? symbols = parser.Symbols.GetValueOrDefault(sectionType);
-            if (symbols != null && parser.VersionSymbols != null)
+            if (symbols != null && symbolIndex >= 0 && symbolIndex < parser.VersionSymbols.Length)
             {
-                int symbolIndex = symbols.IndexOf(symbol);
-                if (symbolIndex >= 0 && symbolIndex < parser.VersionSymbols.Length)
+                ushort versionIndex = (ushort)(parser.VersionSymbols[symbolIndex] & 0x7fff); // 去除隐藏标志
+                if (versionIndex >= 2) // 版本索引从2开始是有效的外部版本
                 {
-                    ushort versionIndex = (ushort)(parser.VersionSymbols[symbolIndex] & 0x7fff); // 去除隐藏标志
-                    if (versionIndex >= 2) // 版本索引从2开始是有效的外部版本
+                    string versionName = GetVersionNameByVersionIndex(parser, versionIndex);
+                    if (!string.IsNullOrEmpty(versionName))
                     {
-                        string versionName = GetVersionNameByVersionIndex(parser, versionIndex);
-                        if (!string.IsNullOrEmpty(versionName))
-                        {
-                            // 判断是否是全局符号 (@@ 表示默认版本)
-                            // 如果是第一个定义的符号则使用 @@，否则使用 @
-                            bool isDefaultVersion = IsDefaultVersionSymbol(parser, symbolIndex, symbols);
-                            return baseName + (isDefaultVersion ? "@@" : "@") + versionName;
-                        }
+                        // 判断是否是默认版本符号 (@@ 表示默认版本，否则 @)
+                        bool isDefaultVersion = IsDefaultVersionSymbol(parser, symbolIndex, symbols);
+                        return baseName + (isDefaultVersion ? "@@" : "@") + versionName;
                     }
                 }
             }
@@ -81,8 +75,7 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             // 简化实现：对于动态符号，根据符号绑定类型判断
             // 全局符号且版本号最低的为默认版本
-            if (parser.Symbols != null && parser.VersionSymbols != null &&
-                symbolIndex < parser.VersionSymbols.Length && symbolIndex < parser.Symbols.Count)
+            if (symbolIndex < parser.VersionSymbols.Length && symbolIndex < symbols.Count)
             {
                 ELFSymbol symbol = symbols[symbolIndex];
                 ushort versionIndex = (ushort)(parser.VersionSymbols[symbolIndex] & 0x7fff);
@@ -106,9 +99,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 return string.Empty;
             }
 
-            Models.ELFSectionHeader strSection = parser.SectionHeaders[parser.Header.e_shstrndx];
-            byte[] strData = new byte[strSection.sh_size];
-            Array.Copy(parser.FileData, (int)strSection.sh_offset, strData, 0, (int)strData.Length);
+            byte[] strData = parser.GetSectionData(parser.Header.e_shstrndx);
 
             Models.ELFSectionHeader section = parser.SectionHeaders[index];
             int offset = (int)section.sh_name;

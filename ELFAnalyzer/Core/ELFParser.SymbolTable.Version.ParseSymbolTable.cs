@@ -26,20 +26,15 @@ namespace PersonalTools.ELFAnalyzer.Core
                 Models.ELFSectionHeader? versymSection = FindSectionByAddress(parser, (ulong)versymAddr);
                 if (versymSection != null)
                 {
-                    byte[] data = new byte[versymSection.Value.sh_size];
-                    Array.Copy(parser.FileData, (long)versymSection.Value.sh_offset, data, 0, (int)versymSection.Value.sh_size);
+                    byte[] data = parser.CopySectionData(versymSection.Value);
 
                     int count = (int)(versymSection.Value.sh_size / 2); // 每个版本符号是2字节
+                    bool isLittleEndian = parser.Header.IsLittleEndian();
                     parser.VersionSymbols = new ushort[count];
 
                     for (int i = 0; i < count; i++)
                     {
-                        if (!parser.Header.IsLittleEndian()) // 如果不是小端序
-                        {
-                            Array.Reverse(parser.FileData, (int)i * 2, 2);
-                        }
-
-                        BitConverter.ToUInt16(data, i * 2);
+                        parser.VersionSymbols[i] = ELFParserUtils.ReadUInt16(data, i * 2, isLittleEndian);
                     }
                 }
             }

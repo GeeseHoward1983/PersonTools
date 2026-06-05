@@ -1,6 +1,5 @@
 using PersonalTools.Enums;
 using System.Globalization;
-using System.IO;
 using System.Text;
 
 namespace PersonalTools.ELFAnalyzer.Core
@@ -48,24 +47,10 @@ namespace PersonalTools.ELFAnalyzer.Core
             while (offset < endOffset)
             {
                 // Note结构：namesz, descsz, type
-                bool isLittleEndian = parser.Header.EI_DATA == (byte)ELFData.LSB;
-                uint namesz, descsz, type;
-
-                using (var ms = new MemoryStream(parser.FileData, (int)offset, Math.Min((int)(endOffset - offset), parser.FileData.Length - (int)offset)))
-                using (var br = new BinaryReader(ms))
-                {
-                    namesz = ELFParserUtils.ReadUInt32(br, isLittleEndian);
-                }
-                using (var ms = new MemoryStream(parser.FileData, (int)offset + 4, Math.Min((int)(endOffset - offset - 4), parser.FileData.Length - (int)offset - 4)))
-                using (var br = new BinaryReader(ms))
-                {
-                    descsz = ELFParserUtils.ReadUInt32(br, isLittleEndian);
-                }
-                using (var ms = new MemoryStream(parser.FileData, (int)offset + 8, Math.Min((int)(endOffset - offset - 8), parser.FileData.Length - (int)offset - 8)))
-                using (var br = new BinaryReader(ms))
-                {
-                    type = ELFParserUtils.ReadUInt32(br, isLittleEndian);
-                }
+                bool isLittleEndian = parser.Header.IsLittleEndian();
+                uint namesz = ELFParserUtils.ReadUInt32(parser.FileData, (int)offset, isLittleEndian);
+                uint descsz = ELFParserUtils.ReadUInt32(parser.FileData, (int)offset + 4, isLittleEndian);
+                uint type = ELFParserUtils.ReadUInt32(parser.FileData, (int)offset + 8, isLittleEndian);
 
                 ulong nameOffset = offset + 12;
                 string owner = ELFParserUtils.ExtractStringFromBytes(parser.FileData, (int)nameOffset, (int)namesz);
@@ -122,14 +107,17 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private static string GetABIVersion(ELFParser parser, byte[] data, int descOffset, int descSize)
         {
-            if (!parser.Header.IsLittleEndian()) // 如果不是小端序
+            if (descSize < 16)
             {
-                Array.Reverse(data, descOffset, 4);
-                Array.Reverse(data, descOffset + 4, 4);
-                Array.Reverse(data, descOffset + 8, 4);
-                Array.Reverse(data, descOffset + 12, 4);
+                return "";
             }
-            return descSize >= 16 ? $"(ABI version: {BitConverter.ToUInt32(data, descOffset)}.{BitConverter.ToUInt32(data, descOffset + 4)}.{BitConverter.ToUInt32(data, descOffset + 8)}.{BitConverter.ToUInt32(data, descOffset + 12)})" : "";
+
+            bool isLittleEndian = parser.Header.IsLittleEndian();
+            uint v0 = ELFParserUtils.ReadUInt32(data, descOffset, isLittleEndian);
+            uint v1 = ELFParserUtils.ReadUInt32(data, descOffset + 4, isLittleEndian);
+            uint v2 = ELFParserUtils.ReadUInt32(data, descOffset + 8, isLittleEndian);
+            uint v3 = ELFParserUtils.ReadUInt32(data, descOffset + 12, isLittleEndian);
+            return $"(ABI version: {v0}.{v1}.{v2}.{v3})";
         }
 
         private static string GetBuildID(byte[] data, int descOffset, int descSize)
@@ -155,7 +143,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 "Android" => type switch
                 {
                     1 => $"{description} (版本)",
-                    _ => $"Unknown GNU note type {type}"
+                    _ => $"Unknown Android note type {type}"
                 },
                 _ => $"{description} (type: {type})"
             };
@@ -177,7 +165,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 "Android" => type switch
                 {
                     1 => "NT_VERSION",
-                    _ => $"Unknown GNU note type {type}"
+                    _ => $"Unknown Android note type {type}"
                 },
                 "CC" => "Compiler Info",
                 _ => $"type 0x{type:x}"

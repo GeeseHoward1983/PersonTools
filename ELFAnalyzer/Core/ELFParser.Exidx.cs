@@ -39,8 +39,8 @@ namespace PersonalTools.ELFAnalyzer.Core
             StringBuilder sb = new();
 
             // 读取异常索引表的数据
-            byte[] data = new byte[exidxSection.sh_size];
-            Array.Copy(parser.FileData, (long)exidxSection.sh_offset, data, 0, (int)exidxSection.sh_size);
+            byte[] data = parser.CopySectionData(in exidxSection);
+            bool isLittleEndian = parser.Header.IsLittleEndian();
 
             // ARM异常索引表由8字节(2个字)的条目组成
             int entryCount = (int)(exidxSection.sh_size / 8); // 8字节每条目
@@ -50,21 +50,13 @@ namespace PersonalTools.ELFAnalyzer.Core
                 int offset = idx * 8; // 每个条目占8字节
 
                 // 每个条目包含两个32位值：
-                // 第一个32位：相对于节起始地址的偏移
+                // 第一个32位：相对于节起始地址的偏移(prel31)
                 // 第二个32位：展开信息(可能是索引或标记)
-                int addrOffset;
-                int unwindInfo;
+                int addrOffset = ELFParserUtils.ReadInt32(data, offset, isLittleEndian);
+                int unwindInfo = ELFParserUtils.ReadInt32(data, offset + 4, isLittleEndian);
 
-                if (!parser.Header.IsLittleEndian())
-                {
-                    Array.Reverse(data, offset, 4);
-                    Array.Reverse(data, offset + 4, 4);
-                }
-                addrOffset = BitConverter.ToInt32(data, offset);
-                unwindInfo = BitConverter.ToInt32(data, offset + 4);
-
-                // 计算绝对地址
-                int absAddr = (int)exidxSection.sh_addr + addrOffset * 2 / 2 + offset;
+                // 计算绝对地址（注：prel31 偏移理论上应做 31 位符号扩展，此处沿用既有行为）
+                int absAddr = (int)exidxSection.sh_addr + addrOffset + offset;
 
                 // 获取可能的符号名称
                 string symbolName = FindNearestSymbolName(parser, (ulong)absAddr, false);
@@ -98,13 +90,9 @@ namespace PersonalTools.ELFAnalyzer.Core
                 else
                 {
                     // 展开表条目索引 - 指向 .ARM.extab 节的偏移
-                    int extabOffset = (int)exidxSection.sh_addr + (int)((unwindInfo + 4) * 2) / 2 + offset;
+                    int extabOffset = (int)exidxSection.sh_addr + (unwindInfo + 4) + offset;
                     sb.AppendLine(CultureInfo.InvariantCulture, $"{symbolDesc}: @0x{extabOffset:x}");
-                    if (!parser.Header.IsLittleEndian())
-                    {
-                        Array.Reverse(parser.FileData, extabOffset, 4);
-                    }
-                    unwindInfo = BitConverter.ToInt32(parser.FileData, extabOffset);
+                    unwindInfo = ELFParserUtils.ReadInt32(parser.FileData, extabOffset, isLittleEndian);
 
                     int compactIndex = (unwindInfo >> 24) & 0x7F;
 
@@ -154,8 +142,9 @@ namespace PersonalTools.ELFAnalyzer.Core
             // 遍历符号表，寻找最接近的符号
             foreach (KeyValuePair<SectionType, List<ELFSymbol>> symbolList in parser.Symbols)
             {
-                foreach (ELFSymbol symbol in symbolList.Value)
+                for (int symbolIndex = 0; symbolIndex < symbolList.Value.Count; symbolIndex++)
                 {
+                    ELFSymbol symbol = symbolList.Value[symbolIndex];
                     ulong pos = symbol.StValue;
                     if (containstSize)
                     {
@@ -166,7 +155,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                         symbol.StInfo != 0 && // 非NULL符号
                         symbol.StShndx != 0) // 非未定义符号
                     {
-                        string name = SymbleName.GetSymbolName(parser, symbol, symbolList.Key);
+                        string name = SymbleName.GetSymbolName(parser, symbol, symbolList.Key, symbolIndex);
                         if (containstSize && !string.IsNullOrEmpty(name))
                         {
                             name += $"+0x{symbol.StSize:x}";
