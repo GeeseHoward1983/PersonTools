@@ -180,10 +180,10 @@ namespace PersonalTools.UserControls
                     inputBytes = Encoding.UTF8.GetBytes(input);
                 }
                 byte[] hashBytes = SHA256.HashData(inputBytes);
-                // 取前28个字节（224位）作为SHA224结果
+                // 取前28个字节（224位）作为SHA224结果（注：这是 SHA-256 截断，并非真正的 SHA-224 初值算法）
                 byte[] sha224Bytes = new byte[28];
                 Array.Copy(hashBytes, sha224Bytes, 28);
-                SHA224ResultLabel.Content = Utils.ToHexString(hashBytes);
+                SHA224ResultLabel.Content = Utils.ToHexString(sha224Bytes);
             }
             catch (FormatException ex)
             {

@@ -9,10 +9,9 @@ namespace PersonalTools
     internal static class GlobalState
     {
         /// <summary>
-        /// 当前语言类型
-        /// 在程序启动时初始化
+        /// 当前语言类型（程序启动时求值一次并缓存）
         /// </summary>
-        public static LanguageType CurrentLanguageType => GetCurrentLanguageType();
+        public static LanguageType CurrentLanguageType { get; } = GetCurrentLanguageType();
         /// <summary>
         /// 获取当前系统的语言类型
         /// </summary>

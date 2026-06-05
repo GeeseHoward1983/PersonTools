@@ -436,8 +436,8 @@ namespace PersonalTools.UserControls
                 // 导入公钥
                 rsa.ImportFromPem(publicKey);
 
-                // 加密
-                byte[] encryptedBytes = rsa.Encrypt(inputBytes, RSAEncryptionPadding.Pkcs1);
+                // 加密（OAEP-SHA256，避免 PKCS#1 v1.5 的填充预言攻击；注意会减小可加密明文上限，512 位密钥过小无法使用）
+                byte[] encryptedBytes = rsa.Encrypt(inputBytes, RSAEncryptionPadding.OaepSHA256);
 
                 // 返回十六进制字符串
                 return Utils.ToHexString(encryptedBytes);
@@ -469,8 +469,8 @@ namespace PersonalTools.UserControls
                 // 导入私钥
                 rsa.ImportFromPem(privateKey);
 
-                // 解密
-                byte[] decryptedBytes = rsa.Decrypt(encryptedBytes, RSAEncryptionPadding.Pkcs1);
+                // 解密（与加密一致使用 OAEP-SHA256）
+                byte[] decryptedBytes = rsa.Decrypt(encryptedBytes, RSAEncryptionPadding.OaepSHA256);
 
                 // 返回解密后的字符串
                 return Encoding.UTF8.GetString(decryptedBytes);

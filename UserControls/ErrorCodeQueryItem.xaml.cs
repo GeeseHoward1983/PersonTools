@@ -18,9 +18,6 @@ namespace PersonalTools.UserControls
         public static readonly DependencyProperty ErrorCodeMapStringProperty =
             DependencyProperty.Register("ErrorCodeMapString", typeof(Dictionary<string, string>), typeof(ErrorCodeQueryItem));
 
-        public static readonly DependencyProperty QueryCommandProperty =
-            DependencyProperty.Register("QueryCommand", typeof(ICommand), typeof(ErrorCodeQueryItem));
-
         #pragma warning disable CA2227 // 符合WPF依赖属性要求，需要公共setter
         public Dictionary<long, string> ErrorCodeMap
         {
@@ -34,12 +31,6 @@ namespace PersonalTools.UserControls
             set => SetValue(ErrorCodeMapStringProperty, value);
         }
         #pragma warning restore CA2227
-
-        public ICommand QueryCommand
-        {
-            get => (ICommand)GetValue(QueryCommandProperty);
-            set => SetValue(QueryCommandProperty, value);
-        }
 
         public ErrorCodeQueryItem()
         {
@@ -64,12 +55,6 @@ namespace PersonalTools.UserControls
         // 执行查询
         private void PerformQuery()
         {
-            if (QueryCommand != null && QueryCommand.CanExecute(null))
-            {
-                QueryCommand.Execute(null);
-                return;
-            }
-
             string input = ErrorCodeInput.Text;
 
             if (string.IsNullOrWhiteSpace(input))

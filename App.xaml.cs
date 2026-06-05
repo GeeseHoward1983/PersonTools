@@ -12,7 +12,24 @@ namespace PersonalTools
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-            // 应用程序启动时的初始化代码可以放在这里
+
+            // 全局未处理异常兜底：避免解析/控件抛出的异常导致应用静默崩溃
+            DispatcherUnhandledException += App_DispatcherUnhandledException;
+            AppDomain.CurrentDomain.UnhandledException += App_UnhandledException;
+        }
+
+        private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+        {
+            MessageBox.Show($"发生未处理的错误：{e.Exception.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            e.Handled = true; // 标记为已处理，避免应用崩溃
+        }
+
+        private static void App_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            if (e.ExceptionObject is Exception ex)
+            {
+                MessageBox.Show($"发生严重错误：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 

@@ -27,6 +27,7 @@ namespace PersonalTools
                     peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryExport].VirtualAddress != 0)
                 {
                     uint exportRVA = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryExport].VirtualAddress;
+                    uint exportSize = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryExport].Size;
                     long exportOffset = Utilities.RvaToOffset(exportRVA, peInfo.SectionHeaders);
 
                     if (exportOffset != -1 && exportOffset < fs.Length)
@@ -72,6 +73,17 @@ namespace PersonalTools
                                 };
 
                                 exportFunc.Name = functionNames.TryGetValue(i, out string? value) ? value : $"Ordinal_{exportFunc.Ordinal}";
+
+                                // 转发导出：函数 RVA 落在导出目录范围内时指向 "DLL.Function" 字符串而非代码
+                                if (functionRVA != 0 && functionRVA >= exportRVA && functionRVA < (long)exportRVA + exportSize)
+                                {
+                                    string forwarder = ReadForwarderString(fs, reader, peInfo.SectionHeaders, functionRVA);
+                                    if (!string.IsNullOrEmpty(forwarder))
+                                    {
+                                        exportFunc.Name = $"{exportFunc.Name} (forwarded -> {forwarder})";
+                                    }
+                                }
+
                                 peInfo.ExportFunctions.Add(exportFunc);
                             }
                         }
@@ -159,6 +171,26 @@ namespace PersonalTools
             }
 
             return result;
+        }
+
+        private static string ReadForwarderString(FileStream fs, BinaryReader reader, List<IMAGESECTIONHEADER> sections, uint rva)
+        {
+            long offset = Utilities.RvaToOffset(rva, sections);
+            if (offset == -1 || offset >= fs.Length)
+            {
+                return string.Empty;
+            }
+
+            long originalPosition = fs.Position;
+            try
+            {
+                fs.Position = offset;
+                return Utilities.ReadNullTerminatedString(reader);
+            }
+            finally
+            {
+                fs.Position = originalPosition;
+            }
         }
 
         private static Dictionary<int, string> BuildExportFunctionNameMap(FileStream fs, BinaryReader reader, List<IMAGESECTIONHEADER> sections, List<uint> nameRVAs, List<ushort> ordinals)

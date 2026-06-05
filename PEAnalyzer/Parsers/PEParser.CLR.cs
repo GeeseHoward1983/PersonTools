@@ -126,7 +126,7 @@ namespace PersonalTools
                     HasStrongNameSignature = clrHeader.StrongNameSignature.VirtualAddress != 0,
                     IsILonly = (clrHeader.Flags & 0x00000001) != 0,
                     Is32BitRequired = (clrHeader.Flags & 0x00000002) != 0,
-                    Is32BitPreferred = (clrHeader.Flags & 0x00040000) != 0,
+                    Is32BitPreferred = (clrHeader.Flags & 0x00020000) != 0, // COMIMAGE_FLAGS_32BITPREFERRED
                     IsStrongNameSigned = (clrHeader.Flags & 0x00000008) != 0,
                     PEMachineType = peInfo.NtHeaders.FileHeader.Machine // 保存PE头中的Machine字段
                 };

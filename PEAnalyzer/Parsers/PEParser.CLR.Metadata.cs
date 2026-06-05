@@ -131,7 +131,8 @@ namespace PersonalTools
         private static string ReadStreamName(FileStream fs, BinaryReader reader)
         {
             StringBuilder nameBuilder = new();
-            while (fs.Position < fs.Length)
+            // 元数据流名称按 ECMA-335 最长 32 字节，限制以防畸形数据无终止符
+            while (fs.Position < fs.Length && nameBuilder.Length < 32)
             {
                 byte b = reader.ReadByte();
                 if (b == 0)

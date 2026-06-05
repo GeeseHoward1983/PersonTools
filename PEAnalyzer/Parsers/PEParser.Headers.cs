@@ -197,6 +197,13 @@ namespace PersonalTools
         private static IMAGEDATADIRECTORY[] ReadDataDirectories(BinaryReader reader, uint numberOfRvaAndSizes)
         {
             int dataDirCount = (int)Math.Min(numberOfRvaAndSizes, PEConstants.MaxDataDirectories);
+            // 限制为文件实际可读的数量，避免被截断的文件触发未捕获的 EndOfStreamException
+            long available = (reader.BaseStream.Length - reader.BaseStream.Position) / 8;
+            if (available < dataDirCount)
+            {
+                dataDirCount = (int)Math.Max(0, available);
+            }
+
             IMAGEDATADIRECTORY[] dataDirectory = new IMAGEDATADIRECTORY[dataDirCount];
             for (int i = 0; i < dataDirCount; i++)
             {

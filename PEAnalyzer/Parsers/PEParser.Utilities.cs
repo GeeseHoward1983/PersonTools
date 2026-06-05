@@ -9,11 +9,12 @@ namespace PersonalTools.PEAnalyzer.Parsers
         public static string ReadNullTerminatedString(BinaryReader reader)
         {
             StringBuilder sb = new();
+            const int MaxLength = 1024; // 防止畸形文件中无终止符导致的超长读取
             try
             {
                 byte b;
 
-                while (reader.BaseStream.Position < reader.BaseStream.Length && (b = reader.ReadByte()) != 0)
+                while (sb.Length < MaxLength && reader.BaseStream.Position < reader.BaseStream.Length && (b = reader.ReadByte()) != 0)
                 {
                     // 确保是有效的ASCII字符
                     if (b is >= 32 and <= 126)
@@ -346,15 +347,17 @@ namespace PersonalTools.PEAnalyzer.Parsers
             foreach (IMAGESECTIONHEADER section in sections)
             {
                 // 确保节头有效并具有文件数据
-                if (section.VirtualSize == 0 || section.SizeOfRawData == 0 || section.PointerToRawData == 0)
+                if (section.SizeOfRawData == 0 || section.PointerToRawData == 0)
                 {
                     continue;
                 }
 
+                // VirtualSize 为 0 时（部分旧链接器合法生成）按 SizeOfRawData 作为节在内存中的大小，
+                // 否则该节内的 RVA 会被误判为无法解析，静默丢失导入/导出/CLR 数据。
+                long sectionVirtualSize = section.VirtualSize != 0 ? section.VirtualSize : section.SizeOfRawData;
+
                 // 检查RVA是否在当前节的范围内
-                // 使用VirtualSize作为节在内存中的大小
-                // 使用SizeOfRawData作为节在文件中的大小
-                if (rva >= section.VirtualAddress && rva < (long)section.VirtualAddress + section.VirtualSize)
+                if (rva >= section.VirtualAddress && rva < (long)section.VirtualAddress + sectionVirtualSize)
                 {
                     // 计算相对于节起始地址的偏移量
                     uint relativeOffset = rva - section.VirtualAddress;

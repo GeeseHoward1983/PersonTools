@@ -93,9 +93,10 @@ namespace PersonalTools
                 long originalPosition = fs.Position;
                 fs.Position = targetPosition;
 
-                // 读取以null结尾的字符串
-                StringBuilder sb = new();
-                while (fs.Position < fs.Length)
+                // #Strings 堆为 UTF-8 编码，按 null 结尾读取并限制最大长度
+                const int MaxLength = 1024;
+                List<byte> bytes = [];
+                while (fs.Position < fs.Length && bytes.Count < MaxLength)
                 {
                     byte b = reader.ReadByte();
                     if (b == 0)
@@ -103,11 +104,11 @@ namespace PersonalTools
                         break;
                     }
 
-                    sb.Append((char)b);
+                    bytes.Add(b);
                 }
 
                 fs.Position = originalPosition;
-                return sb.ToString();
+                return Encoding.UTF8.GetString([.. bytes]);
             }
             catch (EndOfStreamException)
             {

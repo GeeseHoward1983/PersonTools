@@ -15,6 +15,14 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <summary>资源目录项大小（字节）。</summary>
         public const int DirectoryEntrySize = 8;
 
+        /// <summary>资源目录树最大递归深度（正常 PE 仅 3 层：类型/名称/语言）。</summary>
+        private const int MaxDirectoryDepth = 32;
+
+        // 当前遍历路径上的目录偏移集合与深度，用于防止畸形/循环资源树导致的无限递归与 StackOverflow。
+        // 所有递归都经由 WalkEntries 分派回调，故在此单点防护即可覆盖全部调用方。
+        [ThreadStatic] private static HashSet<long>? _walkPath;
+        [ThreadStatic] private static int _walkDepth;
+
         /// <summary>
         /// 从当前位置读取一个 IMAGE_RESOURCE_DIRECTORY（16 字节）。
         /// </summary>
@@ -87,24 +95,47 @@ namespace PersonalTools.PEAnalyzer.Resources
                 return;
             }
 
-            fs.Position = directoryOffset;
-            IMAGERESOURCEDIRECTORY directory = ReadDirectory(reader);
-            int totalEntries = directory.NumberOfNamedEntries + directory.NumberOfIdEntries;
-
-            for (int i = 0; i < totalEntries; i++)
+            // 循环/深度防护：超过最大深度，或该目录偏移已在当前递归路径上（成环）则直接返回。
+            _walkPath ??= [];
+            if (_walkDepth >= MaxDirectoryDepth || !_walkPath.Add(directoryOffset))
             {
-                if (!TryReadEntry(fs, reader, directoryOffset, i, out IMAGERESOURCEDIRECTORYENTRY entry))
-                {
-                    break;
-                }
+                return;
+            }
 
-                if ((entry.OffsetToData & 0x80000000) != 0)
+            _walkDepth++;
+            try
+            {
+                fs.Position = directoryOffset;
+                IMAGERESOURCEDIRECTORY directory = ReadDirectory(reader);
+                int totalEntries = directory.NumberOfNamedEntries + directory.NumberOfIdEntries;
+
+                for (int i = 0; i < totalEntries; i++)
                 {
-                    onSubdirectory(resourceBaseOffset + (entry.OffsetToData & 0x7FFFFFFF));
+                    if (!TryReadEntry(fs, reader, directoryOffset, i, out IMAGERESOURCEDIRECTORYENTRY entry))
+                    {
+                        break;
+                    }
+
+                    if ((entry.OffsetToData & 0x80000000) != 0)
+                    {
+                        onSubdirectory(resourceBaseOffset + (entry.OffsetToData & 0x7FFFFFFF));
+                    }
+                    else
+                    {
+                        onDataEntry(resourceBaseOffset + entry.OffsetToData);
+                    }
+                }
+            }
+            finally
+            {
+                _walkDepth--;
+                if (_walkDepth == 0)
+                {
+                    _walkPath = null; // 顶层遍历结束，释放路径集合
                 }
                 else
                 {
-                    onDataEntry(resourceBaseOffset + entry.OffsetToData);
+                    _walkPath.Remove(directoryOffset); // 离开该层，允许兄弟分支合法地再次访问相同偏移(DAG)
                 }
             }
         }

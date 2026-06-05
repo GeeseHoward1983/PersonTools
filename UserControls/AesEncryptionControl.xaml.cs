@@ -127,10 +127,9 @@ namespace PersonalTools.UserControls
             {
                 MessageBox.Show($"AES加密时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            // 其他异常重新抛出
-            catch (Exception)
+            catch (FormatException ex)
             {
-                throw;
+                MessageBox.Show($"AES处理时发生错误：输入的十六进制格式无效。{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -201,10 +200,9 @@ namespace PersonalTools.UserControls
             {
                 MessageBox.Show($"AES解密时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            // 其他异常重新抛出
-            catch (Exception)
+            catch (FormatException ex)
             {
-                throw;
+                MessageBox.Show($"AES处理时发生错误：输入的十六进制格式无效。{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -277,8 +275,14 @@ namespace PersonalTools.UserControls
 
             using MemoryStream msDecrypt = new(encryptedBytes);
             using CryptoStream csDecrypt = new(msDecrypt, decryptor, CryptoStreamMode.Read);
-            using StreamReader srDecrypt = new(csDecrypt);
-            return srDecrypt.ReadToEnd();
+            using MemoryStream resultStream = new();
+            csDecrypt.CopyTo(resultStream);
+            byte[] decryptedBytes = resultStream.ToArray();
+
+            // 按明文输入的表示方式输出：字符串模式 → UTF-8 文本；Hex 模式 → 十六进制，避免二进制数据丢失
+            return AesInputStringRadio.IsChecked == true
+                ? Encoding.UTF8.GetString(decryptedBytes)
+                : Utils.ToHexString(decryptedBytes);
         }
 
         // 获取密钥字节数组
@@ -299,31 +303,20 @@ namespace PersonalTools.UserControls
         // 获取IV字节数组
         private static byte[] GetIVBytes(string ivInput, bool isString)
         {
-            if (isString)
-            {
-                // 普通字符串模式
-                // 对于IV，如果是字符串模式，我们只取前16个字节
-                byte[] ivBytes = Encoding.UTF8.GetBytes(ivInput);
-                Array.Resize(ref ivBytes, 16);
-                return ivBytes;
-            }
-            else
-            {
-                // Hex字符串模式
-                return Utils.HexStringToByteArray(ivInput);
-            }
+            // 不做截断/补齐：交由 IsValidIVLength 按字节长度校验，避免静默改变用户输入的 IV
+            return isString ? Encoding.UTF8.GetBytes(ivInput) : Utils.HexStringToByteArray(ivInput);
         }
 
-        // 验证密钥长度是否正确
+        // 验证密钥长度是否正确（按实际字节数校验，兼容多字节字符）
         private static bool IsValidKeyLength(string key, bool isString)
         {
-            return isString ? key.Length is 16 or 24 or 32 : key.Length is 32 or 48 or 64;
+            return GetKeyBytes(key, isString).Length is 16 or 24 or 32;
         }
 
-        // 验证IV长度是否正确
+        // 验证IV长度是否正确（AES 固定 16 字节）
         private static bool IsValidIVLength(string iv, bool isString)
         {
-            return isString ? iv.Length == 16 : iv.Length == 32;
+            return GetIVBytes(iv, isString).Length == 16;
         }
 
         // 处理AES标签页的文件拖放事件
@@ -367,10 +360,9 @@ namespace PersonalTools.UserControls
             //{
             //    MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             //}
-            // 其他异常重新抛出
-            catch (Exception)
+            catch (FormatException ex)
             {
-                throw;
+                MessageBox.Show($"AES处理时发生错误：输入的十六进制格式无效。{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
