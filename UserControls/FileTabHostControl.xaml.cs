@@ -8,27 +8,36 @@ using System.Windows.Media;
 namespace PersonalTools.UserControls
 {
     /// <summary>
-    /// ELFAnalyzerHostControl.xaml 的交互逻辑。
-    /// 多文件宿主：按完整路径管理 tab——同路径覆盖、新路径新建，每个 tab 内放一个 ELFAnalyzerControl。
+    /// FileTabHostControl.xaml 的交互逻辑。
+    /// 与分析器无关的多文件宿主：按完整路径管理 tab——同路径覆盖、新路径新建。
+    /// 由宿主方设置 <see cref="AnalyzerFactory"/>/<see cref="FileFilter"/>/<see cref="EmptyHintText"/> 决定承载哪种分析视图。
     /// </summary>
     #pragma warning disable CA1515 // 符合WPF框架要求，需要保持public访问修饰符
-    public partial class ELFAnalyzerHostControl : UserControl
+    public partial class FileTabHostControl : UserControl
     {
         #pragma warning restore CA1515
-        public ELFAnalyzerHostControl()
+        public FileTabHostControl()
         {
             InitializeComponent();
             UpdateEmptyHint();
         }
 
+        /// <summary>创建一个文件分析视图（PE/ELF 等）。由宿主方在构造后设置。</summary>
+        internal Func<IFileAnalyzerView>? AnalyzerFactory { get; set; }
+
+        /// <summary>打开对话框使用的文件过滤器。</summary>
+        public string FileFilter { get; set; } = "All files (*.*)|*.*";
+
+        /// <summary>空状态提示文案。</summary>
+        public string EmptyHintText
+        {
+            get => EmptyHint.Text;
+            set => EmptyHint.Text = value;
+        }
+
         private void OpenFile_Click(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog dlg = new()
-            {
-                Filter = "Executable and Linkable Format files (*.elf)|*.elf|All files (*.*)|*.*",
-                Multiselect = true
-            };
-
+            OpenFileDialog dlg = new() { Filter = FileFilter, Multiselect = true };
             if (dlg.ShowDialog() == true)
             {
                 OpenOrUpdateFiles(dlg.FileNames);
@@ -54,7 +63,7 @@ namespace PersonalTools.UserControls
             }
         }
 
-        // 由 tab 内 ELFAnalyzerControl 拖入时上抛，统一走按路径建/覆盖逻辑
+        // 由 tab 内分析视图拖入时上抛，统一走按路径建/覆盖逻辑
         private void OnInnerFilesDropped(IReadOnlyList<string> files)
         {
             OpenOrUpdateFiles(files);
@@ -70,6 +79,11 @@ namespace PersonalTools.UserControls
 
         private void OpenOrUpdate(string path)
         {
+            if (AnalyzerFactory == null)
+            {
+                return;
+            }
+
             string full;
             try
             {
@@ -85,24 +99,24 @@ namespace PersonalTools.UserControls
             {
                 if (item is TabItem existing && existing.Tag is string tag
                     && string.Equals(tag, full, StringComparison.OrdinalIgnoreCase)
-                    && existing.Content is ELFAnalyzerControl existingControl)
+                    && existing.Content is IFileAnalyzerView existingView)
                 {
-                    existingControl.AnalyzeELFFile(full);
+                    existingView.LoadFile(full);
                     FileTabs.SelectedItem = existing;
                     return;
                 }
             }
 
             // 新路径 → 新建 tab
-            ELFAnalyzerControl control = new();
-            control.FilesDropped = OnInnerFilesDropped;
-            control.AnalyzeELFFile(full);
+            IFileAnalyzerView view = AnalyzerFactory();
+            view.FilesDropped = OnInnerFilesDropped;
+            view.LoadFile(full);
 
             TabItem tab = new()
             {
                 ToolTip = full,
                 Tag = full,
-                Content = control
+                Content = view // 实现者为 UserControl，可直接作为 tab 内容
             };
             tab.Header = BuildTabHeader(Path.GetFileName(full), tab);
 
@@ -143,9 +157,9 @@ namespace PersonalTools.UserControls
         {
             if (sender is Button btn && btn.Tag is TabItem tab)
             {
-                if (tab.Content is ELFAnalyzerControl control)
+                if (tab.Content is IFileAnalyzerView view)
                 {
-                    control.FilesDropped = null;
+                    view.FilesDropped = null;
                 }
 
                 FileTabs.Items.Remove(tab);

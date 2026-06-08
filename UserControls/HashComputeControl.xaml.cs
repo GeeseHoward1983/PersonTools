@@ -42,47 +42,36 @@ namespace PersonalTools.UserControls
             SHA3AlgorithmComboBox.SelectedIndex = 0; // 默认选择SHA3-256
         }
 
-        // MD5计算功能
-        private void CalculateMD5_Click(object sender, RoutedEventArgs e)
+        // 统一的哈希计算：按所选输入模式取字节，计算并显示结果（Hex 单选选中→按十六进制解析，否则按 UTF-8）
+        private static void ComputeHash(string algoName, TextBox inputBox, RadioButton hexRadio, Func<byte[], byte[]> hashFunc, ContentControl resultLabel)
         {
-            string input = MD5InputTextBox.Text;
+            string input = inputBox.Text;
             if (string.IsNullOrEmpty(input))
             {
-                MessageBox.Show("请输入要计算MD5的值", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show($"请输入要计算{algoName}的值", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
             try
             {
-                byte[] inputBytes;
-
-                if (MD5StringInputRadio.IsChecked == true)
-                {
-                    // 普通字符串模式
-                    inputBytes = Encoding.UTF8.GetBytes(input);
-                }
-                else if (MD5HexInputRadio.IsChecked == true)
-                {
-                    // Hex字符串模式
-                    inputBytes = Utils.HexStringToByteArray(input);
-                }
-                else
-                {
-                    // 默认使用普通字符串模式
-                    inputBytes = Encoding.UTF8.GetBytes(input);
-                }
-                byte[] hashBytes = MD5.HashData(inputBytes);
-                MD5ResultLabel.Content = Utils.ToHexString(hashBytes);  // 恢复：使用Label的Content属性
+                byte[] inputBytes = hexRadio.IsChecked == true
+                    ? Utils.HexStringToByteArray(input)
+                    : Encoding.UTF8.GetBytes(input);
+                resultLabel.Content = Utils.ToHexString(hashFunc(inputBytes));
             }
             catch (FormatException ex)
             {
-                MessageBox.Show($"计算MD5时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"计算{algoName}时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            catch (ArgumentNullException ex)
+            catch (ArgumentException ex)
             {
-                MessageBox.Show($"计算MD5时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"计算{algoName}时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        // MD5计算功能
+        private void CalculateMD5_Click(object sender, RoutedEventArgs e)
+            => ComputeHash("MD5", MD5InputTextBox, MD5HexInputRadio, MD5.HashData, MD5ResultLabel);
 
         // 清空MD5计算结果
         private void ClearMD5_Click(object sender, RoutedEventArgs e)
@@ -93,45 +82,7 @@ namespace PersonalTools.UserControls
 
         // SHA1计算功能
         private void CalculateSHA1_Click(object sender, RoutedEventArgs e)
-        {
-            string input = SHA1InputTextBox.Text;
-            if (string.IsNullOrEmpty(input))
-            {
-                MessageBox.Show("请输入要计算SHA1的值", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            try
-            {
-                byte[] inputBytes;
-
-                if (SHA1StringInputRadio.IsChecked == true)
-                {
-                    // 普通字符串模式
-                    inputBytes = Encoding.UTF8.GetBytes(input);
-                }
-                else if (SHA1HexInputRadio.IsChecked == true)
-                {
-                    // Hex字符串模式
-                    inputBytes = Utils.HexStringToByteArray(input);
-                }
-                else
-                {
-                    // 默认使用普通字符串模式
-                    inputBytes = Encoding.UTF8.GetBytes(input);
-                }
-                byte[] hashBytes = SHA1.HashData(inputBytes);
-                SHA1ResultLabel.Content = Utils.ToHexString(hashBytes);
-            }
-            catch (FormatException ex)
-            {
-                MessageBox.Show($"计算SHA1时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (ArgumentNullException ex)
-            {
-                MessageBox.Show($"计算SHA1时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
+            => ComputeHash("SHA1", SHA1InputTextBox, SHA1HexInputRadio, SHA1.HashData, SHA1ResultLabel);
 
         // 清空SHA1计算结果
         private void ClearSHA1_Click(object sender, RoutedEventArgs e)
@@ -142,45 +93,7 @@ namespace PersonalTools.UserControls
 
         // SHA224计算功能
         private void CalculateSHA224_Click(object sender, RoutedEventArgs e)
-        {
-            string input = SHA224InputTextBox.Text;
-            if (string.IsNullOrEmpty(input))
-            {
-                MessageBox.Show("请输入要计算SHA224的值", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            try
-            {
-                byte[] inputBytes;
-
-                if (SHA224StringInputRadio.IsChecked == true)
-                {
-                    // 普通字符串模式
-                    inputBytes = Encoding.UTF8.GetBytes(input);
-                }
-                else if (SHA224HexInputRadio.IsChecked == true)
-                {
-                    // Hex字符串模式
-                    inputBytes = Utils.HexStringToByteArray(input);
-                }
-                else
-                {
-                    // 默认使用普通字符串模式
-                    inputBytes = Encoding.UTF8.GetBytes(input);
-                }
-                byte[] sha224Bytes = Sha224.HashData(inputBytes);
-                SHA224ResultLabel.Content = Utils.ToHexString(sha224Bytes);
-            }
-            catch (FormatException ex)
-            {
-                MessageBox.Show($"计算SHA224时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (ArgumentNullException ex)
-            {
-                MessageBox.Show($"计算SHA224时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
+            => ComputeHash("SHA224", SHA224InputTextBox, SHA224HexInputRadio, Sha224.HashData, SHA224ResultLabel);
 
         // 清空SHA224计算结果
         private void ClearSHA224_Click(object sender, RoutedEventArgs e)
@@ -191,45 +104,7 @@ namespace PersonalTools.UserControls
 
         // SHA256计算功能
         private void CalculateSHA256_Click(object sender, RoutedEventArgs e)
-        {
-            string input = SHA256InputTextBox.Text;
-            if (string.IsNullOrEmpty(input))
-            {
-                MessageBox.Show("请输入要计算SHA256的值", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            try
-            {
-                byte[] inputBytes;
-
-                if (SHA256StringInputRadio.IsChecked == true)
-                {
-                    // 普通字符串模式
-                    inputBytes = Encoding.UTF8.GetBytes(input);
-                }
-                else if (SHA256HexInputRadio.IsChecked == true)
-                {
-                    // Hex字符串模式
-                    inputBytes = Utils.HexStringToByteArray(input);
-                }
-                else
-                {
-                    // 默认使用普通字符串模式
-                    inputBytes = Encoding.UTF8.GetBytes(input);
-                }
-                byte[] hashBytes = SHA256.HashData(inputBytes);
-                SHA256ResultLabel.Content = Utils.ToHexString(hashBytes);
-            }
-            catch (FormatException ex)
-            {
-                MessageBox.Show($"计算SHA256时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (ArgumentNullException ex)
-            {
-                MessageBox.Show($"计算SHA256时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
+            => ComputeHash("SHA256", SHA256InputTextBox, SHA256HexInputRadio, SHA256.HashData, SHA256ResultLabel);
 
         // 清空SHA256计算结果
         private void ClearSHA256_Click(object sender, RoutedEventArgs e)
@@ -240,45 +115,7 @@ namespace PersonalTools.UserControls
 
         // SHA384计算功能
         private void CalculateSHA384_Click(object sender, RoutedEventArgs e)
-        {
-            string input = SHA384InputTextBox.Text;
-            if (string.IsNullOrEmpty(input))
-            {
-                MessageBox.Show("请输入要计算SHA384的值", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            try
-            {
-                byte[] inputBytes;
-
-                if (SHA384StringInputRadio.IsChecked == true)
-                {
-                    // 普通字符串模式
-                    inputBytes = Encoding.UTF8.GetBytes(input);
-                }
-                else if (SHA384HexInputRadio.IsChecked == true)
-                {
-                    // Hex字符串模式
-                    inputBytes = Utils.HexStringToByteArray(input);
-                }
-                else
-                {
-                    // 默认使用普通字符串模式
-                    inputBytes = Encoding.UTF8.GetBytes(input);
-                }
-                byte[] hashBytes = SHA384.HashData(inputBytes);
-                SHA384ResultLabel.Content = Utils.ToHexString(hashBytes);
-            }
-            catch (FormatException ex)
-            {
-                MessageBox.Show($"计算SHA384时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (ArgumentNullException ex)
-            {
-                MessageBox.Show($"计算SHA384时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
+            => ComputeHash("SHA384", SHA384InputTextBox, SHA384HexInputRadio, SHA384.HashData, SHA384ResultLabel);
 
         // 清空SHA384计算结果
         private void ClearSHA384_Click(object sender, RoutedEventArgs e)
@@ -289,45 +126,7 @@ namespace PersonalTools.UserControls
 
         // SHA512计算功能
         private void CalculateSHA512_Click(object sender, RoutedEventArgs e)
-        {
-            string input = SHA512InputTextBox.Text;
-            if (string.IsNullOrEmpty(input))
-            {
-                MessageBox.Show("请输入要计算SHA512的值", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            try
-            {
-                byte[] inputBytes;
-
-                if (SHA512StringInputRadio.IsChecked == true)
-                {
-                    // 普通字符串模式
-                    inputBytes = Encoding.UTF8.GetBytes(input);
-                }
-                else if (SHA512HexInputRadio.IsChecked == true)
-                {
-                    // Hex字符串模式
-                    inputBytes = Utils.HexStringToByteArray(input);
-                }
-                else
-                {
-                    // 默认使用普通字符串模式
-                    inputBytes = Encoding.UTF8.GetBytes(input);
-                }
-                byte[] hashBytes = SHA512.HashData(inputBytes);
-                SHA512ResultLabel.Content = Utils.ToHexString(hashBytes);
-            }
-            catch (FormatException ex)
-            {
-                MessageBox.Show($"计算SHA512时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (ArgumentNullException ex)
-            {
-                MessageBox.Show($"计算SHA512时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
+            => ComputeHash("SHA512", SHA512InputTextBox, SHA512HexInputRadio, SHA512.HashData, SHA512ResultLabel);
 
         // 清空SHA512计算结果
         private void ClearSHA512_Click(object sender, RoutedEventArgs e)

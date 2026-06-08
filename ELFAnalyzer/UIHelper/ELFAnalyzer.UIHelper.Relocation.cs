@@ -11,194 +11,198 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
         {
             List<ELFRelocationInfo> result = [];
 
-            // 先找到对应节的索引
-            int sectionIndex = -1;
-            string actualSectionName = string.Empty;
-
-            if (Parser.SectionHeaders != null)
+            int sectionIndex = FindRelocationSection(Parser, sectionName, out string actualSectionName);
+            if (sectionIndex == -1)
             {
-                for (int i = 0; i < Parser.SectionHeaders.Count; i++)
+                return result;
+            }
+
+            Models.ELFSectionHeader section = Parser.SectionHeaders![sectionIndex];
+            int entryCount = (int)(section.sh_size / section.sh_entsize);
+            byte[] data = Parser.CopySectionData(in section);
+
+            Models.ELFSectionHeader symTabSection = Parser.SectionHeaders[(int)section.sh_link];
+            List<ELFSymbol> symbols = ReadRelocationSymbols(Parser, symTabSection);
+
+            bool isRela = sectionName.Contains("rela", StringComparison.CurrentCulture);
+            for (int j = 0; j < entryCount; j++)
+            {
+                ReadRelocationEntry(Parser, data, j, isRela, out ulong offset, out ulong info, out long addend);
+                SplitRelocInfo(Parser.Is64Bit, info, out uint sym, out uint type);
+                (string symbolName, string symbolValue) = ResolveRelocSymbol(Parser, symbols, sym);
+
+                string typeName = ELFRelocation.GetRelocationTypeName(type, Parser.Header.e_machine);
+                result.Add(new ELFRelocationInfo
                 {
-                    string currentSectionName = SymbleName.GetSectionName(Parser, i) ?? string.Empty;
-                    if (currentSectionName == sectionName)
-                    {
-                        sectionIndex = i;
-                        actualSectionName = currentSectionName;
-                        break;
-                    }
-                }
-
-                if (sectionIndex != -1)
-                {
-                    Models.ELFSectionHeader section = Parser.SectionHeaders[sectionIndex];
-                    if (section.sh_type is ((uint)SectionType.SHT_RELA) or ((uint)SectionType.SHT_REL)) // RELA/REL类型节
-                    {
-                        // 计算条目数
-                        int entryCount = (int)(section.sh_size / section.sh_entsize);
-
-                        // 读取重定位数据
-                        byte[] data = Parser.CopySectionData(in section);
-
-                        // 读取关联的符号表
-                        Models.ELFSectionHeader symTabSection = Parser.SectionHeaders[(int)section.sh_link];
-                        byte[] symTabData = Parser.CopySectionData(in symTabSection);
-
-                        // 读取符号表
-                        List<ELFSymbol> symbols = [];
-                        int symEntrySize = Parser.Is64Bit ? 24 : 16; // 64位ELF符号表项大小为24字节，32位为16字节
-                        int symCount = symTabData.Length / symEntrySize;
-
-                        for (int symIdx = 0; symIdx < symCount; symIdx++)
-                        {
-                            if (!Parser.Header.IsLittleEndian()) // 如果不是小端序
-                            {
-
-                                Array.Reverse(symTabData, symIdx * symEntrySize, 4);
-                                if (Parser.Is64Bit)
-                                {
-                                    Array.Reverse(symTabData, symIdx * symEntrySize + 8, 8);
-                                    Array.Reverse(symTabData, symIdx * symEntrySize + 16, 8);
-                                    Array.Reverse(symTabData, symIdx * symEntrySize + 6, 2);
-                                }
-                                else
-                                {
-                                    Array.Reverse(symTabData, symIdx * symEntrySize + 4, 4);
-                                    Array.Reverse(symTabData, symIdx * symEntrySize + 8, 4);
-                                    Array.Reverse(symTabData, symIdx * symEntrySize + 14, 2);
-
-                                }
-                            }
-                            symbols.Add(Parser.Is64Bit ? new ELFSymbol
-                            {
-                                StName = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize),
-                                StValue = BitConverter.ToUInt64(symTabData, symIdx * symEntrySize + 8),
-                                StSize = BitConverter.ToUInt64(symTabData, symIdx * symEntrySize + 16),
-                                StInfo = symTabData[symIdx * symEntrySize + 4],
-                                StOther = symTabData[symIdx * symEntrySize + 5],
-                                StShndx = BitConverter.ToUInt16(symTabData, symIdx * symEntrySize + 6)
-                            } : new ELFSymbol
-                            {
-                                StName = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize),
-                                StValue = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize + 4),
-                                StSize = BitConverter.ToUInt32(symTabData, symIdx * symEntrySize + 8),
-                                StInfo = symTabData[symIdx * symEntrySize + 12],
-                                StOther = symTabData[symIdx * symEntrySize + 13],
-                                StShndx = BitConverter.ToUInt16(symTabData, symIdx * symEntrySize + 14)
-                            });
-                        }
-
-                        for (int j = 0; j < entryCount; j++)
-                        {
-                            ulong offset;
-                            ulong info;
-                            long addend = -1;
-                            uint sym;
-                            uint type;
-                            string symbolName = string.Empty;
-                            string symbolValue = "0000000000000000"; // 默认符号值
-
-                            if (!Parser.Is64Bit)
-                            {
-                                if (sectionName.Contains("rela", StringComparison.CurrentCulture))
-                                {
-                                    if (!Parser.Header.IsLittleEndian()) // 如果不是小端序
-                                    {
-                                        Array.Reverse(data, j * 12, 4);
-                                        Array.Reverse(data, j * 12 + 4, 4);
-                                        Array.Reverse(data, j * 12 + 8, 4);
-                                    }
-                                    // 读取32位RELA条目
-                                    // r_offset (4 bytes), r_info (4 bytes), r_addend (4 bytes)
-                                    offset = BitConverter.ToUInt32(data, j * 12);
-                                    info = BitConverter.ToUInt32(data, j * 12 + 4);
-                                    addend = BitConverter.ToInt32(data, j * 12 + 8);
-                                }
-                                else
-                                {
-                                    if (!Parser.Header.IsLittleEndian()) // 如果不是小端序
-                                    {
-                                        Array.Reverse(data, j * 8, 4);
-                                        Array.Reverse(data, j * 8 + 4, 4);
-                                    }
-                                    // 读取32位REL条目
-                                    // r_offset (4 bytes), r_info (4 bytes)
-                                    offset = BitConverter.ToUInt32(data, j * 8);
-                                    info = BitConverter.ToUInt32(data, j * 8 + 4);
-                                }
-
-                                // 解析info字段
-                                sym = (uint)(info >> 8); // 符号索引
-                                type = (uint)(info & 0xff); // 重定位类型
-
-                                // 读取符号名和符号值
-                                if (sym < symbols.Count)
-                                {
-                                    ELFSymbol symbol = symbols[(int)sym];
-                                    symbolName = ResolveRelocSymbolName(Parser, symbol, (int)sym);
-                                    symbolValue = $"{symbol.StValue:x8}";
-                                }
-                            }
-                            else
-                            {
-                                if (sectionName.Contains("rela", StringComparison.CurrentCulture))
-                                {
-                                    if (!Parser.Header.IsLittleEndian()) // 如果不是小端序
-                                    {
-                                        Array.Reverse(data, j * 24, 8);
-                                        Array.Reverse(data, j * 24 + 8, 8);
-                                        Array.Reverse(data, j * 24 + 16, 8);
-                                    }
-                                    // 读取64位RELA条目
-                                    // r_offset (8 bytes), r_info (8 bytes), r_addend (8 bytes)
-                                    offset = BitConverter.ToUInt64(data, j * 24);
-                                    info = BitConverter.ToUInt64(data, j * 24 + 8);
-                                    addend = BitConverter.ToInt64(data, j * 24 + 16);
-                                }
-                                else
-                                {
-                                    if (!Parser.Header.IsLittleEndian()) // 如果不是小端序
-                                    {
-                                        Array.Reverse(data, j * 16, 8);
-                                        Array.Reverse(data, j * 16 + 8, 8);
-                                    }
-                                    // 读取64位REL条目
-                                    // r_offset (8 bytes), r_info (8 bytes)
-                                    offset = BitConverter.ToUInt64(data, j * 16);
-                                    info = BitConverter.ToUInt64(data, j * 16 + 8);
-                                }
-
-                                // 解析info字段
-                                sym = (uint)(info >> 32); // 符号索引
-                                type = (uint)(info & 0xffffffff); // 重定位类型
-
-                                // 读取符号名和符号值
-                                if (sym < symbols.Count)
-                                {
-                                    ELFSymbol symbol = symbols[(int)sym];
-                                    symbolName = ResolveRelocSymbolName(Parser, symbol, (int)sym);
-                                    symbolValue = $"{symbol.StValue:x16}";
-                                }
-                            }
-
-                            // 获取重定位类型名称
-                            string typeName = ELFRelocation.GetRelocationTypeName(type, Parser.Header.e_machine);
-
-                            result.Add(new ELFRelocationInfo
-                            {
-                                Offset = $"{offset:x16}".PadLeft(12),
-                                Info = $"{info:x16}".PadLeft(12),
-                                Type = typeName ?? "",
-                                SymbolValue = symbolValue.PadLeft(16),
-                                Symbol = symbolName,
-                                Addend = sectionName.Contains("rela", StringComparison.CurrentCulture) ? addend.ToString(CultureInfo.InvariantCulture) : "",
-                                SectionName = actualSectionName
-                            });
-                        }
-                    }
-                }
+                    Offset = $"{offset:x16}".PadLeft(12),
+                    Info = $"{info:x16}".PadLeft(12),
+                    Type = typeName ?? "",
+                    SymbolValue = symbolValue.PadLeft(16),
+                    Symbol = symbolName,
+                    Addend = isRela ? addend.ToString(CultureInfo.InvariantCulture) : "",
+                    SectionName = actualSectionName
+                });
             }
 
             return result;
+        }
+
+        // 按名称查找 RELA/REL 重定位节，返回其索引（找不到或类型不符返回 -1）
+        private static int FindRelocationSection(ELFParser Parser, string sectionName, out string actualSectionName)
+        {
+            actualSectionName = string.Empty;
+            if (Parser.SectionHeaders == null)
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < Parser.SectionHeaders.Count; i++)
+            {
+                string currentSectionName = SymbleName.GetSectionName(Parser, i) ?? string.Empty;
+                if (currentSectionName != sectionName)
+                {
+                    continue;
+                }
+
+                Models.ELFSectionHeader section = Parser.SectionHeaders[i];
+                if (section.sh_type is ((uint)SectionType.SHT_RELA) or ((uint)SectionType.SHT_REL))
+                {
+                    actualSectionName = currentSectionName;
+                    return i;
+                }
+                return -1;
+            }
+            return -1;
+        }
+
+        // 读取重定位节关联的符号表（处理 32/64 位与字节序）
+        private static List<ELFSymbol> ReadRelocationSymbols(ELFParser Parser, Models.ELFSectionHeader symTabSection)
+        {
+            byte[] symTabData = Parser.CopySectionData(in symTabSection);
+            List<ELFSymbol> symbols = [];
+            int symEntrySize = Parser.Is64Bit ? 24 : 16; // 64位符号表项24字节，32位16字节
+            int symCount = symTabData.Length / symEntrySize;
+
+            for (int symIdx = 0; symIdx < symCount; symIdx++)
+            {
+                int b = symIdx * symEntrySize;
+                if (!Parser.Header.IsLittleEndian())
+                {
+                    ReverseSymbolFields(symTabData, b, Parser.Is64Bit);
+                }
+                symbols.Add(Parser.Is64Bit ? ReadSymbol64(symTabData, b) : ReadSymbol32(symTabData, b));
+            }
+            return symbols;
+        }
+
+        private static void ReverseSymbolFields(byte[] d, int b, bool is64)
+        {
+            Array.Reverse(d, b, 4); // st_name
+            if (is64)
+            {
+                Array.Reverse(d, b + 8, 8);  // st_value
+                Array.Reverse(d, b + 16, 8); // st_size
+                Array.Reverse(d, b + 6, 2);  // st_shndx
+            }
+            else
+            {
+                Array.Reverse(d, b + 4, 4);  // st_value
+                Array.Reverse(d, b + 8, 4);  // st_size
+                Array.Reverse(d, b + 14, 2); // st_shndx
+            }
+        }
+
+        private static ELFSymbol ReadSymbol64(byte[] d, int b) => new()
+        {
+            StName = BitConverter.ToUInt32(d, b),
+            StValue = BitConverter.ToUInt64(d, b + 8),
+            StSize = BitConverter.ToUInt64(d, b + 16),
+            StInfo = d[b + 4],
+            StOther = d[b + 5],
+            StShndx = BitConverter.ToUInt16(d, b + 6)
+        };
+
+        private static ELFSymbol ReadSymbol32(byte[] d, int b) => new()
+        {
+            StName = BitConverter.ToUInt32(d, b),
+            StValue = BitConverter.ToUInt32(d, b + 4),
+            StSize = BitConverter.ToUInt32(d, b + 8),
+            StInfo = d[b + 12],
+            StOther = d[b + 13],
+            StShndx = BitConverter.ToUInt16(d, b + 14)
+        };
+
+        // 读取一个重定位条目（32/64 位 × REL/RELA × 字节序）
+        private static void ReadRelocationEntry(ELFParser Parser, byte[] data, int j, bool isRela, out ulong offset, out ulong info, out long addend)
+        {
+            addend = -1;
+            bool little = Parser.Header.IsLittleEndian();
+            if (Parser.Is64Bit)
+            {
+                int b = j * (isRela ? 24 : 16);
+                if (!little)
+                {
+                    Array.Reverse(data, b, 8);
+                    Array.Reverse(data, b + 8, 8);
+                    if (isRela)
+                    {
+                        Array.Reverse(data, b + 16, 8);
+                    }
+                }
+                offset = BitConverter.ToUInt64(data, b);
+                info = BitConverter.ToUInt64(data, b + 8);
+                if (isRela)
+                {
+                    addend = BitConverter.ToInt64(data, b + 16);
+                }
+            }
+            else
+            {
+                int b = j * (isRela ? 12 : 8);
+                if (!little)
+                {
+                    Array.Reverse(data, b, 4);
+                    Array.Reverse(data, b + 4, 4);
+                    if (isRela)
+                    {
+                        Array.Reverse(data, b + 8, 4);
+                    }
+                }
+                offset = BitConverter.ToUInt32(data, b);
+                info = BitConverter.ToUInt32(data, b + 4);
+                if (isRela)
+                {
+                    addend = BitConverter.ToInt32(data, b + 8);
+                }
+            }
+        }
+
+        // 拆分 r_info 为符号索引与重定位类型（位数不同分割位不同）
+        private static void SplitRelocInfo(bool is64, ulong info, out uint sym, out uint type)
+        {
+            if (is64)
+            {
+                sym = (uint)(info >> 32);
+                type = (uint)(info & 0xffffffff);
+            }
+            else
+            {
+                sym = (uint)(info >> 8);
+                type = (uint)(info & 0xff);
+            }
+        }
+
+        // 解析符号名与符号值（越界返回默认零值）
+        private static (string name, string value) ResolveRelocSymbol(ELFParser Parser, List<ELFSymbol> symbols, uint sym)
+        {
+            if (sym >= symbols.Count)
+            {
+                return (string.Empty, "0000000000000000");
+            }
+            ELFSymbol symbol = symbols[(int)sym];
+            string name = ResolveRelocSymbolName(Parser, symbol, (int)sym);
+            string value = Parser.Is64Bit ? $"{symbol.StValue:x16}" : $"{symbol.StValue:x8}";
+            return (name, value);
         }
 
         // 解析重定位符号名：SECTION 类符号 st_name 通常为 0，回退显示其所属节名（与符号表一致）

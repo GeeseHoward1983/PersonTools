@@ -64,27 +64,9 @@ namespace PersonalTools
 
                             for (int i = 0; i < functionAddresses.Count; i++)
                             {
-                                uint functionRVA = functionAddresses[i];
-
-                                ExportFunctionInfo exportFunc = new()
-                                {
-                                    Ordinal = (int)(i + exportDir.Base),
-                                    RVA = functionRVA
-                                };
-
-                                exportFunc.Name = functionNames.TryGetValue(i, out string? value) ? value : $"Ordinal_{exportFunc.Ordinal}";
-
-                                // 转发导出：函数 RVA 落在导出目录范围内时指向 "DLL.Function" 字符串而非代码
-                                if (functionRVA != 0 && functionRVA >= exportRVA && functionRVA < (long)exportRVA + exportSize)
-                                {
-                                    string forwarder = ReadForwarderString(fs, reader, peInfo.SectionHeaders, functionRVA);
-                                    if (!string.IsNullOrEmpty(forwarder))
-                                    {
-                                        exportFunc.Name = $"{exportFunc.Name} (forwarded -> {forwarder})";
-                                    }
-                                }
-
-                                peInfo.ExportFunctions.Add(exportFunc);
+                                peInfo.ExportFunctions.Add(BuildExportFunction(
+                                    fs, reader, peInfo.SectionHeaders, i, functionAddresses[i],
+                                    exportDir.Base, functionNames, exportRVA, exportSize));
                             }
                         }
                         finally
@@ -109,6 +91,30 @@ namespace PersonalTools
                 // 忽略导出表解析错误
                 Console.WriteLine($"导出表解析错误: {ex.Message}");
             }
+        }
+
+        // 构造单个导出函数项（含序号、名称、转发目标）
+        private static ExportFunctionInfo BuildExportFunction(FileStream fs, BinaryReader reader, List<IMAGESECTIONHEADER> sections, int i, uint functionRVA, uint baseOrdinal, Dictionary<int, string> functionNames, uint exportRVA, uint exportSize)
+        {
+            ExportFunctionInfo exportFunc = new()
+            {
+                Ordinal = (int)(i + baseOrdinal),
+                RVA = functionRVA
+            };
+
+            exportFunc.Name = functionNames.TryGetValue(i, out string? value) ? value : $"Ordinal_{exportFunc.Ordinal}";
+
+            // 转发导出：函数 RVA 落在导出目录范围内时指向 "DLL.Function" 字符串而非代码
+            if (functionRVA != 0 && functionRVA >= exportRVA && functionRVA < (long)exportRVA + exportSize)
+            {
+                string forwarder = ReadForwarderString(fs, reader, sections, functionRVA);
+                if (!string.IsNullOrEmpty(forwarder))
+                {
+                    exportFunc.Name = $"{exportFunc.Name} (forwarded -> {forwarder})";
+                }
+            }
+
+            return exportFunc;
         }
 
         private static List<uint> ReadUInt32ListAtRva(FileStream fs, BinaryReader reader, List<IMAGESECTIONHEADER> sections, uint rva, uint count)

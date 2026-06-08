@@ -124,31 +124,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 // 偏移为相对节起始的连续偏移（与 readelf 一致）
                 sb.AppendLine(CultureInfo.InvariantCulture, $"  {FormatVersionOffset((int)(offset - sectionStart))}: 版本: {vn_version}  文件: {libName}  计数: {vn_cnt}");
 
-                long auxOffset = offset + vn_aux;
-                int auxProcessed = 0;
-
-                // 遍历该库的所有版本依赖
-                while (auxProcessed < vn_cnt && auxOffset < parser.FileData.Length)
-                {
-                    // vernaux: vna_hash(+0) vna_flags(+4) vna_other(+6) vna_name(+8) vna_next(+12)
-                    ushort vnaFlags = ELFParserUtils.ReadUInt16(parser.FileData, (int)auxOffset + 4, isLittleEndian);
-                    ushort vnaOther = ELFParserUtils.ReadUInt16(parser.FileData, (int)auxOffset + 6, isLittleEndian);
-                    uint auxNext = ELFParserUtils.ReadUInt32(parser.FileData, (int)auxOffset + 12, isLittleEndian);
-
-                    // vna_other 的低 15 位是版本索引
-                    ushort verIndex = (ushort)(vnaOther & 0x7fff);
-                    string actualVersionName = GetVersionInfoByIndex(parser, verIndex);
-
-                    sb.AppendLine(CultureInfo.InvariantCulture, $"  {FormatVersionOffset((int)(auxOffset - sectionStart))}: 名称: {actualVersionName}  标志: {GetVerneedFlags(vnaFlags)}  版本: {verIndex}");
-
-                    auxProcessed++;
-                    if (auxNext == 0)
-                    {
-                        break;
-                    }
-
-                    auxOffset += auxNext;
-                }
+                AppendVerneedAuxEntries(parser, sb, offset + vn_aux, vn_cnt, sectionStart, isLittleEndian);
 
                 processed++;
                 if (vn_next == 0)
@@ -162,6 +138,33 @@ namespace PersonalTools.ELFAnalyzer.Core
             if (processed == 0)
             {
                 sb.AppendLine("  No version dependencies found.");
+            }
+        }
+
+        // 遍历某个版本需求项(库)下的所有 vernaux 依赖并追加输出
+        private static void AppendVerneedAuxEntries(ELFParser parser, StringBuilder sb, long auxOffset, ushort vn_cnt, long sectionStart, bool isLittleEndian)
+        {
+            int auxProcessed = 0;
+            while (auxProcessed < vn_cnt && auxOffset < parser.FileData.Length)
+            {
+                // vernaux: vna_hash(+0) vna_flags(+4) vna_other(+6) vna_name(+8) vna_next(+12)
+                ushort vnaFlags = ELFParserUtils.ReadUInt16(parser.FileData, (int)auxOffset + 4, isLittleEndian);
+                ushort vnaOther = ELFParserUtils.ReadUInt16(parser.FileData, (int)auxOffset + 6, isLittleEndian);
+                uint auxNext = ELFParserUtils.ReadUInt32(parser.FileData, (int)auxOffset + 12, isLittleEndian);
+
+                // vna_other 的低 15 位是版本索引
+                ushort verIndex = (ushort)(vnaOther & 0x7fff);
+                string actualVersionName = GetVersionInfoByIndex(parser, verIndex);
+
+                sb.AppendLine(CultureInfo.InvariantCulture, $"  {FormatVersionOffset((int)(auxOffset - sectionStart))}: 名称: {actualVersionName}  标志: {GetVerneedFlags(vnaFlags)}  版本: {verIndex}");
+
+                auxProcessed++;
+                if (auxNext == 0)
+                {
+                    break;
+                }
+
+                auxOffset += auxNext;
             }
         }
 

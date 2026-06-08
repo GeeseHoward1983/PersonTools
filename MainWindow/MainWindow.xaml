@@ -17,12 +17,12 @@
         <TabControl Grid.Row="1" Margin="5,5,5,10">
             <!-- PE文件分析器标签页 -->
             <TabItem Header="PE文件分析器">
-                <uc:PEAnalyzerHostControl/>
+                <uc:FileTabHostControl x:Name="PEHost"/>
             </TabItem>
 
             <!-- ELF文件分析器标签页 -->
             <TabItem Header="ELF文件分析器">
-                <uc:ELFAnalyzerHostControl/>
+                <uc:FileTabHostControl x:Name="ELFHost"/>
             </TabItem>
 
             <!-- Mach-O文件分析器标签页 -->

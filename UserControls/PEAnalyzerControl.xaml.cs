@@ -1,3 +1,4 @@
+using PersonalTools.PEAnalyzer;
 using PersonalTools.PEAnalyzer.Models;
 using PersonalTools.PEAnalyzer.Parsers;
 using System.IO;
@@ -11,7 +12,7 @@ namespace PersonalTools.UserControls
     /// PEAnalyzerControl.xaml 的交互逻辑
     /// </summary>
     #pragma warning disable CA1515 // 符合WPF框架要求，需要保持public访问修饰符
-    public partial class PEAnalyzerControl : UserControl
+    public partial class PEAnalyzerControl : UserControl, IFileAnalyzerView
     {
         #pragma warning restore CA1515
         public PEAnalyzerControl()
@@ -41,6 +42,9 @@ namespace PersonalTools.UserControls
                 }
             }
         }
+
+        // IFileAnalyzerView：供宿主统一调用
+        public void LoadFile(string filePath) => LoadPEFile(filePath);
 
         public void LoadPEFile(string filePath)
         {
@@ -78,164 +82,28 @@ namespace PersonalTools.UserControls
         private void DisplayHeaderInfo()
         {
             HeaderInfoPanel.Children.Clear();
-
             if (currentPEInfo == null)
             {
                 return;
             }
 
-            // 准备文件信息
-            Dictionary<string, string> fileInfo = new()
+            foreach ((string title, Dictionary<string, string> info) in PEHeaderPresenter.BuildHeaderSections(currentPEInfo))
             {
-                { "文件路径", currentPEInfo.FilePath },
-                { "文件类型", Utilities.GetDetailedFileType(currentPEInfo.NtHeaders.FileHeader.Characteristics, currentPEInfo.OptionalHeader.Subsystem) },
-                { "架构", GetArchitectureInfo() },
-                { "位数", GetBitInfo() }
-            };
-
-            // 只有在是驱动程序时才添加驱动程序类型信息
-            string driverType = Utilities.GetDriverType(currentPEInfo.NtHeaders.FileHeader.Characteristics, currentPEInfo.OptionalHeader.Subsystem, currentPEInfo.OptionalHeader.DllCharacteristics);
-            if (!string.IsNullOrEmpty(driverType))
-            {
-                fileInfo.Add("驱动程序类型", driverType);
+                AddHeaderInfo(title, info);
             }
-
-            // 显示文件基本信息
-            AddHeaderInfo("文件信息", fileInfo);
-
-            // 显示DOS头信息
-            AddHeaderInfo("DOS头信息", new Dictionary<string, string>
-            {
-                { "签名(e_magic)", $"0x{currentPEInfo.DosHeader.e_magic:X4} ('{(char)(currentPEInfo.DosHeader.e_magic & 0xFF)}{(char)(currentPEInfo.DosHeader.e_magic >> 8)}')" },
-                { "NT头偏移(e_lfanew)", $"0x{currentPEInfo.DosHeader.e_lfanew:X8}" }
-            });
-
-            // 显示NT头信息
-            AddHeaderInfo("NT头信息", new Dictionary<string, string>
-            {
-                { "签名", $"0x{currentPEInfo.NtHeaders.Signature:X8}" },
-                { "机器类型", Utilities.GetMachineTypeDescription(currentPEInfo.NtHeaders.FileHeader.Machine) },
-                { "节数量", $"0x{currentPEInfo.NtHeaders.FileHeader.NumberOfSections:X4}" },
-                { "时间戳", $"{currentPEInfo.NtHeaders.FileHeader.TimeDateStamp:X8} ({UnixTimeStampToDateTime(currentPEInfo.NtHeaders.FileHeader.TimeDateStamp):yyyy-MM-dd HH:mm:ss})" },
-                { "可选头大小", $"0x{currentPEInfo.NtHeaders.FileHeader.SizeOfOptionalHeader:X4}" },
-                { "特征标志", $"0x{currentPEInfo.NtHeaders.FileHeader.Characteristics:X4}" }
-            });
-
-            // 显示可选头信息
-            AddHeaderInfo("可选头信息", new Dictionary<string, string>
-            {
-                { "魔数", $"0x{currentPEInfo.OptionalHeader.Magic:X4} ({(currentPEInfo.OptionalHeader.Magic == 0x10b ? "PE32" : currentPEInfo.OptionalHeader.Magic == 0x20b ? "PE32+" : "Unknown")})" },
-                { "链接器版本", $"{Utilities.GetLinkerVersionDescription(currentPEInfo.OptionalHeader.MajorLinkerVersion, currentPEInfo.OptionalHeader.MinorLinkerVersion)}" },
-                { "编译器版本", $"{Utilities.GetCompilerVersionDescription(currentPEInfo.OptionalHeader.MajorLinkerVersion, currentPEInfo.OptionalHeader.MinorLinkerVersion, currentPEInfo.CLRInfo != null)}" },
-                { "代码大小", $"0x{currentPEInfo.OptionalHeader.SizeOfCode:X8}" },
-                { "已初始化数据大小", $"0x{currentPEInfo.OptionalHeader.SizeOfInitializedData:X8}" },
-                { "未初始化数据大小", $"0x{currentPEInfo.OptionalHeader.SizeOfUninitializedData:X8}" },
-                { "入口点RVA", $"0x{currentPEInfo.OptionalHeader.AddressOfEntryPoint:X8}" },
-                { "代码基址", $"0x{currentPEInfo.OptionalHeader.BaseOfCode:X8}" },
-                { "数据基址", Utilities.Is64Bit(currentPEInfo.OptionalHeader) ? "N/A (PE32+)" : $"0x{currentPEInfo.OptionalHeader.BaseOfData:X8}" },
-                { "镜像基址", $"0x{currentPEInfo.OptionalHeader.ImageBase:X8}" },
-                { "节对齐", $"0x{currentPEInfo.OptionalHeader.SectionAlignment:X8}" },
-                { "文件对齐", $"0x{currentPEInfo.OptionalHeader.FileAlignment:X8}" },
-                { "操作系统版本", Utilities.GetOperatingSystemVersionDescription(currentPEInfo.OptionalHeader.MajorOperatingSystemVersion, currentPEInfo.OptionalHeader.MinorOperatingSystemVersion) },
-                { "镜像版本", Utilities.GetImageVersionDescription(currentPEInfo.OptionalHeader.MajorImageVersion, currentPEInfo.OptionalHeader.MinorImageVersion) },
-                { "子系统版本", Utilities.GetSubsystemVersionDescription(currentPEInfo.OptionalHeader.MajorSubsystemVersion, currentPEInfo.OptionalHeader.MinorSubsystemVersion) },
-                { "镜像大小", $"0x{currentPEInfo.OptionalHeader.SizeOfImage:X8}" },
-                { "头部大小", $"0x{currentPEInfo.OptionalHeader.SizeOfHeaders:X8}" },
-                { "校验和", $"0x{currentPEInfo.OptionalHeader.CheckSum:X8}" },
-                { "子系统", Utilities.GetSubsystemDescription(currentPEInfo.OptionalHeader.Subsystem) },
-                { "DLL特征", $"0x{currentPEInfo.OptionalHeader.DllCharacteristics:X4}" },
-                { "栈保留大小", $"0x{currentPEInfo.OptionalHeader.SizeOfStackReserve:X8}" },
-                { "栈提交大小", $"0x{currentPEInfo.OptionalHeader.SizeOfStackCommit:X8}" },
-                { "堆保留大小", $"0x{currentPEInfo.OptionalHeader.SizeOfHeapReserve:X8}" },
-                { "堆提交大小", $"0x{currentPEInfo.OptionalHeader.SizeOfHeapCommit:X8}" },
-                { "数据目录数量", $"0x{currentPEInfo.OptionalHeader.NumberOfRvaAndSizes:X8}" }
-            });
-
-            // 显示CLR信息（如果是.NET程序集）
-            if (currentPEInfo.CLRInfo != null)
-            {
-                AddHeaderInfo(".NET CLR信息", new Dictionary<string, string>
-                {
-                    { "运行时版本", $"v{currentPEInfo.CLRInfo.RuntimeVersion}" },
-                    { "架构类型", currentPEInfo.CLRInfo.Architecture },
-                    { "标志位", Utils.EnumerableToString(", ", currentPEInfo.CLRInfo.FlagDescriptions) },
-                    { "入口点", $"0x{currentPEInfo.CLRInfo.EntryPointTokenOrRva:X8}" },
-                    { "包含元数据", currentPEInfo.CLRInfo.HasMetaData ? "是" : "否" },
-                    { "包含资源", currentPEInfo.CLRInfo.HasResources ? "是" : "否" },
-                    { "强名称签名", currentPEInfo.CLRInfo.HasStrongNameSignature ? "是" : "否" }
-                });
-            }
-
-            // 显示节信息
-            Dictionary<string, string> sectionDict = CreateSectionInfo();
-            AddHeaderInfo("节信息", sectionDict);
-        }
-
-        private Dictionary<string, string> CreateSectionInfo()
-        {
-            Dictionary<string, string> sectionInfo = [];
-
-            // 显示所有节信息，不再限制数量
-            for (int i = 0; i < currentPEInfo?.SectionHeaders.Count; i++)
-            {
-                IMAGESECTIONHEADER section = currentPEInfo.SectionHeaders[i];
-                string sectionName = System.Text.Encoding.UTF8.GetString(section.Name).Trim('\0');
-                sectionInfo[$"节 {i} ({sectionName})"] = $"RVA: 0x{section.VirtualAddress:X8}, 大小: 0x{section.VirtualSize:X8}, Raw大小: 0x{section.SizeOfRawData:X8}, 特征: 0x{section.Characteristics:X8}";
-            }
-
-            sectionInfo[$"总计"] = $"{currentPEInfo?.SectionHeaders.Count} 个节";
-
-            return sectionInfo;
         }
 
         private void DisplayAdditionalInfo()
         {
             AdditionalInfoPanel.Children.Clear();
-
-            // 总是创建面板，即使没有附加信息
             if (currentPEInfo == null)
             {
                 return;
             }
 
-            // 显示版本信息
-            AddAdditionalInfo("版本信息", new Dictionary<string, string>
+            foreach ((string title, Dictionary<string, string> info) in PEHeaderPresenter.BuildAdditionalSections(currentPEInfo))
             {
-                { "文件版本", currentPEInfo.AdditionalInfo.FileVersion },
-                { "产品版本", currentPEInfo.AdditionalInfo.ProductVersion }
-            });
-
-            // 显示公司和产品信息
-            AddAdditionalInfo("公司和产品信息", new Dictionary<string, string>
-            {
-                { "公司名称", currentPEInfo.AdditionalInfo.CompanyName },
-                { "产品名称", currentPEInfo.AdditionalInfo.ProductName },
-                { "文件描述", currentPEInfo.AdditionalInfo.FileDescription }
-            });
-
-            // 显示版权和商标信息
-            AddAdditionalInfo("版权和商标信息", new Dictionary<string, string>
-            {
-                { "版权信息", currentPEInfo.AdditionalInfo.LegalCopyright },
-                { "商标信息", currentPEInfo.AdditionalInfo.LegalTrademarks },
-                { "原始文件名", currentPEInfo.AdditionalInfo.OriginalFileName },
-                { "内部名称", currentPEInfo.AdditionalInfo.InternalName }
-            });
-
-            // 显示证书信息
-            AddAdditionalInfo("证书信息", new Dictionary<string, string>
-            {
-                { "是否签名", currentPEInfo.AdditionalInfo.IsSigned ? "是" : "否" },
-                { "证书详情", currentPEInfo.AdditionalInfo.CertificateInfo }
-            });
-
-            // 显示翻译信息（来自VarFileInfo）
-            if (!string.IsNullOrEmpty(currentPEInfo.AdditionalInfo.TranslationInfo))
-            {
-                AddAdditionalInfo("翻译信息", new Dictionary<string, string>
-                {
-                    { "语言和代码页", currentPEInfo.AdditionalInfo.TranslationInfo }
-                });
+                AddAdditionalInfo(title, info);
             }
         }
 
@@ -370,47 +238,6 @@ namespace PersonalTools.UserControls
                 node.EnsureLoaded();
                 ShowFunctions(node.Info);
             }
-        }
-
-        private static DateTime UnixTimeStampToDateTime(long unixTimeStamp)
-        {
-            DateTime dt = new(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-            return dt.AddSeconds(unixTimeStamp).ToLocalTime();
-        }
-
-        private string GetArchitectureInfo()
-        {
-            if (currentPEInfo == null)
-            {
-                return "Unknown";
-            }
-
-            // 对于.NET程序，显示PE头架构和.NET架构信息
-            if (currentPEInfo.CLRInfo != null)
-            {
-                return $"{Utilities.GetMachineTypeDescription(currentPEInfo.NtHeaders.FileHeader.Machine)} (.NET: {currentPEInfo.CLRInfo.Architecture})";
-            }
-
-            // 对于非.NET程序，只显示PE头架构
-            return Utilities.GetMachineTypeDescription(currentPEInfo.NtHeaders.FileHeader.Machine);
-        }
-
-        private string GetBitInfo()
-        {
-            if (currentPEInfo == null)
-            {
-                return "Unknown";
-            }
-
-            // 对于.NET程序，根据.NET架构判断位数
-            if (currentPEInfo.CLRInfo != null)
-            {
-                string arch = currentPEInfo.CLRInfo.Architecture;
-                return arch == "x86" ? "32位" : arch == "Any CPU" ? "Any CPU" : arch is "x64" or "ARM64" ? "64位" : "未知";
-            }
-
-            // 对于非.NET程序，根据PE头判断位数
-            return Utilities.Is64Bit(currentPEInfo.OptionalHeader) ? "64位" : "32位";
         }
 
         private void AddHeaderInfo(string title, System.Collections.Generic.Dictionary<string, string> info)

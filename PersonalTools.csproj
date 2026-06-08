@@ -134,11 +134,7 @@
 		<SubType>Designer</SubType>
 		<Generator>MSBuild:Compile</Generator>
 	</Page>
-	<Page Include="UserControls\PEAnalyzerHostControl.xaml">
-		<SubType>Designer</SubType>
-		<Generator>MSBuild:Compile</Generator>
-	</Page>
-	<Page Include="UserControls\ELFAnalyzerHostControl.xaml">
+	<Page Include="UserControls\FileTabHostControl.xaml">
 		<SubType>Designer</SubType>
 		<Generator>MSBuild:Compile</Generator>
 	</Page>

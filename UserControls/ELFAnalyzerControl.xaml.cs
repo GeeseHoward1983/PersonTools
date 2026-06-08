@@ -7,7 +7,7 @@ using System.Windows.Controls;
 namespace PersonalTools.UserControls
 {
 #pragma warning disable CA1515 // 符合WPF框架要求，需要保持public访问修饰符
-    public partial class ELFAnalyzerControl : UserControl
+    public partial class ELFAnalyzerControl : UserControl, IFileAnalyzerView
     {
 #pragma warning restore CA1515
         public ELFAnalyzerControl()
@@ -147,6 +147,9 @@ namespace PersonalTools.UserControls
             ELFExidxInfoControl.SetExidxInfo(exidxInfo);
             ELFExidxInfoTabItem.Visibility = !exidxInfo.Contains("There are no exception index entries", StringComparison.CurrentCulture) ? Visibility.Visible : Visibility.Collapsed;
         }
+
+        // IFileAnalyzerView：供宿主统一调用
+        public void LoadFile(string filePath) => AnalyzeELFFile(filePath);
 
         public void AnalyzeELFFile(string filePath)
         {

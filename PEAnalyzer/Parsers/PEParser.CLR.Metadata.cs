@@ -254,16 +254,7 @@ namespace PersonalTools
                 long typeDefRowSize = 4L + (2L * stringIndexSize) + typeDefOrRefSize + fieldIndexSize + methodIndexSize;
 
                 // 跳过位于 TypeDef(2) 之前的 Module(0)、TypeRef(1) 表，定位到 TypeDef 表数据起始
-                long typeDefStart = tablesDataOffset;
-                if (IsTablePresent(maskValid, 0))
-                {
-                    typeDefStart += rowCounts[0] * moduleRowSize;
-                }
-
-                if (IsTablePresent(maskValid, 1))
-                {
-                    typeDefStart += rowCounts[1] * typeRefRowSize;
-                }
+                long typeDefStart = ComputeTypeDefStart(tablesDataOffset, maskValid, rowCounts, moduleRowSize, typeRefRowSize);
 
                 uint typeDefCount = rowCounts[2];
                 for (uint i = 0; i < typeDefCount; i++)
@@ -275,29 +266,7 @@ namespace PersonalTools
                     }
 
                     fs.Position = rowStart;
-                    uint flags = reader.ReadUInt32();
-                    uint nameIndex = ReadHeapIndex(reader, stringIndexSize);
-                    uint namespaceIndex = ReadHeapIndex(reader, stringIndexSize);
-                    // Extends/FieldList/MethodList 无需读取：下一行由 rowStart 推进
-
-                    // 仅收集公开可见类型：VisibilityMask = 0x7，Public = 1，NestedPublic = 2
-                    uint visibility = flags & 0x7;
-                    if (visibility is 1u or 2u)
-                    {
-                        string typeName = ReadStringFromHeap(fs, reader, stringHeapOffset, nameIndex);
-                        string namespaceName = ReadStringFromHeap(fs, reader, stringHeapOffset, namespaceIndex);
-                        string fullName = string.IsNullOrEmpty(namespaceName) ? typeName : $"{namespaceName}.{typeName}";
-
-                        if (!string.IsNullOrEmpty(fullName))
-                        {
-                            peInfo.ExportFunctions.Add(new ExportFunctionInfo
-                            {
-                                Name = fullName,
-                                Ordinal = (int)i,
-                                RVA = 0 // 对于.NET程序集，RVA不适用
-                            });
-                        }
-                    }
+                    TryCollectTypeDefRow(fs, reader, peInfo, stringHeapOffset, stringIndexSize, i);
                 }
             }
             catch (IOException ex)
@@ -307,6 +276,50 @@ namespace PersonalTools
             catch (UnauthorizedAccessException ex)
             {
                 Console.WriteLine($"TypeDef表解析权限错误: {ex.Message}");
+            }
+        }
+
+        // 定位 TypeDef 表起始：跳过其前的 Module(0)、TypeRef(1) 表
+        private static long ComputeTypeDefStart(long tablesDataOffset, ulong maskValid, uint[] rowCounts, long moduleRowSize, long typeRefRowSize)
+        {
+            long typeDefStart = tablesDataOffset;
+            if (IsTablePresent(maskValid, 0))
+            {
+                typeDefStart += rowCounts[0] * moduleRowSize;
+            }
+            if (IsTablePresent(maskValid, 1))
+            {
+                typeDefStart += rowCounts[1] * typeRefRowSize;
+            }
+            return typeDefStart;
+        }
+
+        // 读取一行 TypeDef，仅收集公开可见类型（Public=1 / NestedPublic=2）到导出列表
+        private static void TryCollectTypeDefRow(FileStream fs, BinaryReader reader, PEInfo peInfo, long stringHeapOffset, int stringIndexSize, uint i)
+        {
+            uint flags = reader.ReadUInt32();
+            uint nameIndex = ReadHeapIndex(reader, stringIndexSize);
+            uint namespaceIndex = ReadHeapIndex(reader, stringIndexSize);
+            // Extends/FieldList/MethodList 无需读取：下一行由 rowStart 推进
+
+            uint visibility = flags & 0x7; // VisibilityMask
+            if (visibility is not (1u or 2u))
+            {
+                return;
+            }
+
+            string typeName = ReadStringFromHeap(fs, reader, stringHeapOffset, nameIndex);
+            string namespaceName = ReadStringFromHeap(fs, reader, stringHeapOffset, namespaceIndex);
+            string fullName = string.IsNullOrEmpty(namespaceName) ? typeName : $"{namespaceName}.{typeName}";
+
+            if (!string.IsNullOrEmpty(fullName))
+            {
+                peInfo.ExportFunctions.Add(new ExportFunctionInfo
+                {
+                    Name = fullName,
+                    Ordinal = (int)i,
+                    RVA = 0 // 对于.NET程序集，RVA不适用
+                });
             }
         }
     }

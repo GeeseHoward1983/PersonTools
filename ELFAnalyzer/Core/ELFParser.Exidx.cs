@@ -331,98 +331,87 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private static void ProcessSingleByteInstruction(byte cmd, StringBuilder sb)
         {
-            switch (cmd)
+            if (cmd == 0xB0) // BX r14 (finish)
             {
-                case 0xB0: // BX r14 (finish)
-                    sb.AppendLine("  finish");
-                    break;
-                default:
-                    // vsp = vsp - (imm4 + 1) << 2指令 (0x00-0x3F)
-                    if (cmd <= 0x3F)
-                    {
-                        sb.AppendLine(CultureInfo.InvariantCulture, $"  vsp = vsp + {CalcVsp(cmd)}");
-                    }
-                    // vsp = vsp - (imm4 - 1) << 2指令 (0x40-0x7F)
-                    else if (cmd is >= 0x40 and <= 0x7F)
-                    {
-                        sb.AppendLine(CultureInfo.InvariantCulture, $"  vsp = vsp - {CalcVsp(cmd)}");
-                    }
-                    else if ((cmd & 0x90) == 0x90)
-                    {
-                        int imm = cmd & 0x0F;
-                        if (imm is 0xC or 0xF)
-                        {
-                            sb.AppendLine("  reserved");
-                        }
-                        else
-                        {
-                            sb.AppendLine(CultureInfo.InvariantCulture, $"  vsp = r{imm}");
-                        }
-                    }
-                    // 检查是否是pop {r4-rN, lr}指令 (0xA0-0xAF)
-                    else if (cmd is >= 0xA0 and <= 0xAF)
-                    {
-                        List<string> regs = [];
-                        int regMask = cmd & 0x07;
-                        for (int i = 0; i <= regMask; i++)
-                        {
-                            regs.Add($"r{i + 4}");
-                        }
-                        if ((cmd & 0x08) == 0x08)
-                        {
-                            regs.Add("r14"); // LR register
-                        }
-
-                        if (regs.Count > 0)
-                        {
-                            sb.AppendLine(CultureInfo.InvariantCulture, $"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
-                        }
-                    }
-                    else if (cmd == 0xB4)
-                    {
-                        sb.AppendLine("  pop");
-                    }
-                    else if (cmd == 0xB5)
-                    {
-                        sb.AppendLine("  pop vsp");
-                    }
-                    else if (cmd is 0xB6 or 0xB7 or (>= 0xCA and <= 0xCF) or (>= 0xD8 and <= 0xFF))
-                    {
-                        sb.AppendLine("  Spare");
-                    }
-                    else if (cmd is (>= 0xB8 and <= 0xBF) or (>= 0xD0 and <= 0xD7))
-                    {
-                        List<string> regs = [];
-                        int regMask = cmd & 0x07;
-                        for (int i = 0; i <= regMask; i++)
-                        {
-                            regs.Add($"D{i + 8}");
-                        }
-                        if (regs.Count > 0)
-                        {
-                            sb.AppendLine(CultureInfo.InvariantCulture, $"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
-                        }
-                    }
-                    else if (cmd is >= 0xC0 and <= 0xC5)
-                    {
-                        List<string> regs = [];
-                        int regMask = cmd & 0x07;
-                        for (int i = 0; i <= regMask; i++)
-                        {
-                            regs.Add($"wR{i + 10}");
-                        }
-                        if (regs.Count > 0)
-                        {
-                            sb.AppendLine(CultureInfo.InvariantCulture, $"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
-                        }
-                    }
-                    else
-                    {
-                        sb.AppendLine($"  unknown command");
-                    }
-                    break;
+                sb.AppendLine("  finish");
+            }
+            else if (cmd <= 0x3F) // vsp = vsp + (imm6 << 2) + 4
+            {
+                sb.AppendLine(CultureInfo.InvariantCulture, $"  vsp = vsp + {CalcVsp(cmd)}");
+            }
+            else if (cmd is >= 0x40 and <= 0x7F) // vsp = vsp - (imm6 << 2) - 4
+            {
+                sb.AppendLine(CultureInfo.InvariantCulture, $"  vsp = vsp - {CalcVsp(cmd)}");
+            }
+            else if ((cmd & 0x90) == 0x90)
+            {
+                int imm = cmd & 0x0F;
+                if (imm is 0xC or 0xF)
+                {
+                    sb.AppendLine("  reserved");
+                }
+                else
+                {
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"  vsp = r{imm}");
+                }
+            }
+            else if (cmd is >= 0xA0 and <= 0xAF) // pop {r4-rN[, r14]}
+            {
+                AppendPopList(sb, cmd, "r", 4, includeLr: true);
+            }
+            else if (cmd == 0xB4)
+            {
+                sb.AppendLine("  pop");
+            }
+            else if (cmd == 0xB5)
+            {
+                sb.AppendLine("  pop vsp");
+            }
+            else if (cmd is 0xB6 or 0xB7 or (>= 0xCA and <= 0xCF) or (>= 0xD8 and <= 0xFF))
+            {
+                sb.AppendLine("  Spare");
+            }
+            else if (cmd is (>= 0xB8 and <= 0xBF) or (>= 0xD0 and <= 0xD7)) // pop VFP D8-DN
+            {
+                AppendPopList(sb, cmd, "D", 8, includeLr: false);
+            }
+            else if (cmd is >= 0xC0 and <= 0xC5) // pop wR10-wRN
+            {
+                AppendPopList(sb, cmd, "wR", 10, includeLr: false);
+            }
+            else
+            {
+                sb.AppendLine("  unknown command");
             }
         }
+
+        // 追加一条 "pop {prefix<base>..prefix<base+n>[, r14]}" 指令（regMask = cmd 低3位）
+        private static void AppendPopList(StringBuilder sb, byte cmd, string prefix, int baseReg, bool includeLr)
+        {
+            List<string> regs = [];
+            int regMask = cmd & 0x07;
+            for (int i = 0; i <= regMask; i++)
+            {
+                regs.Add($"{prefix}{i + baseReg}");
+            }
+            if (includeLr && (cmd & 0x08) == 0x08)
+            {
+                regs.Add("r14"); // LR
+            }
+
+            AppendPopRegs(sb, regs);
+        }
+
+        // 寄存器列表非空时追加 "pop {...}"（双字节指令解码中重复使用）
+        private static void AppendPopRegs(StringBuilder sb, List<string> regs)
+        {
+            if (regs.Count > 0)
+            {
+                sb.AppendLine(CultureInfo.InvariantCulture, $"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
+            }
+        }
+
+
 
         private static void ProcessDoubleByteInstruction(ushort cmd, StringBuilder sb)
         {
@@ -444,10 +433,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                     }
                 }
 
-                if (regs.Count > 0)
-                {
-                    sb.AppendLine(CultureInfo.InvariantCulture, $"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
-                }
+                AppendPopRegs(sb, regs);
             }
             else if (cmd is 0xB100 or (>= 0xB110 and <= 0xB1FF) or 0xC700 or (>= 0xC710 and <= 0xC7FF))
             {
@@ -466,10 +452,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 
                     regMask >>= 1;
                 }
-                if (regs.Count > 0)
-                {
-                    sb.AppendLine(CultureInfo.InvariantCulture, $"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
-                }
+                AppendPopRegs(sb, regs);
             }
             else if (cmd is >= 0xB200 and <= 0xB2FF)
             {
@@ -491,10 +474,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 {
                     regs.Add($"D{ssss + i + idx}");
                 }
-                if (regs.Count > 0)
-                {
-                    sb.AppendLine(CultureInfo.InvariantCulture, $"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
-                }
+                AppendPopRegs(sb, regs);
             }
             else if (cmd is >= 0xC600 and <= 0xC6FF)
             {
@@ -505,10 +485,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 {
                     regs.Add($"wR{ssss + i}");
                 }
-                if (regs.Count > 0)
-                {
-                    sb.AppendLine(CultureInfo.InvariantCulture, $"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
-                }
+                AppendPopRegs(sb, regs);
             }
             else if (cmd is >= 0xC701 and <= 0xC70F)
             {
@@ -523,10 +500,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 
                     regMask >>= 1;
                 }
-                if (regs.Count > 0)
-                {
-                    sb.AppendLine(CultureInfo.InvariantCulture, $"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
-                }
+                AppendPopRegs(sb, regs);
             }
             else
             {
