@@ -16,16 +16,8 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// </summary>
         public static void ReadAndProcessIconDataEntry(FileStream fs, BinaryReader reader, PEInfo peInfo, long dataEntryOffset)
         {
-            try
+            ResourceDirectoryReader.RunAtOffset(fs, dataEntryOffset, 16, "图标资源数据项解析错误", () =>
             {
-                if (dataEntryOffset < 0 || dataEntryOffset + 16 > fs.Length)
-                {
-                    return;
-                }
-
-                long originalPosition = fs.Position;
-                fs.Position = dataEntryOffset;
-
                 IMAGERESOURCEDATAENTRY dataEntry = ResourceDirectoryReader.ReadDataEntry(reader);
 
                 // OffsetToData 为 RVA
@@ -39,13 +31,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                         ProcessIconData(peInfo, resourceData);
                     }
                 }
-
-                fs.Position = originalPosition;
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
-            {
-                Console.WriteLine($"图标资源数据项解析错误: {ex.Message}");
-            }
+            });
         }
 
         /// <summary>
@@ -58,9 +44,7 @@ namespace PersonalTools.PEAnalyzer.Resources
             try
             {
                 // 检查是否已经是完整的ICO文件
-                if (iconData.Length >= 4 &&
-                    iconData[0] == 0x00 && iconData[1] == 0x00 && // Reserved
-                    iconData[2] == 0x01 && iconData[3] == 0x00)   // Type (1 = ICO)
+                if (IsCompleteIcoHeader(iconData))
                 {
                     // 已经是完整的ICO文件，直接使用
                     IconInfo iconInfo = new()
@@ -188,13 +172,19 @@ namespace PersonalTools.PEAnalyzer.Resources
             }
 
             // ICO 文件头: 00 00 01 00（Reserved=0, Type=1）
-            if (data[0] == 0x00 && data[1] == 0x00 && data[2] == 0x01 && data[3] == 0x00)
+            if (IsCompleteIcoHeader(data))
             {
                 return true;
             }
 
             // DIB 数据：以 BITMAPINFOHEADER 开始（biSize == 40）
             return data.Length >= 16 && BitConverter.ToUInt32(data, 0) == 40;
+        }
+
+        // ICO 文件头: 00 00 01 00（Reserved=0, Type=1=ICO）
+        private static bool IsCompleteIcoHeader(byte[] data)
+        {
+            return data.Length >= 4 && data[0] == 0x00 && data[1] == 0x00 && data[2] == 0x01 && data[3] == 0x00;
         }
     }
 }

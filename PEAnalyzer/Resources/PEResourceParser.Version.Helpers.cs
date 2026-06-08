@@ -24,14 +24,10 @@ namespace PersonalTools.PEAnalyzer.Resources
                 long startPosition = fs.Position;
 
                 // 读取VS_VERSIONINFO头
-                if (fs.Position + 6 > fs.Length)
+                if (!VersionNodeReader.TryReadNodeHeader(fs, reader, out ushort wLength, out ushort wValueLength, out _))
                 {
                     return;
                 }
-
-                ushort wLength = reader.ReadUInt16();
-                ushort wValueLength = reader.ReadUInt16();
-                reader.ReadUInt16(); // wType
 
                 if (wLength < 6 || startPosition + wLength > fs.Length)
                 {
@@ -39,8 +35,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 }
 
                 // 读取szKey (UNICODE字符串 "VS_VERSION_INFO") 并校验
-                int maxStringBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
-                string vsVersionInfoKey = Utilities.ReadUnicodeStringWithMaxBytes(reader, maxStringBytes);
+                string vsVersionInfoKey = VersionNodeReader.ReadKey(fs, reader, wLength);
                 if (!vsVersionInfoKey.Equals("VS_VERSION_INFO", StringComparison.OrdinalIgnoreCase))
                 {
                     return;
@@ -148,9 +143,10 @@ namespace PersonalTools.PEAnalyzer.Resources
                     long childStartPos = fs.Position;
 
                     // 读取子项头部
-                    ushort wLength = reader.ReadUInt16();
-                    ushort wValueLength = reader.ReadUInt16();
-                    ushort wType = reader.ReadUInt16();
+                    if (!VersionNodeReader.TryReadNodeHeader(fs, reader, out ushort wLength, out _, out _))
+                    {
+                        break;
+                    }
 
                     if (wLength == 0)
                     {
@@ -158,8 +154,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     }
 
                     // 读取键名
-                    int maxKeyBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
-                    string key = Utilities.ReadUnicodeStringWithMaxBytes(reader, maxKeyBytes);
+                    string key = VersionNodeReader.ReadKey(fs, reader, wLength);
 
                     // 重置位置以便正确解析
                     fs.Position = childStartPos;

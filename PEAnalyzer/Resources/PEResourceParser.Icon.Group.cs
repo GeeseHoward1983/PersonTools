@@ -15,25 +15,10 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// </summary>
         public static void ParseGroupIconResource(FileStream fs, BinaryReader reader, PEInfo peInfo, long directoryOffset, long resourceBaseOffset)
         {
-            try
-            {
-                if (directoryOffset < 0 || directoryOffset + ResourceDirectoryReader.DirectoryHeaderSize > fs.Length)
-                {
-                    return;
-                }
-
-                long originalPosition = fs.Position;
-
+            ResourceDirectoryReader.RunAtOffset(fs, directoryOffset, ResourceDirectoryReader.DirectoryHeaderSize, "组图标资源解析错误", () =>
                 ResourceDirectoryReader.WalkEntries(fs, reader, directoryOffset, resourceBaseOffset,
                     subdirectoryOffset => ParseGroupIconResource(fs, reader, peInfo, subdirectoryOffset, resourceBaseOffset),
-                    dataEntryOffset => ParseGroupIconDataEntry(fs, reader, peInfo, dataEntryOffset, resourceBaseOffset));
-
-                fs.Position = originalPosition;
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
-            {
-                Console.WriteLine($"组图标资源解析错误: {ex.Message}");
-            }
+                    dataEntryOffset => ParseGroupIconDataEntry(fs, reader, peInfo, dataEntryOffset, resourceBaseOffset)));
         }
 
         /// <summary>
@@ -41,16 +26,8 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// </summary>
         public static void ParseGroupIconDataEntry(FileStream fs, BinaryReader reader, PEInfo peInfo, long dataEntryOffset, long resourceBaseOffset)
         {
-            try
+            ResourceDirectoryReader.RunAtOffset(fs, dataEntryOffset, 16, "解析组图标数据项错误", () =>
             {
-                if (dataEntryOffset < 0 || dataEntryOffset + 16 > fs.Length)
-                {
-                    return;
-                }
-
-                long originalPosition = fs.Position;
-                fs.Position = dataEntryOffset;
-
                 IMAGERESOURCEDATAENTRY dataEntry = ResourceDirectoryReader.ReadDataEntry(reader);
 
                 // OffsetToData 为 RVA，需转换为文件偏移
@@ -60,13 +37,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     fs.Position = dataOffset;
                     ParseIconDirectory(fs, reader, peInfo, resourceBaseOffset);
                 }
-
-                fs.Position = originalPosition;
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
-            {
-                Console.WriteLine($"解析组图标数据项错误: {ex.Message}");
-            }
+            });
         }
 
         /// <summary>

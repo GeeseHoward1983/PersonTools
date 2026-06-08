@@ -1,4 +1,3 @@
-using PersonalTools.PEAnalyzer.Parsers;
 using PersonalTools.PEAnalyzer.Models;
 using System.IO;
 
@@ -23,15 +22,10 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 long startPosition = fs.Position;
 
-                // 检查是否还有足够的数据
-                if (fs.Position + 6 > fs.Length)
+                if (!VersionNodeReader.TryReadNodeHeader(fs, reader, out ushort wLength, out _, out _))
                 {
                     return;
                 }
-
-                ushort wLength = reader.ReadUInt16();
-                ushort wValueLength = reader.ReadUInt16();
-                ushort wType = reader.ReadUInt16();
 
                 if (wLength < 6 || fs.Position + wLength - 6 > fs.Length)
                 {
@@ -39,30 +33,16 @@ namespace PersonalTools.PEAnalyzer.Resources
                 }
 
                 // 读取szKey (UNICODE字符串 "StringFileInfo")
-                int maxKeyBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
-                string key = Utilities.ReadUnicodeStringWithMaxBytes(reader, maxKeyBytes);
+                string key = VersionNodeReader.ReadKey(fs, reader, wLength);
 
                 if (key.Equals("StringFileInfo", StringComparison.OrdinalIgnoreCase))
                 {
-                    // 计算StringTable的位置
-                    long afterKeyPosition = fs.Position;
-                    long stringTablePosition = (afterKeyPosition + 3) & ~3; // 对齐到4字节边界
-
-                    long stringFileInfoEndPosition = Math.Min(startPosition + wLength, endPosition);
-
-                    if (stringTablePosition < fs.Length && stringTablePosition < stringFileInfoEndPosition)
-                    {
-                        fs.Position = stringTablePosition;
-                        PEResourceParserVersionTable.ParseStringTable(fs, reader, peInfo, stringFileInfoEndPosition);
-                    }
+                    VersionNodeReader.ParseChildBlock(fs, startPosition, wLength, endPosition,
+                        stringFileInfoEndPosition => PEResourceParserVersionTable.ParseStringTable(fs, reader, peInfo, stringFileInfoEndPosition));
                 }
 
                 // 确保位置正确前进到下一个兄弟节点
-                long nextPosition = startPosition + wLength + 3 & ~3;
-                if (nextPosition < endPosition && nextPosition > fs.Position)
-                {
-                    fs.Position = nextPosition;
-                }
+                VersionNodeReader.AdvanceToSibling(fs, startPosition, wLength, endPosition);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {

@@ -15,16 +15,8 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// </summary>
         public static void ParseResourceDirectoryForNamedIcons(FileStream fs, BinaryReader reader, PEInfo peInfo, long resourceOffset)
         {
-            try
+            ResourceDirectoryReader.RunAtOffset(fs, resourceOffset, ResourceDirectoryReader.DirectoryHeaderSize, "解析资源目录以查找命名图标错误", () =>
             {
-                if (resourceOffset < 0 || resourceOffset + ResourceDirectoryReader.DirectoryHeaderSize > fs.Length)
-                {
-                    return;
-                }
-
-                long originalPosition = fs.Position;
-                fs.Position = resourceOffset;
-
                 IMAGERESOURCEDIRECTORY rootDirectory = ResourceDirectoryReader.ReadDirectory(reader);
 
                 // 命名条目位于目录前部，仅遍历这部分
@@ -46,13 +38,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                         ParseNamedResourceDirectory(fs, reader, peInfo, nextLevelOffset, resourceOffset, entry.NameOrId & 0x7FFFFFFF);
                     }
                 }
-
-                fs.Position = originalPosition;
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
-            {
-                Console.WriteLine($"解析资源目录以查找命名图标错误: {ex.Message}");
-            }
+            });
         }
 
         /// <summary>
@@ -60,28 +46,15 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// </summary>
         private static void ParseNamedResourceDirectory(FileStream fs, BinaryReader reader, PEInfo peInfo, long directoryOffset, long resourceBaseOffset, uint nameOffset)
         {
-            try
+            ResourceDirectoryReader.RunAtOffset(fs, directoryOffset, ResourceDirectoryReader.DirectoryHeaderSize, "解析命名资源目录错误", () =>
             {
-                if (directoryOffset < 0 || directoryOffset + ResourceDirectoryReader.DirectoryHeaderSize > fs.Length)
-                {
-                    return;
-                }
-
-                long originalPosition = fs.Position;
-
                 if (ShouldProcessNamedResource(fs, reader, resourceBaseOffset, nameOffset))
                 {
                     ResourceDirectoryReader.WalkEntries(fs, reader, directoryOffset, resourceBaseOffset,
                         subdirectoryOffset => ParseNamedResourceDirectory(fs, reader, peInfo, subdirectoryOffset, resourceBaseOffset, 0),
                         dataEntryOffset => PEResourceParserIconData.ReadAndProcessIconDataEntry(fs, reader, peInfo, dataEntryOffset));
                 }
-
-                fs.Position = originalPosition;
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
-            {
-                Console.WriteLine($"解析命名资源目录错误: {ex.Message}");
-            }
+            });
         }
 
         /// <summary>

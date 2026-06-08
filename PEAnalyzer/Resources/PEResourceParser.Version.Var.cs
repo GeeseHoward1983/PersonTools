@@ -23,15 +23,10 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 long startPosition = fs.Position;
 
-                // 检查是否还有足够的数据
-                if (fs.Position + 6 > fs.Length)
+                if (!VersionNodeReader.TryReadNodeHeader(fs, reader, out ushort wLength, out _, out _))
                 {
                     return;
                 }
-
-                ushort wLength = reader.ReadUInt16();
-                reader.ReadUInt16(); // wValueLength
-                reader.ReadUInt16(); // wType
 
                 if (wLength < 6 || fs.Position + wLength - 6 > fs.Length)
                 {
@@ -39,27 +34,16 @@ namespace PersonalTools.PEAnalyzer.Resources
                 }
 
                 // 读取szKey (UNICODE字符串 "VarFileInfo")
-                int maxKeyBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
-                string key = Utilities.ReadUnicodeStringWithMaxBytes(reader, maxKeyBytes);
+                string key = VersionNodeReader.ReadKey(fs, reader, wLength);
 
                 if (key.Equals("VarFileInfo", StringComparison.OrdinalIgnoreCase))
                 {
-                    long varPosition = Utilities.AlignTo4(fs.Position);
-                    long varFileInfoEndPosition = Math.Min(startPosition + wLength, endPosition);
-
-                    if (varPosition < fs.Length && varPosition < varFileInfoEndPosition)
-                    {
-                        fs.Position = varPosition;
-                        ParseVar(fs, reader, peInfo, varFileInfoEndPosition);
-                    }
+                    VersionNodeReader.ParseChildBlock(fs, startPosition, wLength, endPosition,
+                        varFileInfoEndPosition => ParseVar(fs, reader, peInfo, varFileInfoEndPosition));
                 }
 
                 // 确保位置正确前进到下一个兄弟节点
-                long nextPosition = Utilities.AlignTo4(startPosition + wLength);
-                if (nextPosition < endPosition && nextPosition > fs.Position)
-                {
-                    fs.Position = nextPosition;
-                }
+                VersionNodeReader.AdvanceToSibling(fs, startPosition, wLength, endPosition);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
@@ -81,14 +65,10 @@ namespace PersonalTools.PEAnalyzer.Resources
                 while (fs.Position < endPosition)
                 {
                     long startPosition = fs.Position;
-                    if (fs.Position + 6 > fs.Length)
+                    if (!VersionNodeReader.TryReadNodeHeader(fs, reader, out ushort wLength, out ushort wValueLength, out _))
                     {
                         break;
                     }
-
-                    ushort wLength = reader.ReadUInt16();
-                    ushort wValueLength = reader.ReadUInt16();
-                    reader.ReadUInt16(); // wType
 
                     if (wLength == 0)
                     {
@@ -120,8 +100,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         private static bool ParseSingleVar(FileStream fs, BinaryReader reader, PEInfo peInfo, long startPosition, ushort wLength, ushort wValueLength, long endPosition)
         {
             // 读取变量名（通常是"Translation"）
-            int maxVarNameBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
-            string varName = Utilities.ReadUnicodeStringWithMaxBytes(reader, maxVarNameBytes);
+            string varName = VersionNodeReader.ReadKey(fs, reader, wLength);
 
             // 值对齐到4字节边界：用读取键名后的实际流位置，而非按字符串长度推算
             // （避免读取被截断或键名内嵌 NUL 时错位）

@@ -41,15 +41,10 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 long startPosition = fs.Position;
 
-                // 检查是否还有足够的数据
-                if (fs.Position + 6 > fs.Length)
+                if (!VersionNodeReader.TryReadNodeHeader(fs, reader, out ushort wLength, out _, out _))
                 {
                     return;
                 }
-
-                ushort wLength = reader.ReadUInt16();
-                reader.ReadUInt16(); // wValueLength
-                reader.ReadUInt16(); // wType
 
                 if (wLength < 6 || fs.Position + wLength - 6 > fs.Length)
                 {
@@ -57,8 +52,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 }
 
                 // 读取语言和代码页标识符（通常是8位十六进制字符串），随后对齐到 Strings 起始
-                int maxLangIdBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
-                _ = Utilities.ReadUnicodeStringWithMaxBytes(reader, maxLangIdBytes);
+                _ = VersionNodeReader.ReadKey(fs, reader, wLength);
 
                 long stringsPosition = Utilities.AlignTo4(fs.Position);
                 if (stringsPosition >= fs.Length || stringsPosition >= endPosition)
@@ -94,14 +88,10 @@ namespace PersonalTools.PEAnalyzer.Resources
             try
             {
                 long startPosition = fs.Position;
-                if (fs.Position + 6 > fs.Length)
+                if (!VersionNodeReader.TryReadNodeHeader(fs, reader, out ushort wLength, out _, out _))
                 {
                     return false;
                 }
-
-                ushort wLength = reader.ReadUInt16();
-                reader.ReadUInt16(); // wValueLength
-                reader.ReadUInt16(); // wType
 
                 if (wLength == 0 || startPosition + wLength > endPosition)
                 {
@@ -130,11 +120,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 }
 
                 // 前进到下一个兄弟节点
-                long nextPosition = Utilities.AlignTo4(startPosition + wLength);
-                if (nextPosition < endPosition && nextPosition > fs.Position)
-                {
-                    fs.Position = nextPosition;
-                }
+                VersionNodeReader.AdvanceToSibling(fs, startPosition, wLength, endPosition);
 
                 return true;
             }

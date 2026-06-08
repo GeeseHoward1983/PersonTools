@@ -16,19 +16,11 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// </summary>
         internal static long FindSpecificIconData(FileStream fs, BinaryReader reader, PEInfo peInfo, long directoryOffset, long resourceBaseOffset, uint resourceId)
         {
-            try
+            return ResourceDirectoryReader.ReadAtOffset(fs, directoryOffset, ResourceDirectoryReader.DirectoryHeaderSize, -1L, () =>
             {
-                if (directoryOffset < 0 || directoryOffset + ResourceDirectoryReader.DirectoryHeaderSize > fs.Length)
-                {
-                    return -1;
-                }
-
-                long originalPosition = fs.Position;
-                fs.Position = directoryOffset;
                 IMAGERESOURCEDIRECTORY directory = ResourceDirectoryReader.ReadDirectory(reader);
                 int totalEntries = directory.NumberOfNamedEntries + directory.NumberOfIdEntries;
 
-                long result = -1;
                 for (int i = 0; i < totalEntries; i++)
                 {
                     if (!ResourceDirectoryReader.TryReadEntry(fs, reader, directoryOffset, i, out IMAGERESOURCEDIRECTORYENTRY entry))
@@ -41,19 +33,13 @@ namespace PersonalTools.PEAnalyzer.Resources
                         continue;
                     }
 
-                    result = (entry.OffsetToData & 0x80000000) != 0
+                    return (entry.OffsetToData & 0x80000000) != 0
                         ? FindIconDataInLanguageDirectory(fs, reader, peInfo, resourceBaseOffset + (entry.OffsetToData & 0x7FFFFFFF), resourceBaseOffset)
                         : GetIconDataFromEntry(fs, reader, peInfo, resourceBaseOffset + entry.OffsetToData);
-                    break;
                 }
 
-                fs.Position = originalPosition;
-                return result;
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
-            {
-                return -1;
-            }
+                return -1L;
+            });
         }
 
         /// <summary>
@@ -61,32 +47,18 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// </summary>
         internal static long FindIconDataInLanguageDirectory(FileStream fs, BinaryReader reader, PEInfo peInfo, long directoryOffset, long resourceBaseOffset)
         {
-            try
+            return ResourceDirectoryReader.ReadAtOffset(fs, directoryOffset, ResourceDirectoryReader.DirectoryHeaderSize, -1L, () =>
             {
-                if (directoryOffset < 0 || directoryOffset + ResourceDirectoryReader.DirectoryHeaderSize > fs.Length)
-                {
-                    return -1;
-                }
-
-                long originalPosition = fs.Position;
-                fs.Position = directoryOffset;
                 IMAGERESOURCEDIRECTORY directory = ResourceDirectoryReader.ReadDirectory(reader);
-
-                long result = -1;
                 if (directory.NumberOfNamedEntries + directory.NumberOfIdEntries > 0 &&
                     ResourceDirectoryReader.TryReadEntry(fs, reader, directoryOffset, 0, out IMAGERESOURCEDIRECTORYENTRY entry) &&
                     (entry.OffsetToData & 0x80000000) == 0)
                 {
-                    result = GetIconDataFromEntry(fs, reader, peInfo, resourceBaseOffset + entry.OffsetToData);
+                    return GetIconDataFromEntry(fs, reader, peInfo, resourceBaseOffset + entry.OffsetToData);
                 }
 
-                fs.Position = originalPosition;
-                return result;
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
-            {
-                return -1;
-            }
+                return -1L;
+            });
         }
 
         /// <summary>
@@ -94,25 +66,12 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// </summary>
         internal static long GetIconDataFromEntry(FileStream fs, BinaryReader reader, PEInfo peInfo, long dataEntryOffset)
         {
-            try
+            return ResourceDirectoryReader.ReadAtOffset(fs, dataEntryOffset, 16, -1L, () =>
             {
-                if (dataEntryOffset < 0 || dataEntryOffset + 16 > fs.Length)
-                {
-                    return -1;
-                }
-
-                long originalPosition = fs.Position;
-                fs.Position = dataEntryOffset;
                 IMAGERESOURCEDATAENTRY dataEntry = ResourceDirectoryReader.ReadDataEntry(reader);
                 long dataOffset = Utilities.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
-                fs.Position = originalPosition;
-
-                return ResourceDirectoryReader.IsReadableData(dataOffset, dataEntry.Size, fs) ? dataOffset : -1;
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
-            {
-                return -1;
-            }
+                return ResourceDirectoryReader.IsReadableData(dataOffset, dataEntry.Size, fs) ? dataOffset : -1L;
+            });
         }
 
         /// <summary>
@@ -120,22 +79,19 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// </summary>
         internal static long FindIconDataByResourceId(FileStream fs, BinaryReader reader, PEInfo peInfo, uint resourceId, long resourceBaseOffset)
         {
-            try
+            const int RT_ICON_TYPE = 3;
+
+            long resourceOffset = GetResourceDirectoryOffset(fs, peInfo);
+            if (resourceOffset < 0)
             {
-                const int RT_ICON_TYPE = 3;
+                return -1;
+            }
 
-                long resourceOffset = GetResourceDirectoryOffset(fs, peInfo);
-                if (resourceOffset < 0)
-                {
-                    return -1;
-                }
-
-                long originalPosition = fs.Position;
-                fs.Position = resourceOffset;
+            return ResourceDirectoryReader.ReadAtOffset(fs, resourceOffset, 0, -1L, () =>
+            {
                 IMAGERESOURCEDIRECTORY rootDirectory = ResourceDirectoryReader.ReadDirectory(reader);
                 int totalEntries = rootDirectory.NumberOfNamedEntries + rootDirectory.NumberOfIdEntries;
 
-                long result = -1;
                 for (int i = 0; i < totalEntries; i++)
                 {
                     if (!ResourceDirectoryReader.TryReadEntry(fs, reader, resourceOffset, i, out IMAGERESOURCEDIRECTORYENTRY entry))
@@ -154,17 +110,11 @@ namespace PersonalTools.PEAnalyzer.Resources
                         continue;
                     }
 
-                    result = FindSpecificIconData(fs, reader, peInfo, nextLevelOffset, resourceBaseOffset, resourceId);
-                    break;
+                    return FindSpecificIconData(fs, reader, peInfo, nextLevelOffset, resourceBaseOffset, resourceId);
                 }
 
-                fs.Position = originalPosition;
-                return result;
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
-            {
-                return -1;
-            }
+                return -1L;
+            });
         }
 
         /// <summary>
@@ -188,33 +138,17 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// </summary>
         internal static string ReadResourceName(FileStream fs, BinaryReader reader, long nameOffset)
         {
-            try
+            return ResourceDirectoryReader.ReadAtOffset(fs, nameOffset, 2, string.Empty, () =>
             {
-                if (nameOffset < 0 || nameOffset + 2 > fs.Length)
-                {
-                    return string.Empty;
-                }
-
-                long originalPosition = fs.Position;
-                fs.Position = nameOffset;
-
                 ushort nameLength = reader.ReadUInt16();
                 if (nameLength == 0 || fs.Position + ((long)nameLength * 2) > fs.Length)
                 {
-                    fs.Position = originalPosition;
                     return string.Empty;
                 }
 
                 byte[] nameBytes = reader.ReadBytes(nameLength * 2);
-                string resourceName = Encoding.Unicode.GetString(nameBytes);
-
-                fs.Position = originalPosition;
-                return resourceName;
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
-            {
-                return string.Empty;
-            }
+                return Encoding.Unicode.GetString(nameBytes);
+            });
         }
     }
 }

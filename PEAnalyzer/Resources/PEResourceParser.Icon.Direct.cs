@@ -14,25 +14,10 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// </summary>
         public static void ParseDirectIconResource(FileStream fs, BinaryReader reader, PEInfo peInfo, long directoryOffset, long resourceBaseOffset)
         {
-            try
-            {
-                if (directoryOffset < 0 || directoryOffset + ResourceDirectoryReader.DirectoryHeaderSize > fs.Length)
-                {
-                    return;
-                }
-
-                long originalPosition = fs.Position;
-
+            ResourceDirectoryReader.RunAtOffset(fs, directoryOffset, ResourceDirectoryReader.DirectoryHeaderSize, "直接图标资源解析错误", () =>
                 ResourceDirectoryReader.WalkEntries(fs, reader, directoryOffset, resourceBaseOffset,
                     subdirectoryOffset => ParseDirectIconResource(fs, reader, peInfo, subdirectoryOffset, resourceBaseOffset),
-                    dataEntryOffset => PEResourceParserIconData.ReadAndProcessIconDataEntry(fs, reader, peInfo, dataEntryOffset));
-
-                fs.Position = originalPosition;
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
-            {
-                Console.WriteLine($"直接图标资源解析错误: {ex.Message}");
-            }
+                    dataEntryOffset => PEResourceParserIconData.ReadAndProcessIconDataEntry(fs, reader, peInfo, dataEntryOffset)));
         }
     }
 }
