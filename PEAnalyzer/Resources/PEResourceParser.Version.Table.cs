@@ -79,15 +79,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     }
                 }
             }
-            catch (IOException ex)
-            {
-                peInfo.AdditionalInfo.FileVersion += $"; StringTable解析错误: {ex.Message}";
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                peInfo.AdditionalInfo.FileVersion += $"; StringTable解析错误: {ex.Message}";
-            }
-            catch (ArgumentOutOfRangeException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 peInfo.AdditionalInfo.FileVersion += $"; StringTable解析错误: {ex.Message}";
             }
@@ -146,17 +138,7 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 return true;
             }
-            catch (IOException ex)
-            {
-                peInfo.AdditionalInfo.FileVersion += $"; StringPair解析错误: {ex.Message}";
-                return false;
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                peInfo.AdditionalInfo.FileVersion += $"; StringPair解析错误: {ex.Message}";
-                return false;
-            }
-            catch (ArgumentOutOfRangeException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 peInfo.AdditionalInfo.FileVersion += $"; StringPair解析错误: {ex.Message}";
                 return false;

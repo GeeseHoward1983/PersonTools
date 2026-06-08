@@ -76,17 +76,7 @@ namespace PersonalTools
                     }
                 }
             }
-            catch (IOException ex)
-            {
-                // 忽略导出表解析错误
-                Console.WriteLine($"导出表解析错误: {ex.Message}");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                // 忽略导出表解析错误
-                Console.WriteLine($"导出表解析错误: {ex.Message}");
-            }
-            catch (ArgumentOutOfRangeException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 // 忽略导出表解析错误
                 Console.WriteLine($"导出表解析错误: {ex.Message}");

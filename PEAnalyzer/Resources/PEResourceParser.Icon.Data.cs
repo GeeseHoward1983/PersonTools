@@ -42,15 +42,7 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 fs.Position = originalPosition;
             }
-            catch (IOException ex)
-            {
-                Console.WriteLine($"图标资源数据项解析错误: {ex.Message}");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                Console.WriteLine($"图标资源数据项解析错误: {ex.Message}");
-            }
-            catch (ArgumentOutOfRangeException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 Console.WriteLine($"图标资源数据项解析错误: {ex.Message}");
             }
@@ -102,11 +94,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     ConvertDibToIco(peInfo, iconData);
                 }
             }
-            catch (ArgumentException ex)
-            {
-                Console.WriteLine($"处理图标数据错误: {ex.Message}");
-            }
-            catch (IndexOutOfRangeException ex)
+            catch (Exception ex) when (ex is ArgumentException or IndexOutOfRangeException)
             {
                 Console.WriteLine($"处理图标数据错误: {ex.Message}");
             }
@@ -152,11 +140,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     Data = BuildIcoFile(dibData, width, height, bitCount)
                 });
             }
-            catch (ArgumentException ex)
-            {
-                Console.WriteLine($"转换DIB到ICO错误: {ex.Message}");
-            }
-            catch (IndexOutOfRangeException ex)
+            catch (Exception ex) when (ex is ArgumentException or IndexOutOfRangeException)
             {
                 Console.WriteLine($"转换DIB到ICO错误: {ex.Message}");
             }

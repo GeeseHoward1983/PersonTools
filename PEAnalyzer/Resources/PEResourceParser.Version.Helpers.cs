@@ -69,15 +69,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 // 子项（StringFileInfo / VarFileInfo）紧跟在 VS_FIXEDFILEINFO 之后
                 ParseChildrenIfPresent(fs, reader, peInfo, Utilities.AlignTo4(alignedPosition + 52), startPosition + wLength);
             }
-            catch (IOException ex)
-            {
-                peInfo.AdditionalInfo.FileVersion = $"版本信息结构解析错误: {ex.Message}";
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                peInfo.AdditionalInfo.FileVersion = $"版本信息结构解析错误: {ex.Message}";
-            }
-            catch (ArgumentOutOfRangeException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 peInfo.AdditionalInfo.FileVersion = $"版本信息结构解析错误: {ex.Message}";
             }
@@ -192,15 +184,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     fs.Position = nextChildPos;
                 }
             }
-            catch (IOException ex)
-            {
-                peInfo.AdditionalInfo.FileVersion += $"; 版本子项解析错误: {ex.Message}";
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                peInfo.AdditionalInfo.FileVersion += $"; 版本子项解析错误: {ex.Message}";
-            }
-            catch (ArgumentOutOfRangeException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 peInfo.AdditionalInfo.FileVersion += $"; 版本子项解析错误: {ex.Message}";
             }

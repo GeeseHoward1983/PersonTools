@@ -131,14 +131,10 @@ namespace PersonalTools.UserControls
         // 处理Base64标签页的文件拖放事件
         private void Base64Tab_Drop(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            string? filePath = FileDropHelper.GetFirstDroppedFile(e);
+            if (filePath != null)
             {
-                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                if (files != null && files.Length > 0)
-                {
-                    string filePath = files[0]; // 只处理第一个文件
-                    ProcessFileForBase64Encoding(filePath);
-                }
+                ProcessFileForBase64Encoding(filePath);
             }
         }
 
@@ -147,22 +143,12 @@ namespace PersonalTools.UserControls
         {
             try
             {
-                byte[] fileBytes;
+                byte[] fileBytes = FileDropHelper.ReadAllBytes(filePath);
 
-                // 读取文件内容
-                using (FileStream fileStream = new(filePath, FileMode.Open, FileAccess.Read))
-                {
-                    fileBytes = new byte[fileStream.Length];
-                    fileStream.ReadExactly(fileBytes);
-                }
-
-                // 将文件内容显示在输入框中
+                // 输入框显示 hex，结果框显示 Base64，并切到 Hex 模式
                 Base64Input.Text = Utils.ToHexString(fileBytes);
-                // 将文件内容转换为Base64字符串并显示在结果框中
                 Base64Result.Text = Convert.ToBase64String(fileBytes);
-
                 Base64HexInputRadio.IsChecked = true;
-
             }
             catch (IOException ex)
             {

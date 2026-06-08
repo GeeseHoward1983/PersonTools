@@ -408,23 +408,31 @@ namespace PersonalTools.ELFAnalyzer.Core
             }
         }
 
-        private static void ParseAEABIAttributes(byte[] data, ref int offset, int endOffset, StringBuilder sb)
+        // 进入供应商子节的 Tag_File 作用域：跳过子-子节头(作用域标签1字节 + 长度4字节)，
+        // 仅在 Tag_File(=1) 时追加 "File Attributes" 并返回 true；其余作用域/数据不足返回 false。
+        private static bool TryEnterFileScope(byte[] data, ref int offset, int limit, StringBuilder sb)
         {
-            int limit = Math.Min(endOffset, data.Length);
-
-            // 供应商子节内部为若干"子-子节"：作用域标签(1字节: Tag_File=1/Section=2/Symbol=3) + 长度(4字节)
-            // 这里解析 Tag_File 作用域（编译器通常只生成该作用域，与 readelf 输出一致）
             if (offset + 5 > limit)
             {
-                return;
+                return false;
             }
 
             byte scopeTag = data[offset];
             offset += 5; // 跳过作用域标签 + 长度字段
-
-            if (scopeTag == 1) // Tag_File
+            if (scopeTag != 1) // 仅展开 Tag_File 作用域
             {
-                sb.AppendLine("File Attributes");
+                return false;
+            }
+
+            sb.AppendLine("File Attributes");
+            return true;
+        }
+
+        private static void ParseAEABIAttributes(byte[] data, ref int offset, int endOffset, StringBuilder sb)
+        {
+            int limit = Math.Min(endOffset, data.Length);
+            if (TryEnterFileScope(data, ref offset, limit, sb))
+            {
                 ParseAEABIFileAttributes(data, ref offset, limit, sb);
             }
         }
@@ -546,21 +554,11 @@ namespace PersonalTools.ELFAnalyzer.Core
         private static void ParseGnuAttributes(ELFParser parser, byte[] data, ref int offset, int endOffset, StringBuilder sb)
         {
             int limit = Math.Min(endOffset, data.Length);
-
-            // 子-子节头：作用域标签(1字节: Tag_File=1/Section=2/Symbol=3) + 长度(uint32)
-            if (offset + 5 > limit)
+            if (!TryEnterFileScope(data, ref offset, limit, sb))
             {
                 return;
             }
 
-            byte scopeTag = data[offset];
-            offset += 5; // 跳过作用域标签 + 长度字段
-            if (scopeTag != 1) // 仅展开 Tag_File 作用域
-            {
-                return;
-            }
-
-            sb.AppendLine("File Attributes");
             ushort machine = parser.Header.e_machine;
 
             while (offset < limit)
@@ -598,20 +596,10 @@ namespace PersonalTools.ELFAnalyzer.Core
         private static void ParseRiscvAttributes(byte[] data, ref int offset, int endOffset, StringBuilder sb)
         {
             int limit = Math.Min(endOffset, data.Length);
-
-            if (offset + 5 > limit)
+            if (!TryEnterFileScope(data, ref offset, limit, sb))
             {
                 return;
             }
-
-            byte scopeTag = data[offset];
-            offset += 5; // 作用域标签 + 长度
-            if (scopeTag != 1)
-            {
-                return;
-            }
-
-            sb.AppendLine("File Attributes");
 
             while (offset < limit)
             {

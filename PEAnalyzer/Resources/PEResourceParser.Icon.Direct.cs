@@ -29,15 +29,7 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 fs.Position = originalPosition;
             }
-            catch (IOException ex)
-            {
-                Console.WriteLine($"直接图标资源解析错误: {ex.Message}");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                Console.WriteLine($"直接图标资源解析错误: {ex.Message}");
-            }
-            catch (ArgumentOutOfRangeException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 Console.WriteLine($"直接图标资源解析错误: {ex.Message}");
             }

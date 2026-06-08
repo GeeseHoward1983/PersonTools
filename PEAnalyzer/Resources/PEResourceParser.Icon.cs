@@ -40,17 +40,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     ParseDotNetIcons(fs, reader, peInfo);
                 }
             }
-            catch (IOException ex)
-            {
-                Console.WriteLine($"图标信息解析错误: {ex.Message}");
-                // 图标信息解析错误不中断程序执行
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                Console.WriteLine($"图标信息解析错误: {ex.Message}");
-                // 图标信息解析错误不中断程序执行
-            }
-            catch (ArgumentOutOfRangeException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 Console.WriteLine($"图标信息解析错误: {ex.Message}");
                 // 图标信息解析错误不中断程序执行
@@ -74,15 +64,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     ParseDotNetResourcesForIcons(fs, reader, peInfo);
                 }
             }
-            catch (IOException ex)
-            {
-                Console.WriteLine($".NET图标解析错误: {ex.Message}");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                Console.WriteLine($".NET图标解析错误: {ex.Message}");
-            }
-            catch (ArgumentOutOfRangeException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 Console.WriteLine($".NET图标解析错误: {ex.Message}");
             }
@@ -114,15 +96,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     PEResourceParserIconNamed.ParseResourceDirectoryForNamedIcons(fs, reader, peInfo, resourceOffset);
                 }
             }
-            catch (IOException ex)
-            {
-                Console.WriteLine($".NET资源图标解析错误: {ex.Message}");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                Console.WriteLine($".NET资源图标解析错误: {ex.Message}");
-            }
-            catch (ArgumentOutOfRangeException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 Console.WriteLine($".NET资源图标解析错误: {ex.Message}");
             }
@@ -166,15 +140,7 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 fs.Position = originalPosition;
             }
-            catch (IOException ex)
-            {
-                Console.WriteLine($"解析资源目录以查找图标信息错误: {ex.Message}");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                Console.WriteLine($"解析资源目录以查找图标信息错误: {ex.Message}");
-            }
-            catch (ArgumentOutOfRangeException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 Console.WriteLine($"解析资源目录以查找图标信息错误: {ex.Message}");
             }

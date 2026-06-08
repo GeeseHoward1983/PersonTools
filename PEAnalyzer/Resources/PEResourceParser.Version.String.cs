@@ -64,17 +64,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     fs.Position = nextPosition;
                 }
             }
-            catch (IOException ex)
-            {
-                // 忽略StringFileInfo解析错误
-                peInfo.AdditionalInfo.FileVersion += $"; StringFileInfo解析错误: {ex.Message}";
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                // 忽略StringFileInfo解析错误
-                peInfo.AdditionalInfo.FileVersion += $"; StringFileInfo解析错误: {ex.Message}";
-            }
-            catch (ArgumentOutOfRangeException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 // 忽略StringFileInfo解析错误
                 peInfo.AdditionalInfo.FileVersion += $"; StringFileInfo解析错误: {ex.Message}";

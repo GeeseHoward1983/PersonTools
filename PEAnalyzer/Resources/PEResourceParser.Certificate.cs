@@ -47,15 +47,7 @@ internal static void ParseCertificateInfo(FileStream fs, BinaryReader reader, PE
                         : $"{certs.Count} 个证书 -> " + string.Join("; ", certs);
                 }
             }
-            catch (IOException ex)
-            {
-                peInfo.AdditionalInfo.CertificateInfo = $"解析错误: {ex.Message}";
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                peInfo.AdditionalInfo.CertificateInfo = $"解析错误: {ex.Message}";
-            }
-            catch (ArgumentOutOfRangeException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 peInfo.AdditionalInfo.CertificateInfo = $"解析错误: {ex.Message}";
             }

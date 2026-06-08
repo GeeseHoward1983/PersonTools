@@ -30,15 +30,7 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 fs.Position = originalPosition;
             }
-            catch (IOException ex)
-            {
-                Console.WriteLine($"组图标资源解析错误: {ex.Message}");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                Console.WriteLine($"组图标资源解析错误: {ex.Message}");
-            }
-            catch (ArgumentOutOfRangeException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 Console.WriteLine($"组图标资源解析错误: {ex.Message}");
             }
@@ -71,15 +63,7 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 fs.Position = originalPosition;
             }
-            catch (IOException ex)
-            {
-                Console.WriteLine($"解析组图标数据项错误: {ex.Message}");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                Console.WriteLine($"解析组图标数据项错误: {ex.Message}");
-            }
-            catch (ArgumentOutOfRangeException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 Console.WriteLine($"解析组图标数据项错误: {ex.Message}");
             }

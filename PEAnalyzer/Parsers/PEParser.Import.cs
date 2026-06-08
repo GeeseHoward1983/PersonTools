@@ -25,15 +25,7 @@ namespace PersonalTools
                 // 解析延迟加载导入表并合并到主列表
                 peInfo.ImportFunctions.AddRange(ParseDelayLoadImportTable(fs, reader, peInfo));
             }
-            catch (IOException ex)
-            {
-                Console.WriteLine($"导入表解析错误: {ex.Message}");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                Console.WriteLine($"导入表解析错误: {ex.Message}");
-            }
-            catch (ArgumentOutOfRangeException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 Console.WriteLine($"导入表解析错误: {ex.Message}");
             }
@@ -157,15 +149,7 @@ namespace PersonalTools
                     fs.Position = originalPosition;
                 }
             }
-            catch (IOException ex)
-            {
-                Console.WriteLine($"导入函数解析错误: {ex.Message}");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                Console.WriteLine($"导入函数解析错误: {ex.Message}");
-            }
-            catch (ArgumentOutOfRangeException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 Console.WriteLine($"导入函数解析错误: {ex.Message}");
             }
@@ -258,15 +242,7 @@ namespace PersonalTools
 
                 SetImportFunc(importFunc, !string.IsNullOrEmpty(functionName) ? functionName : "EMPTY_NAME", hint, false);
             }
-            catch (IOException ex)
-            {
-                SetImportFunc(importFunc, $"READ_ERROR: {ex.Message}", 0, false);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                SetImportFunc(importFunc, $"READ_ERROR: {ex.Message}", 0, false);
-            }
-            catch (ArgumentOutOfRangeException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 SetImportFunc(importFunc, $"READ_ERROR: {ex.Message}", 0, false);
             }

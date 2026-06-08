@@ -50,15 +50,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 fs.Position = originalPosition;
                 return result;
             }
-            catch (IOException)
-            {
-                return -1;
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return -1;
-            }
-            catch (ArgumentOutOfRangeException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 return -1;
             }
@@ -91,15 +83,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 fs.Position = originalPosition;
                 return result;
             }
-            catch (IOException)
-            {
-                return -1;
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return -1;
-            }
-            catch (ArgumentOutOfRangeException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 return -1;
             }
@@ -125,15 +109,7 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 return ResourceDirectoryReader.IsReadableData(dataOffset, dataEntry.Size, fs) ? dataOffset : -1;
             }
-            catch (IOException)
-            {
-                return -1;
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return -1;
-            }
-            catch (ArgumentOutOfRangeException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 return -1;
             }
@@ -185,15 +161,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 fs.Position = originalPosition;
                 return result;
             }
-            catch (IOException)
-            {
-                return -1;
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return -1;
-            }
-            catch (ArgumentOutOfRangeException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 return -1;
             }
@@ -243,15 +211,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 fs.Position = originalPosition;
                 return resourceName;
             }
-            catch (IOException)
-            {
-                return string.Empty;
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return string.Empty;
-            }
-            catch (ArgumentOutOfRangeException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 return string.Empty;
             }

@@ -65,59 +65,18 @@ namespace PersonalTools.UserControls
             try
             {
                 string input = AesInput.Text;
-                string keyInput = AesKey.Text;
-                string ivInput = AesIV.Text;
-
                 if (string.IsNullOrEmpty(input))
                 {
                     MessageBox.Show("请输入要加密的文本", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
 
-                if (string.IsNullOrEmpty(keyInput))
+                if (!TryGetAesParams(out byte[] key, out byte[]? iv, out CipherMode mode))
                 {
-                    MessageBox.Show("请输入密钥", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
 
-                // 验证密钥长度
-                if (!IsValidKeyLength(keyInput, AesKeyStringRadio.IsChecked == true))
-                {
-                    MessageBox.Show("密钥长度不正确。支持16位、24位或32位密钥。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
-
-                // 根据选择的类型处理密钥
-                byte[] key = GetKeyBytes(keyInput, AesKeyStringRadio.IsChecked == true);
-
-                // 对于CBC和CFB等模式，需要IV向量
-                AesModeOption selectedMode = (AesModeOption)AesModeComboBox.SelectedItem;
-#pragma warning disable CA5358
-                if (selectedMode.Mode is CipherMode.CBC or CipherMode.CFB or CipherMode.OFB)
-#pragma warning restore CA5358
-                {
-                    if (string.IsNullOrEmpty(ivInput))
-                    {
-                        MessageBox.Show("当前模式需要IV向量", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                        return;
-                    }
-
-                    // 验证IV长度（对于AES，IV长度应该是16字节）
-                    if (!IsValidIVLength(ivInput, AesIVStringRadio.IsChecked == true))
-                    {
-                        MessageBox.Show("IV向量长度不正确。应为16字节", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                        return;
-                    }
-
-                    byte[] iv = GetIVBytes(ivInput, AesIVStringRadio.IsChecked == true);
-                    string result = AesEncryptString(input, key, iv, selectedMode.Mode);
-                    AesResult.Text = result;
-                }
-                else // ECB模式不需要IV
-                {
-                    string result = AesEncryptString(input, key, null, selectedMode.Mode);
-                    AesResult.Text = result;
-                }
+                AesResult.Text = AesEncryptString(input, key, iv, mode);
             }
             catch (CryptographicException ex)
             {
@@ -139,58 +98,18 @@ namespace PersonalTools.UserControls
             try
             {
                 string input = AesResult.Text;
-                string keyInput = AesKey.Text;
-                string ivInput = AesIV.Text;
-
                 if (string.IsNullOrEmpty(input))
                 {
                     MessageBox.Show("请输入要解密的文本", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
 
-                if (string.IsNullOrEmpty(keyInput))
+                if (!TryGetAesParams(out byte[] key, out byte[]? iv, out CipherMode mode))
                 {
-                    MessageBox.Show("请输入密钥", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
 
-                // 验证密钥长度
-                if (!IsValidKeyLength(keyInput, AesKeyStringRadio.IsChecked == true))
-                {
-                    MessageBox.Show("密钥长度不正确。支持16位、24位或32位密钥。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
-
-                // 根据选择的类型处理密钥
-                byte[] key = GetKeyBytes(keyInput, AesKeyStringRadio.IsChecked == true);
-
-                // 对于CBC和CFB等模式，需要IV向量
-                AesModeOption selectedMode = (AesModeOption)AesModeComboBox.SelectedItem;
-#pragma warning disable CA5358
-                if (selectedMode.Mode is CipherMode.CBC or CipherMode.CFB or CipherMode.OFB)
-                {
-                    if (string.IsNullOrEmpty(ivInput))
-                    {
-                        MessageBox.Show("当前模式需要IV向量", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                        return;
-                    }
-
-                    // 验证IV长度（对于AES，IV长度应该是16字节）
-                    if (!IsValidIVLength(ivInput, AesIVStringRadio.IsChecked == true))
-                    {
-                        MessageBox.Show("IV向量长度不正确。应为16字节", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                        return;
-                    }
-
-                    byte[] iv = GetIVBytes(ivInput, AesIVStringRadio.IsChecked == true);
-                    string result = AesDecryptString(input, key, iv, selectedMode.Mode);
-                    AesInput.Text = result;
-                }
-                else // ECB模式不需要IV
-                {
-                    string result = AesDecryptString(input, key, null, selectedMode.Mode);
-                    AesInput.Text = result;
-                }
+                AesInput.Text = AesDecryptString(input, key, iv, mode);
             }
             catch (CryptographicException ex)
             {
@@ -204,6 +123,54 @@ namespace PersonalTools.UserControls
             {
                 MessageBox.Show($"AES处理时发生错误：输入的十六进制格式无效。{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        // 校验并取出密钥/IV/模式（加解密共用）。校验失败时弹提示并返回 false。
+        private bool TryGetAesParams(out byte[] key, out byte[]? iv, out CipherMode mode)
+        {
+            key = [];
+            iv = null;
+            mode = CipherMode.CBC;
+
+            string keyInput = AesKey.Text;
+            if (string.IsNullOrEmpty(keyInput))
+            {
+                MessageBox.Show("请输入密钥", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return false;
+            }
+
+            // 验证密钥长度
+            if (!IsValidKeyLength(keyInput, AesKeyStringRadio.IsChecked == true))
+            {
+                MessageBox.Show("密钥长度不正确。支持16位、24位或32位密钥。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return false;
+            }
+            key = GetKeyBytes(keyInput, AesKeyStringRadio.IsChecked == true);
+
+            mode = ((AesModeOption)AesModeComboBox.SelectedItem).Mode;
+
+            // 对于CBC/CFB/OFB等模式，需要IV向量
+#pragma warning disable CA5358
+            if (mode is CipherMode.CBC or CipherMode.CFB or CipherMode.OFB)
+#pragma warning restore CA5358
+            {
+                string ivInput = AesIV.Text;
+                if (string.IsNullOrEmpty(ivInput))
+                {
+                    MessageBox.Show("当前模式需要IV向量", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return false;
+                }
+
+                // 验证IV长度（对于AES，IV长度应该是16字节）
+                if (!IsValidIVLength(ivInput, AesIVStringRadio.IsChecked == true))
+                {
+                    MessageBox.Show("IV向量长度不正确。应为16字节", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return false;
+                }
+                iv = GetIVBytes(ivInput, AesIVStringRadio.IsChecked == true);
+            }
+
+            return true;
         }
 
         // AES清空
@@ -266,14 +233,10 @@ namespace PersonalTools.UserControls
         // 处理AES标签页的文件拖放事件
         private void AesTab_Drop(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            string? filePath = FileDropHelper.GetFirstDroppedFile(e);
+            if (filePath != null)
             {
-                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                if (files?.Length > 0)
-                {
-                    string filePath = files[0]; // 只处理第一个文件
-                    ProcessFileForAesEncryption(filePath);
-                }
+                ProcessFileForAesEncryption(filePath);
             }
         }
 
@@ -282,31 +245,19 @@ namespace PersonalTools.UserControls
         {
             try
             {
-                byte[] fileBytes;
+                byte[] fileBytes = FileDropHelper.ReadAllBytes(filePath);
 
-                // 读取文件内容
-                using (FileStream fileStream = new(filePath, FileMode.Open, FileAccess.Read))
-                {
-                    fileBytes = new byte[fileStream.Length];
-                    fileStream.ReadExactly(fileBytes);
-                }
-
-                // 将文件内容显示在输入框中
+                // 将文件内容以 hex 显示在输入框，并切换到 Hex 模式
                 AesInput.Text = Utils.ToHexString(fileBytes);
-                // 同时切换到Hex字符串模式
                 AesInputHexRadio.IsChecked = true;
             }
-            //catch (IOException ex)
-            //{
-            //    MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            //}
-            //catch (UnauthorizedAccessException ex)
-            //{
-            //    MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            //}
-            catch (FormatException ex)
+            catch (IOException ex)
             {
-                MessageBox.Show($"AES处理时发生错误：输入的十六进制格式无效。{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

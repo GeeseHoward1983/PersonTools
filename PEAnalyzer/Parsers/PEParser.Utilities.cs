@@ -146,15 +146,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
                 return sb.ToString();
             }
-            catch (IOException)
-            {
-                return string.Empty;
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return string.Empty;
-            }
-            catch (ArgumentOutOfRangeException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 return string.Empty;
             }

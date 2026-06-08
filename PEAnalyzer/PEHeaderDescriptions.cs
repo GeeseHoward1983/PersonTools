@@ -80,10 +80,8 @@ namespace PersonalTools.PEAnalyzer
                 10 => "Microsoft Linker 10.x (VS 2010)",
                 11 => "Microsoft Linker 11.x (VS 2012)",
                 12 => "Microsoft Linker 12.x (VS 2013)",
-                14 => minorVersion == 10 ? "Microsoft Linker 14.10 (VS 2015)"
-                    : (minorVersion == 20) ? "Microsoft Linker 14.20 (VS 2017)"
-                    : (minorVersion is >= 26 and <= 29) ? "Microsoft Linker 14.26-14.29 (VS 2019)"
-                    : (minorVersion >= 30) ? "Microsoft Linker 14.30+ (VS 2022)"
+                14 => MsvcVisualStudio(minorVersion) is { } vs
+                    ? $"Microsoft Linker {vs.Range} (VS {vs.Year})"
                     : "Microsoft Linker 14.x (VS 2015/2017/2019)",
                 15 => "Microsoft Linker 15.x",
                 _ =>
@@ -103,16 +101,27 @@ namespace PersonalTools.PEAnalyzer
                 10 => "Microsoft Visual C++ 2010",
                 11 => "Microsoft Visual C++ 2012",
                 12 => "Microsoft Visual C++ 2013",
-                14 => minorVersion == 10 ? "Microsoft Visual C++ 2015"
-                    : (minorVersion == 20) ? "Microsoft Visual C++ 2017"
-                    : (minorVersion is >= 26 and <= 29) ? "Microsoft Visual C++ 2019"
-                    : (minorVersion >= 30) ? "Microsoft Visual C++ 2022"
+                14 => MsvcVisualStudio(minorVersion) is { } vs
+                    ? $"Microsoft Visual C++ {vs.Year}"
                     : "Microsoft Visual C++ 2015/2017/2019",
                 15 => "Microsoft Visual C++ (未知版本)",
                 _ =>
                     isNetAssembly ? "Microsoft .NET Compiler" :
                     majorVersion > 15 ? "Microsoft Visual C++ (较新版本)" : "Microsoft Visual C++ (未知版本)"
             }} [{majorVersion}.{minorVersion}]";
+        }
+
+        // MSVC 14.x 的次版本 → (Visual Studio 年份, 版本号范围标签)，链接器/编译器描述共用此分类
+        private static (string Year, string Range)? MsvcVisualStudio(byte minorVersion)
+        {
+            return minorVersion switch
+            {
+                10 => ("2015", "14.10"),
+                20 => ("2017", "14.20"),
+                >= 26 and <= 29 => ("2019", "14.26-14.29"),
+                >= 30 => ("2022", "14.30+"),
+                _ => null
+            };
         }
 
         public static string GetOperatingSystemVersionDescription(ushort majorVersion, ushort minorVersion)
