@@ -72,27 +72,10 @@ namespace PersonalTools.PEAnalyzer.Resources
                 IMAGERESOURCEDIRECTORY rootDirectory = ResourceDirectoryReader.ReadDirectory(reader);
                 int totalEntries = rootDirectory.NumberOfNamedEntries + rootDirectory.NumberOfIdEntries;
 
-                // 查找 RT_VERSION 资源类型 (ID = 16)，命中后下钻并结束
-                for (int i = 0; i < totalEntries; i++)
-                {
-                    if (!ResourceDirectoryReader.TryReadEntry(fs, reader, resourceOffset, i, out IMAGERESOURCEDIRECTORYENTRY entry))
-                    {
-                        break;
-                    }
-
-                    if ((entry.NameOrId & 0xFFFF) != 16) // RT_VERSION = 16
-                    {
-                        continue;
-                    }
-
-                    long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
-                    if (nextLevelOffset >= 0 && nextLevelOffset + ResourceDirectoryReader.DirectoryHeaderSize <= fs.Length)
-                    {
-                        ParseVersionResource(fs, reader, peInfo, nextLevelOffset, resourceOffset);
-                    }
-
-                    break;
-                }
+                // 查找 RT_VERSION 资源类型 (ID = 16)，命中首个后下钻并结束
+                ResourceDirectoryReader.ScanTypeEntries(fs, reader, resourceOffset, totalEntries, 16,
+                    nextLevelOffset => ParseVersionResource(fs, reader, peInfo, nextLevelOffset, resourceOffset),
+                    stopAtFirst: true);
 
                 fs.Position = originalPosition;
             }

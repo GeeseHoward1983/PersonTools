@@ -139,5 +139,65 @@ namespace PersonalTools.PEAnalyzer.Resources
                 }
             }
         }
+        /// <summary>
+        /// 扫描根目录中指定类型ID的资源条目，命中即对其下一级(子目录)偏移回调；返回是否命中过。
+        /// 偏移取低 31 位（相对资源基址）。下一级越界由各回调自行再次校验。
+        /// </summary>
+        /// <param name="stopAtFirst">为 true 时命中首个匹配即停止（如版本资源只取第一个 RT_VERSION）。</param>
+        public static bool ScanTypeEntries(FileStream fs, BinaryReader reader, long resourceOffset, int totalEntries, uint typeId, Action<long> onMatch, bool stopAtFirst = false)
+        {
+            bool found = false;
+            for (int i = 0; i < totalEntries; i++)
+            {
+                if (!TryReadEntry(fs, reader, resourceOffset, i, out IMAGERESOURCEDIRECTORYENTRY entry))
+                {
+                    break;
+                }
+
+                if ((entry.NameOrId & 0xFFFF) != typeId)
+                {
+                    continue;
+                }
+
+                long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
+                if (nextLevelOffset >= 0 && nextLevelOffset < fs.Length)
+                {
+                    onMatch(nextLevelOffset);
+                }
+
+                found = true;
+                if (stopAtFirst)
+                {
+                    break;
+                }
+            }
+
+            return found;
+        }
+
+        /// <summary>
+        /// 扫描根目录中的命名资源条目（NameOrId 最高位为1），对其下一级偏移回调。
+        /// </summary>
+        public static void ScanNamedEntries(FileStream fs, BinaryReader reader, long resourceOffset, int namedEntries, Action<long> onMatch)
+        {
+            for (int i = 0; i < namedEntries; i++)
+            {
+                if (!TryReadEntry(fs, reader, resourceOffset, i, out IMAGERESOURCEDIRECTORYENTRY entry))
+                {
+                    break;
+                }
+
+                if ((entry.NameOrId & 0x80000000) == 0)
+                {
+                    continue;
+                }
+
+                long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
+                if (nextLevelOffset >= 0 && nextLevelOffset < fs.Length)
+                {
+                    onMatch(nextLevelOffset);
+                }
+            }
+        }
     }
 }

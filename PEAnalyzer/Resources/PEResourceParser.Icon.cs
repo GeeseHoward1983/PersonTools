@@ -125,16 +125,16 @@ namespace PersonalTools.PEAnalyzer.Resources
                 int totalEntries = rootDirectory.NumberOfNamedEntries + rootDirectory.NumberOfIdEntries;
 
                 // 优先查找 RT_GROUP_ICON (ID=14)
-                bool foundGroupIcon = ScanTypeEntries(fs, reader, resourceOffset, totalEntries, 14,
+                bool foundGroupIcon = ResourceDirectoryReader.ScanTypeEntries(fs, reader, resourceOffset, totalEntries, 14,
                     nextLevelOffset => PEResourceParserIconGroup.ParseGroupIconResource(fs, reader, peInfo, nextLevelOffset, resourceOffset));
 
                 // 未找到时回退到 RT_ICON (ID=3) 与命名资源
                 if (!foundGroupIcon)
                 {
-                    ScanTypeEntries(fs, reader, resourceOffset, totalEntries, 3,
+                    ResourceDirectoryReader.ScanTypeEntries(fs, reader, resourceOffset, totalEntries, 3,
                         nextLevelOffset => PEResourceParserIconDirect.ParseDirectIconResource(fs, reader, peInfo, nextLevelOffset, resourceOffset));
 
-                    ScanNamedEntries(fs, reader, resourceOffset, rootDirectory.NumberOfNamedEntries,
+                    ResourceDirectoryReader.ScanNamedEntries(fs, reader, resourceOffset, rootDirectory.NumberOfNamedEntries,
                         nextLevelOffset => PEResourceParserIconNamed.ParseResourceDirectoryForNamedIcons(fs, reader, peInfo, nextLevelOffset));
                 }
 
@@ -143,61 +143,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 Console.WriteLine($"解析资源目录以查找图标信息错误: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// 扫描根目录中指定类型ID的资源条目，命中即对其下一级偏移回调；返回是否命中过。
-        /// </summary>
-        private static bool ScanTypeEntries(FileStream fs, BinaryReader reader, long resourceOffset, int totalEntries, uint typeId, Action<long> onMatch)
-        {
-            bool found = false;
-            for (int i = 0; i < totalEntries; i++)
-            {
-                if (!ResourceDirectoryReader.TryReadEntry(fs, reader, resourceOffset, i, out IMAGERESOURCEDIRECTORYENTRY entry))
-                {
-                    break;
-                }
-
-                if ((entry.NameOrId & 0xFFFF) != typeId)
-                {
-                    continue;
-                }
-
-                long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
-                if (nextLevelOffset >= 0 && nextLevelOffset < fs.Length)
-                {
-                    onMatch(nextLevelOffset);
-                }
-
-                found = true;
-            }
-
-            return found;
-        }
-
-        /// <summary>
-        /// 扫描根目录中的命名资源条目（最高位为1），对其下一级偏移回调。
-        /// </summary>
-        private static void ScanNamedEntries(FileStream fs, BinaryReader reader, long resourceOffset, int namedEntries, Action<long> onMatch)
-        {
-            for (int i = 0; i < namedEntries; i++)
-            {
-                if (!ResourceDirectoryReader.TryReadEntry(fs, reader, resourceOffset, i, out IMAGERESOURCEDIRECTORYENTRY entry))
-                {
-                    break;
-                }
-
-                if ((entry.NameOrId & 0x80000000) == 0)
-                {
-                    continue;
-                }
-
-                long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
-                if (nextLevelOffset >= 0 && nextLevelOffset < fs.Length)
-                {
-                    onMatch(nextLevelOffset);
-                }
             }
         }
     }
