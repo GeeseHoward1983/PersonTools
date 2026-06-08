@@ -22,7 +22,7 @@
 
             <!-- ELF文件分析器标签页 -->
             <TabItem Header="ELF文件分析器">
-                <uc:ELFAnalyzerControl/>
+                <uc:ELFAnalyzerHostControl/>
             </TabItem>
 
             <!-- Mach-O文件分析器标签页 -->

@@ -1,4 +1,3 @@
-using Microsoft.Win32;
 using PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.ELFAnalyzer.UIHelper;
 using PersonalTools.Enums;
@@ -21,18 +20,8 @@ namespace PersonalTools.UserControls
             e.Handled = true;
         }
 
-        private void OpenELFFile_Click(object sender, RoutedEventArgs e)
-        {
-            OpenFileDialog openFileDialog = new()
-            {
-                Filter = "Executable and Linkable Format files (*.elf)|*.elf|All files (*.*)|*.*"
-            };
-
-            if (openFileDialog.ShowDialog() == true)
-            {
-                AnalyzeELFFile(openFileDialog.FileName);
-            }
-        }
+        /// <summary>拖入文件时回调宿主，由宿主按完整路径决定新建/覆盖 tab。</summary>
+        public Action<IReadOnlyList<string>>? FilesDropped { get; set; }
 
         private void ELFAnalyzerTab_Drop(object sender, DragEventArgs e)
         {
@@ -41,7 +30,8 @@ namespace PersonalTools.UserControls
                 string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
                 if (files != null && files.Length > 0)
                 {
-                    AnalyzeELFFile(files[0]);
+                    e.Handled = true; // 阻止冒泡到宿主，避免重复处理
+                    FilesDropped?.Invoke(files);
                 }
             }
         }
@@ -158,7 +148,7 @@ namespace PersonalTools.UserControls
             ELFExidxInfoTabItem.Visibility = !exidxInfo.Contains("There are no exception index entries", StringComparison.CurrentCulture) ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        private void AnalyzeELFFile(string filePath)
+        public void AnalyzeELFFile(string filePath)
         {
             try
             {

@@ -138,6 +138,10 @@
 		<SubType>Designer</SubType>
 		<Generator>MSBuild:Compile</Generator>
 	</Page>
+	<Page Include="UserControls\ELFAnalyzerHostControl.xaml">
+		<SubType>Designer</SubType>
+		<Generator>MSBuild:Compile</Generator>
+	</Page>
   </ItemGroup>
 
   <ItemGroup>
