@@ -121,7 +121,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// <param name="peInfo">PE文件信息</param>
         /// <param name="importDesc">导入描述符</param>
         /// <param name="dllName">DLL名称</param>
-        internal static void ParseImportFunctions(FileStream fs, BinaryReader reader, PEInfo peInfo, IMAGEIMPORTDESCRIPTOR importDesc, string dllName)
+        private static void ParseImportFunctions(FileStream fs, BinaryReader reader, PEInfo peInfo, IMAGEIMPORTDESCRIPTOR importDesc, string dllName)
         {
             try
             {

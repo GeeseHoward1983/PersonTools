@@ -36,14 +36,10 @@ namespace PersonalTools.PEAnalyzer.Parsers
                     }
                 }
             }
-            catch (IOException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
                 // CLR头解析错误不中断程序执行
-                Console.WriteLine($"CLR运行时头解析IO错误: {ex.Message}");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                Console.WriteLine($"CLR运行时头解析权限错误: {ex.Message}");
+                Console.WriteLine($"CLR运行时头解析错误: {ex.Message}");
             }
         }
 
@@ -71,21 +67,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 IMAGE_COR20_HEADER clrHeader = ReadCor20Header(reader);
 
                 // 保存CLR信息到PEInfo
-                peInfo.CLRInfo = new CLRInfo
-                {
-                    MajorRuntimeVersion = clrHeader.MajorRuntimeVersion,
-                    MinorRuntimeVersion = clrHeader.MinorRuntimeVersion,
-                    Flags = clrHeader.Flags,
-                    EntryPointTokenOrRva = clrHeader.EntryPointTokenOrRva,
-                    HasMetaData = clrHeader.MetaData.VirtualAddress != 0,
-                    HasResources = clrHeader.Resources.VirtualAddress != 0,
-                    HasStrongNameSignature = clrHeader.StrongNameSignature.VirtualAddress != 0,
-                    IsILonly = (clrHeader.Flags & 0x00000001) != 0,
-                    Is32BitRequired = (clrHeader.Flags & 0x00000002) != 0,
-                    Is32BitPreferred = (clrHeader.Flags & 0x00020000) != 0, // COMIMAGE_FLAGS_32BITPREFERRED
-                    IsStrongNameSigned = (clrHeader.Flags & 0x00000008) != 0,
-                    PEMachineType = peInfo.NtHeaders.FileHeader.Machine // 保存PE头中的Machine字段
-                };
+                peInfo.CLRInfo = BuildClrInfo(clrHeader, peInfo.NtHeaders.FileHeader.Machine);
 
                 // 解析元数据以获取导出类信息
                 if (clrHeader.MetaData.VirtualAddress != 0)
@@ -95,13 +77,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
                 fs.Position = originalPosition;
             }
-            catch (IOException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                Console.WriteLine($"CLR头解析IO错误: {ex.Message}");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                Console.WriteLine($"CLR头解析权限错误: {ex.Message}");
+                Console.WriteLine($"CLR头解析错误: {ex.Message}");
             }
         }
 
@@ -150,6 +128,26 @@ namespace PersonalTools.PEAnalyzer.Parsers
                     VirtualAddress = reader.ReadUInt32(),
                     Size = reader.ReadUInt32()
                 }
+            };
+        }
+
+        // 将 IMAGE_COR20_HEADER 与 PE 机器类型映射为展示用 CLRInfo（标志位按 ECMA-335 / COR 头解释）
+        private static CLRInfo BuildClrInfo(IMAGE_COR20_HEADER clrHeader, ushort machine)
+        {
+            return new CLRInfo
+            {
+                MajorRuntimeVersion = clrHeader.MajorRuntimeVersion,
+                MinorRuntimeVersion = clrHeader.MinorRuntimeVersion,
+                Flags = clrHeader.Flags,
+                EntryPointTokenOrRva = clrHeader.EntryPointTokenOrRva,
+                HasMetaData = clrHeader.MetaData.VirtualAddress != 0,
+                HasResources = clrHeader.Resources.VirtualAddress != 0,
+                HasStrongNameSignature = clrHeader.StrongNameSignature.VirtualAddress != 0,
+                IsILonly = (clrHeader.Flags & 0x00000001) != 0,
+                Is32BitRequired = (clrHeader.Flags & 0x00000002) != 0,
+                Is32BitPreferred = (clrHeader.Flags & 0x00020000) != 0, // COMIMAGE_FLAGS_32BITPREFERRED
+                IsStrongNameSigned = (clrHeader.Flags & 0x00000008) != 0,
+                PEMachineType = machine // 保存PE头中的Machine字段
             };
         }
     }

@@ -78,13 +78,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
                 fs.Position = originalPosition;
             }
-            catch (IOException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                Console.WriteLine($"元数据解析IO错误: {ex.Message}");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                Console.WriteLine($"元数据解析权限错误: {ex.Message}");
+                Console.WriteLine($"元数据解析错误: {ex.Message}");
             }
         }
 
@@ -213,13 +209,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
                 fs.Position = originalPosition;
             }
-            catch (IOException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                Console.WriteLine($"元数据表解析IO错误: {ex.Message}");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                Console.WriteLine($"元数据表解析权限错误: {ex.Message}");
+                Console.WriteLine($"元数据表解析错误: {ex.Message}");
             }
         }
 
@@ -268,13 +260,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
                     TryCollectTypeDefRow(fs, reader, peInfo, stringHeapOffset, stringIndexSize, i);
                 }
             }
-            catch (IOException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                Console.WriteLine($"TypeDef表解析IO错误: {ex.Message}");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                Console.WriteLine($"TypeDef表解析权限错误: {ex.Message}");
+                Console.WriteLine($"TypeDef表解析错误: {ex.Message}");
             }
         }
 
