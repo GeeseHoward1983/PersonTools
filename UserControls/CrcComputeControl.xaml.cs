@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.IO;
-using System.Text;
 using System.Windows.Controls;
 
 namespace PersonalTools.UserControls
@@ -18,87 +17,12 @@ namespace PersonalTools.UserControls
             InitializeCRCAlgorithmComboBox();
         }
 
-        // CRC算法参数模型
-        private sealed class CRCAlgorithm
-        {
-            public required string Name { get; set; }
-            public required string PolynomialFormula { get; set; }
-            public int Width { get; set; }
-            public uint Polynomial { get; set; }
-            public uint InitialValue { get; set; }
-            public uint FinalXor { get; set; }
-            public bool ReverseInput { get; set; }
-            public bool ReverseOutput { get; set; }
-        }
-
         // 初始化CRC算法下拉框
         private void InitializeCRCAlgorithmComboBox()
         {
-            // 绑定算法列表到下拉框
-            CRCAlgorithmComboBox.ItemsSource = CRCAlgorithms;
+            CRCAlgorithmComboBox.ItemsSource = CrcCalculator.Algorithms;
             CRCAlgorithmComboBox.DisplayMemberPath = "Name";
             CRCAlgorithmComboBox.SelectedIndex = 0;
-        }
-
-        // CRC算法定义
-        private static readonly List<CRCAlgorithm> CRCAlgorithms =
-        [
-            new CRCAlgorithm { Name = "CRC-8", PolynomialFormula = "x8 + x2 + x + 1", Width = 8, Polynomial = 0x07, InitialValue = 0x00, FinalXor = 0x00, ReverseInput = false, ReverseOutput = false },
-            new CRCAlgorithm { Name = "CRC-8/ITU", PolynomialFormula = "x8 + x2 + x + 1", Width = 8, Polynomial = 0x07, InitialValue = 0x00, FinalXor = 0x55, ReverseInput = false, ReverseOutput = false },
-            new CRCAlgorithm { Name = "CRC-8/ROHC", PolynomialFormula = "x8 + x2 + x + 1", Width = 8, Polynomial = 0x07, InitialValue = 0xFF, FinalXor = 0x00, ReverseInput = true, ReverseOutput = true },
-            new CRCAlgorithm { Name = "CRC-8/MAXIM", PolynomialFormula = "x8 + x5 + x4 + 1", Width = 8, Polynomial = 0x31, InitialValue = 0x00, FinalXor = 0x00, ReverseInput = true, ReverseOutput = true },
-            new CRCAlgorithm { Name = "CRC-16/IBM", PolynomialFormula = "x16 + x15 + x2 + 1", Width = 16, Polynomial = 0x8005, InitialValue = 0x0000, FinalXor = 0x0000, ReverseInput = true, ReverseOutput = true },
-            new CRCAlgorithm { Name = "CRC-16/MAXIM", PolynomialFormula = "x16 + x15 + x2 + 1", Width = 16, Polynomial = 0x8005, InitialValue = 0x0000, FinalXor = 0xFFFF, ReverseInput = true, ReverseOutput = true },
-            new CRCAlgorithm { Name = "CRC-16/USB", PolynomialFormula = "x16 + x15 + x2 + 1", Width = 16, Polynomial = 0x8005, InitialValue = 0xFFFF, FinalXor = 0xFFFF, ReverseInput = true, ReverseOutput = true },
-            new CRCAlgorithm { Name = "CRC-16/MODBUS", PolynomialFormula = "x16 + x15 + x2 + 1", Width = 16, Polynomial = 0x8005, InitialValue = 0xFFFF, FinalXor = 0x0000, ReverseInput = true, ReverseOutput = true },
-            new CRCAlgorithm { Name = "CRC-16/CCITT", PolynomialFormula = "x16 + x12 + x5 + 1", Width = 16, Polynomial = 0x1021, InitialValue = 0x0000, FinalXor = 0x0000, ReverseInput = true, ReverseOutput = true },
-            new CRCAlgorithm { Name = "CRC-16/CCITT-FALSE", PolynomialFormula = "x16 + x12 + x5 + 1", Width = 16, Polynomial = 0x1021, InitialValue = 0xFFFF, FinalXor = 0x0000, ReverseInput = false, ReverseOutput = false },
-            new CRCAlgorithm { Name = "CRC-16/X25", PolynomialFormula = "x16 + x12 + x5 + 1", Width = 16, Polynomial = 0x1021, InitialValue = 0xFFFF, FinalXor = 0xFFFF, ReverseInput = true, ReverseOutput = true },
-            new CRCAlgorithm { Name = "CRC-16/XMODEM", PolynomialFormula = "x16 + x12 + x5 + 1", Width = 16, Polynomial = 0x1021, InitialValue = 0x0000, FinalXor = 0x0000, ReverseInput = false, ReverseOutput = false },
-            new CRCAlgorithm { Name = "CRC-16/DNP", PolynomialFormula = "x16 + x13 + x12 + x11 + x10 + x8 + x6 + x5 + x2 + 1", Width = 16, Polynomial = 0x3D65, InitialValue = 0x0000, FinalXor = 0xFFFF, ReverseInput = true, ReverseOutput = true },
-            new CRCAlgorithm { Name = "CRC-32", PolynomialFormula = "x32 + x26 + x23 + x22 + x16 + x12 + x11 + x10 + x8 + x7 + x5 + x4 + x2 + x + 1", Width = 32, Polynomial = 0x04C11DB7, InitialValue = 0xFFFFFFFF, FinalXor = 0xFFFFFFFF, ReverseInput = true, ReverseOutput = true },
-            new CRCAlgorithm { Name = "CRC-32/MPEG-2", PolynomialFormula = "x32 + x26 + x23 + x22 + x16 + x12 + x11 + x10 + x8 + x7 + x5 + x4 + x2 + x + 1", Width = 32, Polynomial = 0x04C11DB7, InitialValue = 0xFFFFFFFF, FinalXor = 0x00000000, ReverseInput = false, ReverseOutput = false }
-        ];
-
-        // CRC计算器
-        private static class CRCCalculator
-        {
-            public static uint Compute(byte[] data, CRCAlgorithm selectedAlgorithm)
-            {
-                uint crc = selectedAlgorithm.InitialValue;
-                uint mask = (uint)((1UL << selectedAlgorithm.Width) - 1);
-                uint topBit = (uint)(1UL << (selectedAlgorithm.Width - 1));
-
-                for (int i = 0; i < data.Length; i++)
-                {
-                    byte value = (byte)(selectedAlgorithm.ReverseInput ? Utils.ReverseBits(data[i], 8) : data[i]);
-                    crc ^= (uint)(value << (selectedAlgorithm.Width - 8));
-
-                    for (int j = 0; j < 8; j++)
-                    {
-                        if ((crc & topBit) != 0)
-                        {
-                            crc = (crc << 1) ^ selectedAlgorithm.Polynomial;
-                        }
-                        else
-                        {
-                            crc <<= 1;
-                        }
-                        crc &= mask;
-                    }
-                }
-
-                if (selectedAlgorithm.ReverseOutput)
-                {
-                    crc = Utils.ReverseBits(crc, selectedAlgorithm.Width);
-                }
-
-                crc ^= selectedAlgorithm.FinalXor;
-                crc &= mask;
-
-                return crc;
-            }
-
         }
 
         // CRC计算功能
@@ -119,21 +43,10 @@ namespace PersonalTools.UserControls
 
             try
             {
-                CRCAlgorithm selectedAlgorithm = (CRCAlgorithm)CRCAlgorithmComboBox.SelectedItem;
-                byte[] inputBytes;
+                CrcAlgorithm selectedAlgorithm = (CrcAlgorithm)CRCAlgorithmComboBox.SelectedItem;
+                byte[] inputBytes = Utils.InputBytes(input, CRCHexInputRadio.IsChecked == true);
 
-                if (CRCHexInputRadio.IsChecked == true)
-                {
-                    // Hex字符串模式
-                    inputBytes = Utils.HexStringToByteArray(input);
-                }
-                else
-                {
-                    // 默认使用普通字符串模式
-                    inputBytes = Encoding.UTF8.GetBytes(input);
-                }
-
-                uint crcResult = CRCCalculator.Compute(inputBytes, selectedAlgorithm);
+                uint crcResult = CrcCalculator.Compute(inputBytes, selectedAlgorithm);
 
                 // 根据算法宽度格式化输出
                 string formatString = selectedAlgorithm.Width <= 8 ? "X2" : selectedAlgorithm.Width <= 16 ? "X4" : "X8";
@@ -163,14 +76,10 @@ namespace PersonalTools.UserControls
         // 处理CRC标签页的文件拖放事件
         private void CrcTab_Drop(object sender, System.Windows.DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
+            string? filePath = FileDropHelper.GetFirstDroppedFile(e);
+            if (filePath != null)
             {
-                string[] files = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
-                if (files != null && files.Length > 0)
-                {
-                    string filePath = files[0]; // 只处理第一个文件
-                    ProcessFileForCrcCalculation(filePath);
-                }
+                ProcessFileForCrcCalculation(filePath);
             }
         }
 
@@ -185,22 +94,11 @@ namespace PersonalTools.UserControls
         {
             try
             {
-                byte[] fileBytes;
+                byte[] fileBytes = FileDropHelper.ReadAllBytes(filePath);
 
-                // 读取文件内容
-                using (FileStream fileStream = new(filePath, FileMode.Open, FileAccess.Read))
-                {
-                    fileBytes = new byte[fileStream.Length];
-                    fileStream.ReadExactly(fileBytes);
-                }
-
-                // 将文件内容转换为hex字符串显示在输入框中
-                string hexString = Utils.ToHexString(fileBytes);
-                CRCInputTextBox.Text = hexString;
-
-                // 设置为hex输入模式
+                // 将文件内容转换为hex字符串显示在输入框中，并切换到 hex 输入模式
+                CRCInputTextBox.Text = Utils.ToHexString(fileBytes);
                 CRCHexInputRadio.IsChecked = true;
-
             }
             catch (IOException ex)
             {

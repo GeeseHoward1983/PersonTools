@@ -41,43 +41,45 @@ namespace PersonalTools.PEAnalyzer.Parsers
             return sb.ToString();
         }
 
+        // 机器类型码 → 描述
+        private static readonly Dictionary<ushort, string> s_machineTypes = new()
+        {
+            [0x014c] = "Intel 386 (x86)",
+            [0x0162] = "MIPS R3000",
+            [0x0166] = "MIPS R4000",
+            [0x0168] = "MIPS R10000",
+            [0x0169] = "MIPS WCI v2",
+            [0x0184] = "Alpha AXP",
+            [0x01A2] = "SH3",
+            [0x01A3] = "SH3 DSP",
+            [0x01A4] = "SH3E",
+            [0x01A6] = "SH4",
+            [0x01A8] = "SH5",
+            [0x01C0] = "ARM",
+            [0x01C2] = "ARM Thumb/Thumb-2",
+            [0x01C4] = "ARM Thumb-2",
+            [0x01D3] = "AM33",
+            [0x01F0] = "PowerPC",
+            [0x01F1] = "PowerPC FP",
+            [0x0200] = "Intel IA64",
+            [0x0266] = "MIPS16",
+            [0x0268] = "Motorola 68000 series",
+            [0x0284] = "Alpha AXP 64-bit",
+            [0x0366] = "MIPS with FPU",
+            [0x0466] = "MIPS16 with FPU",
+            [0x0520] = "TRICORE",
+            [0x0CEF] = "CEF",
+            [0x0EBC] = "EFI Byte Code",
+            [0x8664] = "AMD64 (x64)",
+            [0x9041] = "Mitsubishi M32R",
+            [0xAA64] = "ARM64",
+            [0xC0EE] = "CEE",
+        };
+
         // 获取机器类型描述
         public static string GetMachineTypeDescription(ushort machine)
         {
-            return machine switch
-            {
-                0x014c => "Intel 386 (x86)",
-                0x0162 => "MIPS R3000",
-                0x0166 => "MIPS R4000",
-                0x0168 => "MIPS R10000",
-                0x0169 => "MIPS WCI v2",
-                0x0184 => "Alpha AXP",
-                0x01A2 => "SH3",
-                0x01A3 => "SH3 DSP",
-                0x01A4 => "SH3E",
-                0x01A6 => "SH4",
-                0x01A8 => "SH5",
-                0x01C0 => "ARM",
-                0x01C2 => "ARM Thumb/Thumb-2",
-                0x01C4 => "ARM Thumb-2",
-                0x01D3 => "AM33",
-                0x01F0 => "PowerPC",
-                0x01F1 => "PowerPC FP",
-                0x0200 => "Intel IA64",
-                0x0266 => "MIPS16",
-                0x0268 => "Motorola 68000 series",
-                0x0284 => "Alpha AXP 64-bit",
-                0x0366 => "MIPS with FPU",
-                0x0466 => "MIPS16 with FPU",
-                0x0520 => "TRICORE",
-                0x0CEF => "CEF",
-                0x0EBC => "EFI Byte Code",
-                0x8664 => "AMD64 (x64)",
-                0x9041 => "Mitsubishi M32R",
-                0xAA64 => "ARM64",
-                0xC0EE => "CEE",
-                _ => $"Unknown (0x{machine:X4})",
-            };
+            return s_machineTypes.TryGetValue(machine, out string? name) ? name : $"Unknown (0x{machine:X4})";
         }
 
         // 获取子系统描述
@@ -156,46 +158,14 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
         // 获取操作系统版本描述
         public static string GetOperatingSystemVersionDescription(ushort majorVersion, ushort minorVersion)
-        {
-            return $"{majorVersion switch
-            {
-                3 => minorVersion switch
-                {
-                    10 => "Windows NT 3.1",
-                    51 => "Windows NT 3.51",
-                    _ => "Unknown OS"
-                },
-                4 => minorVersion switch
-                {
-                    0 => "Windows NT 4.0",
-                    _ => "Unknown OS"
-                },
-                5 => minorVersion switch
-                {
-                    0 => "Windows 2000",
-                    1 => "Windows XP",
-                    2 => "Windows Server 2003",
-                    _ => "Unknown OS"
-                },
-                6 => minorVersion switch
-                {
-                    0 => "Windows Vista/Server 2008",
-                    1 => "Windows 7/Server 2008 R2",
-                    2 => "Windows 8/Server 2012",
-                    3 => "Windows 8.1/Server 2012 R2",
-                    _ => "Unknown OS"
-                },
-                10 => minorVersion switch
-                {
-                    0 => "Windows 10/11/Server 2016/2019/2022",
-                    _ => "Unknown OS"
-                },
-                _ => $"Windows NT {majorVersion}.{minorVersion}"
-            }} [{majorVersion}.{minorVersion}]";
-        }
+            => DescribeWindowsVersion(majorVersion, minorVersion, "Windows 10/11/Server 2016/2019/2022");
 
         // 获取子系统版本描述
         public static string GetSubsystemVersionDescription(ushort majorVersion, ushort minorVersion)
+            => DescribeWindowsVersion(majorVersion, minorVersion, "Windows 10/11");
+
+        // OS / 子系统版本描述共用核心（仅 Windows 10 主版本的描述串不同）
+        private static string DescribeWindowsVersion(ushort majorVersion, ushort minorVersion, string win10Text)
         {
             return $"{majorVersion switch
             {
@@ -227,7 +197,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 },
                 10 => minorVersion switch
                 {
-                    0 => "Windows 10/11",
+                    0 => win10Text,
                     _ => "Unknown OS"
                 },
                 _ => $"Windows NT {majorVersion}.{minorVersion}"

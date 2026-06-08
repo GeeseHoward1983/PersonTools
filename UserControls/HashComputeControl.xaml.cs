@@ -165,14 +165,10 @@ namespace PersonalTools.UserControls
         // 处理文件拖放事件
         private void HashTab_Drop(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            string? filePath = FileDropHelper.GetFirstDroppedFile(e);
+            if (filePath != null)
             {
-                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                if (files != null && files.Length > 0)
-                {
-                    string filePath = files[0]; // 只处理第一个文件
-                    ProcessFileForHashCalculation(filePath);
-                }
+                ProcessFileForHashCalculation(filePath);
             }
         }
 
@@ -181,26 +177,15 @@ namespace PersonalTools.UserControls
         {
             try
             {
-                byte[] fileBytes;
-
-                // 读取文件内容
-                using (FileStream fileStream = new(filePath, FileMode.Open, FileAccess.Read))
-                {
-                    fileBytes = new byte[fileStream.Length];
-                    fileStream.ReadExactly(fileBytes);
-                }
+                byte[] fileBytes = FileDropHelper.ReadAllBytes(filePath);
 
                 // 计算除SHA3外的所有哈希值
                 CalculateAndDisplayHashValues(fileBytes);
 
-                // 将文件内容转换为hex字符串显示在SHA3输入框中
-                string hexString = Utils.ToHexString(fileBytes);
-                SHA3InputTextBox.Text = hexString;
-
-                // 设置SHA3为hex输入模式
+                // 将文件内容转为 hex 显示在 SHA3 输入框，并切换到 hex 模式
+                SHA3InputTextBox.Text = Utils.ToHexString(fileBytes);
                 SHA3HexInputRadio.IsChecked = true;
 
-                // 更新提示文本
                 FileDropHint.Text = $"已加载文件: {Path.GetFileName(filePath)}，请在下方选择SHA3算法类型并计算";
             }
             catch (IOException ex)

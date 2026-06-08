@@ -234,10 +234,7 @@ namespace PersonalTools.UserControls
                     return;
                 }
 
-                using RSA rsa = RSA.Create(selectedOption.KeySize); // 根据选择生成指定长度的密钥对
-                string publicKey = rsa.ExportRSAPublicKeyPem(); // 导出公钥PEM格式
-                string privateKey = rsa.ExportRSAPrivateKeyPem(); // 导出私钥PEM格式
-
+                (string publicKey, string privateKey) = RsaCryptoService.GenerateKeyPair(selectedOption.KeySize);
                 RsaPublicKey.Text = publicKey;
                 RsaPrivateKey.Text = privateKey;
 
@@ -253,89 +250,51 @@ namespace PersonalTools.UserControls
             }
         }
 
-        // RSA导入公钥
-        private void RsaImportPublicKey_Click(object sender, RoutedEventArgs e)
+        // RSA导入公钥/私钥
+        private void RsaImportPublicKey_Click(object sender, RoutedEventArgs e) => ImportKey("选择公钥文件", isPublic: true);
+
+        private void RsaImportPrivateKey_Click(object sender, RoutedEventArgs e) => ImportKey("选择私钥文件", isPublic: false);
+
+        private void ImportKey(string dialogTitle, bool isPublic)
         {
+            string kind = isPublic ? "公钥" : "私钥";
             try
             {
                 OpenFileDialog openFileDialog = new()
                 {
                     Filter = "PEM文件 (*.pem)|*.pem|文本文件 (*.txt)|*.txt|所有文件 (*.*)|*.*",
-                    Title = "选择公钥文件"
+                    Title = dialogTitle
                 };
 
-                if (openFileDialog.ShowDialog() == true)
+                if (openFileDialog.ShowDialog() != true)
                 {
-                    string publicKey = File.ReadAllText(openFileDialog.FileName);
-
-                    // 验证是否是有效的公钥
-                    using RSA rsa = RSA.Create();
-                    try
-                    {
-                        rsa.ImportFromPem(publicKey);
-                        RsaPublicKey.Text = publicKey;
-                        MessageBox.Show("公钥导入成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                    }
-                    catch (CryptographicException)
-                    {
-                        MessageBox.Show("选择的文件不是有效的公钥文件！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                    catch (ArgumentException)
-                    {
-                        MessageBox.Show("选择的文件不是有效的公钥文件！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
+                    return;
                 }
+
+                string pem = File.ReadAllText(openFileDialog.FileName);
+                if (!RsaCryptoService.IsValidPem(pem))
+                {
+                    MessageBox.Show($"选择的文件不是有效的{kind}文件！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                if (isPublic)
+                {
+                    RsaPublicKey.Text = pem;
+                }
+                else
+                {
+                    RsaPrivateKey.Text = pem;
+                }
+                MessageBox.Show($"{kind}导入成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (IOException ex)
             {
-                MessageBox.Show($"导入公钥时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"导入{kind}时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             catch (UnauthorizedAccessException ex)
             {
-                MessageBox.Show($"导入公钥时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        // RSA导入私钥
-        private void RsaImportPrivateKey_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                OpenFileDialog openFileDialog = new()
-                {
-                    Filter = "PEM文件 (*.pem)|*.pem|文本文件 (*.txt)|*.txt|所有文件 (*.*)|*.*",
-                    Title = "选择私钥文件"
-                };
-
-                if (openFileDialog.ShowDialog() == true)
-                {
-                    string privateKey = File.ReadAllText(openFileDialog.FileName);
-
-                    // 验证是否是有效的私钥
-                    using RSA rsa = RSA.Create();
-                    try
-                    {
-                        rsa.ImportFromPem(privateKey);
-                        RsaPrivateKey.Text = privateKey;
-                        MessageBox.Show("私钥导入成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                    }
-                    catch (CryptographicException)
-                    {
-                        MessageBox.Show("选择的文件不是有效的私钥文件！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                    catch (ArgumentException)
-                    {
-                        MessageBox.Show("选择的文件不是有效的私钥文件！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                }
-            }
-            catch (IOException ex)
-            {
-                MessageBox.Show($"导入私钥时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                MessageBox.Show($"导入私钥时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"导入{kind}时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

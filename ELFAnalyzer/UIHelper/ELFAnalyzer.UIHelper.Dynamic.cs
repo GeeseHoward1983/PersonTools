@@ -90,34 +90,18 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
 
         private static string ReadStringFromSection(ELFParser _parser, ELFModels.ELFSectionHeader? section, ulong offset)
         {
-            try
+            if (section != null && _parser.FileData != null
+                && offset < (ulong)_parser.FileData.Length
+                && section.Value.sh_offset + offset < (ulong)_parser.FileData.Length)
             {
-                if (section != null && _parser.FileData != null &&
-                    offset < (ulong)_parser.FileData.Length &&
-                    section.Value.sh_offset + offset < (ulong)_parser.FileData.Length)
+                int start = (int)(section.Value.sh_offset + offset);
+                string value = ELFParserUtils.ExtractStringFromBytes(_parser.FileData, start);
+                if (!string.IsNullOrEmpty(value))
                 {
-                    int start = (int)(section.Value.sh_offset + offset);
-                    int end = start;
-                    while (end < _parser.FileData.Length && _parser.FileData[end] != 0)
-                    {
-                        end++;
-                    }
-
-                    if (end > start)
-                    {
-                        return Encoding.UTF8.GetString(_parser.FileData, start, end - start);
-                    }
+                    return value;
                 }
             }
-            catch (ArgumentOutOfRangeException)
-            {
-                // 如果发生索引越界，返回偏移量
-            }
-            catch (DecoderFallbackException)
-            {
-                // 如果发生解码错误，返回偏移量
-            }
-            // 移除 catch (Exception)
+
             return $"0x{offset:x}";
         }
     }

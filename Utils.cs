@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace PersonalTools
 {
     internal static class Utils
@@ -57,6 +59,12 @@ namespace PersonalTools
         public static string EnumerableToString(string? separator, IEnumerable<string> values)
         {
             return values.Any() ? string.Join(separator, values) : string.Empty;
+        }
+
+        /// <summary>按输入模式取字节：isHex=true 按十六进制解析，否则按 UTF-8。</summary>
+        public static byte[] InputBytes(string text, bool isHex)
+        {
+            return isHex ? HexStringToByteArray(text) : Encoding.UTF8.GetBytes(text);
         }
     }
 }

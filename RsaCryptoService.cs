@@ -109,5 +109,31 @@ namespace PersonalTools
                 return false;
             }
         }
+
+        /// <summary>生成指定长度的 RSA 密钥对，返回 (公钥PEM, 私钥PEM)。</summary>
+        public static (string PublicKey, string PrivateKey) GenerateKeyPair(int keySize)
+        {
+            using RSA rsa = RSA.Create(keySize);
+            return (rsa.ExportRSAPublicKeyPem(), rsa.ExportRSAPrivateKeyPem());
+        }
+
+        /// <summary>校验 PEM 是否能作为有效的 RSA 密钥导入。</summary>
+        public static bool IsValidPem(string pem)
+        {
+            try
+            {
+                using RSA rsa = RSA.Create();
+                rsa.ImportFromPem(pem);
+                return true;
+            }
+            catch (CryptographicException)
+            {
+                return false;
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
+        }
     }
 }
