@@ -32,24 +32,35 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 return string.Empty;
             }
-            // 如果符号表是动态符号表(SHT_DYNSYM)，尝试根据符号下标获取版本信息
+
+            // 动态符号表(SHT_DYNSYM)可能带版本：追加 @/@@<版本名>
+            return AppendVersionSuffix(parser, baseName, symbolIndex, sectionType);
+        }
+
+        // 若该符号有有效外部版本（索引≥2），按是否默认版本追加 "@@版本"/"@版本"，否则原样返回
+        private static string AppendVersionSuffix(ELFParser parser, string baseName, int symbolIndex, SectionType sectionType)
+        {
             List<ELFSymbol>? symbols = parser.Symbols.GetValueOrDefault(sectionType);
-            if (symbols != null && symbolIndex >= 0 && symbolIndex < parser.VersionSymbols.Length)
+            if (symbols == null || symbolIndex < 0 || symbolIndex >= parser.VersionSymbols.Length)
             {
-                ushort versionIndex = (ushort)(parser.VersionSymbols[symbolIndex] & 0x7fff); // 去除隐藏标志
-                if (versionIndex >= 2) // 版本索引从2开始是有效的外部版本
-                {
-                    string versionName = GetVersionNameByVersionIndex(parser, versionIndex);
-                    if (!string.IsNullOrEmpty(versionName))
-                    {
-                        // 判断是否是默认版本符号 (@@ 表示默认版本，否则 @)
-                        bool isDefaultVersion = IsDefaultVersionSymbol(parser, symbolIndex, symbols);
-                        return baseName + (isDefaultVersion ? "@@" : "@") + versionName;
-                    }
-                }
+                return baseName;
             }
 
-            return baseName;
+            ushort versionIndex = (ushort)(parser.VersionSymbols[symbolIndex] & 0x7fff); // 去除隐藏标志
+            if (versionIndex < 2) // 版本索引从2开始是有效的外部版本
+            {
+                return baseName;
+            }
+
+            string versionName = GetVersionNameByVersionIndex(parser, versionIndex);
+            if (string.IsNullOrEmpty(versionName))
+            {
+                return baseName;
+            }
+
+            // 判断是否是默认版本符号 (@@ 表示默认版本，否则 @)
+            bool isDefaultVersion = IsDefaultVersionSymbol(parser, symbolIndex, symbols);
+            return baseName + (isDefaultVersion ? "@@" : "@") + versionName;
         }
 
         private static string GetVersionNameByVersionIndex(ELFParser parser, ushort versionIndex)

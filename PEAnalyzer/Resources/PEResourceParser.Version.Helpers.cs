@@ -52,11 +52,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 // wValueLength==0 表示没有 VS_FIXEDFILEINFO（合法），直接解析子项
                 if (wValueLength == 0)
                 {
-                    if (alignedPosition < fs.Length && alignedPosition < startPosition + wLength)
-                    {
-                        fs.Position = alignedPosition;
-                        ParseVersionChildren(fs, reader, peInfo, startPosition + wLength);
-                    }
+                    ParseChildrenIfPresent(fs, reader, peInfo, alignedPosition, startPosition + wLength);
                     return;
                 }
 
@@ -71,12 +67,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 ApplyFixedFileVersions(peInfo, fixedFileInfo);
 
                 // 子项（StringFileInfo / VarFileInfo）紧跟在 VS_FIXEDFILEINFO 之后
-                long childrenStartPos = Utilities.AlignTo4(alignedPosition + 52);
-                if (childrenStartPos < fs.Length && childrenStartPos < startPosition + wLength)
-                {
-                    fs.Position = childrenStartPos;
-                    ParseVersionChildren(fs, reader, peInfo, startPosition + wLength);
-                }
+                ParseChildrenIfPresent(fs, reader, peInfo, Utilities.AlignTo4(alignedPosition + 52), startPosition + wLength);
             }
             catch (IOException ex)
             {
@@ -89,6 +80,16 @@ namespace PersonalTools.PEAnalyzer.Resources
             catch (ArgumentOutOfRangeException ex)
             {
                 peInfo.AdditionalInfo.FileVersion = $"版本信息结构解析错误: {ex.Message}";
+            }
+        }
+
+        // 若子项起始位置有效（在文件内且未越过本结构末尾），定位并解析 StringFileInfo/VarFileInfo
+        private static void ParseChildrenIfPresent(FileStream fs, BinaryReader reader, PEInfo peInfo, long childrenStart, long endPosition)
+        {
+            if (childrenStart < fs.Length && childrenStart < endPosition)
+            {
+                fs.Position = childrenStart;
+                ParseVersionChildren(fs, reader, peInfo, endPosition);
             }
         }
 

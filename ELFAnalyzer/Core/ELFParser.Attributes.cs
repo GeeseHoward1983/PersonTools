@@ -44,63 +44,71 @@ namespace PersonalTools.ELFAnalyzer.Core
             int offset = 0;
 
             // 解析属性段格式版本 (固定为'A' = 0x41)
-            if (offset < data.Length && data[offset] == 0x41) // 'A'
+            if (offset >= data.Length || data[offset] != 0x41)
             {
-                offset++;
+                return sb.ToString();
+            }
+            offset++;
 
-                while (offset < data.Length)
-                {
-                    // 子节长度字段：含本 4 字节长度 + 供应商名 + 数据（ARM/GNU 规范）
-                    int subSectionStart = offset;
-                    uint subSectionLength = ELFParserUtils.ReadUInt32(data, offset, isLittleEndian);
-                    offset += 4;
-
-                    if (offset >= data.Length)
-                    {
-                        break;
-                    }
-
-                    // 解析供应商名称 (null终止字符串)
-                    int vendorNameStart = offset;
-                    while (offset < data.Length && data[offset] != 0)
-                    {
-                        offset++;
-                    }
-                    string vendorName = Encoding.UTF8.GetString(data, vendorNameStart, offset - vendorNameStart);
-                    offset++; // 跳过null终止符
-
-                    sb.AppendLine(CultureInfo.InvariantCulture, $"Attribute Section: {vendorName}");
-
-                    // 子节结束位置 = 子节起始 + 子节长度（length 字段含其自身与 vendor 名）
-                    int subSectionEnd = subSectionStart + (int)subSectionLength;
-                    if (subSectionEnd > data.Length || subSectionLength == 0)
-                    {
-                        subSectionEnd = data.Length;
-                    }
-
-                    if (vendorName == "aeabi")
-                    {
-                        ParseAEABIAttributes(data, ref offset, subSectionEnd, sb);
-                    }
-                    else if (vendorName == "riscv")
-                    {
-                        ParseRiscvAttributes(data, ref offset, subSectionEnd, sb);
-                    }
-                    else
-                    {
-                        // 通用 GNU 方言：MIPS/PowerPC/LoongArch/S390/SPARC 等（vendor 通常为 "gnu"）
-                        ParseGnuAttributes(parser, data, ref offset, subSectionEnd, sb);
-                    }
-
-                    // 确保offset不会倒退
-                    if (offset < subSectionEnd)
-                    {
-                        offset = subSectionEnd;
-                    }
-                }
+            // 逐个解析供应商子节，直到数据耗尽或子节读取失败
+            while (offset < data.Length && ParseVendorSubsection(parser, data, ref offset, isLittleEndian, sb))
+            {
             }
 
             return sb.ToString();
+        }
+
+        // 解析一个供应商子节；返回 false 表示数据不足应停止
+        private static bool ParseVendorSubsection(ELFParser parser, byte[] data, ref int offset, bool isLittleEndian, StringBuilder sb)
+        {
+            // 子节长度字段：含本 4 字节长度 + 供应商名 + 数据（ARM/GNU 规范）
+            int subSectionStart = offset;
+            uint subSectionLength = ELFParserUtils.ReadUInt32(data, offset, isLittleEndian);
+            offset += 4;
+
+            if (offset >= data.Length)
+            {
+                return false;
+            }
+
+            // 解析供应商名称 (null终止字符串)
+            int vendorNameStart = offset;
+            while (offset < data.Length && data[offset] != 0)
+            {
+                offset++;
+            }
+            string vendorName = Encoding.UTF8.GetString(data, vendorNameStart, offset - vendorNameStart);
+            offset++; // 跳过null终止符
+
+            sb.AppendLine(CultureInfo.InvariantCulture, $"Attribute Section: {vendorName}");
+
+            // 子节结束位置 = 子节起始 + 子节长度（length 字段含其自身与 vendor 名）
+            int subSectionEnd = subSectionStart + (int)subSectionLength;
+            if (subSectionEnd > data.Length || subSectionLength == 0)
+            {
+                subSectionEnd = data.Length;
+            }
+
+            if (vendorName == "aeabi")
+            {
+                ParseAEABIAttributes(data, ref offset, subSectionEnd, sb);
+            }
+            else if (vendorName == "riscv")
+            {
+                ParseRiscvAttributes(data, ref offset, subSectionEnd, sb);
+            }
+            else
+            {
+                // 通用 GNU 方言：MIPS/PowerPC/LoongArch/S390/SPARC 等（vendor 通常为 "gnu"）
+                ParseGnuAttributes(parser, data, ref offset, subSectionEnd, sb);
+            }
+
+            // 确保offset不会倒退
+            if (offset < subSectionEnd)
+            {
+                offset = subSectionEnd;
+            }
+            return true;
         }
 
         // ---- AEABI (ARM EABI) 属性解析，输出对齐 readelf ----

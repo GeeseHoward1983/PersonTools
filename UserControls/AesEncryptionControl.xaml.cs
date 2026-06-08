@@ -218,71 +218,15 @@ namespace PersonalTools.UserControls
         // AES加密字符串
         private string AesEncryptString(string input, byte[] key, byte[]? iv, CipherMode mode)
         {
-            AesPaddingOption selectedPadding = (AesPaddingOption)AesPaddingComboBox.SelectedItem;
-
-            using Aes aesAlg = Aes.Create();
-            aesAlg.KeySize = key.Length * 8; // 根据密钥长度设置KeySize
-            aesAlg.Key = key;
-            if (iv != null)
-            {
-                aesAlg.IV = iv;
-            }
-            aesAlg.Mode = mode;
-            aesAlg.Padding = selectedPadding.Padding;
-
-            // 根据选择的类型处理输入文本
-            byte[] inputBytes;
-            if (AesInputStringRadio.IsChecked == true)
-            {
-                // 普通字符串模式
-                inputBytes = Encoding.UTF8.GetBytes(input);
-            }
-            else
-            {
-                // Hex字符串模式
-                inputBytes = Utils.HexStringToByteArray(input);
-            }
-#pragma warning disable CA5401
-            ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
-#pragma warning restore CA5401
-            using MemoryStream msEncrypt = new();
-            using CryptoStream csEncrypt = new(msEncrypt, encryptor, CryptoStreamMode.Write);
-            csEncrypt.Write(inputBytes, 0, inputBytes.Length);
-            byte[] encryptedBytes = msEncrypt.ToArray();
-            // 返回十六进制字符串而不是Base64
-            return Utils.ToHexString(encryptedBytes);
+            PaddingMode padding = ((AesPaddingOption)AesPaddingComboBox.SelectedItem).Padding;
+            return AesCryptoService.Encrypt(input, key, iv, mode, padding, AesInputStringRadio.IsChecked != true);
         }
 
         // AES解密字符串
         private string AesDecryptString(string input, byte[] key, byte[]? iv, CipherMode mode)
         {
-            AesPaddingOption selectedPadding = (AesPaddingOption)AesPaddingComboBox.SelectedItem;
-
-            // 将输入的十六进制字符串转换为字节数组
-            byte[] encryptedBytes = Utils.HexStringToByteArray(input);
-
-            using Aes aesAlg = Aes.Create();
-            aesAlg.KeySize = key.Length * 8; // 根据密钥长度设置KeySize
-            aesAlg.Key = key;
-            if (iv != null)
-            {
-                aesAlg.IV = iv;
-            }
-            aesAlg.Mode = mode;
-            aesAlg.Padding = selectedPadding.Padding;
-
-            ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
-
-            using MemoryStream msDecrypt = new(encryptedBytes);
-            using CryptoStream csDecrypt = new(msDecrypt, decryptor, CryptoStreamMode.Read);
-            using MemoryStream resultStream = new();
-            csDecrypt.CopyTo(resultStream);
-            byte[] decryptedBytes = resultStream.ToArray();
-
-            // 按明文输入的表示方式输出：字符串模式 → UTF-8 文本；Hex 模式 → 十六进制，避免二进制数据丢失
-            return AesInputStringRadio.IsChecked == true
-                ? Encoding.UTF8.GetString(decryptedBytes)
-                : Utils.ToHexString(decryptedBytes);
+            PaddingMode padding = ((AesPaddingOption)AesPaddingComboBox.SelectedItem).Padding;
+            return AesCryptoService.Decrypt(input, key, iv, mode, padding, AesInputStringRadio.IsChecked != true);
         }
 
         // 获取密钥字节数组

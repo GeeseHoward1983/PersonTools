@@ -54,7 +54,7 @@ namespace PersonalTools.UserControls
 
                 try
                 {
-                    string result = RsaEncryptString(input, publicKey, RsaInputStringRadio.IsChecked == true);
+                    string result = RsaCryptoService.Encrypt(input, publicKey, RsaInputStringRadio.IsChecked == true);
                     RsaResult.Text = result;
                 }
                 catch (CryptographicException ex)
@@ -98,7 +98,7 @@ namespace PersonalTools.UserControls
 
                 try
                 {
-                    string result = RsaDecryptString(input, privateKey);
+                    string result = RsaCryptoService.Decrypt(input, privateKey);
                     RsaInput.Text = result;
                 }
                 catch (CryptographicException ex)
@@ -142,7 +142,7 @@ namespace PersonalTools.UserControls
 
                 try
                 {
-                    string result = RsaSignData(input, privateKey, RsaInputStringRadio.IsChecked == true);
+                    string result = RsaCryptoService.Sign(input, privateKey, RsaInputStringRadio.IsChecked == true);
                     RsaResult.Text = result;
                 }
                 catch (CryptographicException ex)
@@ -193,7 +193,7 @@ namespace PersonalTools.UserControls
 
                 try
                 {
-                    bool isValid = RsaVerifySignature(input, signature, publicKey, RsaInputStringRadio.IsChecked == true);
+                    bool isValid = RsaCryptoService.Verify(input, signature, publicKey, RsaInputStringRadio.IsChecked == true);
                     if (isValid)
                     {
                         MessageBox.Show("验签成功！", "结果", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -346,164 +346,6 @@ namespace PersonalTools.UserControls
             RsaResult.Clear();
             RsaPublicKey.Clear();
             RsaPrivateKey.Clear();
-        }
-
-        // RSA加密字符串
-        private static string RsaEncryptString(string input, string publicKey, bool isString)
-        {
-            using RSA rsa = RSA.Create();
-
-            try
-            {
-                // 根据选择的类型处理输入文本
-                byte[] inputBytes;
-                if (isString)
-                {
-                    // 普通字符串模式
-                    inputBytes = Encoding.UTF8.GetBytes(input);
-                }
-                else
-                {
-                    // Hex字符串模式
-                    inputBytes = Utils.HexStringToByteArray(input);
-                }
-
-                // 导入公钥
-                rsa.ImportFromPem(publicKey);
-
-                // 加密（OAEP-SHA256，避免 PKCS#1 v1.5 的填充预言攻击；注意会减小可加密明文上限，512 位密钥过小无法使用）
-                byte[] encryptedBytes = rsa.Encrypt(inputBytes, RSAEncryptionPadding.OaepSHA256);
-
-                // 返回十六进制字符串
-                return Utils.ToHexString(encryptedBytes);
-            }
-            catch (ArgumentException ex)
-            {
-                throw new CryptographicException($"导入公钥或加密失败: {ex.Message}", ex);
-            }
-            catch (CryptographicException ex)
-            {
-                throw new CryptographicException($"导入公钥或加密失败: {ex.Message}", ex);
-            }
-            catch (Exception ex)
-            {
-                throw new CryptographicException($"导入公钥或加密失败: {ex.Message}", ex);
-            }
-        }
-
-        // RSA解密字符串
-        private static string RsaDecryptString(string input, string privateKey)
-        {
-            using RSA rsa = RSA.Create();
-
-            try
-            {
-                // 将输入的十六进制字符串转换为字节数组
-                byte[] encryptedBytes = Utils.HexStringToByteArray(input);
-
-                // 导入私钥
-                rsa.ImportFromPem(privateKey);
-
-                // 解密（与加密一致使用 OAEP-SHA256）
-                byte[] decryptedBytes = rsa.Decrypt(encryptedBytes, RSAEncryptionPadding.OaepSHA256);
-
-                // 返回解密后的字符串
-                return Encoding.UTF8.GetString(decryptedBytes);
-            }
-            catch (ArgumentException ex)
-            {
-                throw new CryptographicException($"导入私钥或解密失败: {ex.Message}", ex);
-            }
-            catch (CryptographicException ex)
-            {
-                throw new CryptographicException($"导入私钥或解密失败: {ex.Message}", ex);
-            }
-            catch (Exception ex)
-            {
-                throw new CryptographicException($"导入私钥或解密失败: {ex.Message}", ex);
-            }
-        }
-
-        // RSA签名数据
-        private static string RsaSignData(string input, string privateKey, bool isString)
-        {
-            using RSA rsa = RSA.Create();
-
-            try
-            {
-                // 根据选择的类型处理输入文本
-                byte[] inputBytes;
-                if (isString)
-                {
-                    // 普通字符串模式
-                    inputBytes = Encoding.UTF8.GetBytes(input);
-                }
-                else
-                {
-                    // Hex字符串模式
-                    inputBytes = Utils.HexStringToByteArray(input);
-                }
-
-                // 导入私钥
-                rsa.ImportFromPem(privateKey);
-
-                // 使用SHA256作为哈希算法进行签名
-                byte[] signatureBytes = rsa.SignData(inputBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-
-                // 返回十六进制字符串
-                return Utils.ToHexString(signatureBytes);
-            }
-            catch (ArgumentException ex)
-            {
-                throw new CryptographicException($"导入私钥或签名失败: {ex.Message}", ex);
-            }
-            catch (CryptographicException ex)
-            {
-                throw new CryptographicException($"导入私钥或签名失败: {ex.Message}", ex);
-            }
-            catch (Exception ex)
-            {
-                throw new CryptographicException($"导入私钥或签名失败: {ex.Message}", ex);
-            }
-        }
-
-        // RSA验证签名
-        private static bool RsaVerifySignature(string input, string signature, string publicKey, bool isString)
-        {
-            using RSA rsa = RSA.Create();
-
-            try
-            {
-                // 根据选择的类型处理输入文本
-                byte[] inputBytes;
-                if (isString)
-                {
-                    // 普通字符串模式
-                    inputBytes = Encoding.UTF8.GetBytes(input);
-                }
-                else
-                {
-                    // Hex字符串模式
-                    inputBytes = Utils.HexStringToByteArray(input);
-                }
-
-                // 将签名的十六进制字符串转换为字节数组
-                byte[] signatureBytes = Utils.HexStringToByteArray(signature);
-
-                // 导入公钥
-                rsa.ImportFromPem(publicKey);
-
-                // 使用SHA256作为哈希算法进行验签
-                return rsa.VerifyData(inputBytes, signatureBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-            }
-            catch (CryptographicException)
-            {
-                return false;
-            }
-            catch (ArgumentException)
-            {
-                return false;
-            }
         }
 
         // 处理RSA标签页的文件拖放事件

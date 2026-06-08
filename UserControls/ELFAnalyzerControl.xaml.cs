@@ -148,6 +148,29 @@ namespace PersonalTools.UserControls
             ELFExidxInfoTabItem.Visibility = !exidxInfo.Contains("There are no exception index entries", StringComparison.CurrentCulture) ? Visibility.Visible : Visibility.Collapsed;
         }
 
+        private Action<ELFAnalyzer.ELFAnalyzer>[]? displaySteps;
+
+        // 各分析展示步骤（表驱动：统一遍历调用，增删步骤只需改这张表）
+        private Action<ELFAnalyzer.ELFAnalyzer>[] DisplaySteps => displaySteps ??=
+        [
+            SetELFHeaderInfo,
+            SetInterpreterInfo,
+            SetProgramHeadersData,
+            SetSectionHeadersData,
+            SetSectionToSegmentInfo,
+            SetSymbolTableData,
+            SetDynamicSymbolTableData,
+            SetDynamicSectionData,
+            SetVersionSymbolInfo,
+            SetVersionDependencyInfo,
+            SetRelaDynData,
+            SetRelaPltData,
+            SetGotData,
+            SetNoteInfo,
+            SetAttributeInfo,
+            SetExidxInfo,
+        ];
+
         // IFileAnalyzerView：供宿主统一调用
         public void LoadFile(string filePath) => AnalyzeELFFile(filePath);
 
@@ -158,36 +181,10 @@ namespace PersonalTools.UserControls
                 ELFAnalyzer.ELFAnalyzer analyzer = new(filePath);
 
                 // 更新各控件的信息
-                SetELFHeaderInfo(analyzer);
-                SetInterpreterInfo(analyzer);
-                // 显示程序头信息
-                SetProgramHeadersData(analyzer);
-                // 显示节头信息
-                SetSectionHeadersData(analyzer);
-                // 显示节到段映射信息
-                SetSectionToSegmentInfo(analyzer);
-                // 显示符号表信息
-                SetSymbolTableData(analyzer);
-                // 显示动态符号表信息
-                SetDynamicSymbolTableData(analyzer);
-                // 显示动态段信息
-                SetDynamicSectionData(analyzer);
-                // 显示版本符号信息
-                SetVersionSymbolInfo(analyzer);
-                // 显示版本依赖信息
-                SetVersionDependencyInfo(analyzer);
-                // 显示重定位信息
-                SetRelaDynData(analyzer);
-                // 显示plt重定位信息
-                SetRelaPltData(analyzer);
-                // 显示GOT信息
-                SetGotData(analyzer);
-                // 显示note信息
-                SetNoteInfo(analyzer);
-                // 显示属性信息
-                SetAttributeInfo(analyzer);
-                // 显示Exidx信息
-                SetExidxInfo(analyzer);
+                foreach (Action<ELFAnalyzer.ELFAnalyzer> step in DisplaySteps)
+                {
+                    step(analyzer);
+                }
             }
             catch (UnauthorizedAccessException ex)
             {

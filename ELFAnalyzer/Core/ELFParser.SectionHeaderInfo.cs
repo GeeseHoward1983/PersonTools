@@ -10,65 +10,32 @@ namespace PersonalTools.ELFAnalyzer.Core
             return ELFParserUtils.GetTypeName(typeof(SectionType), shType, "");
         }
 
+        // 节标志位 → 字符（顺序与 readelf 一致）
+        private static readonly (SectionAttributes Flag, char Char)[] s_sectionFlagChars =
+        [
+            (SectionAttributes.SHF_WRITE, 'W'),
+            (SectionAttributes.SHF_ALLOC, 'A'),
+            (SectionAttributes.SHF_EXECINSTR, 'X'),
+            (SectionAttributes.SHF_MERGE, 'M'),
+            (SectionAttributes.SHF_STRINGS, 'S'),
+            (SectionAttributes.SHF_INFO_LINK, 'I'),
+            (SectionAttributes.SHF_LINK_ORDER, 'L'),
+            (SectionAttributes.SHF_OS_NONCONFORMING, 'O'),
+            (SectionAttributes.SHF_GROUP, 'G'),
+            (SectionAttributes.SHF_TLS, 'T'),
+            (SectionAttributes.SHF_COMPRESSED, 'C'),
+        ];
+
         public static string GetSectionFlags(ulong shFlags)
         {
             string sectionFlags = "";
-
-            if ((shFlags & (ulong)SectionAttributes.SHF_WRITE) != 0)
+            foreach ((SectionAttributes flag, char ch) in s_sectionFlagChars)
             {
-                sectionFlags += "W";
+                if ((shFlags & (ulong)flag) != 0)
+                {
+                    sectionFlags += ch;
+                }
             }
-
-            if ((shFlags & (ulong)SectionAttributes.SHF_ALLOC) != 0)
-            {
-                sectionFlags += "A";
-            }
-
-            if ((shFlags & (ulong)SectionAttributes.SHF_EXECINSTR) != 0)
-            {
-                sectionFlags += "X";
-            }
-
-            if ((shFlags & (ulong)SectionAttributes.SHF_MERGE) != 0)
-            {
-                sectionFlags += "M";
-            }
-
-            if ((shFlags & (ulong)SectionAttributes.SHF_STRINGS) != 0)
-            {
-                sectionFlags += "S";
-            }
-
-            if ((shFlags & (ulong)SectionAttributes.SHF_INFO_LINK) != 0)
-            {
-                sectionFlags += "I";
-            }
-
-            if ((shFlags & (ulong)SectionAttributes.SHF_LINK_ORDER) != 0)
-            {
-                sectionFlags += "L";
-            }
-
-            if ((shFlags & (ulong)SectionAttributes.SHF_OS_NONCONFORMING) != 0)
-            {
-                sectionFlags += "O";
-            }
-
-            if ((shFlags & (ulong)SectionAttributes.SHF_GROUP) != 0)
-            {
-                sectionFlags += "G";
-            }
-
-            if ((shFlags & (ulong)SectionAttributes.SHF_TLS) != 0)
-            {
-                sectionFlags += "T";
-            }
-
-            if ((shFlags & (ulong)SectionAttributes.SHF_COMPRESSED) != 0)
-            {
-                sectionFlags += "C";
-            }
-
             return sectionFlags;
         }
 

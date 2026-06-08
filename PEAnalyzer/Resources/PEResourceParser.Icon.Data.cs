@@ -122,73 +122,35 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             try
             {
-                // 检查BITMAPINFOHEADER
-                if (dibData.Length < 40)
+                // 检查 BITMAPINFOHEADER
+                if (dibData.Length < 40 || BitConverter.ToUInt32(dibData, 0) != 40)
                 {
                     return;
                 }
 
-                uint biSize = BitConverter.ToUInt32(dibData, 0);
-                if (biSize != 40)
-                {
-                    return;
-                }
-
-                // 从BITMAPINFOHEADER中提取宽度和高度
                 int width = BitConverter.ToInt32(dibData, 4);
-                int height = BitConverter.ToInt32(dibData, 8);
                 // 图标 DIB 高度为实际高度的两倍（XOR+AND 掩码）；负数表示自顶向下，先取绝对值
-                height = Math.Abs(height) / 2;
-
-                // 从BITMAPINFOHEADER中提取色深
+                int height = Math.Abs(BitConverter.ToInt32(dibData, 8)) / 2;
                 ushort bitCount = BitConverter.ToUInt16(dibData, 14);
-
-                // 验证基本图像参数
                 if (width <= 0 || height <= 0 || bitCount == 0)
                 {
                     return;
                 }
 
-                // 构建完整的ICO文件数据
                 int fullIconDataSize = 6 + 16 + dibData.Length;
-                if (fullIconDataSize is > 0 and < (10 * 1024 * 1024)) // 限制最大10MB
+                if (fullIconDataSize is <= 0 or >= (10 * 1024 * 1024)) // 限制最大10MB
                 {
-                    byte[] fullIconData = new byte[fullIconDataSize];
-
-                    // 写入ICO文件头 (6字节)
-                    fullIconData[0] = 0x00; // Reserved
-                    fullIconData[1] = 0x00; // Reserved
-                    fullIconData[2] = 0x01; // Type (1 = ICO)
-                    fullIconData[3] = 0x00; // Type
-                    fullIconData[4] = 0x01; // Count (1个图标)
-                    fullIconData[5] = 0x00; // Count
-
-                    // 写入目录项 (16字节)
-                    fullIconData[6] = (byte)(width & 0xFF);  // Width
-                    fullIconData[7] = (byte)(height & 0xFF); // Height
-                    fullIconData[8] = 0; // ColorCount
-                    fullIconData[9] = 0; // Reserved
-                    BitConverter.GetBytes((ushort)1).CopyTo(fullIconData, 10); // Planes
-                    BitConverter.GetBytes(bitCount).CopyTo(fullIconData, 12); // BitCount
-                    BitConverter.GetBytes((uint)dibData.Length).CopyTo(fullIconData, 14); // BytesInRes
-                    // 图像数据偏移量 (从文件开始到图像数据的偏移量)
-                    uint imageDataOffset = 6 + 16; // 文件头 + 目录项
-                    BitConverter.GetBytes(imageDataOffset).CopyTo(fullIconData, 18);
-
-                    // 复制图像数据
-                    Array.Copy(dibData, 0, fullIconData, 6 + 16, dibData.Length);
-
-                    IconInfo iconInfo = new()
-                    {
-                        Width = width,
-                        Height = height,
-                        BitsPerPixel = bitCount,
-                        Size = fullIconDataSize,
-                        Data = fullIconData
-                    };
-
-                    peInfo.Icons.Add(iconInfo);
+                    return;
                 }
+
+                peInfo.Icons.Add(new IconInfo
+                {
+                    Width = width,
+                    Height = height,
+                    BitsPerPixel = bitCount,
+                    Size = fullIconDataSize,
+                    Data = BuildIcoFile(dibData, width, height, bitCount)
+                });
             }
             catch (ArgumentException ex)
             {
@@ -198,6 +160,35 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 Console.WriteLine($"转换DIB到ICO错误: {ex.Message}");
             }
+        }
+
+        // 将单张 DIB 包装为 .ico 文件字节（6字节文件头 + 16字节目录项 + DIB 数据）
+        private static byte[] BuildIcoFile(byte[] dibData, int width, int height, ushort bitCount)
+        {
+            byte[] fullIconData = new byte[6 + 16 + dibData.Length];
+
+            // ICO 文件头 (6字节)
+            fullIconData[0] = 0x00; // Reserved
+            fullIconData[1] = 0x00; // Reserved
+            fullIconData[2] = 0x01; // Type (1 = ICO)
+            fullIconData[3] = 0x00; // Type
+            fullIconData[4] = 0x01; // Count (1个图标)
+            fullIconData[5] = 0x00; // Count
+
+            // 目录项 (16字节)
+            fullIconData[6] = (byte)(width & 0xFF);  // Width
+            fullIconData[7] = (byte)(height & 0xFF); // Height
+            fullIconData[8] = 0; // ColorCount
+            fullIconData[9] = 0; // Reserved
+            BitConverter.GetBytes((ushort)1).CopyTo(fullIconData, 10);            // Planes
+            BitConverter.GetBytes(bitCount).CopyTo(fullIconData, 12);             // BitCount
+            BitConverter.GetBytes((uint)dibData.Length).CopyTo(fullIconData, 14); // BytesInRes
+            BitConverter.GetBytes((uint)(6 + 16)).CopyTo(fullIconData, 18);       // 图像数据偏移（文件头+目录项）
+
+            // 复制图像数据
+            Array.Copy(dibData, 0, fullIconData, 6 + 16, dibData.Length);
+
+            return fullIconData;
         }
 
         /// <summary>

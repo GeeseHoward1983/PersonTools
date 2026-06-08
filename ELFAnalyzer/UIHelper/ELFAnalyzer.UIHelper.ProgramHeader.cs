@@ -56,44 +56,42 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
         private static List<string> GetSectionsInSegment(ELFParser _parser, ELFProgramHeader ph)
         {
             List<string> sections = [];
-            if (_parser.SectionHeaders != null)
+            if (_parser.SectionHeaders == null)
             {
-                // Calculate the end address of the segment based on memory size
-                ulong segEndAddr = ph.p_vaddr + ph.p_memsz;
+                return sections;
+            }
 
-                for (int i = 0; i < _parser.SectionHeaders.Count; i++)
+            // 段在虚拟内存中的结束地址
+            ulong segEndAddr = ph.p_vaddr + ph.p_memsz;
+            for (int i = 0; i < _parser.SectionHeaders.Count; i++)
+            {
+                Models.ELFSectionHeader sh = _parser.SectionHeaders[i];
+                if (sh.sh_size == 0)
                 {
-                    Models.ELFSectionHeader sh = _parser.SectionHeaders[i];
+                    continue;
+                }
 
-                    // Skip sections with zero size or invalid addresses
-                    if (sh.sh_size == 0 || string.IsNullOrEmpty(SymbleName.GetSectionName(_parser, i)))
-                    {
-                        continue;
-                    }
+                string sectionName = SymbleName.GetSectionName(_parser, i);
+                if (string.IsNullOrEmpty(sectionName))
+                {
+                    continue;
+                }
 
-                    // Calculate the end address of the section
-                    ulong secEndAddr = sh.sh_addr + sh.sh_size;
-
-                    // Check if section overlaps with segment in virtual memory space
-                    // Three cases of overlap:
-                    // 1. Section starts within segment: sh.sh_addr >= ph.p_vaddr && sh.sh_addr < segEndAddr
-                    // 2. Section ends within segment: secEndAddr > ph.p_vaddr && secEndAddr <= segEndAddr
-                    // 3. Section completely contains segment: sh.sh_addr <= ph.p_vaddr && secEndAddr >= segEndAddr
-                    bool overlapsInVirtualMemory = (sh.sh_addr >= ph.p_vaddr && sh.sh_addr < segEndAddr) ||
-                                                  (secEndAddr > ph.p_vaddr && secEndAddr <= segEndAddr) ||
-                                                  (sh.sh_addr <= ph.p_vaddr && secEndAddr >= segEndAddr);
-
-                    if (overlapsInVirtualMemory)
-                    {
-                        string sectionName = SymbleName.GetSectionName(_parser, i);
-                        if (!string.IsNullOrEmpty(sectionName))
-                        {
-                            sections.Add(sectionName);
-                        }
-                    }
+                if (SectionOverlapsSegment(sh, ph.p_vaddr, segEndAddr))
+                {
+                    sections.Add(sectionName);
                 }
             }
             return sections;
+        }
+
+        // 节是否与段在虚拟内存空间重叠：起始落入段 / 结束落入段 / 节包含段，三者之一即重叠
+        private static bool SectionOverlapsSegment(Models.ELFSectionHeader sh, ulong segStart, ulong segEnd)
+        {
+            ulong secEndAddr = sh.sh_addr + sh.sh_size;
+            return (sh.sh_addr >= segStart && sh.sh_addr < segEnd) ||
+                   (secEndAddr > segStart && secEndAddr <= segEnd) ||
+                   (sh.sh_addr <= segStart && secEndAddr >= segEnd);
         }
 
         internal static string GetInterpreterInfo(ELFParser Parser)

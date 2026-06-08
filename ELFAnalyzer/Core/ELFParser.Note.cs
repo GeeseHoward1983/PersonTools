@@ -42,12 +42,14 @@ namespace PersonalTools.ELFAnalyzer.Core
             StringBuilder sb = new();
             sb.AppendLine(CultureInfo.InvariantCulture, $"Displaying notes found at file offset 0x{offset:x8} with length 0x{size:x8}:");
             sb.AppendLine("  Owner             Data size            Description");
+
+            bool isLittleEndian = parser.Header.IsLittleEndian();
+            bool is64Bit = parser.Is64Bit;
             ulong endOffset = offset + size;
 
             while (offset < endOffset)
             {
                 // Note结构：namesz, descsz, type
-                bool isLittleEndian = parser.Header.IsLittleEndian();
                 uint namesz = ELFParserUtils.ReadUInt32(parser.FileData, (int)offset, isLittleEndian);
                 uint descsz = ELFParserUtils.ReadUInt32(parser.FileData, (int)offset + 4, isLittleEndian);
                 uint type = ELFParserUtils.ReadUInt32(parser.FileData, (int)offset + 8, isLittleEndian);
@@ -55,49 +57,24 @@ namespace PersonalTools.ELFAnalyzer.Core
                 ulong nameOffset = offset + 12;
                 string owner = ELFParserUtils.ExtractStringFromBytes(parser.FileData, (int)nameOffset, (int)namesz);
 
-                ulong descOffset = nameOffset + namesz;
-                // 修复对齐方式 - 确保对齐到4字节边界
-                if (parser.Is64Bit)
-                {
-                    if (descOffset % 8 != 0)
-                    {
-                        descOffset = (descOffset + 7) & ~7UL; // 对齐 (64位)
-                    }
-                }
-                else
-                {
-                    if (descOffset % 4 != 0)
-                    {
-                        descOffset = (descOffset + 3) & ~3UL; // 对齐
-                    }
-                }
+                ulong descOffset = AlignNoteOffset(nameOffset + namesz, is64Bit);
                 string noteInfo = ProcessNoteEntry(parser, type, owner, parser.FileData, (int)descOffset, (int)descsz);
                 if (!string.IsNullOrEmpty(noteInfo))
                 {
                     sb.AppendLine(CultureInfo.InvariantCulture, $"  {owner,-18}0x{descsz:x8}           {noteInfo}");
                 }
 
-                // 计算下一个note的偏移
-                ulong nextOffset = descOffset + descsz;
-                if (parser.Is64Bit)
-                {
-                    if (nextOffset % 8 != 0)
-                    {
-                        nextOffset = (nextOffset + 7) & ~7UL; // 对齐 (64位)
-                    }
-                }
-                else
-                {
-                    if (nextOffset % 4 != 0)
-                    {
-                        nextOffset = (nextOffset + 3) & ~3UL; // 对齐
-                    }
-                }
-                offset = nextOffset;
+                // 推进到下一个 note（按位宽对齐）
+                offset = AlignNoteOffset(descOffset + descsz, is64Bit);
             }
 
             return sb.ToString();
+        }
 
+        // note 偏移按位宽对齐（64位→8字节边界，32位→4字节边界）；已对齐时返回原值
+        private static ulong AlignNoteOffset(ulong value, bool is64Bit)
+        {
+            return is64Bit ? (value + 7) & ~7UL : (value + 3) & ~3UL;
         }
 
         private static string ParseNoteSection(ELFParser parser, Models.ELFSectionHeader section)

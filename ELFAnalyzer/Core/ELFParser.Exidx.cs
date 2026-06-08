@@ -65,90 +65,97 @@ namespace PersonalTools.ELFAnalyzer.Core
                 {
                     sb.AppendLine(CultureInfo.InvariantCulture, $"{symbolDesc}: @0x{unwindInfo:x} (cantunwind)");
                 }
-                else if ((unwindInfo & 0x80000000) != 0) // Compact展开表 (bit 31 set)
+                else if ((unwindInfo & 0x80000000) != 0) // Compact展开表 (bit 31 set)，指令内联在条目内
                 {
-                    sb.AppendLine(CultureInfo.InvariantCulture, $"{symbolDesc}: @0x{unwindInfo:x}");
-                    // Compact model index 是高7位 (bits 30-24)
-                    int compactIndex = (unwindInfo >> 24) & 0x7F;
-                    int instruction = unwindInfo & 0x00FFFFFF; // 低24位是实际指令
-
-                    sb.AppendLine(CultureInfo.InvariantCulture, $"  Compact model index: {compactIndex}");
-                    byte[] bInstruction =
-                    [
-                        (byte)(instruction >> 16 & 0xFF),
-                        (byte)(instruction >> 8 & 0xFF),
-                        (byte)(instruction & 0xFF),
-                    ];
-                    // 解析实际的展开指令
-                    ParseUnwindInstructions(bInstruction, 3, sb);
+                    AppendInlineCompact(unwindInfo, symbolDesc, sb);
                 }
-                else
+                else // 指向 .ARM.extab 节
                 {
-                    // 展开表条目索引 - 指向 .ARM.extab 节，prel31 偏移相对该字地址
-                    int extabRel = SignExtendPrel31(unwindInfo);
-                    long extabVaddr = (long)exidxSection.sh_addr + offset + 4 + extabRel;
-                    sb.AppendLine(CultureInfo.InvariantCulture, $"{symbolDesc}: @0x{extabVaddr:x}");
-
-                    // 虚拟地址需转换为文件偏移再读取（vaddr 通常不等于文件偏移）
-                    long extabFileOff = VaddrToFileOffset(parser, (ulong)extabVaddr);
-                    if (extabFileOff < 0 || extabFileOff + 4 > parser.FileData.Length)
-                    {
-                        sb.AppendLine();
-                        continue;
-                    }
-                    unwindInfo = ELFParserUtils.ReadInt32(parser.FileData, (int)extabFileOff, isLittleEndian);
-
-                    if ((unwindInfo & 0x80000000) == 0)
-                    {
-                        // 通用模型：extab 首字 bit31==0，低31位为指向 personality routine 的 prel31 偏移
-                        int per = SignExtendPrel31(unwindInfo);
-                        long personalityAddr = extabVaddr + per;
-                        string perName = FindContainingSymbolName(parser, (ulong)personalityAddr);
-                        string perDesc = string.IsNullOrEmpty(perName) ? $"0x{personalityAddr:x}" : $"0x{personalityAddr:x} <{perName}>";
-                        sb.AppendLine(CultureInfo.InvariantCulture, $"  Personality routine: {perDesc}");
-                    }
-                    else
-                    {
-                        int compactIndex = (unwindInfo >> 24) & 0x7F;
-
-                        sb.AppendLine(CultureInfo.InvariantCulture, $"  Compact model index: {compactIndex}");
-                        byte[] bInstruction;
-                        if (compactIndex == 1)
-                        {
-                            int remainDWords = (unwindInfo >> 16) & 0xFF;
-                            bInstruction = new byte[2 + remainDWords * 4];
-                            bInstruction[0] = (byte)(unwindInfo >> 8 & 0xFF);
-                            bInstruction[1] = (byte)(unwindInfo & 0xFF);
-
-                            for (int i = 0; i < remainDWords; i++)
-                            {
-                                extabFileOff += 4;
-                                if (extabFileOff + 4 > parser.FileData.Length)
-                                {
-                                    break;
-                                }
-                                Array.Copy(parser.FileData, extabFileOff, bInstruction, 2 + i * 4, 4);
-                                if (parser.Header.IsLittleEndian())
-                                {
-                                    Array.Reverse(bInstruction, 2 + i * 4, 4);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            bInstruction = new byte[3];
-                            bInstruction[0] = (byte)(unwindInfo >> 16 & 0xFF);
-                            bInstruction[1] = (byte)(unwindInfo >> 8 & 0xFF);
-                            bInstruction[2] = (byte)(unwindInfo & 0xFF);
-                        }
-                        ParseUnwindInstructions(bInstruction, bInstruction.Length, sb);
-                    }
+                    AppendExtabEntry(parser, exidxSection, offset, unwindInfo, symbolDesc, isLittleEndian, sb);
                 }
 
                 sb.AppendLine(); // 添加空行分隔
             }
 
             return sb.ToString();
+        }
+
+        // 内联 Compact 模型（条目 bit31==1）：高7位为模型索引，低24位为展开指令
+        private static void AppendInlineCompact(int unwindInfo, string symbolDesc, StringBuilder sb)
+        {
+            sb.AppendLine(CultureInfo.InvariantCulture, $"{symbolDesc}: @0x{unwindInfo:x}");
+            int compactIndex = (unwindInfo >> 24) & 0x7F; // bits 30-24
+            int instruction = unwindInfo & 0x00FFFFFF;     // 低24位是实际指令
+
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  Compact model index: {compactIndex}");
+            byte[] bInstruction =
+            [
+                (byte)(instruction >> 16 & 0xFF),
+                (byte)(instruction >> 8 & 0xFF),
+                (byte)(instruction & 0xFF),
+            ];
+            ParseUnwindInstructions(bInstruction, 3, sb);
+        }
+
+        // 指向 .ARM.extab 的条目：通用模型(personality routine) 或 extab 内的 Compact 模型
+        private static void AppendExtabEntry(ELFParser parser, Models.ELFSectionHeader exidxSection, int offset, int unwindInfo, string symbolDesc, bool isLittleEndian, StringBuilder sb)
+        {
+            // prel31 偏移相对该字地址
+            int extabRel = SignExtendPrel31(unwindInfo);
+            long extabVaddr = (long)exidxSection.sh_addr + offset + 4 + extabRel;
+            sb.AppendLine(CultureInfo.InvariantCulture, $"{symbolDesc}: @0x{extabVaddr:x}");
+
+            // 虚拟地址需转换为文件偏移再读取（vaddr 通常不等于文件偏移）；分隔空行由调用方统一追加
+            long extabFileOff = VaddrToFileOffset(parser, (ulong)extabVaddr);
+            if (extabFileOff < 0 || extabFileOff + 4 > parser.FileData.Length)
+            {
+                return;
+            }
+            unwindInfo = ELFParserUtils.ReadInt32(parser.FileData, (int)extabFileOff, isLittleEndian);
+
+            if ((unwindInfo & 0x80000000) == 0)
+            {
+                // 通用模型：extab 首字 bit31==0，低31位为指向 personality routine 的 prel31 偏移
+                int per = SignExtendPrel31(unwindInfo);
+                long personalityAddr = extabVaddr + per;
+                string perName = FindContainingSymbolName(parser, (ulong)personalityAddr);
+                string perDesc = string.IsNullOrEmpty(perName) ? $"0x{personalityAddr:x}" : $"0x{personalityAddr:x} <{perName}>";
+                sb.AppendLine(CultureInfo.InvariantCulture, $"  Personality routine: {perDesc}");
+                return;
+            }
+
+            int compactIndex = (unwindInfo >> 24) & 0x7F;
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  Compact model index: {compactIndex}");
+            byte[] bInstruction;
+            if (compactIndex == 1)
+            {
+                int remainDWords = (unwindInfo >> 16) & 0xFF;
+                bInstruction = new byte[2 + remainDWords * 4];
+                bInstruction[0] = (byte)(unwindInfo >> 8 & 0xFF);
+                bInstruction[1] = (byte)(unwindInfo & 0xFF);
+
+                for (int i = 0; i < remainDWords; i++)
+                {
+                    extabFileOff += 4;
+                    if (extabFileOff + 4 > parser.FileData.Length)
+                    {
+                        break;
+                    }
+                    Array.Copy(parser.FileData, extabFileOff, bInstruction, 2 + i * 4, 4);
+                    if (parser.Header.IsLittleEndian())
+                    {
+                        Array.Reverse(bInstruction, 2 + i * 4, 4);
+                    }
+                }
+            }
+            else
+            {
+                bInstruction = new byte[3];
+                bInstruction[0] = (byte)(unwindInfo >> 16 & 0xFF);
+                bInstruction[1] = (byte)(unwindInfo >> 8 & 0xFF);
+                bInstruction[2] = (byte)(unwindInfo & 0xFF);
+            }
+            ParseUnwindInstructions(bInstruction, bInstruction.Length, sb);
         }
 
         // prel31：31 位有符号偏移，按 bit30 符号扩展为完整 int
@@ -201,28 +208,9 @@ namespace PersonalTools.ELFAnalyzer.Core
                 for (int symbolIndex = 0; symbolIndex < symbolList.Value.Count; symbolIndex++)
                 {
                     ELFSymbol symbol = symbolList.Value[symbolIndex];
-                    if (symbol.StShndx == 0)
-                    {
-                        continue; // 未定义符号
-                    }
-
-                    byte type = (byte)(symbol.StInfo & 0x0F);
-                    if (type is not ((byte)SymbolType.STT_FUNC) and not ((byte)SymbolType.STT_OBJECT) and not ((byte)SymbolType.STT_NOTYPE))
+                    if (!IsAddressInSymbol(symbol, address) || (found && symbol.StValue <= bestStart))
                     {
                         continue;
-                    }
-
-                    if (symbol.StValue > address)
-                    {
-                        continue; // 符号在目标地址之后
-                    }
-                    if (symbol.StSize != 0 && address >= symbol.StValue + symbol.StSize)
-                    {
-                        continue; // 超出符号范围
-                    }
-                    if (found && symbol.StValue <= bestStart)
-                    {
-                        continue; // 已有更接近的符号
                     }
 
                     string name = SymbleName.GetSymbolName(parser, symbol, symbolList.Key, symbolIndex);
@@ -245,6 +233,33 @@ namespace PersonalTools.ELFAnalyzer.Core
 
             ulong delta = address - bestStart;
             return delta == 0 ? bestName : $"{bestName}+0x{delta:x}";
+        }
+
+        // 判断地址是否落在该符号范围内（已定义、FUNC/OBJECT/NOTYPE 类型、StValue<=addr<StValue+StSize）
+        private static bool IsAddressInSymbol(ELFSymbol symbol, ulong address)
+        {
+            if (symbol.StShndx == 0)
+            {
+                return false; // 未定义符号
+            }
+
+            byte type = (byte)(symbol.StInfo & 0x0F);
+            if (type is not ((byte)SymbolType.STT_FUNC) and not ((byte)SymbolType.STT_OBJECT) and not ((byte)SymbolType.STT_NOTYPE))
+            {
+                return false;
+            }
+
+            if (symbol.StValue > address)
+            {
+                return false; // 符号在目标地址之后
+            }
+
+            if (symbol.StSize != 0 && address >= symbol.StValue + symbol.StSize)
+            {
+                return false; // 超出符号范围
+            }
+
+            return true;
         }
 
 
