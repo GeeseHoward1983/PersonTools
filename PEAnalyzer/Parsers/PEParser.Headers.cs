@@ -1,13 +1,13 @@
 using PersonalTools.PEAnalyzer.Models;
 using System.IO;
 
-namespace PersonalTools
+namespace PersonalTools.PEAnalyzer.Parsers
 {
     /// <summary>
     /// PE文件头解析器
     /// 专门负责解析PE文件的各种头结构
     /// </summary>
-    internal static partial class PEParser
+    internal static class PEHeaderParser
     {
         /// <summary>
         /// 解析DOS头

@@ -2,12 +2,12 @@ using PersonalTools.PEAnalyzer.Models;
 using PersonalTools.PEAnalyzer.Resources;
 using System.IO;
 
-namespace PersonalTools
+namespace PersonalTools.PEAnalyzer.Parsers
 {
     /// <summary>
-    /// PE文件解析器核心类
+    /// PE文件解析器核心类（编排头部与各内容目录解析器）。
     /// </summary>
-    internal static partial class PEParser
+    internal static class PEParser
     {
         /// <summary>
         /// 内容目录解析步骤（在头部解析完成后按顺序执行；每一步自行处理异常，互不影响）。
@@ -15,8 +15,8 @@ namespace PersonalTools
         /// </summary>
         private static readonly Action<FileStream, BinaryReader, PEInfo>[] ContentParsers =
         [
-            ParseImportTable,
-            ParseExportTable,
+            PEImportParser.ParseImportTable,
+            PEExportParser.ParseExportTable,
             PEResourceParserVersion.ParseVersionInfo,
             PEResourceParserCertificate.ParseCertificateInfo,
             PEParserCLR.ParseCLRHeaderInfo,
@@ -47,7 +47,7 @@ namespace PersonalTools
         private static void ParseHeaders(FileStream fs, BinaryReader reader, PEInfo peInfo)
         {
             // 解析DOS头
-            peInfo.DosHeader = ParseDosHeader(reader);
+            peInfo.DosHeader = PEHeaderParser.ParseDosHeader(reader);
             if (peInfo.DosHeader.e_magic != PEConstants.DosSignature)
             {
                 throw new InvalidDataException("文件不是有效的PE文件: DOS头签名错误。");
@@ -66,7 +66,7 @@ namespace PersonalTools
             }
 
             // 解析NT头
-            peInfo.NtHeaders = ParseNtHeaders(reader);
+            peInfo.NtHeaders = PEHeaderParser.ParseNtHeaders(reader);
             if (peInfo.NtHeaders.Signature != PEConstants.NtSignature)
             {
                 throw new InvalidDataException("文件不是有效的PE文件: NT头签名错误。");
@@ -79,7 +79,7 @@ namespace PersonalTools
             }
 
             // 解析可选头
-            peInfo.OptionalHeader = ParseOptionalHeader(reader, peInfo.NtHeaders.FileHeader.SizeOfOptionalHeader);
+            peInfo.OptionalHeader = PEHeaderParser.ParseOptionalHeader(reader, peInfo.NtHeaders.FileHeader.SizeOfOptionalHeader);
 
             long sectionHeadersLength = peInfo.NtHeaders.FileHeader.NumberOfSections * (long)PEConstants.SectionHeaderSize;
             if (sectionHeadersLength > 0 && fs.Position + sectionHeadersLength > fs.Length)
@@ -88,7 +88,7 @@ namespace PersonalTools
             }
 
             // 解析节头
-            peInfo.SectionHeaders = ParseSectionHeaders(reader, peInfo.NtHeaders.FileHeader.NumberOfSections);
+            peInfo.SectionHeaders = PEHeaderParser.ParseSectionHeaders(reader, peInfo.NtHeaders.FileHeader.NumberOfSections);
         }
 
         /// <summary>

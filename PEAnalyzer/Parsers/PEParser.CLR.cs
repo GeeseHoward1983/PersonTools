@@ -1,9 +1,8 @@
-using PersonalTools.PEAnalyzer.Parsers;
 using PersonalTools.PEAnalyzer.Models;
 using PersonalTools.PEAnalyzer.Resources;
 using System.IO;
 
-namespace PersonalTools
+namespace PersonalTools.PEAnalyzer.Parsers
 {
     /// <summary>
     /// PE文件解析器CLR信息解析模块
@@ -46,7 +45,6 @@ namespace PersonalTools
             {
                 Console.WriteLine($"CLR运行时头解析权限错误: {ex.Message}");
             }
-            // 你可以根据需要添加其他具体异常类型
         }
 
         /// <summary>
@@ -70,49 +68,7 @@ namespace PersonalTools
                 }
 
                 // 读取CLR运行时头
-                IMAGE_COR20_HEADER clrHeader = new()
-                {
-                    cb = reader.ReadUInt32(),
-                    MajorRuntimeVersion = reader.ReadUInt16(),
-                    MinorRuntimeVersion = reader.ReadUInt16(),
-                    MetaData = new IMAGEDATADIRECTORY
-                    {
-                        VirtualAddress = reader.ReadUInt32(),
-                        Size = reader.ReadUInt32()
-                    },
-                    Flags = reader.ReadUInt32(),
-                    EntryPointTokenOrRva = reader.ReadUInt32(),
-                    Resources = new IMAGEDATADIRECTORY
-                    {
-                        VirtualAddress = reader.ReadUInt32(),
-                        Size = reader.ReadUInt32()
-                    },
-                    StrongNameSignature = new IMAGEDATADIRECTORY
-                    {
-                        VirtualAddress = reader.ReadUInt32(),
-                        Size = reader.ReadUInt32()
-                    },
-                    CodeManagerTable = new IMAGEDATADIRECTORY
-                    {
-                        VirtualAddress = reader.ReadUInt32(),
-                        Size = reader.ReadUInt32()
-                    },
-                    VTableFixups = new IMAGEDATADIRECTORY
-                    {
-                        VirtualAddress = reader.ReadUInt32(),
-                        Size = reader.ReadUInt32()
-                    },
-                    ExportAddressTableJumps = new IMAGEDATADIRECTORY
-                    {
-                        VirtualAddress = reader.ReadUInt32(),
-                        Size = reader.ReadUInt32()
-                    },
-                    ManagedNativeHeader = new IMAGEDATADIRECTORY
-                    {
-                        VirtualAddress = reader.ReadUInt32(),
-                        Size = reader.ReadUInt32()
-                    }
-                };
+                IMAGE_COR20_HEADER clrHeader = ReadCor20Header(reader);
 
                 // 保存CLR信息到PEInfo
                 peInfo.CLRInfo = new CLRInfo
@@ -147,7 +103,54 @@ namespace PersonalTools
             {
                 Console.WriteLine($"CLR头解析权限错误: {ex.Message}");
             }
-            // 你可以根据需要添加其他具体异常类型
+        }
+
+        // 从当前位置读取 IMAGE_COR20_HEADER（72 字节：cb + 运行时版本 + 8 个数据目录 + Flags/EntryPoint）
+        private static IMAGE_COR20_HEADER ReadCor20Header(BinaryReader reader)
+        {
+            return new IMAGE_COR20_HEADER
+            {
+                cb = reader.ReadUInt32(),
+                MajorRuntimeVersion = reader.ReadUInt16(),
+                MinorRuntimeVersion = reader.ReadUInt16(),
+                MetaData = new IMAGEDATADIRECTORY
+                {
+                    VirtualAddress = reader.ReadUInt32(),
+                    Size = reader.ReadUInt32()
+                },
+                Flags = reader.ReadUInt32(),
+                EntryPointTokenOrRva = reader.ReadUInt32(),
+                Resources = new IMAGEDATADIRECTORY
+                {
+                    VirtualAddress = reader.ReadUInt32(),
+                    Size = reader.ReadUInt32()
+                },
+                StrongNameSignature = new IMAGEDATADIRECTORY
+                {
+                    VirtualAddress = reader.ReadUInt32(),
+                    Size = reader.ReadUInt32()
+                },
+                CodeManagerTable = new IMAGEDATADIRECTORY
+                {
+                    VirtualAddress = reader.ReadUInt32(),
+                    Size = reader.ReadUInt32()
+                },
+                VTableFixups = new IMAGEDATADIRECTORY
+                {
+                    VirtualAddress = reader.ReadUInt32(),
+                    Size = reader.ReadUInt32()
+                },
+                ExportAddressTableJumps = new IMAGEDATADIRECTORY
+                {
+                    VirtualAddress = reader.ReadUInt32(),
+                    Size = reader.ReadUInt32()
+                },
+                ManagedNativeHeader = new IMAGEDATADIRECTORY
+                {
+                    VirtualAddress = reader.ReadUInt32(),
+                    Size = reader.ReadUInt32()
+                }
+            };
         }
     }
 }

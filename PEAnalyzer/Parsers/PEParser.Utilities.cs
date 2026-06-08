@@ -59,6 +59,30 @@ namespace PersonalTools.PEAnalyzer.Parsers
         }
 
         /// <summary>
+        /// 临时定位到 <paramref name="offset"/> 执行 <paramref name="read"/>，结束（含异常）通过 finally 恢复原流位置。
+        /// <paramref name="offset"/> 无效（小于 0 或不小于文件长度）时直接返回 <paramref name="fallback"/> 且不移动流。
+        /// 异常不在此捕获，向上层传播（与各导入/导出读取方法原有 try/finally 语义一致）。
+        /// </summary>
+        internal static T ReadAtOffset<T>(FileStream fs, long offset, T fallback, Func<T> read)
+        {
+            if (offset < 0 || offset >= fs.Length)
+            {
+                return fallback;
+            }
+
+            long originalPosition = fs.Position;
+            try
+            {
+                fs.Position = offset;
+                return read();
+            }
+            finally
+            {
+                fs.Position = originalPosition;
+            }
+        }
+
+        /// <summary>
         /// 将RVA转换为文件偏移量。该原语与位数无关（仅使用 32 位节表字段），供导入/导出/CLR/资源解析共用。
         /// </summary>
         /// <param name="rva">相对虚拟地址</param>

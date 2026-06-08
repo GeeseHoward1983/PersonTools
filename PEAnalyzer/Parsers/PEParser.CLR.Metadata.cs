@@ -1,9 +1,8 @@
-using PersonalTools.PEAnalyzer.Parsers;
 using PersonalTools.PEAnalyzer.Models;
 using System.IO;
 using System.Text;
 
-namespace PersonalTools
+namespace PersonalTools.PEAnalyzer.Parsers
 {
     /// <summary>
     /// PE文件解析器CLR元数据解析模块
@@ -144,7 +143,7 @@ namespace PersonalTools
             }
 
             // 对齐到4字节边界
-            long alignedPosition = (fs.Position + 3) & ~3;
+            long alignedPosition = Utilities.AlignTo4(fs.Position);
             if (alignedPosition < fs.Length && alignedPosition > fs.Position)
             {
                 fs.Position = alignedPosition;

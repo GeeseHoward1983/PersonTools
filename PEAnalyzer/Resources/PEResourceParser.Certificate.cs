@@ -15,7 +15,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <param name="fs">文件流</param>
         /// <param name="reader">二进制读取器</param>
         /// <param name="peInfo">PE文件信息</param>
-internal static void ParseCertificateInfo(FileStream fs, BinaryReader reader, PEInfo peInfo)
+        internal static void ParseCertificateInfo(FileStream fs, BinaryReader reader, PEInfo peInfo)
         {
             try
             {

@@ -1,14 +1,13 @@
 using PersonalTools.PEAnalyzer.Models;
-using PersonalTools.PEAnalyzer.Parsers;
 using System.IO;
 
-namespace PersonalTools
+namespace PersonalTools.PEAnalyzer.Parsers
 {
     /// <summary>
     /// PE文件导入表解析器
     /// 专门负责解析PE文件的导入表信息
     /// </summary>
-    internal static partial class PEParser
+    internal static class PEImportParser
     {
         /// <summary>
         /// 解析导入表（标准导入表 + 延迟加载导入表）。
@@ -110,10 +109,7 @@ namespace PersonalTools
                 return (-1, string.Empty);
             }
 
-            long savePos = fs.Position;
-            fs.Position = offset;
-            string value = Utilities.ReadNullTerminatedString(reader);
-            fs.Position = savePos;
+            string value = Utilities.ReadAtOffset(fs, offset, string.Empty, () => Utilities.ReadNullTerminatedString(reader));
             return (offset, value);
         }
 
@@ -137,17 +133,9 @@ namespace PersonalTools
                     return;
                 }
 
-                long originalPosition = fs.Position;
-                try
-                {
-                    bool is64Bit = Utilities.Is64Bit(peInfo.OptionalHeader);
-                    peInfo.ImportFunctions.AddRange(
-                        WalkThunkTable(fs, reader, peInfo, thunkOffset, is64Bit, dllName, isDelayLoaded: false));
-                }
-                finally
-                {
-                    fs.Position = originalPosition;
-                }
+                bool is64Bit = Utilities.Is64Bit(peInfo.OptionalHeader);
+                peInfo.ImportFunctions.AddRange(Utilities.ReadAtOffset(fs, thunkOffset, new List<ImportFunctionInfo>(),
+                    () => WalkThunkTable(fs, reader, peInfo, thunkOffset, is64Bit, dllName, isDelayLoaded: false)));
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {

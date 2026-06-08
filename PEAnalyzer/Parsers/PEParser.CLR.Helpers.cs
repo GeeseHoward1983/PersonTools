@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text;
 
-namespace PersonalTools
+namespace PersonalTools.PEAnalyzer.Parsers
 {
     /// <summary>
     /// PE文件解析器CLR辅助函数模块
@@ -110,19 +110,7 @@ namespace PersonalTools
                 fs.Position = originalPosition;
                 return Encoding.UTF8.GetString([.. bytes]);
             }
-            catch (EndOfStreamException)
-            {
-                return $"Unknown_Type_{index}";
-            }
-            catch (IOException)
-            {
-                return $"Unknown_Type_{index}";
-            }
-            catch (ObjectDisposedException)
-            {
-                return $"Unknown_Type_{index}";
-            }
-            catch (ArgumentOutOfRangeException)
+            catch (Exception ex) when (ex is EndOfStreamException or IOException or ObjectDisposedException or ArgumentOutOfRangeException)
             {
                 return $"Unknown_Type_{index}";
             }

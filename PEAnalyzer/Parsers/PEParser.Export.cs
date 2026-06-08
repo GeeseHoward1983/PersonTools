@@ -1,16 +1,15 @@
 using PersonalTools.PEAnalyzer.Models;
-using PersonalTools.PEAnalyzer.Parsers;
 using PersonalTools.PEAnalyzer.Resources;
 using System.IO;
 using System.Text;
 
-namespace PersonalTools
+namespace PersonalTools.PEAnalyzer.Parsers
 {
     /// <summary>
     /// PE文件导出表解析器
     /// 专门负责解析PE文件的导出表信息
     /// </summary>
-    internal static partial class PEParser
+    internal static class PEExportParser
     {
         /// <summary>
         /// 解析导出表
@@ -109,84 +108,48 @@ namespace PersonalTools
 
         private static List<uint> ReadUInt32ListAtRva(FileStream fs, BinaryReader reader, List<IMAGESECTIONHEADER> sections, uint rva, uint count)
         {
-            List<uint> result = [];
             if (rva == 0 || count == 0)
             {
-                return result;
+                return [];
             }
 
             long offset = Utilities.RvaToOffset(rva, sections);
-            if (offset == -1 || offset >= fs.Length)
+            return Utilities.ReadAtOffset(fs, offset, new List<uint>(), () =>
             {
-                return result;
-            }
-
-            long originalPosition = fs.Position;
-            try
-            {
-                fs.Position = offset;
+                List<uint> result = [];
                 for (int i = 0; i < count && fs.Position + 4 <= fs.Length; i++)
                 {
                     result.Add(reader.ReadUInt32());
                 }
-            }
-            finally
-            {
-                fs.Position = originalPosition;
-            }
 
-            return result;
+                return result;
+            });
         }
 
         private static List<ushort> ReadUInt16ListAtRva(FileStream fs, BinaryReader reader, List<IMAGESECTIONHEADER> sections, uint rva, uint count)
         {
-            List<ushort> result = [];
             if (rva == 0 || count == 0)
             {
-                return result;
+                return [];
             }
 
             long offset = Utilities.RvaToOffset(rva, sections);
-            if (offset == -1 || offset >= fs.Length)
+            return Utilities.ReadAtOffset(fs, offset, new List<ushort>(), () =>
             {
-                return result;
-            }
-
-            long originalPosition = fs.Position;
-            try
-            {
-                fs.Position = offset;
+                List<ushort> result = [];
                 for (int i = 0; i < count && fs.Position + 2 <= fs.Length; i++)
                 {
                     result.Add(reader.ReadUInt16());
                 }
-            }
-            finally
-            {
-                fs.Position = originalPosition;
-            }
 
-            return result;
+                return result;
+            });
         }
 
         private static string ReadForwarderString(FileStream fs, BinaryReader reader, List<IMAGESECTIONHEADER> sections, uint rva)
         {
             long offset = Utilities.RvaToOffset(rva, sections);
-            if (offset == -1 || offset >= fs.Length)
-            {
-                return string.Empty;
-            }
-
-            long originalPosition = fs.Position;
-            try
-            {
-                fs.Position = offset;
-                return Utilities.ReadNullTerminatedString(reader);
-            }
-            finally
-            {
-                fs.Position = originalPosition;
-            }
+            return Utilities.ReadAtOffset(fs, offset, string.Empty, () => Utilities.ReadNullTerminatedString(reader));
         }
 
         private static Dictionary<int, string> BuildExportFunctionNameMap(FileStream fs, BinaryReader reader, List<IMAGESECTIONHEADER> sections, List<uint> nameRVAs, List<ushort> ordinals)
@@ -196,26 +159,11 @@ namespace PersonalTools
 
             for (int i = 0; i < entryCount; i++)
             {
-                uint nameRVA = nameRVAs[i];
-                long nameOffset = Utilities.RvaToOffset(nameRVA, sections);
-                if (nameOffset == -1 || nameOffset >= fs.Length)
+                long nameOffset = Utilities.RvaToOffset(nameRVAs[i], sections);
+                string functionName = Utilities.ReadAtOffset(fs, nameOffset, string.Empty, () => Utilities.ReadNullTerminatedString(reader));
+                if (!string.IsNullOrEmpty(functionName))
                 {
-                    continue;
-                }
-
-                long originalPosition = fs.Position;
-                try
-                {
-                    fs.Position = nameOffset;
-                    string functionName = Utilities.ReadNullTerminatedString(reader);
-                    if (!string.IsNullOrEmpty(functionName))
-                    {
-                        result[ordinals[i]] = functionName;
-                    }
-                }
-                finally
-                {
-                    fs.Position = originalPosition;
+                    result[ordinals[i]] = functionName;
                 }
             }
 
