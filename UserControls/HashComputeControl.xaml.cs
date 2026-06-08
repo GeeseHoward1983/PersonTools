@@ -19,10 +19,22 @@ namespace PersonalTools.UserControls
     public partial class HashComputeControl : UserControl
     {
         #pragma warning restore CA1515
+        // 6 种定长哈希算法（数据驱动渲染，绑定到 HashItemsControl）
+        private readonly List<HashAlgorithmRow> hashRows =
+        [
+            new("MD5", MD5.HashData),
+            new("SHA1", SHA1.HashData),
+            new("SHA224", Sha224.HashData),
+            new("SHA256", SHA256.HashData),
+            new("SHA384", SHA384.HashData),
+            new("SHA512", SHA512.HashData),
+        ];
+
         public HashComputeControl()
         {
             InitializeComponent();
             InitializeSHA3AlgorithmComboBox();
+            HashItemsControl.ItemsSource = hashRows;
         }
 
         private void Grid_PreviewDragOver(object sender, System.Windows.DragEventArgs e)
@@ -42,97 +54,49 @@ namespace PersonalTools.UserControls
             SHA3AlgorithmComboBox.SelectedIndex = 0; // 默认选择SHA3-256
         }
 
-        // 统一的哈希计算：按所选输入模式取字节，计算并显示结果（Hex 单选选中→按十六进制解析，否则按 UTF-8）
-        private static void ComputeHash(string algoName, TextBox inputBox, RadioButton hexRadio, Func<byte[], byte[]> hashFunc, ContentControl resultLabel)
+        // 计算按钮：从 DataContext 取出该行算法并计算
+        private void HashCompute_Click(object sender, RoutedEventArgs e)
         {
-            string input = inputBox.Text;
-            if (string.IsNullOrEmpty(input))
+            if (sender is Button { DataContext: HashAlgorithmRow row })
             {
-                MessageBox.Show($"请输入要计算{algoName}的值", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                ComputeRow(row);
+            }
+        }
+
+        // 清空按钮：复位该行输入与结果
+        private void HashClear_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button { DataContext: HashAlgorithmRow row })
+            {
+                row.InputText = string.Empty;
+                row.Result = "等待计算...";
+            }
+        }
+
+        // 按所选输入模式取字节，计算并把结果写回该行（Hex 模式→十六进制解析，否则 UTF-8）
+        private static void ComputeRow(HashAlgorithmRow row)
+        {
+            if (string.IsNullOrEmpty(row.InputText))
+            {
+                MessageBox.Show($"请输入要计算{row.Name}的值", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
             try
             {
-                byte[] inputBytes = hexRadio.IsChecked == true
-                    ? Utils.HexStringToByteArray(input)
-                    : Encoding.UTF8.GetBytes(input);
-                resultLabel.Content = Utils.ToHexString(hashFunc(inputBytes));
+                byte[] inputBytes = row.IsHexMode
+                    ? Utils.HexStringToByteArray(row.InputText)
+                    : Encoding.UTF8.GetBytes(row.InputText);
+                row.Result = Utils.ToHexString(row.HashFunc(inputBytes));
             }
             catch (FormatException ex)
             {
-                MessageBox.Show($"计算{algoName}时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"计算{row.Name}时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             catch (ArgumentException ex)
             {
-                MessageBox.Show($"计算{algoName}时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"计算{row.Name}时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }
-
-        // MD5计算功能
-        private void CalculateMD5_Click(object sender, RoutedEventArgs e)
-            => ComputeHash("MD5", MD5InputTextBox, MD5HexInputRadio, MD5.HashData, MD5ResultLabel);
-
-        // 清空MD5计算结果
-        private void ClearMD5_Click(object sender, RoutedEventArgs e)
-        {
-            MD5InputTextBox.Clear();
-            MD5ResultLabel.Content = "等待计算...";  // 恢复：使用Label的Content属性，并恢复提示文本
-        }
-
-        // SHA1计算功能
-        private void CalculateSHA1_Click(object sender, RoutedEventArgs e)
-            => ComputeHash("SHA1", SHA1InputTextBox, SHA1HexInputRadio, SHA1.HashData, SHA1ResultLabel);
-
-        // 清空SHA1计算结果
-        private void ClearSHA1_Click(object sender, RoutedEventArgs e)
-        {
-            SHA1InputTextBox.Clear();
-            SHA1ResultLabel.Content = "等待计算...";
-        }
-
-        // SHA224计算功能
-        private void CalculateSHA224_Click(object sender, RoutedEventArgs e)
-            => ComputeHash("SHA224", SHA224InputTextBox, SHA224HexInputRadio, Sha224.HashData, SHA224ResultLabel);
-
-        // 清空SHA224计算结果
-        private void ClearSHA224_Click(object sender, RoutedEventArgs e)
-        {
-            SHA224InputTextBox.Clear();
-            SHA224ResultLabel.Content = "等待计算...";
-        }
-
-        // SHA256计算功能
-        private void CalculateSHA256_Click(object sender, RoutedEventArgs e)
-            => ComputeHash("SHA256", SHA256InputTextBox, SHA256HexInputRadio, SHA256.HashData, SHA256ResultLabel);
-
-        // 清空SHA256计算结果
-        private void ClearSHA256_Click(object sender, RoutedEventArgs e)
-        {
-            SHA256InputTextBox.Clear();
-            SHA256ResultLabel.Content = "等待计算...";
-        }
-
-        // SHA384计算功能
-        private void CalculateSHA384_Click(object sender, RoutedEventArgs e)
-            => ComputeHash("SHA384", SHA384InputTextBox, SHA384HexInputRadio, SHA384.HashData, SHA384ResultLabel);
-
-        // 清空SHA384计算结果
-        private void ClearSHA384_Click(object sender, RoutedEventArgs e)
-        {
-            SHA384InputTextBox.Clear();
-            SHA384ResultLabel.Content = "等待计算...";
-        }
-
-        // SHA512计算功能
-        private void CalculateSHA512_Click(object sender, RoutedEventArgs e)
-            => ComputeHash("SHA512", SHA512InputTextBox, SHA512HexInputRadio, SHA512.HashData, SHA512ResultLabel);
-
-        // 清空SHA512计算结果
-        private void ClearSHA512_Click(object sender, RoutedEventArgs e)
-        {
-            SHA512InputTextBox.Clear();
-            SHA512ResultLabel.Content = "等待计算...";
         }
 
         // SHA3计算功能
@@ -249,31 +213,13 @@ namespace PersonalTools.UserControls
             }
         }
 
-        // 计算并显示各种哈希值
+        // 计算并显示各种哈希值（SHA3 单独处理）
         private void CalculateAndDisplayHashValues(byte[] data)
         {
-            // 计算MD5
-            byte[] hash = MD5.HashData(data);
-            MD5ResultLabel.Content = Utils.ToHexString(hash);
-
-            // 计算SHA1
-            hash = SHA1.HashData(data);
-            SHA1ResultLabel.Content = Utils.ToHexString(hash);
-
-            // 计算SHA224
-            SHA224ResultLabel.Content = Utils.ToHexString(Sha224.HashData(data));
-
-            // 计算SHA256
-            hash = SHA256.HashData(data);
-            SHA256ResultLabel.Content = Utils.ToHexString(hash);
-
-            // 计算SHA384
-            hash = SHA384.HashData(data);
-            SHA384ResultLabel.Content = Utils.ToHexString(hash);
-
-            // 计算SHA512
-            hash = SHA512.HashData(data);
-            SHA512ResultLabel.Content = Utils.ToHexString(hash);
+            foreach (HashAlgorithmRow row in hashRows)
+            {
+                row.Result = Utils.ToHexString(row.HashFunc(data));
+            }
         }
     }
 }
