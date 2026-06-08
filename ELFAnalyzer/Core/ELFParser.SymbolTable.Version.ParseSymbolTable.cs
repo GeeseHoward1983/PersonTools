@@ -23,7 +23,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             // 查找对应的节头
             if (versymAddr > 0)
             {
-                Models.ELFSectionHeader? versymSection = FindSectionByAddress(parser, (ulong)versymAddr);
+                Models.ELFSectionHeader? versymSection = ELFParserUtils.FindSectionByAddress(parser, (ulong)versymAddr);
                 if (versymSection != null)
                 {
                     byte[] data = parser.CopySectionData(versymSection.Value);

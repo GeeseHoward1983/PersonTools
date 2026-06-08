@@ -430,44 +430,21 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private static void ProcessDoubleByteInstruction(ushort cmd, StringBuilder sb)
         {
-            // 检查是否是pop {register_list}指令 (0x8000-0x8FFF)
             if (cmd == 0x8000)
             {
                 sb.AppendLine("  Refuse to unwind");
             }
-            else if (cmd is >= 0x8001 and <= 0x8FFF)
+            else if (cmd is >= 0x8001 and <= 0x8FFF) // pop {r4-r15} 位掩码
             {
-                int regMask = cmd & 0xFFF;
-                List<string> regs = [];
-
-                for (int i = 0; i < 12; i++)
-                {
-                    if ((regMask & (1 << i)) != 0)
-                    {
-                        regs.Add($"r{i + 4}");
-                    }
-                }
-
-                AppendPopRegs(sb, regs);
+                AppendMaskedRegs(sb, cmd & 0xFFF, 12, "r", 4);
             }
             else if (cmd is 0xB100 or (>= 0xB110 and <= 0xB1FF) or 0xC700 or (>= 0xC710 and <= 0xC7FF))
             {
                 sb.AppendLine("  Spare");
             }
-            else if (cmd is >= 0xB101 and <= 0xB10F)
+            else if (cmd is >= 0xB101 and <= 0xB10F) // pop {r0-r3} 位掩码
             {
-                List<string> regs = [];
-                int regMask = cmd & 0x0F;
-                for (int i = 0; regMask != 0; i++)
-                {
-                    if ((regMask & 1) == 1)
-                    {
-                        regs.Add($"r{i}");
-                    }
-
-                    regMask >>= 1;
-                }
-                AppendPopRegs(sb, regs);
+                AppendMaskedRegs(sb, cmd & 0x0F, 4, "r", 0);
             }
             else if (cmd is >= 0xB200 and <= 0xB2FF)
             {
@@ -475,52 +452,52 @@ namespace PersonalTools.ELFAnalyzer.Core
                 int vsp = 0x204 + (uleb128 << 2);
                 sb.AppendLine(CultureInfo.InvariantCulture, $" vsp = vsp + {vsp}");
             }
-            else if (cmd is (>= 0xB300 and <= 0xB3FF) or (>= 0xC900 and <= 0xC9FF) or (>= 0xC800 and <= 0xC8FF))
+            else if (cmd is (>= 0xB300 and <= 0xB3FF) or (>= 0xC900 and <= 0xC9FF) or (>= 0xC800 and <= 0xC8FF)) // pop VFP D 范围
             {
-                int idx = 0;
-                if (cmd is >= 0xC800 and <= 0xC8FF)
-                {
-                    idx = 16;
-                }
+                int idx = cmd is >= 0xC800 and <= 0xC8FF ? 16 : 0;
                 int ssss = (cmd >> 4) & 0x0F;
                 int cccc = cmd & 0x0F;
-                List<string> regs = [];
-                for (int i = 0; i <= cccc; i++)
-                {
-                    regs.Add($"D{ssss + i + idx}");
-                }
-                AppendPopRegs(sb, regs);
+                AppendRegRange(sb, "D", ssss + idx, cccc);
             }
-            else if (cmd is >= 0xC600 and <= 0xC6FF)
+            else if (cmd is >= 0xC600 and <= 0xC6FF) // pop wR 范围
             {
                 int ssss = (cmd >> 4) & 0x0F;
                 int cccc = cmd & 0x0F;
-                List<string> regs = [];
-                for (int i = 0; i <= ssss + cccc; i++)
-                {
-                    regs.Add($"wR{ssss + i}");
-                }
-                AppendPopRegs(sb, regs);
+                AppendRegRange(sb, "wR", ssss, ssss + cccc);
             }
-            else if (cmd is >= 0xC701 and <= 0xC70F)
+            else if (cmd is >= 0xC701 and <= 0xC70F) // pop wCGR 位掩码
             {
-                List<string> regs = [];
-                int regMask = cmd & 0x0F;
-                for (int i = 0; regMask != 0; i++)
-                {
-                    if ((regMask & 1) == 1)
-                    {
-                        regs.Add($"wCGR{i}");
-                    }
-
-                    regMask >>= 1;
-                }
-                AppendPopRegs(sb, regs);
+                AppendMaskedRegs(sb, cmd & 0x0F, 4, "wCGR", 0);
             }
             else
             {
-                sb.AppendLine($"  unknown double-byte command");
+                sb.AppendLine("  unknown double-byte command");
             }
+        }
+
+        // 按位掩码追加寄存器：bit i 置位 → "prefix{i+baseReg}"
+        private static void AppendMaskedRegs(StringBuilder sb, int mask, int bitCount, string prefix, int baseReg)
+        {
+            List<string> regs = [];
+            for (int i = 0; i < bitCount; i++)
+            {
+                if ((mask & (1 << i)) != 0)
+                {
+                    regs.Add($"{prefix}{i + baseReg}");
+                }
+            }
+            AppendPopRegs(sb, regs);
+        }
+
+        // 追加连续寄存器范围："prefix{baseReg+0}".."prefix{baseReg+count}"
+        private static void AppendRegRange(StringBuilder sb, string prefix, int baseReg, int count)
+        {
+            List<string> regs = [];
+            for (int i = 0; i <= count; i++)
+            {
+                regs.Add($"{prefix}{baseReg + i}");
+            }
+            AppendPopRegs(sb, regs);
         }
     }
 }

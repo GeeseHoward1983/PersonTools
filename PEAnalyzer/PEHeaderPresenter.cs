@@ -17,11 +17,11 @@ namespace PersonalTools.PEAnalyzer
             Dictionary<string, string> fileInfo = new()
             {
                 { "文件路径", peInfo.FilePath },
-                { "文件类型", Utilities.GetDetailedFileType(peInfo.NtHeaders.FileHeader.Characteristics, peInfo.OptionalHeader.Subsystem) },
+                { "文件类型", PEHeaderDescriptions.GetDetailedFileType(peInfo.NtHeaders.FileHeader.Characteristics, peInfo.OptionalHeader.Subsystem) },
                 { "架构", GetArchitectureInfo(peInfo) },
                 { "位数", GetBitInfo(peInfo) }
             };
-            string driverType = Utilities.GetDriverType(peInfo.NtHeaders.FileHeader.Characteristics, peInfo.OptionalHeader.Subsystem, peInfo.OptionalHeader.DllCharacteristics);
+            string driverType = PEHeaderDescriptions.GetDriverType(peInfo.NtHeaders.FileHeader.Characteristics, peInfo.OptionalHeader.Subsystem, peInfo.OptionalHeader.DllCharacteristics);
             if (!string.IsNullOrEmpty(driverType))
             {
                 fileInfo.Add("驱动程序类型", driverType);
@@ -37,7 +37,7 @@ namespace PersonalTools.PEAnalyzer
             sections.Add(("NT头信息", new Dictionary<string, string>
             {
                 { "签名", $"0x{peInfo.NtHeaders.Signature:X8}" },
-                { "机器类型", Utilities.GetMachineTypeDescription(peInfo.NtHeaders.FileHeader.Machine) },
+                { "机器类型", PEHeaderDescriptions.GetMachineTypeDescription(peInfo.NtHeaders.FileHeader.Machine) },
                 { "节数量", $"0x{peInfo.NtHeaders.FileHeader.NumberOfSections:X4}" },
                 { "时间戳", $"{peInfo.NtHeaders.FileHeader.TimeDateStamp:X8} ({UnixTimeStampToDateTime(peInfo.NtHeaders.FileHeader.TimeDateStamp):yyyy-MM-dd HH:mm:ss})" },
                 { "可选头大小", $"0x{peInfo.NtHeaders.FileHeader.SizeOfOptionalHeader:X4}" },
@@ -47,8 +47,8 @@ namespace PersonalTools.PEAnalyzer
             sections.Add(("可选头信息", new Dictionary<string, string>
             {
                 { "魔数", $"0x{peInfo.OptionalHeader.Magic:X4} ({(peInfo.OptionalHeader.Magic == 0x10b ? "PE32" : peInfo.OptionalHeader.Magic == 0x20b ? "PE32+" : "Unknown")})" },
-                { "链接器版本", $"{Utilities.GetLinkerVersionDescription(peInfo.OptionalHeader.MajorLinkerVersion, peInfo.OptionalHeader.MinorLinkerVersion)}" },
-                { "编译器版本", $"{Utilities.GetCompilerVersionDescription(peInfo.OptionalHeader.MajorLinkerVersion, peInfo.OptionalHeader.MinorLinkerVersion, peInfo.CLRInfo != null)}" },
+                { "链接器版本", $"{PEHeaderDescriptions.GetLinkerVersionDescription(peInfo.OptionalHeader.MajorLinkerVersion, peInfo.OptionalHeader.MinorLinkerVersion)}" },
+                { "编译器版本", $"{PEHeaderDescriptions.GetCompilerVersionDescription(peInfo.OptionalHeader.MajorLinkerVersion, peInfo.OptionalHeader.MinorLinkerVersion, peInfo.CLRInfo != null)}" },
                 { "代码大小", $"0x{peInfo.OptionalHeader.SizeOfCode:X8}" },
                 { "已初始化数据大小", $"0x{peInfo.OptionalHeader.SizeOfInitializedData:X8}" },
                 { "未初始化数据大小", $"0x{peInfo.OptionalHeader.SizeOfUninitializedData:X8}" },
@@ -58,13 +58,13 @@ namespace PersonalTools.PEAnalyzer
                 { "镜像基址", $"0x{peInfo.OptionalHeader.ImageBase:X8}" },
                 { "节对齐", $"0x{peInfo.OptionalHeader.SectionAlignment:X8}" },
                 { "文件对齐", $"0x{peInfo.OptionalHeader.FileAlignment:X8}" },
-                { "操作系统版本", Utilities.GetOperatingSystemVersionDescription(peInfo.OptionalHeader.MajorOperatingSystemVersion, peInfo.OptionalHeader.MinorOperatingSystemVersion) },
-                { "镜像版本", Utilities.GetImageVersionDescription(peInfo.OptionalHeader.MajorImageVersion, peInfo.OptionalHeader.MinorImageVersion) },
-                { "子系统版本", Utilities.GetSubsystemVersionDescription(peInfo.OptionalHeader.MajorSubsystemVersion, peInfo.OptionalHeader.MinorSubsystemVersion) },
+                { "操作系统版本", PEHeaderDescriptions.GetOperatingSystemVersionDescription(peInfo.OptionalHeader.MajorOperatingSystemVersion, peInfo.OptionalHeader.MinorOperatingSystemVersion) },
+                { "镜像版本", PEHeaderDescriptions.GetImageVersionDescription(peInfo.OptionalHeader.MajorImageVersion, peInfo.OptionalHeader.MinorImageVersion) },
+                { "子系统版本", PEHeaderDescriptions.GetSubsystemVersionDescription(peInfo.OptionalHeader.MajorSubsystemVersion, peInfo.OptionalHeader.MinorSubsystemVersion) },
                 { "镜像大小", $"0x{peInfo.OptionalHeader.SizeOfImage:X8}" },
                 { "头部大小", $"0x{peInfo.OptionalHeader.SizeOfHeaders:X8}" },
                 { "校验和", $"0x{peInfo.OptionalHeader.CheckSum:X8}" },
-                { "子系统", Utilities.GetSubsystemDescription(peInfo.OptionalHeader.Subsystem) },
+                { "子系统", PEHeaderDescriptions.GetSubsystemDescription(peInfo.OptionalHeader.Subsystem) },
                 { "DLL特征", $"0x{peInfo.OptionalHeader.DllCharacteristics:X4}" },
                 { "栈保留大小", $"0x{peInfo.OptionalHeader.SizeOfStackReserve:X8}" },
                 { "栈提交大小", $"0x{peInfo.OptionalHeader.SizeOfStackCommit:X8}" },
@@ -150,8 +150,8 @@ namespace PersonalTools.PEAnalyzer
         private static string GetArchitectureInfo(PEInfo peInfo)
         {
             return peInfo.CLRInfo != null
-                ? $"{Utilities.GetMachineTypeDescription(peInfo.NtHeaders.FileHeader.Machine)} (.NET: {peInfo.CLRInfo.Architecture})"
-                : Utilities.GetMachineTypeDescription(peInfo.NtHeaders.FileHeader.Machine);
+                ? $"{PEHeaderDescriptions.GetMachineTypeDescription(peInfo.NtHeaders.FileHeader.Machine)} (.NET: {peInfo.CLRInfo.Architecture})"
+                : PEHeaderDescriptions.GetMachineTypeDescription(peInfo.NtHeaders.FileHeader.Machine);
         }
 
         private static string GetBitInfo(PEInfo peInfo)

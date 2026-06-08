@@ -103,6 +103,30 @@ namespace PersonalTools.ELFAnalyzer.Core
             return isLittleEndian ? BinaryPrimitives.ReadInt32LittleEndian(span) : BinaryPrimitives.ReadInt32BigEndian(span);
         }
 
+        public static long ReadInt64(byte[] data, int offset, bool isLittleEndian)
+        {
+            ReadOnlySpan<byte> span = data.AsSpan(offset, 8);
+            return isLittleEndian ? BinaryPrimitives.ReadInt64LittleEndian(span) : BinaryPrimitives.ReadInt64BigEndian(span);
+        }
+
+        // 按虚拟地址(sh_addr)查找节（多处版本/动态解析共用）
+        public static Models.ELFSectionHeader? FindSectionByAddress(ELFParser parser, ulong address)
+        {
+            if (parser.SectionHeaders == null)
+            {
+                return null;
+            }
+
+            foreach (Models.ELFSectionHeader section in parser.SectionHeaders)
+            {
+                if (section.sh_addr == address)
+                {
+                    return section;
+                }
+            }
+            return null;
+        }
+
         public static string GetTypeName(Type enumType, object type, string prefix)
         {
             try

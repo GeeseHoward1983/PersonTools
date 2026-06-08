@@ -32,7 +32,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 parser.VersionDefinitions = [];
 
-                Models.ELFSectionHeader? verdefSection = FindSectionByAddress(parser, (ulong)verdefAddr);
+                Models.ELFSectionHeader? verdefSection = ELFParserUtils.FindSectionByAddress(parser, (ulong)verdefAddr);
                 if (verdefSection != null)
                 {
                     ParseVerDefEntries(parser, verdefSection.Value, (int)verdefNum);

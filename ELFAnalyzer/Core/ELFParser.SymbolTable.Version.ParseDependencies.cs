@@ -30,29 +30,12 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 parser.VersionDependencies = [];
 
-                Models.ELFSectionHeader? verneedSection = FindSectionByAddress(parser, (ulong)verneedAddr);
+                Models.ELFSectionHeader? verneedSection = ELFParserUtils.FindSectionByAddress(parser, (ulong)verneedAddr);
                 if (verneedSection != null)
                 {
                     ParseVerNeedEntries(parser, verneedSection.Value, (int)verneedNum);
                 }
             }
-        }
-
-        private static Models.ELFSectionHeader? FindSectionByAddress(ELFParser parser, ulong address)
-        {
-            if (parser.SectionHeaders == null)
-            {
-                return null;
-            }
-
-            foreach (Models.ELFSectionHeader section in parser.SectionHeaders)
-            {
-                if (section.sh_addr == address)
-                {
-                    return section;
-                }
-            }
-            return null;
         }
 
         private static void ParseVerNeedEntries(ELFParser parser, Models.ELFSectionHeader section, int count)

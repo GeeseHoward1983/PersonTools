@@ -80,59 +80,39 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
         {
             byte[] symTabData = Parser.CopySectionData(in symTabSection);
             List<ELFSymbol> symbols = [];
+            bool little = Parser.Header.IsLittleEndian();
             int symEntrySize = Parser.Is64Bit ? 24 : 16; // 64位符号表项24字节，32位16字节
             int symCount = symTabData.Length / symEntrySize;
 
             for (int symIdx = 0; symIdx < symCount; symIdx++)
             {
                 int b = symIdx * symEntrySize;
-                if (!Parser.Header.IsLittleEndian())
-                {
-                    ReverseSymbolFields(symTabData, b, Parser.Is64Bit);
-                }
-                symbols.Add(Parser.Is64Bit ? ReadSymbol64(symTabData, b) : ReadSymbol32(symTabData, b));
+                symbols.Add(Parser.Is64Bit ? ReadSymbol64(symTabData, b, little) : ReadSymbol32(symTabData, b, little));
             }
             return symbols;
         }
 
-        private static void ReverseSymbolFields(byte[] d, int b, bool is64)
+        private static ELFSymbol ReadSymbol64(byte[] d, int b, bool little) => new()
         {
-            Array.Reverse(d, b, 4); // st_name
-            if (is64)
-            {
-                Array.Reverse(d, b + 8, 8);  // st_value
-                Array.Reverse(d, b + 16, 8); // st_size
-                Array.Reverse(d, b + 6, 2);  // st_shndx
-            }
-            else
-            {
-                Array.Reverse(d, b + 4, 4);  // st_value
-                Array.Reverse(d, b + 8, 4);  // st_size
-                Array.Reverse(d, b + 14, 2); // st_shndx
-            }
-        }
-
-        private static ELFSymbol ReadSymbol64(byte[] d, int b) => new()
-        {
-            StName = BitConverter.ToUInt32(d, b),
-            StValue = BitConverter.ToUInt64(d, b + 8),
-            StSize = BitConverter.ToUInt64(d, b + 16),
+            StName = ELFParserUtils.ReadUInt32(d, b, little),
             StInfo = d[b + 4],
             StOther = d[b + 5],
-            StShndx = BitConverter.ToUInt16(d, b + 6)
+            StShndx = ELFParserUtils.ReadUInt16(d, b + 6, little),
+            StValue = ELFParserUtils.ReadUInt64(d, b + 8, little),
+            StSize = ELFParserUtils.ReadUInt64(d, b + 16, little)
         };
 
-        private static ELFSymbol ReadSymbol32(byte[] d, int b) => new()
+        private static ELFSymbol ReadSymbol32(byte[] d, int b, bool little) => new()
         {
-            StName = BitConverter.ToUInt32(d, b),
-            StValue = BitConverter.ToUInt32(d, b + 4),
-            StSize = BitConverter.ToUInt32(d, b + 8),
+            StName = ELFParserUtils.ReadUInt32(d, b, little),
+            StValue = ELFParserUtils.ReadUInt32(d, b + 4, little),
+            StSize = ELFParserUtils.ReadUInt32(d, b + 8, little),
             StInfo = d[b + 12],
             StOther = d[b + 13],
-            StShndx = BitConverter.ToUInt16(d, b + 14)
+            StShndx = ELFParserUtils.ReadUInt16(d, b + 14, little)
         };
 
-        // 读取一个重定位条目（32/64 位 × REL/RELA × 字节序）
+        // 读取一个重定位条目（32/64 位 × REL/RELA × 字节序），不修改源缓冲
         private static void ReadRelocationEntry(ELFParser Parser, byte[] data, int j, bool isRela, out ulong offset, out ulong info, out long addend)
         {
             addend = -1;
@@ -140,39 +120,21 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             if (Parser.Is64Bit)
             {
                 int b = j * (isRela ? 24 : 16);
-                if (!little)
-                {
-                    Array.Reverse(data, b, 8);
-                    Array.Reverse(data, b + 8, 8);
-                    if (isRela)
-                    {
-                        Array.Reverse(data, b + 16, 8);
-                    }
-                }
-                offset = BitConverter.ToUInt64(data, b);
-                info = BitConverter.ToUInt64(data, b + 8);
+                offset = ELFParserUtils.ReadUInt64(data, b, little);
+                info = ELFParserUtils.ReadUInt64(data, b + 8, little);
                 if (isRela)
                 {
-                    addend = BitConverter.ToInt64(data, b + 16);
+                    addend = ELFParserUtils.ReadInt64(data, b + 16, little);
                 }
             }
             else
             {
                 int b = j * (isRela ? 12 : 8);
-                if (!little)
-                {
-                    Array.Reverse(data, b, 4);
-                    Array.Reverse(data, b + 4, 4);
-                    if (isRela)
-                    {
-                        Array.Reverse(data, b + 8, 4);
-                    }
-                }
-                offset = BitConverter.ToUInt32(data, b);
-                info = BitConverter.ToUInt32(data, b + 4);
+                offset = ELFParserUtils.ReadUInt32(data, b, little);
+                info = ELFParserUtils.ReadUInt32(data, b + 4, little);
                 if (isRela)
                 {
-                    addend = BitConverter.ToInt32(data, b + 8);
+                    addend = ELFParserUtils.ReadInt32(data, b + 8, little);
                 }
             }
         }

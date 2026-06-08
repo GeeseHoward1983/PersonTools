@@ -4,7 +4,6 @@ using PersonalTools.PEAnalyzer.Parsers;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media.Imaging;
 
 namespace PersonalTools.UserControls
 {
@@ -110,82 +109,14 @@ namespace PersonalTools.UserControls
         private void DisplayIcons()
         {
             List<IconViewModel> iconViewModels = [];
-
-            if (currentPEInfo?.Icons != null && currentPEInfo.Icons.Count > 0)
+            if (currentPEInfo?.Icons != null)
             {
                 foreach (IconInfo icon in currentPEInfo.Icons)
                 {
-                    try
+                    IconViewModel? viewModel = IconImageFactory.TryCreate(icon);
+                    if (viewModel != null)
                     {
-                        // 检查图标数据是否有效
-                        if (icon.Data == null || icon.Data.Length == 0)
-                        {
-                            continue;
-                        }
-
-                        // 验证图标尺寸，避免添加无效图标
-                        if (icon.Width <= 0 || icon.Height <= 0)
-                        {
-                            continue;
-                        }
-
-                        IconViewModel iconViewModel = new()
-                        {
-                            Width = icon.Width,
-                            Height = icon.Height,
-                            BitsPerPixel = icon.BitsPerPixel,
-                            Size = icon.Size
-                        };
-
-                        // 从字节数组创建位图
-                        using (MemoryStream stream = new(icon.Data))
-                        {
-                            try
-                            {
-                                BitmapImage bitmap = new();
-                                bitmap.BeginInit();
-                                bitmap.StreamSource = stream;
-                                bitmap.CacheOption = BitmapCacheOption.OnLoad; // 提高性能并确保图像加载完成
-                                bitmap.EndInit();
-                                bitmap.Freeze(); // 提高性能
-                                iconViewModel.ImageSource = bitmap;
-                            }
-                            catch (IOException ex)
-                            {
-                                // 如果图像解码失败，记录日志但不中断其他图标显示
-                                Console.WriteLine($"图标解码失败: {ex.Message}");
-                                continue;
-                            }
-                            catch (UnauthorizedAccessException ex)
-                            {
-                                // 如果图像解码失败，记录日志但不中断其他图标显示
-                                Console.WriteLine($"图标解码失败: {ex.Message}");
-                                continue;
-                            }
-                            catch (ArgumentException ex)
-                            {
-                                // 如果图像解码失败，记录日志但不中断其他图标显示
-                                Console.WriteLine($"图标解码失败: {ex.Message}");
-                                continue;
-                            }
-                        }
-
-                        iconViewModels.Add(iconViewModel);
-                    }
-                    catch (IOException ex)
-                    {
-                        // 图标加载失败时跳过该图标
-                        Console.WriteLine($"图标加载失败: {ex.Message}");
-                    }
-                    catch (UnauthorizedAccessException ex)
-                    {
-                        // 图标加载失败时跳过该图标
-                        Console.WriteLine($"图标加载失败: {ex.Message}");
-                    }
-                    catch (ArgumentException ex)
-                    {
-                        // 图标加载失败时跳过该图标
-                        Console.WriteLine($"图标加载失败: {ex.Message}");
+                        iconViewModels.Add(viewModel);
                     }
                 }
             }

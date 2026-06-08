@@ -17,7 +17,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             if (strTabAddr != 0 && strTabSize != 0 && _parser.SectionHeaders != null)
             {
                 // Find the section that contains the string table
-                ELFModels.ELFSectionHeader? stringTableSection = FindSectionByAddress(_parser, strTabAddr);
+                ELFModels.ELFSectionHeader? stringTableSection = ELFParserUtils.FindSectionByAddress(_parser, strTabAddr);
                 if (stringTableSection != null)
                 {
                     value = ReadStringFromSection(_parser, stringTableSection, entry.d_val);
@@ -71,21 +71,6 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                 }
             }
             return 0;
-        }
-
-        private static ELFModels.ELFSectionHeader? FindSectionByAddress(ELFParser _parser, ulong address)
-        {
-            if (_parser.SectionHeaders != null)
-            {
-                foreach (ELFModels.ELFSectionHeader section in _parser.SectionHeaders)
-                {
-                    if (section.sh_addr == address)
-                    {
-                        return section;
-                    }
-                }
-            }
-            return null;
         }
 
         private static string ReadStringFromSection(ELFParser _parser, ELFModels.ELFSectionHeader? section, ulong offset)
