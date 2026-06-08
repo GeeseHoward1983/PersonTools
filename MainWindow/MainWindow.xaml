@@ -17,7 +17,7 @@
         <TabControl Grid.Row="1" Margin="5,5,5,10">
             <!-- PE文件分析器标签页 -->
             <TabItem Header="PE文件分析器">
-                <uc:PEAnalyzerControl/>
+                <uc:PEAnalyzerHostControl/>
             </TabItem>
 
             <!-- ELF文件分析器标签页 -->

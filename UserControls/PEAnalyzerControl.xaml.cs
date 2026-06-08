@@ -1,4 +1,3 @@
-using Microsoft.Win32;
 using PersonalTools.PEAnalyzer.Models;
 using PersonalTools.PEAnalyzer.Parsers;
 using System.IO;
@@ -27,18 +26,8 @@ namespace PersonalTools.UserControls
 
         private PEInfo? currentPEInfo;
 
-        private void OpenFile_Click(object sender, RoutedEventArgs e)
-        {
-            OpenFileDialog openFileDialog = new()
-            {
-                Filter = "PE Files (*.exe;*.dll;*.sys)|*.exe;*.dll;*.sys|All files (*.*)|*.*"
-            };
-
-            if (openFileDialog.ShowDialog() == true)
-            {
-                LoadPEFile(openFileDialog.FileName);
-            }
-        }
+        /// <summary>拖入文件时回调宿主，由宿主按完整路径决定新建/覆盖 tab。</summary>
+        public Action<IReadOnlyList<string>>? FilesDropped { get; set; }
 
         private void PEAnalyzer_Drop(object sender, DragEventArgs e)
         {
@@ -47,17 +36,13 @@ namespace PersonalTools.UserControls
                 string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
                 if (files.Length > 0)
                 {
-                    LoadPEFile(files[0]);
+                    e.Handled = true; // 阻止冒泡到宿主，避免重复处理
+                    FilesDropped?.Invoke(files);
                 }
             }
         }
 
-        private void Exit_Click(object sender, RoutedEventArgs e)
-        {
-            Application.Current.Shutdown();
-        }
-
-        private void LoadPEFile(string filePath)
+        public void LoadPEFile(string filePath)
         {
             try
             {
@@ -342,51 +327,48 @@ namespace PersonalTools.UserControls
 
         private void DisplayDependencies()
         {
-            DependencyTree.Items.Clear();
-
-            if (currentPEInfo?.Dependencies == null)
+            if (currentPEInfo == null)
             {
+                DependencyTree.ItemsSource = null;
                 return;
             }
 
-            foreach (DependencyInfo dep in currentPEInfo.Dependencies)
+            // 根节点为已打开文件；预解析直接依赖并默认展开
+            DependencyNode root = DependencyNode.CreateRoot(currentPEInfo);
+            root.EnsureLoaded();
+            root.IsExpanded = true;
+            DependencyTree.ItemsSource = new[] { root };
+        }
+
+        // 惰性展开：首次展开某依赖节点时解析它，得到其下层依赖
+        private void DependencyNode_Expanded(object sender, RoutedEventArgs e)
+        {
+            if (sender is TreeViewItem item && item.DataContext is DependencyNode node)
             {
-                TreeViewItem treeNode = new() { Header = dep.Name };
-                // 这里可以添加递归依赖显示逻辑
-                DependencyTree.Items.Add(treeNode);
+                node.EnsureLoaded();
             }
         }
 
         private void DisplayImportExportFunctions()
         {
-            // 显示导入函数
-            ImportFunctionsGrid.ItemsSource = currentPEInfo?.ImportFunctions;
+            // 默认显示已打开文件的导入/导出
+            ShowFunctions(currentPEInfo);
+        }
 
-            // 显示导出函数
-            // 对于.NET程序集，导出函数实际上可能是公开的类型
-            List<object> exportItems = [];
-
-            if (currentPEInfo != null)
-            {
-                // 添加传统的导出函数
-                exportItems.AddRange(currentPEInfo.ExportFunctions);
-
-                // 如果是.NET程序集，添加额外的导出信息
-                if (currentPEInfo.CLRInfo != null)
-                {
-                    // 可以在这里添加额外的.NET特定信息
-                }
-            }
-
-            ExportFunctionsGrid.ItemsSource = exportItems;
+        // 将指定 PEInfo 的导入/导出函数填入右侧两个表格
+        private void ShowFunctions(PEInfo? info)
+        {
+            ImportFunctionsGrid.ItemsSource = info?.ImportFunctions;
+            ExportFunctionsGrid.ItemsSource = info?.ExportFunctions;
         }
 
         private void DependencyTree_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if (DependencyTree.SelectedItem is TreeViewItem selectedItem)
+            if (DependencyTree.SelectedItem is DependencyNode node)
             {
-                // 双击依赖项时的处理逻辑
-                MessageBox.Show($"双击了依赖项: {selectedItem.Header}", "信息", MessageBoxButton.OK, MessageBoxImage.Information);
+                // 确保该依赖已解析，然后把导入/导出列表切换为它自身的数据
+                node.EnsureLoaded();
+                ShowFunctions(node.Info);
             }
         }
 
