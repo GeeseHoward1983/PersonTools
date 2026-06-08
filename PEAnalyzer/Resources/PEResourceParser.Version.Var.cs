@@ -139,9 +139,9 @@ namespace PersonalTools.PEAnalyzer.Resources
             int maxVarNameBytes = (int)Math.Min(wLength, (uint)(fs.Length - fs.Position));
             string varName = Utilities.ReadUnicodeStringWithMaxBytes(reader, maxVarNameBytes);
 
-            // 计算值的位置（对齐到4字节边界）
-            long keyLengthInBytes = ((long)varName.Length + 1) * 2; // Unicode字符串长度 + null终止符
-            long valuePosition = Utilities.AlignTo4(startPosition + 6 + keyLengthInBytes);
+            // 值对齐到4字节边界：用读取键名后的实际流位置，而非按字符串长度推算
+            // （避免读取被截断或键名内嵌 NUL 时错位）
+            long valuePosition = Utilities.AlignTo4(fs.Position);
             if (valuePosition >= fs.Length || valuePosition >= endPosition)
             {
                 return false;

@@ -91,13 +91,13 @@ namespace PersonalTools.ELFAnalyzer.Core
             while (processed < count && offset < (ulong)parser.FileData.Length)
             {
                 ushort vd_ndx = ELFParserUtils.ReadUInt16(parser.FileData, (int)offset + 4, isLittleEndian);
-                // vd_aux 与 vd_next 紧随其后；跳过 offset+8 处的 vd_hash
-                ulong vd_aux = parser.Is64Bit ? ELFParserUtils.ReadUInt64(parser.FileData, (int)offset + 8, isLittleEndian) : ELFParserUtils.ReadUInt32(parser.FileData, (int)offset + 12, isLittleEndian);
-                ulong vd_next = parser.Is64Bit ? ELFParserUtils.ReadUInt64(parser.FileData, (int)offset + 16, isLittleEndian) : ELFParserUtils.ReadUInt32(parser.FileData, (int)offset + 16, isLittleEndian);
+                // Verdef 结构与位宽无关：vd_aux(+12)、vd_next(+16) 均为 4 字节
+                uint vd_aux = ELFParserUtils.ReadUInt32(parser.FileData, (int)offset + 12, isLittleEndian);
+                uint vd_next = ELFParserUtils.ReadUInt32(parser.FileData, (int)offset + 16, isLittleEndian);
 
-                // 获取版本名称：vernaux 结构紧跟在 verdef 结构之后
+                // Verdaux 紧随其后：vda_name(+0) 为版本名在字符串表中的偏移
                 ulong nameOffset = offset + vd_aux;
-                uint nameOffsetInStrTab = ELFParserUtils.ReadUInt32(parser.FileData, (int)nameOffset + 8, isLittleEndian); // vernaux.vna_name
+                uint nameOffsetInStrTab = ELFParserUtils.ReadUInt32(parser.FileData, (int)nameOffset, isLittleEndian);
                 string versionName = ELFParserUtils.ExtractStringFromBytes(strTabData, (int)nameOffsetInStrTab);
 
                 // 存储版本定义

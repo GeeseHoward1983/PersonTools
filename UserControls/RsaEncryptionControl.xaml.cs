@@ -65,11 +65,6 @@ namespace PersonalTools.UserControls
                 {
                     MessageBox.Show($"RSA加密失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
-                // 其他异常重新抛出
-                catch (Exception)
-                {
-                    throw;
-                }
             }
             catch (CryptographicException ex)
             {
@@ -78,11 +73,6 @@ namespace PersonalTools.UserControls
             catch (ArgumentException ex)
             {
                 MessageBox.Show($"RSA加密时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
 
@@ -119,11 +109,6 @@ namespace PersonalTools.UserControls
                 {
                     MessageBox.Show($"RSA解密失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
-                // 其他异常重新抛出
-                catch (Exception)
-                {
-                    throw;
-                }
             }
             catch (CryptographicException ex)
             {
@@ -132,11 +117,6 @@ namespace PersonalTools.UserControls
             catch (ArgumentException ex)
             {
                 MessageBox.Show($"RSA解密时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
 
@@ -173,11 +153,6 @@ namespace PersonalTools.UserControls
                 {
                     MessageBox.Show($"RSA签名失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
-                // 其他异常重新抛出
-                catch (Exception)
-                {
-                    throw;
-                }
             }
             catch (CryptographicException ex)
             {
@@ -186,11 +161,6 @@ namespace PersonalTools.UserControls
             catch (ArgumentException ex)
             {
                 MessageBox.Show($"RSA签名时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
 
@@ -241,11 +211,6 @@ namespace PersonalTools.UserControls
                 {
                     MessageBox.Show($"RSA验签失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
-                // 其他异常重新抛出
-                catch (Exception)
-                {
-                    throw;
-                }
             }
             catch (CryptographicException ex)
             {
@@ -254,11 +219,6 @@ namespace PersonalTools.UserControls
             catch (ArgumentException ex)
             {
                 MessageBox.Show($"RSA验签时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
 
@@ -290,11 +250,6 @@ namespace PersonalTools.UserControls
             catch (ArgumentOutOfRangeException ex)
             {
                 MessageBox.Show($"生成密钥对时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
 
@@ -329,11 +284,6 @@ namespace PersonalTools.UserControls
                     {
                         MessageBox.Show("选择的文件不是有效的公钥文件！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
-                    // 其他异常重新抛出
-                    catch (Exception)
-                    {
-                        throw;
-                    }
                 }
             }
             catch (IOException ex)
@@ -343,11 +293,6 @@ namespace PersonalTools.UserControls
             catch (UnauthorizedAccessException ex)
             {
                 MessageBox.Show($"导入公钥时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
 
@@ -382,11 +327,6 @@ namespace PersonalTools.UserControls
                     {
                         MessageBox.Show("选择的文件不是有效的私钥文件！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
-                    // 其他异常重新抛出
-                    catch (Exception)
-                    {
-                        throw;
-                    }
                 }
             }
             catch (IOException ex)
@@ -396,11 +336,6 @@ namespace PersonalTools.UserControls
             catch (UnauthorizedAccessException ex)
             {
                 MessageBox.Show($"导入私钥时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
 
@@ -569,11 +504,6 @@ namespace PersonalTools.UserControls
             {
                 return false;
             }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
-            }
         }
 
         // 处理RSA标签页的文件拖放事件
@@ -616,11 +546,6 @@ namespace PersonalTools.UserControls
             catch (UnauthorizedAccessException ex)
             {
                 MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
 

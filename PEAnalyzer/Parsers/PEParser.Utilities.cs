@@ -335,8 +335,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// </summary>
         /// <param name="rva">相对虚拟地址</param>
         /// <param name="sections">节头列表</param>
+        /// <param name="requiredLength">从该 RVA 起需要读取的字节数，用于校验整段都落在同一节的文件数据内，避免跨节读取</param>
         /// <returns>文件偏移量；无法解析时返回 -1</returns>
-        internal static long RvaToOffset(uint rva, List<IMAGESECTIONHEADER> sections)
+        internal static long RvaToOffset(uint rva, List<IMAGESECTIONHEADER> sections, uint requiredLength = 1)
         {
             // 添加对RVA的基本验证
             if (rva == 0 || sections == null || sections.Count == 0)
@@ -362,9 +363,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
                     // 计算相对于节起始地址的偏移量
                     uint relativeOffset = rva - section.VirtualAddress;
 
-                    // 如果偏移量超出了文件中节的大小，则返回-1
-                    // 这种情况常见于未初始化数据节(.bss等)
-                    if (relativeOffset >= section.SizeOfRawData)
+                    // 起始 + 所需长度必须都落在节的文件数据(SizeOfRawData)内，
+                    // 既排除未初始化数据节(.bss)，也避免跨节读取到下一节的数据
+                    if ((long)relativeOffset + requiredLength > section.SizeOfRawData)
                     {
                         return -1;
                     }

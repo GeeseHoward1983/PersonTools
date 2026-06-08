@@ -28,7 +28,7 @@ namespace PersonalTools
                 {
                     uint exportRVA = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryExport].VirtualAddress;
                     uint exportSize = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryExport].Size;
-                    long exportOffset = Utilities.RvaToOffset(exportRVA, peInfo.SectionHeaders);
+                    long exportOffset = Utilities.RvaToOffset(exportRVA, peInfo.SectionHeaders, PEConstants.ExportDirectorySize);
 
                     if (exportOffset != -1 && exportOffset < fs.Length)
                     {

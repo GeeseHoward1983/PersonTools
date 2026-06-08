@@ -6913,6 +6913,7 @@ namespace PersonalTools.ConstString
             {2276392985, "sqlite3_bind的第二個參數超出範圍"},
             {2276392986, "開啟的檔案不是資料庫檔案"},
             {2276392987, "來自sqlite3_log()的通知"},
+            {2276392988, "來自sqlite3_log()的警告"},
             {2276393060, "sqlite3_step()有另一行準備就緒"},
             {2276393061, "sqlite3_step()已完成執行"},
             {2276393226, "SQLITE_IOERR_READ"},

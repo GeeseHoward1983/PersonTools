@@ -48,6 +48,18 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 // VS_FIXEDFILEINFO 紧随其后（对齐到4字节边界），大小 52 字节
                 long alignedPosition = Utilities.AlignTo4(fs.Position);
+
+                // wValueLength==0 表示没有 VS_FIXEDFILEINFO（合法），直接解析子项
+                if (wValueLength == 0)
+                {
+                    if (alignedPosition < fs.Length && alignedPosition < startPosition + wLength)
+                    {
+                        fs.Position = alignedPosition;
+                        ParseVersionChildren(fs, reader, peInfo, startPosition + wLength);
+                    }
+                    return;
+                }
+
                 if (wValueLength < 52 || alignedPosition + 52 > fs.Length)
                 {
                     peInfo.AdditionalInfo.FileVersion = $"版本信息数据不完整: wValueLength={wValueLength}, 需要>=52";

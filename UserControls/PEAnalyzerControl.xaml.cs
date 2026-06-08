@@ -88,11 +88,6 @@ namespace PersonalTools.UserControls
             {
                 MessageBox.Show($"加载文件时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
-            }
         }
 
         private void DisplayHeaderInfo()

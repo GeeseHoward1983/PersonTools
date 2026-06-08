@@ -134,7 +134,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                                 if (sym < symbols.Count)
                                 {
                                     ELFSymbol symbol = symbols[(int)sym];
-                                    symbolName = SymbleName.GetSymbolName(Parser, symbol, SectionType.SHT_DYNSYM, (int)sym);
+                                    symbolName = ResolveRelocSymbolName(Parser, symbol, (int)sym);
                                     symbolValue = $"{symbol.StValue:x8}";
                                 }
                             }
@@ -175,7 +175,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                                 if (sym < symbols.Count)
                                 {
                                     ELFSymbol symbol = symbols[(int)sym];
-                                    symbolName = SymbleName.GetSymbolName(Parser, symbol, SectionType.SHT_DYNSYM, (int)sym);
+                                    symbolName = ResolveRelocSymbolName(Parser, symbol, (int)sym);
                                     symbolValue = $"{symbol.StValue:x16}";
                                 }
                             }
@@ -199,6 +199,19 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             }
 
             return result;
+        }
+
+        // 解析重定位符号名：SECTION 类符号 st_name 通常为 0，回退显示其所属节名（与符号表一致）
+        private static string ResolveRelocSymbolName(ELFParser Parser, ELFSymbol symbol, int index)
+        {
+            string name = SymbleName.GetSymbolName(Parser, symbol, SectionType.SHT_DYNSYM, index);
+            if (string.IsNullOrEmpty(name)
+                && (byte)(symbol.StInfo & 0x0F) == (byte)SymbolType.STT_SECTION
+                && symbol.StShndx > 0 && symbol.StShndx < 0xFF00)
+            {
+                name = SymbleName.GetSectionName(Parser, symbol.StShndx);
+            }
+            return name;
         }
     }
 }

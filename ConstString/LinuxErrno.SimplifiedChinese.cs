@@ -137,8 +137,8 @@ namespace PersonalTools.ConstString
             { 131, "状态不可恢复" }, /* ENOTRECOVERABLE */
             { 132, "由于RF-kill导致操作不可能" }, /* ERFKILL */
             { 133, "内存页有硬件错误" }, /* EHWPOISON */
-            { 512, "ERESTARTSYS" },
-            { 513, "ERESTARTNOINTR" },
+            { 512, "应重启系统调用" }, /* ERESTARTSYS */
+            { 513, "重启系统调用（不允许中断）" }, /* ERESTARTNOINTR */
             { 514, "如果没有处理程序则重启.." }, /* ERESTARTNOHAND */
             { 515, "没有ioctl命令" }, /* ENOIOCTLCMD */
             { 516, "通过调用sys_restart_syscall重启" }, /* ERESTART_RESTARTBLOCK */

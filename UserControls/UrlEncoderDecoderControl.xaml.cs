@@ -35,11 +35,6 @@ namespace PersonalTools.UserControls
             {
                 MessageBox.Show($"URL编码时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
-            }
         }
 
         // URL解码
@@ -64,11 +59,6 @@ namespace PersonalTools.UserControls
             catch (UriFormatException ex)
             {
                 MessageBox.Show($"URL解码时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
 

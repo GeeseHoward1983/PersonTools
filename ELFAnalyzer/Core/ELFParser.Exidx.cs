@@ -49,22 +49,17 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 int offset = idx * 8; // 每个条目占8字节
 
-                // 每个条目包含两个32位值：
-                // 第一个32位：相对于节起始地址的偏移(prel31)
-                // 第二个32位：展开信息(可能是索引或标记)
-                int addrOffset = ELFParserUtils.ReadInt32(data, offset, isLittleEndian);
+                // 第一个32位：相对该字地址的 prel31 函数偏移；第二个32位：展开信息
+                int addrOffset = SignExtendPrel31(ELFParserUtils.ReadInt32(data, offset, isLittleEndian));
                 int unwindInfo = ELFParserUtils.ReadInt32(data, offset + 4, isLittleEndian);
 
-                // 计算绝对地址（注：prel31 偏移理论上应做 31 位符号扩展，此处沿用既有行为）
-                int absAddr = (int)exidxSection.sh_addr + addrOffset + offset;
+                // 函数绝对地址 = 该条目字所在虚拟地址 + prel31 偏移
+                long absAddr = (long)exidxSection.sh_addr + offset + addrOffset;
 
-                // 获取可能的符号名称
-                string symbolName = FindNearestSymbolName(parser, (ulong)absAddr, false);
-                if (string.IsNullOrEmpty(symbolName))
-                {
-                    symbolName = FindNearestSymbolName(parser, (ulong)absAddr, true);
-                }
+                // 获取包含该地址的符号名（跳过 $a/$t/$d 等映射符号）
+                string symbolName = FindContainingSymbolName(parser, (ulong)absAddr);
                 string symbolDesc = string.IsNullOrEmpty(symbolName) ? $"0x{absAddr:x}" : $"0x{absAddr:x} <{symbolName}>";
+
                 // 根据展开信息判断是索引还是标记
                 if (unwindInfo == 1) // 特殊值表示无法展开
                 {
@@ -89,20 +84,25 @@ namespace PersonalTools.ELFAnalyzer.Core
                 }
                 else
                 {
-                    // 展开表条目索引 - 指向 .ARM.extab 节的偏移
-                    int extabOffset = (int)exidxSection.sh_addr + (unwindInfo + 4) + offset;
-                    sb.AppendLine(CultureInfo.InvariantCulture, $"{symbolDesc}: @0x{extabOffset:x}");
-                    unwindInfo = ELFParserUtils.ReadInt32(parser.FileData, extabOffset, isLittleEndian);
+                    // 展开表条目索引 - 指向 .ARM.extab 节，prel31 偏移相对该字地址
+                    int extabRel = SignExtendPrel31(unwindInfo);
+                    long extabVaddr = (long)exidxSection.sh_addr + offset + 4 + extabRel;
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"{symbolDesc}: @0x{extabVaddr:x}");
+
+                    // 虚拟地址需转换为文件偏移再读取（vaddr 通常不等于文件偏移）
+                    long extabFileOff = VaddrToFileOffset(parser, (ulong)extabVaddr);
+                    if (extabFileOff < 0 || extabFileOff + 4 > parser.FileData.Length)
+                    {
+                        sb.AppendLine();
+                        continue;
+                    }
+                    unwindInfo = ELFParserUtils.ReadInt32(parser.FileData, (int)extabFileOff, isLittleEndian);
 
                     if ((unwindInfo & 0x80000000) == 0)
                     {
                         // 通用模型：extab 首字 bit31==0，低31位为指向 personality routine 的 prel31 偏移
-                        int per = unwindInfo & 0x7FFFFFFF;
-                        if ((per & 0x40000000) != 0)
-                        {
-                            per |= unchecked((int)0x80000000); // bit30 符号扩展
-                        }
-                        long personalityAddr = (long)extabOffset + per;
+                        int per = SignExtendPrel31(unwindInfo);
+                        long personalityAddr = extabVaddr + per;
                         string perName = FindContainingSymbolName(parser, (ulong)personalityAddr);
                         string perDesc = string.IsNullOrEmpty(perName) ? $"0x{personalityAddr:x}" : $"0x{personalityAddr:x} <{perName}>";
                         sb.AppendLine(CultureInfo.InvariantCulture, $"  Personality routine: {perDesc}");
@@ -122,8 +122,12 @@ namespace PersonalTools.ELFAnalyzer.Core
 
                             for (int i = 0; i < remainDWords; i++)
                             {
-                                extabOffset += 4;
-                                Array.Copy(parser.FileData, extabOffset, bInstruction, 2 + i * 4, 4);
+                                extabFileOff += 4;
+                                if (extabFileOff + 4 > parser.FileData.Length)
+                                {
+                                    break;
+                                }
+                                Array.Copy(parser.FileData, extabFileOff, bInstruction, 2 + i * 4, 4);
                                 if (parser.Header.IsLittleEndian())
                                 {
                                     Array.Reverse(bInstruction, 2 + i * 4, 4);
@@ -147,44 +151,37 @@ namespace PersonalTools.ELFAnalyzer.Core
             return sb.ToString();
         }
 
-        private static string FindNearestSymbolName(ELFParser parser, ulong address, bool containstSize)
+        // prel31：31 位有符号偏移，按 bit30 符号扩展为完整 int
+        private static int SignExtendPrel31(int value)
         {
-            if (parser.Symbols == null)
+            value &= 0x7FFFFFFF;
+            if ((value & 0x40000000) != 0)
             {
-                return string.Empty;
+                value |= unchecked((int)0x80000000);
+            }
+            return value;
+        }
+
+        // 虚拟地址 → 文件偏移（遍历节头，跳过 NOBITS/无地址节）
+        private static long VaddrToFileOffset(ELFParser parser, ulong vaddr)
+        {
+            if (parser.SectionHeaders == null)
+            {
+                return -1;
             }
 
-            // 遍历符号表，寻找最接近的符号
-            foreach (KeyValuePair<SectionType, List<ELFSymbol>> symbolList in parser.Symbols)
+            foreach (Models.ELFSectionHeader section in parser.SectionHeaders)
             {
-                for (int symbolIndex = 0; symbolIndex < symbolList.Value.Count; symbolIndex++)
+                if (section.sh_addr == 0 || section.sh_size == 0 || section.sh_type == (uint)SectionType.SHT_NOBITS)
                 {
-                    ELFSymbol symbol = symbolList.Value[symbolIndex];
-                    ulong pos = symbol.StValue;
-                    if (containstSize)
-                    {
-                        pos += symbol.StSize;
-                    }
-                    // 查找地址最接近且不大于目标地址的符号
-                    if ((pos == address || pos == address + 1) &&
-                        symbol.StInfo != 0 && // 非NULL符号
-                        symbol.StShndx != 0) // 非未定义符号
-                    {
-                        string name = SymbleName.GetSymbolName(parser, symbol, symbolList.Key, symbolIndex);
-                        if (containstSize && !string.IsNullOrEmpty(name))
-                        {
-                            name += $"+0x{symbol.StSize:x}";
-                        }
-
-                        if (!string.IsNullOrEmpty(name))
-                        {
-                            return name;
-                        }
-                    }
+                    continue;
+                }
+                if (vaddr >= section.sh_addr && vaddr < section.sh_addr + section.sh_size)
+                {
+                    return (long)(section.sh_offset + (vaddr - section.sh_addr));
                 }
             }
-
-            return string.Empty;
+            return -1;
         }
 
         // 查找包含/最接近某地址的命名符号（用于 personality routine 显示 <name+0xoff>）

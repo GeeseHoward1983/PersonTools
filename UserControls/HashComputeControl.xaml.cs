@@ -82,11 +82,6 @@ namespace PersonalTools.UserControls
             {
                 MessageBox.Show($"计算MD5时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
-            }
         }
 
         // 清空MD5计算结果
@@ -136,11 +131,6 @@ namespace PersonalTools.UserControls
             {
                 MessageBox.Show($"计算SHA1时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
-            }
         }
 
         // 清空SHA1计算结果
@@ -179,10 +169,7 @@ namespace PersonalTools.UserControls
                     // 默认使用普通字符串模式
                     inputBytes = Encoding.UTF8.GetBytes(input);
                 }
-                byte[] hashBytes = SHA256.HashData(inputBytes);
-                // 取前28个字节（224位）作为SHA224结果（注：这是 SHA-256 截断，并非真正的 SHA-224 初值算法）
-                byte[] sha224Bytes = new byte[28];
-                Array.Copy(hashBytes, sha224Bytes, 28);
+                byte[] sha224Bytes = Sha224.HashData(inputBytes);
                 SHA224ResultLabel.Content = Utils.ToHexString(sha224Bytes);
             }
             catch (FormatException ex)
@@ -192,11 +179,6 @@ namespace PersonalTools.UserControls
             catch (ArgumentNullException ex)
             {
                 MessageBox.Show($"计算SHA224时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
 
@@ -247,11 +229,6 @@ namespace PersonalTools.UserControls
             {
                 MessageBox.Show($"计算SHA256时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
-            }
         }
 
         // 清空SHA256计算结果
@@ -301,11 +278,6 @@ namespace PersonalTools.UserControls
             {
                 MessageBox.Show($"计算SHA384时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
-            }
         }
 
         // 清空SHA384计算结果
@@ -354,11 +326,6 @@ namespace PersonalTools.UserControls
             catch (ArgumentNullException ex)
             {
                 MessageBox.Show($"计算SHA512时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
             }
         }
 
@@ -423,11 +390,6 @@ namespace PersonalTools.UserControls
             {
                 MessageBox.Show($"计算SHA3时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
-            }
         }
 
         // 清空SHA3计算结果
@@ -486,11 +448,6 @@ namespace PersonalTools.UserControls
             {
                 MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            // 其他异常重新抛出
-            catch (Exception)
-            {
-                throw;
-            }
         }
 
         // 计算并显示各种哈希值
@@ -505,11 +462,7 @@ namespace PersonalTools.UserControls
             SHA1ResultLabel.Content = Utils.ToHexString(hash);
 
             // 计算SHA224
-            hash = SHA256.HashData(data);
-            byte[] sha224Bytes = new byte[28];
-            Array.Copy(hash, sha224Bytes, 28);
-
-            SHA224ResultLabel.Content = Utils.ToHexString(sha224Bytes);
+            SHA224ResultLabel.Content = Utils.ToHexString(Sha224.HashData(data));
 
             // 计算SHA256
             hash = SHA256.HashData(data);

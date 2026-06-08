@@ -137,8 +137,8 @@ namespace PersonalTools.PEAnalyzer.Resources
                 // 从BITMAPINFOHEADER中提取宽度和高度
                 int width = BitConverter.ToInt32(dibData, 4);
                 int height = BitConverter.ToInt32(dibData, 8);
-                // 高度是实际高度的两倍（包含遮罩）
-                height /= 2;
+                // 图标 DIB 高度为实际高度的两倍（XOR+AND 掩码）；负数表示自顶向下，先取绝对值
+                height = Math.Abs(height) / 2;
 
                 // 从BITMAPINFOHEADER中提取色深
                 ushort bitCount = BitConverter.ToUInt16(dibData, 14);

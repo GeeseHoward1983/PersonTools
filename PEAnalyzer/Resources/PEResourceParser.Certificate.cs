@@ -33,12 +33,14 @@ internal static void ParseCertificateInfo(FileStream fs, BinaryReader reader, PE
                         certificateOffset + certificateSize <= fs.Length)
                     {
                         long originalPosition = fs.Position;
+                        long certEnd = (long)certificateOffset + certificateSize;
+                        long pos = certificateOffset;
+                        List<string> certs = [];
 
-                        fs.Position = certificateOffset;
-
-                        // 读取证书头
-                        if (fs.Position + 8 <= fs.Length)
+                        // 安全目录是 8 字节对齐的 WIN_CERTIFICATE 数组，逐个解析（支持多重签名）
+                        while (pos + 8 <= certEnd && pos + 8 <= fs.Length)
                         {
+                            fs.Position = pos;
                             WINCERTIFICATE certHeader = new()
                             {
                                 dwLength = reader.ReadUInt32(),
@@ -46,28 +48,33 @@ internal static void ParseCertificateInfo(FileStream fs, BinaryReader reader, PE
                                 wCertificateType = reader.ReadUInt16()
                             };
 
-                            peInfo.AdditionalInfo.IsSigned = true;
-
-                            // 根据证书类型生成信息
-                            string certType = "未知";
-                            switch (certHeader.wCertificateType)
+                            if (certHeader.dwLength < 8 || pos + certHeader.dwLength > certEnd)
                             {
-                                case 0x0001:
-                                    certType = "X509";
-                                    break;
-                                case 0x0002:
-                                    certType = "PKCS#7";
-                                    break;
-                                case 0x0003:
-                                    certType = "PKCS#1";
-                                    break;
+                                break;
                             }
 
-                            peInfo.AdditionalInfo.CertificateInfo =
-                                $"类型: {certType}, 长度: {certHeader.dwLength} 字节, 修订版: {certHeader.wRevision}";
+                            string certType = certHeader.wCertificateType switch
+                            {
+                                0x0001 => "X509",
+                                0x0002 => "PKCS#7",
+                                0x0003 => "PKCS#1",
+                                _ => "未知"
+                            };
+                            certs.Add($"类型: {certType}, 长度: {certHeader.dwLength} 字节, 修订版: 0x{certHeader.wRevision:X4}");
+
+                            // 下一个证书按 8 字节对齐
+                            pos += (long)((certHeader.dwLength + 7u) & ~7u);
                         }
 
                         fs.Position = originalPosition;
+
+                        if (certs.Count > 0)
+                        {
+                            peInfo.AdditionalInfo.IsSigned = true;
+                            peInfo.AdditionalInfo.CertificateInfo = certs.Count == 1
+                                ? certs[0]
+                                : $"{certs.Count} 个证书 -> " + string.Join("; ", certs);
+                        }
                     }
                 }
                 else

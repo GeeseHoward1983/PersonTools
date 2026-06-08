@@ -174,11 +174,13 @@ namespace PersonalTools.PEAnalyzer.Resources
                 return null;
             }
 
-            int fullIconDataSize = 6 + 16 + (int)entry.BytesInRes;
-            if (fullIconDataSize <= 0 || fullIconDataSize >= 10 * 1024 * 1024)
+            // 在 long 上计算以避免 6+16+BytesInRes 的 int 溢出
+            long fullIconDataSizeLong = 6L + 16 + entry.BytesInRes;
+            if (fullIconDataSizeLong <= 0 || fullIconDataSizeLong >= 10 * 1024 * 1024)
             {
                 return null;
             }
+            int fullIconDataSize = (int)fullIconDataSizeLong;
 
             byte[]? imageData = ReadIconImageData(fs, reader, iconDataOffset, entry.BytesInRes);
             if (imageData == null)

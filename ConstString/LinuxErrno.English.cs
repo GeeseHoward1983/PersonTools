@@ -137,8 +137,8 @@ namespace PersonalTools.ConstString
             { 131, "State not recoverable" }, /* ENOTRECOVERABLE */
             { 132, "Operation not possible due to RF-kill" }, /* ERFKILL */
             { 133, "Memory page has hardware error" }, /* EHWPOISON */
-            { 512, "ERESTARTSYS" },
-            { 513, "ERESTARTNOINTR" },
+            { 512, "Restart system call" }, /* ERESTARTSYS */
+            { 513, "Restart system call (no interrupt)" }, /* ERESTARTNOINTR */
             { 514, "restart if no handler.." }, /* ERESTARTNOHAND */
             { 515, "No ioctl command" }, /* ENOIOCTLCMD */
             { 516, "restart by calling sys_restart_syscall" }, /* ERESTART_RESTARTBLOCK */
