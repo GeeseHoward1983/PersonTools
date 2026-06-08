@@ -106,10 +106,15 @@ namespace PersonalTools.UserControls
                 return;
             }
 
+            // 按本 PE 的位数对依赖做位数优先解析（32位优先 SysWOW64，64位优先 System32）
+            bool? targetIs64Bit = Utilities.Is64Bit(Info.OptionalHeader) ? true
+                : Utilities.Is32Bit(Info.OptionalHeader) ? false
+                : null;
+
             string? baseDir = FullPath != null ? Path.GetDirectoryName(FullPath) : null;
             foreach (DependencyInfo dep in Info.Dependencies)
             {
-                string? childPath = DependencyResolver.Resolve(dep.Name, baseDir);
+                string? childPath = DependencyResolver.Resolve(dep.Name, baseDir, targetIs64Bit);
                 bool cyclic = childPath != null && ancestors.Contains(childPath);
 
                 HashSet<string> childAncestors = new(ancestors, StringComparer.OrdinalIgnoreCase);
