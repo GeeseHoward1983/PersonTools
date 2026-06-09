@@ -127,6 +127,27 @@ namespace PersonalTools.ELFAnalyzer.Core
             return null;
         }
 
+        // 解析某节通过 sh_link 关联的字符串表数据（verdef/verneed 的解析与格式化共用）。
+        // SectionHeaders 为空或 sh_link 索引越界返回 false 且 strTabData 置空；isLittleEndian 始终给出。
+        public static bool TryGetLinkedStringTable(ELFParser parser, Models.ELFSectionHeader section, out byte[] strTabData, out bool isLittleEndian)
+        {
+            strTabData = [];
+            isLittleEndian = parser.Header.IsLittleEndian();
+            if (parser.SectionHeaders == null)
+            {
+                return false;
+            }
+
+            int strTabIdx = (int)section.sh_link;
+            if (strTabIdx >= parser.SectionHeaders.Count)
+            {
+                return false;
+            }
+
+            strTabData = parser.GetSectionData(strTabIdx);
+            return true;
+        }
+
         public static string GetTypeName(Type enumType, object type, string prefix)
         {
             try

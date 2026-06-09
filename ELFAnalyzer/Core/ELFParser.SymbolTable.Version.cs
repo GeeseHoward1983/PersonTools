@@ -1,6 +1,6 @@
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    internal static partial class VersionSymbleTable
+    internal static partial class VersionSymbolParser
     {
         // 解析版本信息
         internal static void ReadVersionInformation(ELFParser parser)

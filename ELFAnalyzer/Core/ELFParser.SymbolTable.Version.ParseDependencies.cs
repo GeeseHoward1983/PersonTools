@@ -3,28 +3,13 @@ using PersonalTools.Enums;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    internal static partial class VersionSymbleTable
+    internal static partial class VersionSymbolParser
     {
         private static void ParseVersionDependencies(ELFParser parser)
         {
             // 查找版本依赖 (DT_VERNEED)
-            long verneedAddr = 0;
-            long verneedNum = 0;
-
-            if (parser.DynamicEntries != null)
-            {
-                foreach (ELFDynamic entry in parser.DynamicEntries)
-                {
-                    if (entry.d_tag == (long)DynamicTag.DT_VERNEED)
-                    {
-                        verneedAddr = (long)entry.d_val;
-                    }
-                    else if (entry.d_tag == (long)DynamicTag.DT_VERNEEDNUM)
-                    {
-                        verneedNum = (long)entry.d_val;
-                    }
-                }
-            }
+            long verneedAddr = FindDynamicValue(parser, DynamicTag.DT_VERNEED);
+            long verneedNum = FindDynamicValue(parser, DynamicTag.DT_VERNEEDNUM);
 
             if (verneedAddr > 0 && verneedNum > 0)
             {
@@ -40,20 +25,11 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private static void ParseVerNeedEntries(ELFParser parser, Models.ELFSectionHeader section, int count)
         {
-            if (parser.SectionHeaders == null || parser.VersionDependencies == null)
+            if (parser.VersionDependencies == null ||
+                !ELFParserUtils.TryGetLinkedStringTable(parser, section, out byte[] strTabData, out bool isLittleEndian))
             {
                 return;
             }
-
-            // 找到版本需求字符串表
-            int strTabIdx = (int)section.sh_link;
-            if (strTabIdx >= parser.SectionHeaders.Count)
-            {
-                return;
-            }
-
-            byte[] strTabData = parser.GetSectionData(strTabIdx);
-            bool isLittleEndian = parser.Header.IsLittleEndian();
 
             WalkVerneed(parser, (long)section.sh_offset, count, isLittleEndian,
                 onVerneed: (_, _) => { },
@@ -73,7 +49,7 @@ namespace PersonalTools.ELFAnalyzer.Core
         // 再对其下每个 vernaux 项回调 onVernaux(辅助项文件偏移)。maxCount<=0 表示不限项数（仅靠 vn_next==0/越界停止）。
         // 返回已处理的 verneed 项数。链表步进(+2 vn_cnt / +8 vn_aux / +12 vn_next / 辅助项 +12 vna_next)与边界在此单点维护，
         // 供版本依赖的“解析填表”与“格式化输出”两路复用。
-        private static int WalkVerneed(ELFParser parser, long sectionStart, int maxCount, bool isLittleEndian,
+        internal static int WalkVerneed(ELFParser parser, long sectionStart, int maxCount, bool isLittleEndian,
             Action<long, ushort> onVerneed, Action<long> onVernaux)
         {
             long offset = sectionStart;

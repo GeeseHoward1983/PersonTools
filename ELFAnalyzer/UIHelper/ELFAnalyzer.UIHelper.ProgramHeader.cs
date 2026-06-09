@@ -71,7 +71,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                     continue;
                 }
 
-                string sectionName = SymbleName.GetSectionName(_parser, i);
+                string sectionName = SymbolName.GetSectionName(_parser, i);
                 if (string.IsNullOrEmpty(sectionName))
                 {
                     continue;

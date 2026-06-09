@@ -17,7 +17,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                     result.Add(new ELFSectionHeaderInfo
                     {
                         Index = i,
-                        Name = SymbleName.GetSectionName(Parser, i),
+                        Name = SymbolName.GetSectionName(Parser, i),
                         Type = Core.ELFSectionHeader.GetSectionType(sh.sh_type),
                         Address = $"0x{sh.sh_addr:x10}",
                         Offset = $"0x{sh.sh_offset:x8}",

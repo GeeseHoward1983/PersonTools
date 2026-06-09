@@ -80,13 +80,13 @@ namespace PersonalTools.ELFAnalyzer.Core
             ELFSectionHeader.ReadSectionHeaders(this, reader, isLittleEndian);
 
             // Read symbol tables if present
-            SymbleTable.ReadSymbolTables(this, reader, isLittleEndian);
+            SymbolTable.ReadSymbolTables(this, reader, isLittleEndian);
 
             // Read dynamic entries if present
             Dynamic.ReadDynamicEntries(this, reader, isLittleEndian);
 
             // Read version information if present
-            VersionSymbleTable.ReadVersionInformation(this);
+            VersionSymbolParser.ReadVersionInformation(this);
         }
     }
 }

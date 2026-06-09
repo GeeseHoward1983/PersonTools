@@ -1,9 +1,10 @@
+using PersonalTools.Enums;
 using System.Globalization;
 using System.Text;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    internal static partial class VersionSymbleTable
+    internal static class VersionSymbolFormatter
     {
         private static Models.ELFSectionHeader? GetSection(ELFParser parser, string objSectionName)
         {
@@ -11,7 +12,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 for (int i = 0; i < parser.SectionHeaders.Count; i++)
                 {
-                    if (SymbleName.GetSectionName(parser, i) == objSectionName)
+                    if (SymbolName.GetSectionName(parser, i) == objSectionName)
                     {
                         return parser.SectionHeaders[i];
                     }
@@ -73,6 +74,45 @@ namespace PersonalTools.ELFAnalyzer.Core
             return sb.ToString();
         }
 
+        internal static string GetFormattedVersionDefinitionInfo(ELFParser parser)
+        {
+            if (parser.VersionDefinitions == null || parser.VersionDefinitions.Count == 0)
+            {
+                return "";
+            }
+
+            // 获取.gnu.version_d节的信息
+            Models.ELFSectionHeader? verdefSection = parser.SectionHeaders?.Find(sh => sh.sh_type == (uint)SectionType.SHT_GNU_verdef);
+            if (verdefSection == null)
+            {
+                return "";
+            }
+
+            Models.ELFSectionHeader vd = verdefSection.Value;
+            StringBuilder sb = new();
+            sb.AppendLine(CultureInfo.InvariantCulture, $"Version definition section '.gnu.version_d' contains {vd.sh_info} entries:");
+
+            int entryIndex = 0;
+            foreach (KeyValuePair<ushort, string> kvp in parser.VersionDefinitions.OrderBy(k => k.Key))
+            {
+                bool isBase = kvp.Key == 1;
+                string flags = isBase ? "BASE" : "";
+                ulong entryDelta = isBase ? 0UL : (ulong)entryIndex * vd.sh_entsize;
+                ulong addr = vd.sh_addr + entryDelta;
+                ulong fileOffset = vd.sh_offset + entryDelta;
+                sb.AppendLine(CultureInfo.InvariantCulture, $"  地址：0x{addr:x8}  Offset: 0x{fileOffset:x6}  Link: {vd.sh_link} (.dynstr)  {entryIndex:D4}: Rev: 1  Flags: {flags,-6}   Index: {kvp.Key}  Cnt: 1  名称：{kvp.Value}");
+                entryIndex++;
+            }
+
+            // 检查是否超出范围（参考 readelf："Version definition past end of section"）
+            if (parser.VersionDefinitions.Count > VersionSymbolParser.CalculateVerDefEntryCount(vd))
+            {
+                sb.AppendLine("  Version definition past end of section");
+            }
+
+            return sb.ToString();
+        }
+
         private static string GetVersionInfoByIndex(ELFParser parser, ushort versionIndex)
         {
             return versionIndex switch
@@ -85,24 +125,15 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private static void ParseAndAppendVersionNeeds(ELFParser parser, Models.ELFSectionHeader section, StringBuilder sb)
         {
-            if (parser.SectionHeaders == null)
+            if (!ELFParserUtils.TryGetLinkedStringTable(parser, section, out byte[] strTabData, out bool isLittleEndian))
             {
                 return;
             }
 
-            //找到版本需求字符串表
-            int strTabIdx = (int)section.sh_link;
-            if (strTabIdx >= parser.SectionHeaders.Count)
-            {
-                return;
-            }
-
-            byte[] strTabData = parser.GetSectionData(strTabIdx);
-            bool isLittleEndian = parser.Header.IsLittleEndian();
             long sectionStart = (long)section.sh_offset;
 
             // 遍历骨架与 readelf 一致，不限项数；填表与格式化共用 WalkVerneed（见 ParseDependencies.cs）
-            int processed = WalkVerneed(parser, sectionStart, maxCount: -1, isLittleEndian,
+            int processed = VersionSymbolParser.WalkVerneed(parser, sectionStart, maxCount: -1, isLittleEndian,
                 onVerneed: (verneedOffset, vn_cnt) =>
                 {
                     uint vn_version = ELFParserUtils.ReadUInt16(parser.FileData, (int)verneedOffset, isLittleEndian);

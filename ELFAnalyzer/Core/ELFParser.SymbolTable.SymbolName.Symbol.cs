@@ -3,7 +3,7 @@ using PersonalTools.Enums;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    internal static class SymbleName
+    internal static class SymbolName
     {
         internal static string GetSymbolName(ELFParser parser, ELFSymbol symbol, SectionType sectionType, int symbolIndex)
         {

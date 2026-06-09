@@ -3,23 +3,13 @@ using PersonalTools.Enums;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    internal static partial class VersionSymbleTable
+    internal static partial class VersionSymbolParser
     {
         private static void ParseVersionSymbolTable(ELFParser parser)
         {
             // 查找版本符号表 (DT_VERSYM)
-            long versymAddr = 0;
+            long versymAddr = FindDynamicValue(parser, DynamicTag.DT_VERSYM);
 
-            if (parser.DynamicEntries != null)
-            {
-                foreach (ELFDynamic entry in parser.DynamicEntries)
-                {
-                    if (entry.d_tag == (long)DynamicTag.DT_VERSYM)
-                    {
-                        versymAddr = (long)entry.d_val;
-                    }
-                }
-            }
             // 查找对应的节头
             if (versymAddr > 0)
             {
@@ -38,6 +28,24 @@ namespace PersonalTools.ELFAnalyzer.Core
                     }
                 }
             }
+        }
+
+        // 扫描动态段取指定标签的值（同标签多次出现取最后一次，与原逐项覆盖一致）；未找到返回 defaultValue
+        private static long FindDynamicValue(ELFParser parser, DynamicTag tag, long defaultValue = 0)
+        {
+            long value = defaultValue;
+            if (parser.DynamicEntries != null)
+            {
+                foreach (ELFDynamic entry in parser.DynamicEntries)
+                {
+                    if (entry.d_tag == (long)tag)
+                    {
+                        value = (long)entry.d_val;
+                    }
+                }
+            }
+
+            return value;
         }
     }
 }

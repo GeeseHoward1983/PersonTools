@@ -1,32 +1,15 @@
 using PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.Enums;
-using System.Globalization;
-using System.Text;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    internal static partial class VersionSymbleTable
+    internal static partial class VersionSymbolParser
     {
         private static void ParseVersionDefinitions(ELFParser parser)
         {
             // 查找版本定义 (DT_VERDEF)
-            long verdefAddr = 0;
-            long verdefNum = 0;
-
-            if (parser.DynamicEntries != null)
-            {
-                foreach (ELFDynamic entry in parser.DynamicEntries)
-                {
-                    if (entry.d_tag == (long)DynamicTag.DT_VERDEF)
-                    {
-                        verdefAddr = (long)entry.d_val;
-                    }
-                    else if (entry.d_tag == (long)DynamicTag.DT_VERDEFNUM)
-                    {
-                        verdefNum = (long)entry.d_val;
-                    }
-                }
-            }
+            long verdefAddr = FindDynamicValue(parser, DynamicTag.DT_VERDEF);
+            long verdefNum = FindDynamicValue(parser, DynamicTag.DT_VERDEFNUM);
 
             if (verdefAddr > 0 && verdefNum > 0)
             {
@@ -63,28 +46,19 @@ namespace PersonalTools.ELFAnalyzer.Core
             }
         }
 
-        private static int CalculateVerDefEntryCount(Models.ELFSectionHeader section)
+        internal static int CalculateVerDefEntryCount(Models.ELFSectionHeader section)
         {
             return section.sh_entsize == 0 ? 0 : (int)(section.sh_size / section.sh_entsize);
         }
 
         private static void ParseVerDefEntries(ELFParser parser, Models.ELFSectionHeader section, int count)
         {
-            if (parser.SectionHeaders == null || parser.VersionDefinitions == null)
+            if (parser.VersionDefinitions == null ||
+                !ELFParserUtils.TryGetLinkedStringTable(parser, section, out byte[] strTabData, out bool isLittleEndian))
             {
                 return;
             }
 
-            // 找到版本定义字符串表
-            int strTabIdx = (int)section.sh_link;
-            if (strTabIdx >= parser.SectionHeaders.Count)
-            {
-                return;
-            }
-
-            byte[] strTabData = parser.GetSectionData(strTabIdx);
-
-            bool isLittleEndian = parser.Header.IsLittleEndian();
             ulong offset = section.sh_offset;
             int processed = 0;
 
@@ -113,45 +87,6 @@ namespace PersonalTools.ELFAnalyzer.Core
                 offset += vd_next; // 移动到下一个版本定义
                 processed++;
             }
-        }
-
-        internal static string GetFormattedVersionDefinitionInfo(ELFParser parser)
-        {
-            if (parser.VersionDefinitions == null || parser.VersionDefinitions.Count == 0)
-            {
-                return "";
-            }
-
-            // 获取.gnu.version_d节的信息
-            Models.ELFSectionHeader? verdefSection = parser.SectionHeaders?.Find(sh => sh.sh_type == (uint)SectionType.SHT_GNU_verdef);
-            if (verdefSection == null)
-            {
-                return "";
-            }
-
-            Models.ELFSectionHeader vd = verdefSection.Value;
-            StringBuilder sb = new();
-            sb.AppendLine(CultureInfo.InvariantCulture, $"Version definition section '.gnu.version_d' contains {vd.sh_info} entries:");
-
-            int entryIndex = 0;
-            foreach (KeyValuePair<ushort, string> kvp in parser.VersionDefinitions.OrderBy(k => k.Key))
-            {
-                bool isBase = kvp.Key == 1;
-                string flags = isBase ? "BASE" : "";
-                ulong entryDelta = isBase ? 0UL : (ulong)entryIndex * vd.sh_entsize;
-                ulong addr = vd.sh_addr + entryDelta;
-                ulong fileOffset = vd.sh_offset + entryDelta;
-                sb.AppendLine(CultureInfo.InvariantCulture, $"  地址：0x{addr:x8}  Offset: 0x{fileOffset:x6}  Link: {vd.sh_link} (.dynstr)  {entryIndex:D4}: Rev: 1  Flags: {flags,-6}   Index: {kvp.Key}  Cnt: 1  名称：{kvp.Value}");
-                entryIndex++;
-            }
-
-            // 检查是否超出范围（参考 readelf："Version definition past end of section"）
-            if (parser.VersionDefinitions.Count > CalculateVerDefEntryCount(vd))
-            {
-                sb.AppendLine("  Version definition past end of section");
-            }
-
-            return sb.ToString();
         }
     }
 }

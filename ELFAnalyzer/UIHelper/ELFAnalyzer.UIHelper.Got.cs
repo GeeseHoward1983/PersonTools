@@ -122,7 +122,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             }
             for (int i = 0; i < Parser.SectionHeaders.Count; i++)
             {
-                if (SymbleName.GetSectionName(Parser, i) == sectionName)
+                if (SymbolName.GetSectionName(Parser, i) == sectionName)
                 {
                     return i;
                 }

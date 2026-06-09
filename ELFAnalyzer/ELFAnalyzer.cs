@@ -18,17 +18,17 @@ namespace PersonalTools.ELFAnalyzer
 
         public string GetFormattedVersionSymbolInfo()
         {
-            return VersionSymbleTable.GetFormattedVersionSymbolInfo(Parser);
+            return VersionSymbolFormatter.GetFormattedVersionSymbolInfo(Parser);
         }
 
         public string GetFormattedVersionDependencyInfo()
         {
-            return VersionSymbleTable.GetFormattedVersionDependencyInfo(Parser);
+            return VersionSymbolFormatter.GetFormattedVersionDependencyInfo(Parser);
         }
 
         public string GetFormattedVersionDefinitionInfo()
         {
-            return VersionSymbleTable.GetFormattedVersionDefinitionInfo(Parser);
+            return VersionSymbolFormatter.GetFormattedVersionDefinitionInfo(Parser);
         }
 
         public string GetFormattedNotesInfo()

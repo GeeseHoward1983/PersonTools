@@ -226,7 +226,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                         continue;
                     }
 
-                    string name = SymbleName.GetSymbolName(parser, symbol, symbolList.Key, symbolIndex);
+                    string name = SymbolName.GetSymbolName(parser, symbol, symbolList.Key, symbolIndex);
                     // 跳过 ARM 映射符号（$a/$t/$d/$x 等），与 readelf 一致
                     if (string.IsNullOrEmpty(name) || name[0] == '$')
                     {
