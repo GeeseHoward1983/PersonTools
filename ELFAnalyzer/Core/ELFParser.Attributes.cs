@@ -291,33 +291,17 @@ namespace PersonalTools.ELFAnalyzer.Core
         private static void AppendAEABIAlignAttr(string name, bool preserved, byte[] data, ref int offset, int endOffset, StringBuilder sb)
         {
             int val = ReadAEABIUleb128(data, ref offset, endOffset);
-            string text;
-            if (val == 0)
+            string text = val switch
             {
-                text = "None";
-            }
-            else if (val == 1)
-            {
-                text = preserved ? "8-byte, except leaf SP" : "8-byte";
-            }
-            else if (val == 2)
-            {
-                text = preserved ? "8-byte" : "4-byte";
-            }
-            else if (val == 3)
-            {
-                text = "??? 3";
-            }
-            else if (val <= 12)
-            {
-                text = preserved
+                0 => "None",
+                1 => preserved ? "8-byte, except leaf SP" : "8-byte",
+                2 => preserved ? "8-byte" : "4-byte",
+                3 => "??? 3",
+                <= 12 => preserved
                     ? $"8-byte and up to {1 << val}-byte extended, except leaf SP"
-                    : $"8-byte and up to {1 << val}-byte extended";
-            }
-            else
-            {
-                text = $"??? ({val})";
-            }
+                    : $"8-byte and up to {1 << val}-byte extended",
+                _ => $"??? ({val})",
+            };
             sb.AppendLine(CultureInfo.InvariantCulture, $"  {name}: {text}");
         }
 
@@ -366,9 +350,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 
                 switch (tag)
                 {
-                    case 4: // Tag_CPU_raw_name
-                    case 5: // Tag_CPU_name
-                    case 67: // Tag_conformance
+                    case 4 or 5 or 67: // Tag_CPU_raw_name / Tag_CPU_name / Tag_conformance
                         AppendAEABIStringAttr(GetAEABITagName(tag), data, ref offset, sb);
                         break;
                     case 7: // Tag_CPU_arch_profile

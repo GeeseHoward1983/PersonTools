@@ -46,7 +46,7 @@ namespace PersonalTools.PEAnalyzer
 
             sections.Add(("可选头信息", new Dictionary<string, string>
             {
-                { "魔数", $"0x{peInfo.OptionalHeader.Magic:X4} ({(peInfo.OptionalHeader.Magic == 0x10b ? "PE32" : peInfo.OptionalHeader.Magic == 0x20b ? "PE32+" : "Unknown")})" },
+                { "魔数", $"0x{peInfo.OptionalHeader.Magic:X4} ({peInfo.OptionalHeader.Magic switch { 0x10b => "PE32", 0x20b => "PE32+", _ => "Unknown" }})" },
                 { "链接器版本", $"{PEHeaderDescriptions.GetLinkerVersionDescription(peInfo.OptionalHeader.MajorLinkerVersion, peInfo.OptionalHeader.MinorLinkerVersion)}" },
                 { "编译器版本", $"{PEHeaderDescriptions.GetCompilerVersionDescription(peInfo.OptionalHeader.MajorLinkerVersion, peInfo.OptionalHeader.MinorLinkerVersion, peInfo.CLRInfo != null)}" },
                 { "代码大小", $"0x{peInfo.OptionalHeader.SizeOfCode:X8}" },
@@ -156,13 +156,18 @@ namespace PersonalTools.PEAnalyzer
 
         private static string GetBitInfo(PEInfo peInfo)
         {
-            if (peInfo.CLRInfo != null)
+            return peInfo.CLRInfo switch
             {
-                string arch = peInfo.CLRInfo.Architecture;
-                return arch == "x86" ? "32位" : arch == "Any CPU" ? "Any CPU" : arch is "x64" or "ARM64" ? "64位" : "未知";
-            }
-
-            return Utilities.Is64Bit(peInfo.OptionalHeader) ? "64位" : "32位";
+                null => Utilities.Is64Bit(peInfo.OptionalHeader) ? "64位" : "32位",
+                _ => peInfo.CLRInfo.Architecture switch
+                {
+                    "x86" => "32位",
+                    "x64" => "64位",
+                    "ARM64" => "64位",
+                    "Any CPU" => "Any CPU",
+                    _ => "未知"
+                }
+            };
         }
 
         private static DateTime UnixTimeStampToDateTime(long unixTimeStamp)

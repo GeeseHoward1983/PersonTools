@@ -49,7 +49,12 @@ namespace PersonalTools.UserControls
                 uint crcResult = CrcCalculator.Compute(inputBytes, selectedAlgorithm);
 
                 // 根据算法宽度格式化输出
-                string formatString = selectedAlgorithm.Width <= 8 ? "X2" : selectedAlgorithm.Width <= 16 ? "X4" : "X8";
+                string formatString = selectedAlgorithm.Width switch
+                {
+                    <= 8 => "X2",
+                    <= 16 => "X4",
+                    _ => "X8",
+                };
                 CRCResultLabel.Content = crcResult.ToString(formatString, CultureInfo.InvariantCulture);
             }
             catch (FormatException ex)

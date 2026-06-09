@@ -30,21 +30,13 @@ namespace PersonalTools.PEAnalyzer.Models
         {
             get
             {
-                // 首先根据CLR头中的标志位判断.NET程序的目标架构类型
-                if (Is32BitRequired)
+                // 根据CLR头标志位判断目标架构（(Is32BitRequired, Is32BitPreferred) 四种组合已穷尽）
+                return (Is32BitRequired, Is32BitPreferred) switch
                 {
-                    return "x86"; // 明确要求32位运行
-                }
-                else if (!Is32BitRequired && Is32BitPreferred)
-                {
-                    return "x86"; // 32位首选（在64位系统上通过WoW64运行）
-                }
-                else if (!Is32BitRequired && !Is32BitPreferred)
-                {
-                    return "Any CPU"; // 可以在任何CPU架构上运行
-                }
-
-                return "Unknown"; // 无法确定的架构
+                    (true, _) => "x86",         // 明确要求32位运行
+                    (false, true) => "x86",     // 32位首选（在64位系统上通过WoW64运行）
+                    (false, false) => "Any CPU" // 可以在任何CPU架构上运行
+                };
             }
         }
 

@@ -315,40 +315,15 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private static bool IsValidSingleByteInstruction(byte cmd)
         {
-            if (cmd == 0x00) // nop
+            return cmd switch
             {
-                return true;
-            }
-
-            if (cmd <= 0x7F)
-            {
-                return true;
-            }
-
-            // 0x90-0xAF: pop {r4-rN, lr}
-            if (cmd is >= 0x90 and <= 0xAF)
-            {
-                return true;
-            }
-
-            // 0x80-0xFF: 以1开头的字节通常是单字节指令
-            if (cmd is 0xB0 or (>= 0xB4 and <= 0xBF))
-            {
-                return true;
-            }
-
-            if (cmd is >= 0xC0 and <= 0xC5)
-            {
-                return true;
-            }
-
-            if (cmd is >= 0xCA and <= 0xFF)
-            {
-                return true;
-            }
-
-            // 其他情况暂不认定为有效单字节指令
-            return false;
+                <= 0x7F => true,                        // 含 0x00 (nop) 及 0x01-0x7F
+                >= 0x90 and <= 0xAF => true,            // pop {r4-rN, lr}
+                0xB0 or (>= 0xB4 and <= 0xBF) => true,  // 0x80-0xFF: 以1开头的字节通常是单字节指令
+                >= 0xC0 and <= 0xC5 => true,
+                >= 0xCA and <= 0xFF => true,
+                _ => false,                             // 其他情况暂不认定为有效单字节指令
+            };
         }
 
         private static int CalcVsp(byte cmd)

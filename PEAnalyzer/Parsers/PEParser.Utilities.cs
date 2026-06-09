@@ -16,21 +16,12 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
                 while (sb.Length < MaxLength && reader.BaseStream.Position < reader.BaseStream.Length && (b = reader.ReadByte()) != 0)
                 {
-                    // 确保是有效的ASCII字符
-                    if (b is >= 32 and <= 126)
+                    sb.Append(b switch
                     {
-                        sb.Append((char)b);
-                    }
-                    else if (b is 9 or 10 or 13)
-                    {
-                        // 允许制表符、换行符和回车符
-                        sb.Append((char)b);
-                    }
-                    else
-                    {
-                        // 其他字符用'?'替换
-                        sb.Append('?');
-                    }
+                        >= 32 and <= 126 => (char)b, // 可打印 ASCII
+                        9 or 10 or 13 => (char)b,     // 制表符、换行符、回车符
+                        _ => '?',                     // 其他字符用 '?' 替换
+                    });
                 }
             }
             catch (EndOfStreamException)
