@@ -55,30 +55,44 @@ namespace PersonalTools.ELFAnalyzer.Core
             byte[] strTabData = parser.GetSectionData(strTabIdx);
             bool isLittleEndian = parser.Header.IsLittleEndian();
 
-            long offset = (long)section.sh_offset;
-            int processed = 0;
-
-            while (processed < count && offset < parser.FileData.Length)
-            {
-                // 读取版本需求结构（vn_cnt、vn_aux、vn_next）
-                ushort vn_cnt = ELFParserUtils.ReadUInt16(parser.FileData, (int)offset + 2, isLittleEndian);
-                uint vn_aux = ELFParserUtils.ReadUInt32(parser.FileData, (int)offset + 8, isLittleEndian);
-                uint vn_next = ELFParserUtils.ReadUInt32(parser.FileData, (int)offset + 12, isLittleEndian);
-
-                long auxOffset = offset + vn_aux;
-                int auxProcessed = 0;
-
-                // 遍历辅助条目
-                while (auxProcessed < vn_cnt && auxOffset < parser.FileData.Length)
+            WalkVerneed(parser, (long)section.sh_offset, count, isLittleEndian,
+                onVerneed: (_, _) => { },
+                onVernaux: auxOffset =>
                 {
                     ushort flags = ELFParserUtils.ReadUInt16(parser.FileData, (int)auxOffset + 6, isLittleEndian);
                     uint nameOffset = ELFParserUtils.ReadUInt32(parser.FileData, (int)auxOffset + 8, isLittleEndian);
-                    uint auxNext = ELFParserUtils.ReadUInt32(parser.FileData, (int)auxOffset + 12, isLittleEndian);
                     string versionName = ELFParserUtils.ExtractStringFromBytes(strTabData, (int)nameOffset);
 
                     // 使用版本索引作为键，而不是顺序
                     ushort verIndex = (ushort)(flags & 0x7fff); // 去除隐藏标志
                     parser.VersionDependencies.TryAdd(verIndex, versionName);
+                });
+        }
+
+        // 遍历 verneed(.gnu.version_r) 链表：对每个 verneed 项回调 onVerneed(项文件偏移, vn_cnt)，
+        // 再对其下每个 vernaux 项回调 onVernaux(辅助项文件偏移)。maxCount<=0 表示不限项数（仅靠 vn_next==0/越界停止）。
+        // 返回已处理的 verneed 项数。链表步进(+2 vn_cnt / +8 vn_aux / +12 vn_next / 辅助项 +12 vna_next)与边界在此单点维护，
+        // 供版本依赖的“解析填表”与“格式化输出”两路复用。
+        private static int WalkVerneed(ELFParser parser, long sectionStart, int maxCount, bool isLittleEndian,
+            Action<long, ushort> onVerneed, Action<long> onVernaux)
+        {
+            long offset = sectionStart;
+            int processed = 0;
+
+            while ((maxCount <= 0 || processed < maxCount) && offset < parser.FileData.Length)
+            {
+                ushort vn_cnt = ELFParserUtils.ReadUInt16(parser.FileData, (int)offset + 2, isLittleEndian);
+                uint vn_aux = ELFParserUtils.ReadUInt32(parser.FileData, (int)offset + 8, isLittleEndian);
+                uint vn_next = ELFParserUtils.ReadUInt32(parser.FileData, (int)offset + 12, isLittleEndian);
+
+                onVerneed(offset, vn_cnt);
+
+                long auxOffset = offset + vn_aux;
+                int auxProcessed = 0;
+                while (auxProcessed < vn_cnt && auxOffset < parser.FileData.Length)
+                {
+                    uint auxNext = ELFParserUtils.ReadUInt32(parser.FileData, (int)auxOffset + 12, isLittleEndian);
+                    onVernaux(auxOffset);
                     auxProcessed++;
                     if (auxNext == 0)
                     {
@@ -88,14 +102,16 @@ namespace PersonalTools.ELFAnalyzer.Core
                     auxOffset += auxNext;
                 }
 
-                offset += vn_next; // 移动到下一个版本需求
                 processed++;
-
                 if (vn_next == 0)
                 {
                     break; // 没有更多版本需求
                 }
+
+                offset += vn_next; // 移动到下一个版本需求
             }
+
+            return processed;
         }
     }
 }

@@ -56,9 +56,8 @@ namespace PersonalTools.ELFAnalyzer.Core
                 // 函数绝对地址 = 该条目字所在虚拟地址 + prel31 偏移
                 long absAddr = (long)exidxSection.sh_addr + offset + addrOffset;
 
-                // 获取包含该地址的符号名（跳过 $a/$t/$d 等映射符号）
-                string symbolName = FindContainingSymbolName(parser, (ulong)absAddr);
-                string symbolDesc = string.IsNullOrEmpty(symbolName) ? $"0x{absAddr:x}" : $"0x{absAddr:x} <{symbolName}>";
+                // 获取包含该地址的符号名（跳过 $a/$t/$d 等映射符号），格式化为 "0x... <name>"
+                string symbolDesc = DescribeAddress(parser, (ulong)absAddr);
 
                 // 根据展开信息判断是索引还是标记
                 if (unwindInfo == 1) // 特殊值表示无法展开
@@ -118,44 +117,51 @@ namespace PersonalTools.ELFAnalyzer.Core
                 // 通用模型：extab 首字 bit31==0，低31位为指向 personality routine 的 prel31 偏移
                 int per = SignExtendPrel31(unwindInfo);
                 long personalityAddr = extabVaddr + per;
-                string perName = FindContainingSymbolName(parser, (ulong)personalityAddr);
-                string perDesc = string.IsNullOrEmpty(perName) ? $"0x{personalityAddr:x}" : $"0x{personalityAddr:x} <{perName}>";
+                string perDesc = DescribeAddress(parser, (ulong)personalityAddr);
                 sb.AppendLine(CultureInfo.InvariantCulture, $"  Personality routine: {perDesc}");
                 return;
             }
 
             int compactIndex = (unwindInfo >> 24) & 0x7F;
             sb.AppendLine(CultureInfo.InvariantCulture, $"  Compact model index: {compactIndex}");
-            byte[] bInstruction;
-            if (compactIndex == 1)
-            {
-                int remainDWords = (unwindInfo >> 16) & 0xFF;
-                bInstruction = new byte[2 + remainDWords * 4];
-                bInstruction[0] = (byte)(unwindInfo >> 8 & 0xFF);
-                bInstruction[1] = (byte)(unwindInfo & 0xFF);
 
-                for (int i = 0; i < remainDWords; i++)
+            byte[] bInstruction = BuildCompactInstructions(parser, unwindInfo, compactIndex, extabFileOff);
+            ParseUnwindInstructions(bInstruction, bInstruction.Length, sb);
+        }
+
+        // Compact 模型：由 unwindInfo 及（compactIndex==1 时）后续 extab 字节装配出解码用指令序列
+        private static byte[] BuildCompactInstructions(ELFParser parser, int unwindInfo, int compactIndex, long extabFileOff)
+        {
+            if (compactIndex != 1)
+            {
+                return
+                [
+                    (byte)(unwindInfo >> 16 & 0xFF),
+                    (byte)(unwindInfo >> 8 & 0xFF),
+                    (byte)(unwindInfo & 0xFF),
+                ];
+            }
+
+            int remainDWords = (unwindInfo >> 16) & 0xFF;
+            byte[] bInstruction = new byte[2 + remainDWords * 4];
+            bInstruction[0] = (byte)(unwindInfo >> 8 & 0xFF);
+            bInstruction[1] = (byte)(unwindInfo & 0xFF);
+
+            for (int i = 0; i < remainDWords; i++)
+            {
+                extabFileOff += 4;
+                if (extabFileOff + 4 > parser.FileData.Length)
                 {
-                    extabFileOff += 4;
-                    if (extabFileOff + 4 > parser.FileData.Length)
-                    {
-                        break;
-                    }
-                    Array.Copy(parser.FileData, extabFileOff, bInstruction, 2 + i * 4, 4);
-                    if (parser.Header.IsLittleEndian())
-                    {
-                        Array.Reverse(bInstruction, 2 + i * 4, 4);
-                    }
+                    break;
+                }
+                Array.Copy(parser.FileData, extabFileOff, bInstruction, 2 + i * 4, 4);
+                if (parser.Header.IsLittleEndian())
+                {
+                    Array.Reverse(bInstruction, 2 + i * 4, 4);
                 }
             }
-            else
-            {
-                bInstruction = new byte[3];
-                bInstruction[0] = (byte)(unwindInfo >> 16 & 0xFF);
-                bInstruction[1] = (byte)(unwindInfo >> 8 & 0xFF);
-                bInstruction[2] = (byte)(unwindInfo & 0xFF);
-            }
-            ParseUnwindInstructions(bInstruction, bInstruction.Length, sb);
+
+            return bInstruction;
         }
 
         // prel31：31 位有符号偏移，按 bit30 符号扩展为完整 int
@@ -189,6 +195,13 @@ namespace PersonalTools.ELFAnalyzer.Core
                 }
             }
             return -1;
+        }
+
+        // 地址 → "0x..." 或 "0x... <符号名>"（按包含该地址的命名符号解析）
+        private static string DescribeAddress(ELFParser parser, ulong address)
+        {
+            string name = FindContainingSymbolName(parser, address);
+            return string.IsNullOrEmpty(name) ? $"0x{address:x}" : $"0x{address:x} <{name}>";
         }
 
         // 查找包含/最接近某地址的命名符号（用于 personality routine 显示 <name+0xoff>）

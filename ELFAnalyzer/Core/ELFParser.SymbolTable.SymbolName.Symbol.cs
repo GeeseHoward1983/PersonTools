@@ -65,21 +65,10 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private static string GetVersionNameByVersionIndex(ELFParser parser, ushort versionIndex)
         {
-            // 这里需要根据版本索引查找版本名称
-            // 实现简化，实际应用中需要从 .gnu.version_d 或 .gnu.version_n 节中解析
-            if (parser.VersionDefinitions != null && parser.VersionDefinitions.TryGetValue(versionIndex, out string? value))
-            {
-                return value;
-            }
-
-            if (parser.VersionDependencies != null && parser.VersionDependencies.TryGetValue(versionIndex, out value))
-            {
-                return value;
-            }
-
-            // 通常版本索引2开始代表外部版本，可以尝试从动态段中查找
-            // 简化实现：返回版本索引作为名称
-            return $"VER_{versionIndex}";
+            // 版本索引 → 名称：优先 .gnu.version_d 定义，再 .gnu.version_r 依赖，最后回退 VER_n
+            return parser.VersionDefinitions.GetValueOrDefault(versionIndex)
+                ?? parser.VersionDependencies.GetValueOrDefault(versionIndex)
+                ?? $"VER_{versionIndex}";
         }
 
         private static bool IsDefaultVersionSymbol(ELFParser parser, int symbolIndex, List<ELFSymbol> symbols)

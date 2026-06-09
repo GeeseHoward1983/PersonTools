@@ -10,20 +10,17 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             StringBuilder sb = new();
 
-            if (sb.Length == 0)
+            // 检查节头中的Note节
+            if (parser.SectionHeaders != null)
             {
-                // 检查节头中的Note节
-                if (parser.SectionHeaders != null)
+                for (int i = 0; i < parser.SectionHeaders.Count; i++)
                 {
-                    for (int i = 0; i < parser.SectionHeaders.Count; i++)
+                    if (parser.SectionHeaders[i].sh_type == (uint)SectionType.SHT_NOTE)
                     {
-                        if (parser.SectionHeaders[i].sh_type == (uint)SectionType.SHT_NOTE)
+                        string noteInfo = ParseNoteSection(parser, parser.SectionHeaders[i]);
+                        if (!string.IsNullOrEmpty(noteInfo))
                         {
-                            string noteInfo = ParseNoteSection(parser, parser.SectionHeaders[i]);
-                            if (!string.IsNullOrEmpty(noteInfo))
-                            {
-                                sb.AppendLine(noteInfo);
-                            }
+                            sb.AppendLine(noteInfo);
                         }
                     }
                 }
@@ -37,7 +34,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             return sb.ToString();
         }
 
-        private static string GetNoteDescription(ELFParser parser, ulong offset, ulong size)
+        private static string FormatNoteSection(ELFParser parser, ulong offset, ulong size)
         {
             StringBuilder sb = new();
             sb.AppendLine(CultureInfo.InvariantCulture, $"Displaying notes found at file offset 0x{offset:x8} with length 0x{size:x8}:");
@@ -79,7 +76,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private static string ParseNoteSection(ELFParser parser, Models.ELFSectionHeader section)
         {
-            return GetNoteDescription(parser, section.sh_offset, section.sh_size);
+            return FormatNoteSection(parser, section.sh_offset, section.sh_size);
         }
 
         private static string GetABIVersion(ELFParser parser, byte[] data, int descOffset, int descSize)

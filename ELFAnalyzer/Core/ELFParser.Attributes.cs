@@ -237,21 +237,10 @@ namespace PersonalTools.ELFAnalyzer.Core
             };
         }
 
-        // 读取 ULEB128，并推进 offset（专用于 AEABI 路径，不影响 MIPS/通用路径的 ReadULEB128）
+        // 读取 ULEB128，并推进 offset（AEABI 路径用；委托给 ReadULEB128 统一解码逻辑）
         private static int ReadAEABIUleb128(byte[] data, ref int offset, int endOffset)
         {
-            int value = 0;
-            int shift = 0;
-            while (offset < endOffset && offset < data.Length)
-            {
-                byte b = data[offset++];
-                value |= (b & 0x7f) << shift;
-                if ((b & 0x80) == 0)
-                {
-                    break;
-                }
-                shift += 7;
-            }
+            offset += ReadULEB128(data, offset, endOffset, out int value);
             return value;
         }
 
