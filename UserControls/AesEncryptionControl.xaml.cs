@@ -3,6 +3,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using PersonalTools.Utils;
+using PersonalTools.Utils.Crypto;
 
 namespace PersonalTools.UserControls
 {
@@ -207,7 +209,7 @@ namespace PersonalTools.UserControls
             else
             {
                 // Hex字符串模式
-                return Utils.HexStringToByteArray(keyInput);
+                return ConvertUtils.HexStringToByteArray(keyInput);
             }
         }
 
@@ -215,7 +217,7 @@ namespace PersonalTools.UserControls
         private static byte[] GetIVBytes(string ivInput, bool isString)
         {
             // 不做截断/补齐：交由 IsValidIVLength 按字节长度校验，避免静默改变用户输入的 IV
-            return isString ? Encoding.UTF8.GetBytes(ivInput) : Utils.HexStringToByteArray(ivInput);
+            return isString ? Encoding.UTF8.GetBytes(ivInput) : ConvertUtils.HexStringToByteArray(ivInput);
         }
 
         // 验证密钥长度是否正确（按实际字节数校验，兼容多字节字符）
@@ -248,7 +250,7 @@ namespace PersonalTools.UserControls
                 byte[] fileBytes = FileDropHelper.ReadAllBytes(filePath);
 
                 // 将文件内容以 hex 显示在输入框，并切换到 Hex 模式
-                AesInput.Text = Utils.ToHexString(fileBytes);
+                AesInput.Text = ConvertUtils.ToHexString(fileBytes);
                 AesInputHexRadio.IsChecked = true;
             }
             catch (IOException ex)

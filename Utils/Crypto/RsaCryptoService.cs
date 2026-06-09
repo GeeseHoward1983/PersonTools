@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace PersonalTools
+namespace PersonalTools.Utils.Crypto
 {
     /// <summary>
     /// RSA 加解密/签名核心，与 UI 无关。把 RSA 等加密类型从控件中剥离，降低控件类耦合。
@@ -15,12 +15,12 @@ namespace PersonalTools
 
             try
             {
-                byte[] inputBytes = isString ? Encoding.UTF8.GetBytes(input) : Utils.HexStringToByteArray(input);
+                byte[] inputBytes = isString ? Encoding.UTF8.GetBytes(input) : ConvertUtils.HexStringToByteArray(input);
                 rsa.ImportFromPem(publicKey);
 
                 // OAEP-SHA256，避免 PKCS#1 v1.5 的填充预言攻击（会减小可加密明文上限，512 位密钥过小无法使用）
                 byte[] encryptedBytes = rsa.Encrypt(inputBytes, RSAEncryptionPadding.OaepSHA256);
-                return Utils.ToHexString(encryptedBytes);
+                return ConvertUtils.ToHexString(encryptedBytes);
             }
             catch (ArgumentException ex)
             {
@@ -42,7 +42,7 @@ namespace PersonalTools
 
             try
             {
-                byte[] encryptedBytes = Utils.HexStringToByteArray(input);
+                byte[] encryptedBytes = ConvertUtils.HexStringToByteArray(input);
                 rsa.ImportFromPem(privateKey);
 
                 byte[] decryptedBytes = rsa.Decrypt(encryptedBytes, RSAEncryptionPadding.OaepSHA256);
@@ -68,11 +68,11 @@ namespace PersonalTools
 
             try
             {
-                byte[] inputBytes = isString ? Encoding.UTF8.GetBytes(input) : Utils.HexStringToByteArray(input);
+                byte[] inputBytes = isString ? Encoding.UTF8.GetBytes(input) : ConvertUtils.HexStringToByteArray(input);
                 rsa.ImportFromPem(privateKey);
 
                 byte[] signatureBytes = rsa.SignData(inputBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-                return Utils.ToHexString(signatureBytes);
+                return ConvertUtils.ToHexString(signatureBytes);
             }
             catch (ArgumentException ex)
             {
@@ -94,8 +94,8 @@ namespace PersonalTools
 
             try
             {
-                byte[] inputBytes = isString ? Encoding.UTF8.GetBytes(input) : Utils.HexStringToByteArray(input);
-                byte[] signatureBytes = Utils.HexStringToByteArray(signature);
+                byte[] inputBytes = isString ? Encoding.UTF8.GetBytes(input) : ConvertUtils.HexStringToByteArray(input);
+                byte[] signatureBytes = ConvertUtils.HexStringToByteArray(signature);
                 rsa.ImportFromPem(publicKey);
 
                 return rsa.VerifyData(inputBytes, signatureBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);

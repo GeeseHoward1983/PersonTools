@@ -4,7 +4,7 @@ namespace PersonalTools.PEAnalyzer.Models
 {
     // 版本信息结构
     [StructLayout(LayoutKind.Sequential)]
-    internal struct VSFIXEDFILEINFO
+    internal struct VS_FIXEDFILEINFO
     {
         public uint dwSignature;
         public uint dwStrucVersion;

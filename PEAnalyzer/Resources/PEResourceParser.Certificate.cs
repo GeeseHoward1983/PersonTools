@@ -64,7 +64,7 @@ namespace PersonalTools.PEAnalyzer.Resources
             while (pos + 8 <= certEnd && pos + 8 <= fs.Length)
             {
                 fs.Position = pos;
-                WINCERTIFICATE certHeader = new()
+                WIN_CERTIFICATE certHeader = new()
                 {
                     dwLength = reader.ReadUInt32(),
                     wRevision = reader.ReadUInt16(),

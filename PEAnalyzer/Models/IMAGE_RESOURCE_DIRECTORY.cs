@@ -4,7 +4,7 @@ namespace PersonalTools.PEAnalyzer.Models
 {
     // 资源目录
     [StructLayout(LayoutKind.Sequential)]
-    internal struct IMAGERESOURCEDIRECTORY
+    internal struct IMAGE_RESOURCE_DIRECTORY
     {
         public uint Characteristics;
         public uint TimeDateStamp;

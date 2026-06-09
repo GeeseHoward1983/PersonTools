@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.IO;
 using System.Windows.Controls;
+using PersonalTools.Utils;
+using PersonalTools.Utils.Hash;
 
 namespace PersonalTools.UserControls
 {
@@ -44,7 +46,7 @@ namespace PersonalTools.UserControls
             try
             {
                 CrcAlgorithm selectedAlgorithm = (CrcAlgorithm)CRCAlgorithmComboBox.SelectedItem;
-                byte[] inputBytes = Utils.InputBytes(input, CRCHexInputRadio.IsChecked == true);
+                byte[] inputBytes = ConvertUtils.InputBytes(input, CRCHexInputRadio.IsChecked == true);
 
                 uint crcResult = CrcCalculator.Compute(inputBytes, selectedAlgorithm);
 
@@ -102,7 +104,7 @@ namespace PersonalTools.UserControls
                 byte[] fileBytes = FileDropHelper.ReadAllBytes(filePath);
 
                 // 将文件内容转换为hex字符串显示在输入框中，并切换到 hex 输入模式
-                CRCInputTextBox.Text = Utils.ToHexString(fileBytes);
+                CRCInputTextBox.Text = ConvertUtils.ToHexString(fileBytes);
                 CRCHexInputRadio.IsChecked = true;
             }
             catch (IOException ex)

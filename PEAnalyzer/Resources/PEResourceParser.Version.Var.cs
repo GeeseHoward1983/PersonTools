@@ -73,7 +73,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     if (wLength == 0)
                     {
                         // 长度为0：跳转到下一个4字节边界后结束
-                        long alignedPos = Utilities.AlignTo4(startPosition);
+                        long alignedPos = PEParserUtils.AlignTo4(startPosition);
                         if (alignedPos < fs.Length)
                         {
                             fs.Position = alignedPos;
@@ -104,7 +104,7 @@ namespace PersonalTools.PEAnalyzer.Resources
 
             // 值对齐到4字节边界：用读取键名后的实际流位置，而非按字符串长度推算
             // （避免读取被截断或键名内嵌 NUL 时错位）
-            long valuePosition = Utilities.AlignTo4(fs.Position);
+            long valuePosition = PEParserUtils.AlignTo4(fs.Position);
             if (valuePosition >= fs.Length || valuePosition >= endPosition)
             {
                 return false;
@@ -114,7 +114,7 @@ namespace PersonalTools.PEAnalyzer.Resources
             ApplyTranslationIfPresent(fs, reader, peInfo, varName, wValueLength, valuePosition, endPosition);
 
             // 前进到下一个兄弟节点（对齐到4字节边界）
-            long nextPosition = Utilities.AlignTo4(startPosition + wLength);
+            long nextPosition = PEParserUtils.AlignTo4(startPosition + wLength);
             if (nextPosition < endPosition && nextPosition > fs.Position && nextPosition < fs.Length)
             {
                 fs.Position = nextPosition;

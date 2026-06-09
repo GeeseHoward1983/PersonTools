@@ -1,4 +1,5 @@
 using PersonalTools.PEAnalyzer.Models;
+using PersonalTools.Utils;
 using PersonalTools.PEAnalyzer.Parsers;
 
 namespace PersonalTools.PEAnalyzer
@@ -54,7 +55,7 @@ namespace PersonalTools.PEAnalyzer
                 { "未初始化数据大小", $"0x{peInfo.OptionalHeader.SizeOfUninitializedData:X8}" },
                 { "入口点RVA", $"0x{peInfo.OptionalHeader.AddressOfEntryPoint:X8}" },
                 { "代码基址", $"0x{peInfo.OptionalHeader.BaseOfCode:X8}" },
-                { "数据基址", Utilities.Is64Bit(peInfo.OptionalHeader) ? "N/A (PE32+)" : $"0x{peInfo.OptionalHeader.BaseOfData:X8}" },
+                { "数据基址", PEParserUtils.Is64Bit(peInfo.OptionalHeader) ? "N/A (PE32+)" : $"0x{peInfo.OptionalHeader.BaseOfData:X8}" },
                 { "镜像基址", $"0x{peInfo.OptionalHeader.ImageBase:X8}" },
                 { "节对齐", $"0x{peInfo.OptionalHeader.SectionAlignment:X8}" },
                 { "文件对齐", $"0x{peInfo.OptionalHeader.FileAlignment:X8}" },
@@ -79,7 +80,7 @@ namespace PersonalTools.PEAnalyzer
                 {
                     { "运行时版本", $"v{peInfo.CLRInfo.RuntimeVersion}" },
                     { "架构类型", peInfo.CLRInfo.Architecture },
-                    { "标志位", Utils.EnumerableToString(", ", peInfo.CLRInfo.FlagDescriptions) },
+                    { "标志位", ConvertUtils.EnumerableToString(", ", peInfo.CLRInfo.FlagDescriptions) },
                     { "入口点", $"0x{peInfo.CLRInfo.EntryPointTokenOrRva:X8}" },
                     { "包含元数据", peInfo.CLRInfo.HasMetaData ? "是" : "否" },
                     { "包含资源", peInfo.CLRInfo.HasResources ? "是" : "否" },
@@ -138,7 +139,7 @@ namespace PersonalTools.PEAnalyzer
 
             for (int i = 0; i < peInfo.SectionHeaders.Count; i++)
             {
-                IMAGESECTIONHEADER section = peInfo.SectionHeaders[i];
+                IMAGE_SECTION_HEADER section = peInfo.SectionHeaders[i];
                 string sectionName = System.Text.Encoding.UTF8.GetString(section.Name).Trim('\0');
                 sectionInfo[$"节 {i} ({sectionName})"] = $"RVA: 0x{section.VirtualAddress:X8}, 大小: 0x{section.VirtualSize:X8}, Raw大小: 0x{section.SizeOfRawData:X8}, 特征: 0x{section.Characteristics:X8}";
             }
@@ -158,7 +159,7 @@ namespace PersonalTools.PEAnalyzer
         {
             return peInfo.CLRInfo switch
             {
-                null => Utilities.Is64Bit(peInfo.OptionalHeader) ? "64位" : "32位",
+                null => PEParserUtils.Is64Bit(peInfo.OptionalHeader) ? "64位" : "32位",
                 _ => peInfo.CLRInfo.Architecture switch
                 {
                     "x86" => "32位",

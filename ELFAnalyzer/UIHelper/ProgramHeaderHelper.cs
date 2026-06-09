@@ -1,4 +1,5 @@
 using PersonalTools.ELFAnalyzer.Core;
+using PersonalTools.Utils;
 using PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.Enums;
 using System.Globalization;
@@ -6,7 +7,7 @@ using System.Text;
 
 namespace PersonalTools.ELFAnalyzer.UIHelper
 {
-    internal static class ProgrameHeaderHelper
+    internal static class ProgramHeaderHelper
     {
         internal static List<ProgramHeaderInfo> GetProgramHeaderInfoList(ELFParser Parser)
         {
@@ -46,7 +47,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                     ELFProgramHeader ph = Parser.ProgramHeaders[i];
                     sb.Append(CultureInfo.InvariantCulture, $"   {i:D2}     ");
                     List<string> sections = GetSectionsInSegment(Parser, ph);
-                    sb.AppendLine(Utils.EnumerableToString(" ", sections));
+                    sb.AppendLine(ConvertUtils.EnumerableToString(" ", sections));
                 }
             }
 
@@ -71,7 +72,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                     continue;
                 }
 
-                string sectionName = SymbolName.GetSectionName(_parser, i);
+                string sectionName = ELFSymbolNameResolver.GetSectionName(_parser, i);
                 if (string.IsNullOrEmpty(sectionName))
                 {
                     continue;

@@ -4,7 +4,7 @@ namespace PersonalTools.PEAnalyzer.Models
 {
     // 导入描述符
     [StructLayout(LayoutKind.Sequential)]
-    internal struct IMAGEIMPORTDESCRIPTOR
+    internal struct IMAGE_IMPORT_DESCRIPTOR
     {
         public uint OriginalFirstThunk;
         public uint TimeDateStamp;

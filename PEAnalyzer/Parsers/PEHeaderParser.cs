@@ -14,9 +14,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// </summary>
         /// <param name="reader">二进制读取器</param>
         /// <returns>DOS头结构</returns>
-        internal static IMAGEDOSHEADER ParseDosHeader(BinaryReader reader)
+        internal static IMAGE_DOS_HEADER ParseDosHeader(BinaryReader reader)
         {
-            return new IMAGEDOSHEADER
+            return new IMAGE_DOS_HEADER
             {
                 e_magic = reader.ReadUInt16(),
                 e_cblp = reader.ReadUInt16(),
@@ -48,9 +48,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// </summary>
         /// <param name="reader">二进制读取器</param>
         /// <returns>NT头结构</returns>
-        internal static IMAGENTHEADERS ParseNtHeaders(BinaryReader reader)
+        internal static IMAGE_NT_HEADERS ParseNtHeaders(BinaryReader reader)
         {
-            IMAGENTHEADERS ntHeaders = new()
+            IMAGE_NT_HEADERS ntHeaders = new()
             {
                 Signature = reader.ReadUInt32(),
                 FileHeader = new()
@@ -74,11 +74,11 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// <param name="reader">二进制读取器</param>
         /// <param name="sizeOfOptionalHeader">可选头大小</param>
         /// <returns>可选头结构</returns>
-        internal static IMAGEOPTIONALHEADER ParseOptionalHeader(BinaryReader reader, ushort sizeOfOptionalHeader)
+        internal static IMAGE_OPTIONAL_HEADER ParseOptionalHeader(BinaryReader reader, ushort sizeOfOptionalHeader)
         {
             long optionalHeaderStart = reader.BaseStream.Position;
 
-            IMAGEOPTIONALHEADER optionalHeader = new()
+            IMAGE_OPTIONAL_HEADER optionalHeader = new()
             {
                 // 读取通用部分
                 Magic = reader.ReadUInt16(),
@@ -156,7 +156,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// <summary>
         /// 读取 ImageBase 与 BaseOfData（位数相关：PE32 各 4 字节；PE32+ 的 ImageBase 为 8 字节且无 BaseOfData）。
         /// </summary>
-        private static void ReadImageBaseFields(BinaryReader reader, ref IMAGEOPTIONALHEADER optionalHeader, bool is64Bit)
+        private static void ReadImageBaseFields(BinaryReader reader, ref IMAGE_OPTIONAL_HEADER optionalHeader, bool is64Bit)
         {
             if (is64Bit)
             {
@@ -173,7 +173,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// <summary>
         /// 读取栈/堆的保留与提交大小（位数相关：PE32 为 4 字节，PE32+ 为 8 字节）。
         /// </summary>
-        private static void ReadStackHeapFields(BinaryReader reader, ref IMAGEOPTIONALHEADER optionalHeader, bool is64Bit)
+        private static void ReadStackHeapFields(BinaryReader reader, ref IMAGE_OPTIONAL_HEADER optionalHeader, bool is64Bit)
         {
             if (is64Bit)
             {
@@ -194,7 +194,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// <summary>
         /// 读取数据目录数组（每项 8 字节，最多 16 项；项布局与位数无关）。
         /// </summary>
-        private static IMAGEDATADIRECTORY[] ReadDataDirectories(BinaryReader reader, uint numberOfRvaAndSizes)
+        private static IMAGE_DATA_DIRECTORY[] ReadDataDirectories(BinaryReader reader, uint numberOfRvaAndSizes)
         {
             int dataDirCount = (int)Math.Min(numberOfRvaAndSizes, PEConstants.MaxDataDirectories);
             // 限制为文件实际可读的数量，避免被截断的文件触发未捕获的 EndOfStreamException
@@ -204,10 +204,10 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 dataDirCount = (int)Math.Max(0, available);
             }
 
-            IMAGEDATADIRECTORY[] dataDirectory = new IMAGEDATADIRECTORY[dataDirCount];
+            IMAGE_DATA_DIRECTORY[] dataDirectory = new IMAGE_DATA_DIRECTORY[dataDirCount];
             for (int i = 0; i < dataDirCount; i++)
             {
-                dataDirectory[i] = new IMAGEDATADIRECTORY
+                dataDirectory[i] = new IMAGE_DATA_DIRECTORY
                 {
                     VirtualAddress = reader.ReadUInt32(),
                     Size = reader.ReadUInt32()
@@ -223,13 +223,13 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// <param name="reader">二进制读取器</param>
         /// <param name="numberOfSections">节的数量</param>
         /// <returns>节头列表</returns>
-        internal static List<IMAGESECTIONHEADER> ParseSectionHeaders(BinaryReader reader, ushort numberOfSections)
+        internal static List<IMAGE_SECTION_HEADER> ParseSectionHeaders(BinaryReader reader, ushort numberOfSections)
         {
-            List<IMAGESECTIONHEADER> sections = [];
+            List<IMAGE_SECTION_HEADER> sections = [];
 
             for (int i = 0; i < numberOfSections; i++)
             {
-                IMAGESECTIONHEADER section = new()
+                IMAGE_SECTION_HEADER section = new()
                 {
                     Name = reader.ReadBytes(8),
                     VirtualSize = reader.ReadUInt32(),

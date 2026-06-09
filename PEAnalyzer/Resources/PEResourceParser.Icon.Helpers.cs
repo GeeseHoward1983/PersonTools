@@ -18,12 +18,12 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             return ResourceDirectoryReader.ReadAtOffset(fs, directoryOffset, ResourceDirectoryReader.DirectoryHeaderSize, -1L, () =>
             {
-                IMAGERESOURCEDIRECTORY directory = ResourceDirectoryReader.ReadDirectory(reader);
+                IMAGE_RESOURCE_DIRECTORY directory = ResourceDirectoryReader.ReadDirectory(reader);
                 int totalEntries = directory.NumberOfNamedEntries + directory.NumberOfIdEntries;
 
                 for (int i = 0; i < totalEntries; i++)
                 {
-                    if (!ResourceDirectoryReader.TryReadEntry(fs, reader, directoryOffset, i, out IMAGERESOURCEDIRECTORYENTRY entry))
+                    if (!ResourceDirectoryReader.TryReadEntry(fs, reader, directoryOffset, i, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry))
                     {
                         break;
                     }
@@ -49,9 +49,9 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             return ResourceDirectoryReader.ReadAtOffset(fs, directoryOffset, ResourceDirectoryReader.DirectoryHeaderSize, -1L, () =>
             {
-                IMAGERESOURCEDIRECTORY directory = ResourceDirectoryReader.ReadDirectory(reader);
+                IMAGE_RESOURCE_DIRECTORY directory = ResourceDirectoryReader.ReadDirectory(reader);
                 if (directory.NumberOfNamedEntries + directory.NumberOfIdEntries > 0 &&
-                    ResourceDirectoryReader.TryReadEntry(fs, reader, directoryOffset, 0, out IMAGERESOURCEDIRECTORYENTRY entry) &&
+                    ResourceDirectoryReader.TryReadEntry(fs, reader, directoryOffset, 0, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry) &&
                     (entry.OffsetToData & 0x80000000) == 0)
                 {
                     return GetIconDataFromEntry(fs, reader, peInfo, resourceBaseOffset + entry.OffsetToData);
@@ -68,8 +68,8 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             return ResourceDirectoryReader.ReadAtOffset(fs, dataEntryOffset, 16, -1L, () =>
             {
-                IMAGERESOURCEDATAENTRY dataEntry = ResourceDirectoryReader.ReadDataEntry(reader);
-                long dataOffset = Utilities.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
+                IMAGE_RESOURCE_DATA_ENTRY dataEntry = ResourceDirectoryReader.ReadDataEntry(reader);
+                long dataOffset = PEParserUtils.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
                 return ResourceDirectoryReader.IsReadableData(dataOffset, dataEntry.Size, fs) ? dataOffset : -1L;
             });
         }
@@ -89,12 +89,12 @@ namespace PersonalTools.PEAnalyzer.Resources
 
             return ResourceDirectoryReader.ReadAtOffset(fs, resourceOffset, 0, -1L, () =>
             {
-                IMAGERESOURCEDIRECTORY rootDirectory = ResourceDirectoryReader.ReadDirectory(reader);
+                IMAGE_RESOURCE_DIRECTORY rootDirectory = ResourceDirectoryReader.ReadDirectory(reader);
                 int totalEntries = rootDirectory.NumberOfNamedEntries + rootDirectory.NumberOfIdEntries;
 
                 for (int i = 0; i < totalEntries; i++)
                 {
-                    if (!ResourceDirectoryReader.TryReadEntry(fs, reader, resourceOffset, i, out IMAGERESOURCEDIRECTORYENTRY entry))
+                    if (!ResourceDirectoryReader.TryReadEntry(fs, reader, resourceOffset, i, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry))
                     {
                         break;
                     }
@@ -129,7 +129,7 @@ namespace PersonalTools.PEAnalyzer.Resources
             }
 
             uint resourceRVA = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryResource].VirtualAddress;
-            long resourceOffset = Utilities.RvaToOffset(resourceRVA, peInfo.SectionHeaders);
+            long resourceOffset = PEParserUtils.RvaToOffset(resourceRVA, peInfo.SectionHeaders);
             return resourceOffset == -1 || resourceOffset + ResourceDirectoryReader.DirectoryHeaderSize > fs.Length ? -1 : resourceOffset;
         }
 

@@ -4,7 +4,7 @@ namespace PersonalTools.PEAnalyzer.Models
 {
     // 版权信息头
     [StructLayout(LayoutKind.Sequential)]
-    internal struct IMAGEARCHITECTUREHEADER
+    internal struct IMAGE_ARCHITECTURE_HEADER
     {
         public uint AmaskValue;
         public uint Reserved1;  // 以前称为 Adummy1

@@ -4,7 +4,7 @@ using System.IO;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    internal static class SymbolTable
+    internal static class ELFSymbolTableReader
     {
         internal static void ReadSymbolTables(ELFParser parser, BinaryReader reader, bool isLittleEndian)
         {

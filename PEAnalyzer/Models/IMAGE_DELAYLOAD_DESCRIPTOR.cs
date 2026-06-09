@@ -4,7 +4,7 @@ namespace PersonalTools.PEAnalyzer.Models
 {
     // 延迟加载导入描述符
     [StructLayout(LayoutKind.Sequential)]
-    internal struct IMAGEDELAYLOADDESCRIPTOR
+    internal struct IMAGE_DELAYLOAD_DESCRIPTOR
     {
         public uint Attributes;          // 可能包含标志位
         public uint DllNameRVA;         // 指向DLL名称的RVA

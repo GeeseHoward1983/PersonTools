@@ -42,7 +42,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
             }
 
             uint importRVA = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryImport].VirtualAddress;
-            long importOffset = Utilities.RvaToOffset(importRVA, peInfo.SectionHeaders);
+            long importOffset = PEParserUtils.RvaToOffset(importRVA, peInfo.SectionHeaders);
             if (importOffset == -1 || importOffset >= fs.Length)
             {
                 return;
@@ -56,7 +56,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 // 循环读取导入描述符直到遇到全零的描述符
                 while (fs.Position + PEConstants.ImportDescriptorSize <= fs.Length)
                 {
-                    IMAGEIMPORTDESCRIPTOR importDesc = new()
+                    IMAGE_IMPORT_DESCRIPTOR importDesc = new()
                     {
                         OriginalFirstThunk = reader.ReadUInt32(),
                         TimeDateStamp = reader.ReadUInt32(),
@@ -91,7 +91,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
             }
         }
 
-        private static bool IsTerminatorDescriptor(IMAGEIMPORTDESCRIPTOR d)
+        private static bool IsTerminatorDescriptor(IMAGE_IMPORT_DESCRIPTOR d)
         {
             return d.OriginalFirstThunk == 0 && d.TimeDateStamp == 0 && d.ForwarderChain == 0 &&
                    d.Name == 0 && d.FirstThunk == 0;
@@ -103,13 +103,13 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// </summary>
         private static (long offset, string value) ReadStringAtRva(FileStream fs, BinaryReader reader, PEInfo peInfo, uint rva)
         {
-            long offset = Utilities.RvaToOffset(rva, peInfo.SectionHeaders);
+            long offset = PEParserUtils.RvaToOffset(rva, peInfo.SectionHeaders);
             if (offset == -1 || offset >= fs.Length)
             {
                 return (-1, string.Empty);
             }
 
-            string value = Utilities.ReadAtOffset(fs, offset, string.Empty, () => Utilities.ReadNullTerminatedString(reader));
+            string value = PEParserUtils.ReadAtOffset(fs, offset, string.Empty, () => PEParserUtils.ReadNullTerminatedString(reader));
             return (offset, value);
         }
 
@@ -121,20 +121,20 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// <param name="peInfo">PE文件信息</param>
         /// <param name="importDesc">导入描述符</param>
         /// <param name="dllName">DLL名称</param>
-        private static void ParseImportFunctions(FileStream fs, BinaryReader reader, PEInfo peInfo, IMAGEIMPORTDESCRIPTOR importDesc, string dllName)
+        private static void ParseImportFunctions(FileStream fs, BinaryReader reader, PEInfo peInfo, IMAGE_IMPORT_DESCRIPTOR importDesc, string dllName)
         {
             try
             {
                 // 优先使用 OriginalFirstThunk（ILT），否则回退到 FirstThunk（IAT）
                 uint thunkRVA = importDesc.OriginalFirstThunk != 0 ? importDesc.OriginalFirstThunk : importDesc.FirstThunk;
-                long thunkOffset = Utilities.RvaToOffset(thunkRVA, peInfo.SectionHeaders);
+                long thunkOffset = PEParserUtils.RvaToOffset(thunkRVA, peInfo.SectionHeaders);
                 if (thunkOffset == -1 || thunkOffset >= fs.Length)
                 {
                     return;
                 }
 
-                bool is64Bit = Utilities.Is64Bit(peInfo.OptionalHeader);
-                peInfo.ImportFunctions.AddRange(Utilities.ReadAtOffset(fs, thunkOffset, new List<ImportFunctionInfo>(),
+                bool is64Bit = PEParserUtils.Is64Bit(peInfo.OptionalHeader);
+                peInfo.ImportFunctions.AddRange(PEParserUtils.ReadAtOffset(fs, thunkOffset, new List<ImportFunctionInfo>(),
                     () => WalkThunkTable(fs, reader, peInfo, thunkOffset, is64Bit, dllName, isDelayLoaded: false)));
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
@@ -203,9 +203,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
             importFunc.IsOrdinalImport = isOrdinalImport;
         }
 
-        private static void ImportByName(List<IMAGESECTIONHEADER> sections, ulong thunkRva, FileStream fs, BinaryReader reader, ImportFunctionInfo importFunc)
+        private static void ImportByName(List<IMAGE_SECTION_HEADER> sections, ulong thunkRva, FileStream fs, BinaryReader reader, ImportFunctionInfo importFunc)
         {
-            long nameOffset = Utilities.RvaToOffset((uint)thunkRva, sections);
+            long nameOffset = PEParserUtils.RvaToOffset((uint)thunkRva, sections);
             if (nameOffset == -1 || nameOffset >= fs.Length)
             {
                 SetImportFunc(importFunc, $"INVALID_RVA_{thunkRva:X8}", 0, false);
@@ -225,7 +225,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 fs.Position = nameOffset;
                 // 读取Hint字段（2字节）后读取函数名称
                 ushort hint = reader.ReadUInt16();
-                string functionName = Utilities.ReadNullTerminatedString(reader);
+                string functionName = PEParserUtils.ReadNullTerminatedString(reader);
                 fs.Position = savePos;
 
                 SetImportFunc(importFunc, !string.IsNullOrEmpty(functionName) ? functionName : "EMPTY_NAME", hint, false);
@@ -258,19 +258,19 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 return delayLoadImportFunctions;
             }
 
-            long startOffset = Utilities.RvaToOffset(delayLoadImportRVA, peInfo.SectionHeaders);
+            long startOffset = PEParserUtils.RvaToOffset(delayLoadImportRVA, peInfo.SectionHeaders);
             if (startOffset == -1 || startOffset >= fs.Length)
             {
                 return delayLoadImportFunctions;
             }
 
-            bool is64Bit = Utilities.Is64Bit(peInfo.OptionalHeader);
+            bool is64Bit = PEParserUtils.Is64Bit(peInfo.OptionalHeader);
             int descriptorCount = 0;
 
             while (startOffset + ((long)descriptorCount + 1) * PEConstants.DelayLoadDescriptorSize <= fs.Length)
             {
                 fs.Position = startOffset + (long)descriptorCount * PEConstants.DelayLoadDescriptorSize;
-                IMAGEDELAYLOADDESCRIPTOR delayLoadDesc = ReadDelayLoadDescriptor(reader);
+                IMAGE_DELAYLOAD_DESCRIPTOR delayLoadDesc = ReadDelayLoadDescriptor(reader);
                 descriptorCount++;
 
                 // 解析 DLL 名称；名称 RVA 无效则结束扫描，名称为空则跳过该描述符
@@ -305,7 +305,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 return [];
             }
 
-            long nameTableOffset = Utilities.RvaToOffset(importNameTableRVA, peInfo.SectionHeaders);
+            long nameTableOffset = PEParserUtils.RvaToOffset(importNameTableRVA, peInfo.SectionHeaders);
             if (nameTableOffset == -1 || nameTableOffset >= fs.Length)
             {
                 return [];
@@ -314,9 +314,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
             return WalkThunkTable(fs, reader, peInfo, nameTableOffset, is64Bit, dllName, isDelayLoaded: true);
         }
 
-        private static IMAGEDELAYLOADDESCRIPTOR ReadDelayLoadDescriptor(BinaryReader reader)
+        private static IMAGE_DELAYLOAD_DESCRIPTOR ReadDelayLoadDescriptor(BinaryReader reader)
         {
-            return new IMAGEDELAYLOADDESCRIPTOR
+            return new IMAGE_DELAYLOAD_DESCRIPTOR
             {
                 Attributes = reader.ReadUInt32(),
                 DllNameRVA = reader.ReadUInt32(),

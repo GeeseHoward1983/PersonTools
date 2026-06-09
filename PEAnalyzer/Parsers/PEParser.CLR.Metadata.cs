@@ -21,7 +21,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
         {
             try
             {
-                long metaDataOffset = Utilities.RvaToOffset(metaDataRVA, peInfo.SectionHeaders);
+                long metaDataOffset = PEParserUtils.RvaToOffset(metaDataRVA, peInfo.SectionHeaders);
                 if (metaDataOffset == -1 || metaDataOffset >= fs.Length)
                 {
                     return;
@@ -139,7 +139,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
             }
 
             // 对齐到4字节边界
-            long alignedPosition = Utilities.AlignTo4(fs.Position);
+            long alignedPosition = PEParserUtils.AlignTo4(fs.Position);
             if (alignedPosition < fs.Length && alignedPosition > fs.Position)
             {
                 fs.Position = alignedPosition;

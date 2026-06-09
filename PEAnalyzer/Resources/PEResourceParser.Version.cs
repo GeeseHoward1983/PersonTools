@@ -26,7 +26,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryResource].VirtualAddress != 0)
                 {
                     uint resourceRVA = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryResource].VirtualAddress;
-                    long resourceOffset = Utilities.RvaToOffset(resourceRVA, peInfo.SectionHeaders);
+                    long resourceOffset = PEParserUtils.RvaToOffset(resourceRVA, peInfo.SectionHeaders);
 
                     if (resourceOffset != -1 && resourceOffset < fs.Length)
                     {
@@ -69,7 +69,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 long originalPosition = fs.Position;
                 fs.Position = resourceOffset;
 
-                IMAGERESOURCEDIRECTORY rootDirectory = ResourceDirectoryReader.ReadDirectory(reader);
+                IMAGE_RESOURCE_DIRECTORY rootDirectory = ResourceDirectoryReader.ReadDirectory(reader);
                 int totalEntries = rootDirectory.NumberOfNamedEntries + rootDirectory.NumberOfIdEntries;
 
                 // 查找 RT_VERSION 资源类型 (ID = 16)，命中首个后下钻并结束
@@ -127,10 +127,10 @@ namespace PersonalTools.PEAnalyzer.Resources
                 long originalPosition = fs.Position;
                 fs.Position = dataEntryOffset;
 
-                IMAGERESOURCEDATAENTRY dataEntry = ResourceDirectoryReader.ReadDataEntry(reader);
+                IMAGE_RESOURCE_DATA_ENTRY dataEntry = ResourceDirectoryReader.ReadDataEntry(reader);
 
                 // OffsetToData 为 RVA
-                long dataOffset = Utilities.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
+                long dataOffset = PEParserUtils.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
                 if (ResourceDirectoryReader.IsReadableData(dataOffset, dataEntry.Size, fs))
                 {
                     fs.Position = dataOffset;

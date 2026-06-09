@@ -1,9 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace PersonalTools
+namespace PersonalTools.Utils.Hash
 {
-    internal sealed class SHA3(int variant) : IDisposable
+    internal sealed class Sha3(int variant) : IDisposable
     {
         private readonly int _outputLengthBits = variant;
 
@@ -16,7 +16,7 @@ namespace PersonalTools
         {
             byte[] inputBytes = Encoding.UTF8.GetBytes(input);
             byte[] output = ComputeHash(inputBytes, outputLengthBits);
-            return Utils.ToHexString(output);
+            return ConvertUtils.ToHexString(output);
         }
 
         public static byte[] ComputeHash(byte[] input, int outputLengthBits = 256)

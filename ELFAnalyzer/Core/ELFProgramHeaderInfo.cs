@@ -1,4 +1,5 @@
 ﻿using PersonalTools.ELFAnalyzer.Models;
+using PersonalTools.Utils;
 using PersonalTools.Enums;
 using System.IO;
 
@@ -15,22 +16,22 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             List<string> descriptions = [];
 
-            if ((pFlags & (uint)ProgramHeaderPermissions.PF_R) != 0)
+            if ((pFlags & (uint)ProgramHeaderFlags.PF_R) != 0)
             {
                 descriptions.Add("R");
             }
 
-            if ((pFlags & (uint)ProgramHeaderPermissions.PF_W) != 0)
+            if ((pFlags & (uint)ProgramHeaderFlags.PF_W) != 0)
             {
                 descriptions.Add("W");
             }
 
-            if ((pFlags & (uint)ProgramHeaderPermissions.PF_X) != 0)
+            if ((pFlags & (uint)ProgramHeaderFlags.PF_X) != 0)
             {
                 descriptions.Add("E");
             }
 
-            return Utils.EnumerableToString("", descriptions);
+            return ConvertUtils.EnumerableToString("", descriptions);
         }
 
         internal static void ReadProgramHeaders(ELFParser parser, BinaryReader reader, bool isLittleEndian)

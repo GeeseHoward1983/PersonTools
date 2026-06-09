@@ -28,10 +28,10 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             ResourceDirectoryReader.RunAtOffset(fs, dataEntryOffset, 16, "解析组图标数据项错误", () =>
             {
-                IMAGERESOURCEDATAENTRY dataEntry = ResourceDirectoryReader.ReadDataEntry(reader);
+                IMAGE_RESOURCE_DATA_ENTRY dataEntry = ResourceDirectoryReader.ReadDataEntry(reader);
 
                 // OffsetToData 为 RVA，需转换为文件偏移
-                long dataOffset = Utilities.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
+                long dataOffset = PEParserUtils.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
                 if (ResourceDirectoryReader.IsReadableData(dataOffset, dataEntry.Size, fs) && dataOffset + 6 <= fs.Length)
                 {
                     fs.Position = dataOffset;

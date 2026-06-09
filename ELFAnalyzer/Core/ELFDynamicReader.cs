@@ -4,7 +4,7 @@ using System.IO;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    internal static class Dynamic
+    internal static class ELFDynamicReader
     {
         internal static void ReadDynamicEntries(ELFParser parser, BinaryReader reader, bool isLittleEndian)
         {

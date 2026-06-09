@@ -44,7 +44,7 @@ namespace PersonalTools.UserControls
 
         private void SetInterpreterInfo(ELFAnalyzer.ELFAnalyzer analyzer)
         {
-            string interpreter = ProgrameHeaderHelper.GetInterpreterInfo(analyzer.Parser);
+            string interpreter = ProgramHeaderHelper.GetInterpreterInfo(analyzer.Parser);
             if (!string.IsNullOrEmpty(interpreter))
             {
                 ELFHeaderInfoControl.SetInterpreterInfo(interpreter);
@@ -53,7 +53,7 @@ namespace PersonalTools.UserControls
 
         private void SetProgramHeadersData(ELFAnalyzer.ELFAnalyzer analyzer)
         {
-            List<ProgramHeaderInfo> programHeaders = ProgrameHeaderHelper.GetProgramHeaderInfoList(analyzer.Parser);
+            List<ProgramHeaderInfo> programHeaders = ProgramHeaderHelper.GetProgramHeaderInfoList(analyzer.Parser);
             ELFProgramHeaderControl.SetProgramHeadersData(programHeaders);
         }
 
@@ -65,7 +65,7 @@ namespace PersonalTools.UserControls
 
         private void SetSectionToSegmentInfo(ELFAnalyzer.ELFAnalyzer analyzer)
         {
-            ELFSectionToSegmentMappingControl.SetSectionToSegmentInfo(ProgrameHeaderHelper.GetSectionToSegmentMappingInfo(analyzer.Parser));
+            ELFSectionToSegmentMappingControl.SetSectionToSegmentInfo(ProgramHeaderHelper.GetSectionToSegmentMappingInfo(analyzer.Parser));
         }
 
         private void SetSymbolTableData(ELFAnalyzer.ELFAnalyzer analyzer)

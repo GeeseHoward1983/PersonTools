@@ -1,4 +1,5 @@
 using PersonalTools.Enums;
+using PersonalTools.Utils;
 using System.Globalization;
 using System.Text;
 
@@ -102,7 +103,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private static string GetBuildID(byte[] data, int descOffset, int descSize)
         {
-            return descSize >= 20 ? $"(NT_GNU_BUILD_ID (unique build ID bitstring)\n    Build ID: {Utils.ToHexString(data, descOffset, descSize)}" : "";
+            return descSize >= 20 ? $"(NT_GNU_BUILD_ID (unique build ID bitstring)\n    Build ID: {ConvertUtils.ToHexString(data, descOffset, descSize)}" : "";
         }
 
         private static string ProcessNoteEntry(ELFParser parser, uint type, string owner, byte[] data, int descOffset, int descSize)

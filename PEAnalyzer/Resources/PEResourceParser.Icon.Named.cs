@@ -17,12 +17,12 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             ResourceDirectoryReader.RunAtOffset(fs, resourceOffset, ResourceDirectoryReader.DirectoryHeaderSize, "解析资源目录以查找命名图标错误", () =>
             {
-                IMAGERESOURCEDIRECTORY rootDirectory = ResourceDirectoryReader.ReadDirectory(reader);
+                IMAGE_RESOURCE_DIRECTORY rootDirectory = ResourceDirectoryReader.ReadDirectory(reader);
 
                 // 命名条目位于目录前部，仅遍历这部分
                 for (int i = 0; i < rootDirectory.NumberOfNamedEntries; i++)
                 {
-                    if (!ResourceDirectoryReader.TryReadEntry(fs, reader, resourceOffset, i, out IMAGERESOURCEDIRECTORYENTRY entry))
+                    if (!ResourceDirectoryReader.TryReadEntry(fs, reader, resourceOffset, i, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry))
                     {
                         break;
                     }

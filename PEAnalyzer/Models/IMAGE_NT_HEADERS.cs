@@ -4,10 +4,10 @@ namespace PersonalTools.PEAnalyzer.Models
 {
     // NT头签名
     [StructLayout(LayoutKind.Sequential)]
-    internal struct IMAGENTHEADERS
+    internal struct IMAGE_NT_HEADERS
     {
         public uint Signature;
-        public IMAGEFILEHEADER FileHeader;
-        public IMAGEOPTIONALHEADER OptionalHeader;
+        public IMAGE_FILE_HEADER FileHeader;
+        public IMAGE_OPTIONAL_HEADER OptionalHeader;
     }
 }

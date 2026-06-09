@@ -89,13 +89,13 @@ namespace PersonalTools.ELFAnalyzer.Core
             ELFProgramHeaderInfo.ReadProgramHeaders(this, reader, isLittleEndian);
 
             // Read section headers
-            ELFSectionHeader.ReadSectionHeaders(this, reader, isLittleEndian);
+            ELFSectionHeaderReader.ReadSectionHeaders(this, reader, isLittleEndian);
 
             // Read symbol tables if present
-            SymbolTable.ReadSymbolTables(this, reader, isLittleEndian);
+            ELFSymbolTableReader.ReadSymbolTables(this, reader, isLittleEndian);
 
             // Read dynamic entries if present
-            Dynamic.ReadDynamicEntries(this, reader, isLittleEndian);
+            ELFDynamicReader.ReadDynamicEntries(this, reader, isLittleEndian);
 
             // Read version information if present
             VersionSymbolParser.ReadVersionInformation(this);

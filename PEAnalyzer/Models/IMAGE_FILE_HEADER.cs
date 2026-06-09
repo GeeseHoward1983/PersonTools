@@ -4,7 +4,7 @@ namespace PersonalTools.PEAnalyzer.Models
 {
     // 文件头
     [StructLayout(LayoutKind.Sequential)]
-    internal struct IMAGEFILEHEADER
+    internal struct IMAGE_FILE_HEADER
     {
         public ushort Machine;
         public ushort NumberOfSections;

@@ -1,7 +1,7 @@
 namespace PersonalTools.PEAnalyzer.Models
 {
     // 统一的可选头结构
-    internal struct IMAGEOPTIONALHEADER
+    internal struct IMAGE_OPTIONAL_HEADER
     {
         public ushort Magic { get; set; }
         public byte MajorLinkerVersion { get; set; }
@@ -33,6 +33,6 @@ namespace PersonalTools.PEAnalyzer.Models
         public ulong SizeOfHeapCommit { get; set; }
         public uint LoaderFlags { get; set; }
         public uint NumberOfRvaAndSizes { get; set; }
-        public IMAGEDATADIRECTORY[] DataDirectory { get; set; }
+        public IMAGE_DATA_DIRECTORY[] DataDirectory { get; set; }
     }
 }

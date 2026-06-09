@@ -1,4 +1,5 @@
 using PersonalTools.Enums;
+using PersonalTools.Utils;
 using System.Globalization;
 
 namespace PersonalTools.PEAnalyzer.Resources

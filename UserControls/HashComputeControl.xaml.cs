@@ -3,10 +3,12 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using PersonalTools.Utils;
+using PersonalTools.Utils.Hash;
 
 namespace PersonalTools.UserControls
 {
-    internal sealed class SHA3AlgorithmOption(string name, int value)
+    internal sealed class Sha3AlgorithmOption(string name, int value)
     {
         public string Name { get; } = name;
         public int Value { get; } = value;
@@ -46,9 +48,9 @@ namespace PersonalTools.UserControls
         private void InitializeSHA3AlgorithmComboBox()
         {
             // 添加算法选项到下拉框
-            SHA3AlgorithmComboBox.Items.Add(new SHA3AlgorithmOption("SHA3-256", 256));
-            SHA3AlgorithmComboBox.Items.Add(new SHA3AlgorithmOption("SHA3-384", 384));
-            SHA3AlgorithmComboBox.Items.Add(new SHA3AlgorithmOption("SHA3-512", 512));
+            SHA3AlgorithmComboBox.Items.Add(new Sha3AlgorithmOption("SHA3-256", 256));
+            SHA3AlgorithmComboBox.Items.Add(new Sha3AlgorithmOption("SHA3-384", 384));
+            SHA3AlgorithmComboBox.Items.Add(new Sha3AlgorithmOption("SHA3-512", 512));
 
             // 设置默认选中项
             SHA3AlgorithmComboBox.SelectedIndex = 0; // 默认选择SHA3-256
@@ -85,9 +87,9 @@ namespace PersonalTools.UserControls
             try
             {
                 byte[] inputBytes = row.IsHexMode
-                    ? Utils.HexStringToByteArray(row.InputText)
+                    ? ConvertUtils.HexStringToByteArray(row.InputText)
                     : Encoding.UTF8.GetBytes(row.InputText);
-                row.Result = Utils.ToHexString(row.HashFunc(inputBytes));
+                row.Result = ConvertUtils.ToHexString(row.HashFunc(inputBytes));
             }
             catch (FormatException ex)
             {
@@ -121,7 +123,7 @@ namespace PersonalTools.UserControls
                 else if (SHA3HexInputRadio.IsChecked == true)
                 {
                     // Hex字符串模式
-                    inputBytes = Utils.HexStringToByteArray(input);
+                    inputBytes = ConvertUtils.HexStringToByteArray(input);
                 }
                 else
                 {
@@ -130,16 +132,16 @@ namespace PersonalTools.UserControls
                 }
 
                 // 获取选中的算法选项
-                if (SHA3AlgorithmComboBox.SelectedItem is not SHA3AlgorithmOption selectedOption)
+                if (SHA3AlgorithmComboBox.SelectedItem is not Sha3AlgorithmOption selectedOption)
                 {
                     MessageBox.Show("请选择SHA3算法类型", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
 
                 // 使用真正的SHA3算法
-                using SHA3 sha3 = new(selectedOption.Value);
+                using Sha3 sha3 = new(selectedOption.Value);
                 byte[] hashBytes = sha3.ComputeHash(inputBytes);
-                SHA3ResultLabel.Content = Utils.ToHexString(hashBytes);
+                SHA3ResultLabel.Content = ConvertUtils.ToHexString(hashBytes);
             }
             catch (FormatException ex)
             {
@@ -183,7 +185,7 @@ namespace PersonalTools.UserControls
                 CalculateAndDisplayHashValues(fileBytes);
 
                 // 将文件内容转为 hex 显示在 SHA3 输入框，并切换到 hex 模式
-                SHA3InputTextBox.Text = Utils.ToHexString(fileBytes);
+                SHA3InputTextBox.Text = ConvertUtils.ToHexString(fileBytes);
                 SHA3HexInputRadio.IsChecked = true;
 
                 FileDropHint.Text = $"已加载文件: {Path.GetFileName(filePath)}，请在下方选择SHA3算法类型并计算";
@@ -203,7 +205,7 @@ namespace PersonalTools.UserControls
         {
             foreach (HashAlgorithmRow row in hashRows)
             {
-                row.Result = Utils.ToHexString(row.HashFunc(data));
+                row.Result = ConvertUtils.ToHexString(row.HashFunc(data));
             }
         }
     }

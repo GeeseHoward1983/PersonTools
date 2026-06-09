@@ -42,7 +42,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 }
 
                 // VS_FIXEDFILEINFO 紧随其后（对齐到4字节边界），大小 52 字节
-                long alignedPosition = Utilities.AlignTo4(fs.Position);
+                long alignedPosition = PEParserUtils.AlignTo4(fs.Position);
 
                 // wValueLength==0 表示没有 VS_FIXEDFILEINFO（合法），直接解析子项
                 if (wValueLength == 0)
@@ -58,11 +58,11 @@ namespace PersonalTools.PEAnalyzer.Resources
                 }
 
                 fs.Position = alignedPosition;
-                VSFIXEDFILEINFO fixedFileInfo = ReadFixedFileInfo(reader);
+                VS_FIXEDFILEINFO fixedFileInfo = ReadFixedFileInfo(reader);
                 ApplyFixedFileVersions(peInfo, fixedFileInfo);
 
                 // 子项（StringFileInfo / VarFileInfo）紧跟在 VS_FIXEDFILEINFO 之后
-                ParseChildrenIfPresent(fs, reader, peInfo, Utilities.AlignTo4(alignedPosition + 52), startPosition + wLength);
+                ParseChildrenIfPresent(fs, reader, peInfo, PEParserUtils.AlignTo4(alignedPosition + 52), startPosition + wLength);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
@@ -83,9 +83,9 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <summary>
         /// 读取 VS_FIXEDFILEINFO 结构（52 字节，13 个 DWORD）。
         /// </summary>
-        private static VSFIXEDFILEINFO ReadFixedFileInfo(BinaryReader reader)
+        private static VS_FIXEDFILEINFO ReadFixedFileInfo(BinaryReader reader)
         {
-            return new VSFIXEDFILEINFO
+            return new VS_FIXEDFILEINFO
             {
                 dwSignature = reader.ReadUInt32(),
                 dwStrucVersion = reader.ReadUInt32(),
@@ -106,7 +106,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <summary>
         /// 校验签名并将 VS_FIXEDFILEINFO 中的文件/产品版本写入 PEInfo。
         /// </summary>
-        private static void ApplyFixedFileVersions(PEInfo peInfo, VSFIXEDFILEINFO info)
+        private static void ApplyFixedFileVersions(PEInfo peInfo, VS_FIXEDFILEINFO info)
         {
             if (info.dwSignature != 0xFEEF04BD) // VS_VERSIONINFO签名
             {

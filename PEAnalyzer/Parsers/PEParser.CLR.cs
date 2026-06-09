@@ -27,7 +27,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
                     peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryClrHeader].VirtualAddress != 0)
                 {
                     uint clrHeaderRVA = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryClrHeader].VirtualAddress;
-                    long clrHeaderOffset = Utilities.RvaToOffset(clrHeaderRVA, peInfo.SectionHeaders);
+                    long clrHeaderOffset = PEParserUtils.RvaToOffset(clrHeaderRVA, peInfo.SectionHeaders);
 
                     if (clrHeaderOffset != -1 && clrHeaderOffset < fs.Length)
                     {
@@ -91,39 +91,39 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 cb = reader.ReadUInt32(),
                 MajorRuntimeVersion = reader.ReadUInt16(),
                 MinorRuntimeVersion = reader.ReadUInt16(),
-                MetaData = new IMAGEDATADIRECTORY
+                MetaData = new IMAGE_DATA_DIRECTORY
                 {
                     VirtualAddress = reader.ReadUInt32(),
                     Size = reader.ReadUInt32()
                 },
                 Flags = reader.ReadUInt32(),
                 EntryPointTokenOrRva = reader.ReadUInt32(),
-                Resources = new IMAGEDATADIRECTORY
+                Resources = new IMAGE_DATA_DIRECTORY
                 {
                     VirtualAddress = reader.ReadUInt32(),
                     Size = reader.ReadUInt32()
                 },
-                StrongNameSignature = new IMAGEDATADIRECTORY
+                StrongNameSignature = new IMAGE_DATA_DIRECTORY
                 {
                     VirtualAddress = reader.ReadUInt32(),
                     Size = reader.ReadUInt32()
                 },
-                CodeManagerTable = new IMAGEDATADIRECTORY
+                CodeManagerTable = new IMAGE_DATA_DIRECTORY
                 {
                     VirtualAddress = reader.ReadUInt32(),
                     Size = reader.ReadUInt32()
                 },
-                VTableFixups = new IMAGEDATADIRECTORY
+                VTableFixups = new IMAGE_DATA_DIRECTORY
                 {
                     VirtualAddress = reader.ReadUInt32(),
                     Size = reader.ReadUInt32()
                 },
-                ExportAddressTableJumps = new IMAGEDATADIRECTORY
+                ExportAddressTableJumps = new IMAGE_DATA_DIRECTORY
                 {
                     VirtualAddress = reader.ReadUInt32(),
                     Size = reader.ReadUInt32()
                 },
-                ManagedNativeHeader = new IMAGEDATADIRECTORY
+                ManagedNativeHeader = new IMAGE_DATA_DIRECTORY
                 {
                     VirtualAddress = reader.ReadUInt32(),
                     Size = reader.ReadUInt32()

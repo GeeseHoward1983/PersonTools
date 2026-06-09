@@ -40,7 +40,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         public static string ReadKey(FileStream fs, BinaryReader reader, ushort length)
         {
             int maxBytes = (int)Math.Min(length, (uint)(fs.Length - fs.Position));
-            return Utilities.ReadUnicodeStringWithMaxBytes(reader, maxBytes);
+            return PEParserUtils.ReadUnicodeStringWithMaxBytes(reader, maxBytes);
         }
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// </summary>
         public static void AdvanceToSibling(FileStream fs, long startPosition, ushort length, long endPosition)
         {
-            long nextPosition = Utilities.AlignTo4(startPosition + length);
+            long nextPosition = PEParserUtils.AlignTo4(startPosition + length);
             if (nextPosition < endPosition && nextPosition > fs.Position)
             {
                 fs.Position = nextPosition;
@@ -62,7 +62,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// </summary>
         public static void ParseChildBlock(FileStream fs, long startPosition, ushort length, long endPosition, Action<long> parseChild)
         {
-            long childStart = Utilities.AlignTo4(fs.Position);
+            long childStart = PEParserUtils.AlignTo4(fs.Position);
             long childEnd = Math.Min(startPosition + length, endPosition);
             if (childStart < fs.Length && childStart < childEnd)
             {

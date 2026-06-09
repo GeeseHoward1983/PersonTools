@@ -2,6 +2,7 @@ using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using PersonalTools.Utils;
 
 namespace PersonalTools.UserControls
 {
@@ -38,7 +39,7 @@ namespace PersonalTools.UserControls
                 if (Base64HexInputRadio.IsChecked == true)
                 {
                     // Hex字符串模式
-                    bytes = Utils.HexStringToByteArray(input);
+                    bytes = ConvertUtils.HexStringToByteArray(input);
                 }
                 else
                 {
@@ -83,7 +84,7 @@ namespace PersonalTools.UserControls
                 if (ContainsInvisibleCharacters(bytes))
                 {
                     // 如果包含不可见字符，转换为Hex字符串显示
-                    string hexString = Utils.ToHexString(bytes);
+                    string hexString = ConvertUtils.ToHexString(bytes);
                     Base64Input.Text = hexString;
                 }
                 else
@@ -146,7 +147,7 @@ namespace PersonalTools.UserControls
                 byte[] fileBytes = FileDropHelper.ReadAllBytes(filePath);
 
                 // 输入框显示 hex，结果框显示 Base64，并切到 Hex 模式
-                Base64Input.Text = Utils.ToHexString(fileBytes);
+                Base64Input.Text = ConvertUtils.ToHexString(fileBytes);
                 Base64Result.Text = Convert.ToBase64String(fileBytes);
                 Base64HexInputRadio.IsChecked = true;
             }

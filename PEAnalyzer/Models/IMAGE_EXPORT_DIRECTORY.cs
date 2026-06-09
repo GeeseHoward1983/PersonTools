@@ -4,7 +4,7 @@ namespace PersonalTools.PEAnalyzer.Models
 {
     // 导出目录
     [StructLayout(LayoutKind.Sequential)]
-    internal struct IMAGEEXPORTDIRECTORY
+    internal struct IMAGE_EXPORT_DIRECTORY
     {
         public uint Characteristics;
         public uint TimeDateStamp;

@@ -1,8 +1,8 @@
 using System.Text;
 
-namespace PersonalTools
+namespace PersonalTools.Utils
 {
-    internal static class Utils
+    internal static class ConvertUtils
     {
         /// <summary>
         /// 将Hex字符串转换为字节数组

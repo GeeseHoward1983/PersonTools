@@ -1,4 +1,4 @@
-namespace PersonalTools
+namespace PersonalTools.Utils.Hash
 {
     /// <summary>CRC 算法参数。</summary>
     internal sealed class CrcAlgorithm
@@ -46,7 +46,7 @@ namespace PersonalTools
 
             for (int i = 0; i < data.Length; i++)
             {
-                byte value = (byte)(algo.ReverseInput ? Utils.ReverseBits(data[i], 8) : data[i]);
+                byte value = (byte)(algo.ReverseInput ? ConvertUtils.ReverseBits(data[i], 8) : data[i]);
                 crc ^= (uint)(value << (algo.Width - 8));
 
                 for (int j = 0; j < 8; j++)
@@ -65,7 +65,7 @@ namespace PersonalTools
 
             if (algo.ReverseOutput)
             {
-                crc = Utils.ReverseBits(crc, algo.Width);
+                crc = ConvertUtils.ReverseBits(crc, algo.Width);
             }
 
             crc ^= algo.FinalXor;

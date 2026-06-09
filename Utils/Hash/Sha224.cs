@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 
-namespace PersonalTools
+namespace PersonalTools.Utils.Hash
 {
     /// <summary>
     /// SHA-224 (FIPS 180-4) 实现。

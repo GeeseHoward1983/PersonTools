@@ -4,6 +4,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using PersonalTools.Utils;
+using PersonalTools.Utils.Crypto;
 
 namespace PersonalTools.UserControls
 {
@@ -336,7 +338,7 @@ namespace PersonalTools.UserControls
                 }
 
                 // 将文件内容显示在输入框中
-                RsaInput.Text = Utils.ToHexString(fileBytes);
+                RsaInput.Text = ConvertUtils.ToHexString(fileBytes);
                 // 同时切换到Hex字符串模式
                 RsaInputHexRadio.IsChecked = true;
             }

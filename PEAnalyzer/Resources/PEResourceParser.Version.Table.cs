@@ -54,7 +54,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 // 读取语言和代码页标识符（通常是8位十六进制字符串），随后对齐到 Strings 起始
                 _ = VersionNodeReader.ReadKey(fs, reader, wLength);
 
-                long stringsPosition = Utilities.AlignTo4(fs.Position);
+                long stringsPosition = PEParserUtils.AlignTo4(fs.Position);
                 if (stringsPosition >= fs.Length || stringsPosition >= endPosition)
                 {
                     return;
@@ -105,7 +105,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 string keyValue = ReadUnicodeWithin(fs, reader, blockEnd);
 
                 // 值对齐到 4 字节边界
-                long valuePosition = Utilities.AlignTo4(fs.Position);
+                long valuePosition = PEParserUtils.AlignTo4(fs.Position);
                 if (valuePosition >= endPosition || valuePosition >= fs.Length)
                 {
                     return false;
@@ -137,7 +137,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         private static string ReadUnicodeWithin(FileStream fs, BinaryReader reader, long limit)
         {
             int maxBytes = (int)Math.Max(0, Math.Min(limit, fs.Length) - fs.Position);
-            return Utilities.ReadUnicodeStringWithMaxBytes(reader, maxBytes);
+            return PEParserUtils.ReadUnicodeStringWithMaxBytes(reader, maxBytes);
         }
     }
 }

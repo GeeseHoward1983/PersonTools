@@ -4,7 +4,7 @@ namespace PersonalTools.PEAnalyzer.Models
 {
     // DOS头结构
     [StructLayout(LayoutKind.Sequential)]
-    internal struct IMAGEDOSHEADER
+    internal struct IMAGE_DOS_HEADER
     {
         public ushort e_magic;       // 魔数 "MZ"
         public ushort e_cblp;

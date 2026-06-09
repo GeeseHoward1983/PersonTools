@@ -4,7 +4,7 @@ namespace PersonalTools.PEAnalyzer.Models
 {
     // 节头
     [StructLayout(LayoutKind.Sequential)]
-    internal struct IMAGESECTIONHEADER
+    internal struct IMAGE_SECTION_HEADER
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
         public byte[] Name;

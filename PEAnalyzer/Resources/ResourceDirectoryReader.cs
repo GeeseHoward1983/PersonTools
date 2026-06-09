@@ -26,9 +26,9 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <summary>
         /// 从当前位置读取一个 IMAGE_RESOURCE_DIRECTORY（16 字节）。
         /// </summary>
-        public static IMAGERESOURCEDIRECTORY ReadDirectory(BinaryReader reader)
+        public static IMAGE_RESOURCE_DIRECTORY ReadDirectory(BinaryReader reader)
         {
-            return new IMAGERESOURCEDIRECTORY
+            return new IMAGE_RESOURCE_DIRECTORY
             {
                 Characteristics = reader.ReadUInt32(),
                 TimeDateStamp = reader.ReadUInt32(),
@@ -43,7 +43,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// 读取目录头之后第 <paramref name="index"/> 项目录条目（8 字节）。
         /// 越界返回 false。
         /// </summary>
-        public static bool TryReadEntry(FileStream fs, BinaryReader reader, long directoryOffset, int index, out IMAGERESOURCEDIRECTORYENTRY entry)
+        public static bool TryReadEntry(FileStream fs, BinaryReader reader, long directoryOffset, int index, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry)
         {
             entry = default;
             long entryOffset = directoryOffset + DirectoryHeaderSize + ((long)index * DirectoryEntrySize);
@@ -53,7 +53,7 @@ namespace PersonalTools.PEAnalyzer.Resources
             }
 
             fs.Position = entryOffset;
-            entry = new IMAGERESOURCEDIRECTORYENTRY
+            entry = new IMAGE_RESOURCE_DIRECTORY_ENTRY
             {
                 NameOrId = reader.ReadUInt32(),
                 OffsetToData = reader.ReadUInt32()
@@ -64,9 +64,9 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <summary>
         /// 从当前位置读取一个 IMAGE_RESOURCE_DATA_ENTRY（16 字节）。
         /// </summary>
-        public static IMAGERESOURCEDATAENTRY ReadDataEntry(BinaryReader reader)
+        public static IMAGE_RESOURCE_DATA_ENTRY ReadDataEntry(BinaryReader reader)
         {
-            return new IMAGERESOURCEDATAENTRY
+            return new IMAGE_RESOURCE_DATA_ENTRY
             {
                 OffsetToData = reader.ReadUInt32(),
                 Size = reader.ReadUInt32(),
@@ -106,12 +106,12 @@ namespace PersonalTools.PEAnalyzer.Resources
             try
             {
                 fs.Position = directoryOffset;
-                IMAGERESOURCEDIRECTORY directory = ReadDirectory(reader);
+                IMAGE_RESOURCE_DIRECTORY directory = ReadDirectory(reader);
                 int totalEntries = directory.NumberOfNamedEntries + directory.NumberOfIdEntries;
 
                 for (int i = 0; i < totalEntries; i++)
                 {
-                    if (!TryReadEntry(fs, reader, directoryOffset, i, out IMAGERESOURCEDIRECTORYENTRY entry))
+                    if (!TryReadEntry(fs, reader, directoryOffset, i, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry))
                     {
                         break;
                     }
@@ -149,7 +149,7 @@ namespace PersonalTools.PEAnalyzer.Resources
             bool found = false;
             for (int i = 0; i < totalEntries; i++)
             {
-                if (!TryReadEntry(fs, reader, resourceOffset, i, out IMAGERESOURCEDIRECTORYENTRY entry))
+                if (!TryReadEntry(fs, reader, resourceOffset, i, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry))
                 {
                     break;
                 }
@@ -182,7 +182,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             for (int i = 0; i < namedEntries; i++)
             {
-                if (!TryReadEntry(fs, reader, resourceOffset, i, out IMAGERESOURCEDIRECTORYENTRY entry))
+                if (!TryReadEntry(fs, reader, resourceOffset, i, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry))
                 {
                     break;
                 }

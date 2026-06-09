@@ -1,6 +1,6 @@
 using PersonalTools.Enums;
 
-namespace PersonalTools
+namespace PersonalTools.Utils
 {
     /// <summary>
     /// 全局状态管理类

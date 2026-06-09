@@ -12,7 +12,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 for (int i = 0; i < parser.SectionHeaders.Count; i++)
                 {
-                    if (SymbolName.GetSectionName(parser, i) == objSectionName)
+                    if (ELFSymbolNameResolver.GetSectionName(parser, i) == objSectionName)
                     {
                         return parser.SectionHeaders[i];
                     }

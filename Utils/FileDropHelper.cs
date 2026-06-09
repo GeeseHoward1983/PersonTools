@@ -1,7 +1,7 @@
 using System.IO;
 using System.Windows;
 
-namespace PersonalTools
+namespace PersonalTools.Utils
 {
     /// <summary>
     /// 文件拖放共享辅助：取首个拖入文件 + 读全部字节，消除各控件里重复的拖放/读取样板。

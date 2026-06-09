@@ -4,7 +4,7 @@ namespace PersonalTools.PEAnalyzer.Models
 {
     // 数据目录项
     [StructLayout(LayoutKind.Sequential)]
-    internal struct IMAGEDATADIRECTORY
+    internal struct IMAGE_DATA_DIRECTORY
     {
         public uint VirtualAddress;
         public uint Size;

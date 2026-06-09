@@ -19,12 +19,12 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                     ELFSymbol sym = symbols[i];
                     byte stType = (byte)(sym.StInfo & 0x0F);
 
-                    string name = SymbolName.GetSymbolName(Parser, sym, sectionType, i);
+                    string name = ELFSymbolNameResolver.GetSymbolName(Parser, sym, sectionType, i);
                     // SECTION 符号 st_name 通常为 0，按 readelf 显示其所属节名
                     if (string.IsNullOrEmpty(name) && stType == (byte)SymbolType.STT_SECTION
                         && sym.StShndx > 0 && sym.StShndx < 0xFF00)
                     {
-                        name = SymbolName.GetSectionName(Parser, sym.StShndx);
+                        name = ELFSymbolNameResolver.GetSectionName(Parser, sym.StShndx);
                     }
 
                     result.Add(new ELFModels.ELFSymbolTableInfo

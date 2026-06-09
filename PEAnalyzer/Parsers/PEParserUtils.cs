@@ -4,7 +4,7 @@ using System.Text;
 
 namespace PersonalTools.PEAnalyzer.Parsers
 {
-    internal static class Utilities
+    internal static class PEParserUtils
     {
         public static string ReadNullTerminatedString(BinaryReader reader)
         {
@@ -33,12 +33,12 @@ namespace PersonalTools.PEAnalyzer.Parsers
         }
 
         // 判断是否为64位PE
-        internal static bool Is64Bit(IMAGEOPTIONALHEADER optionalHeader)
+        internal static bool Is64Bit(IMAGE_OPTIONAL_HEADER optionalHeader)
         {
             return optionalHeader.Magic == PEConstants.Pe32PlusMagic;
         }
 
-        internal static bool Is32Bit(IMAGEOPTIONALHEADER optionalHeader)
+        internal static bool Is32Bit(IMAGE_OPTIONAL_HEADER optionalHeader)
         {
             return optionalHeader.Magic == PEConstants.Pe32Magic;
         }
@@ -80,7 +80,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// <param name="sections">节头列表</param>
         /// <param name="requiredLength">从该 RVA 起需要读取的字节数，用于校验整段都落在同一节的文件数据内，避免跨节读取</param>
         /// <returns>文件偏移量；无法解析时返回 -1</returns>
-        internal static long RvaToOffset(uint rva, List<IMAGESECTIONHEADER> sections, uint requiredLength = 1)
+        internal static long RvaToOffset(uint rva, List<IMAGE_SECTION_HEADER> sections, uint requiredLength = 1)
         {
             // 添加对RVA的基本验证
             if (rva == 0 || sections == null || sections.Count == 0)
@@ -88,7 +88,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 return -1;
             }
 
-            foreach (IMAGESECTIONHEADER section in sections)
+            foreach (IMAGE_SECTION_HEADER section in sections)
             {
                 // 确保节头有效并具有文件数据
                 if (section.SizeOfRawData == 0 || section.PointerToRawData == 0)

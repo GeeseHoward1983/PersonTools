@@ -1,4 +1,5 @@
 using PersonalTools.ELFAnalyzer.Models;
+using PersonalTools.Utils;
 using PersonalTools.Enums;
 using System.Globalization;
 using System.Text;
@@ -226,7 +227,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                         continue;
                     }
 
-                    string name = SymbolName.GetSymbolName(parser, symbol, symbolList.Key, symbolIndex);
+                    string name = ELFSymbolNameResolver.GetSymbolName(parser, symbol, symbolList.Key, symbolIndex);
                     // 跳过 ARM 映射符号（$a/$t/$d/$x 等），与 readelf 一致
                     if (string.IsNullOrEmpty(name) || name[0] == '$')
                     {
@@ -410,7 +411,7 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             if (regs.Count > 0)
             {
-                sb.AppendLine(CultureInfo.InvariantCulture, $"  pop {{{Utils.EnumerableToString(", ", regs)}}}");
+                sb.AppendLine(CultureInfo.InvariantCulture, $"  pop {{{ConvertUtils.EnumerableToString(", ", regs)}}}");
             }
         }
 

@@ -4,10 +4,10 @@ namespace PersonalTools.PEAnalyzer.Models
     internal sealed class PEInfo
     {
         public string FilePath { get; set; } = string.Empty;
-        internal IMAGEDOSHEADER DosHeader { get; set; }
-        internal IMAGENTHEADERS NtHeaders { get; set; }
-        internal IMAGEOPTIONALHEADER OptionalHeader { get; set; }
-        internal List<IMAGESECTIONHEADER> SectionHeaders { get; set; } = [];
+        internal IMAGE_DOS_HEADER DosHeader { get; set; }
+        internal IMAGE_NT_HEADERS NtHeaders { get; set; }
+        internal IMAGE_OPTIONAL_HEADER OptionalHeader { get; set; }
+        internal List<IMAGE_SECTION_HEADER> SectionHeaders { get; set; } = [];
         public List<ImportFunctionInfo> ImportFunctions { get; set; } = [];
         public List<ExportFunctionInfo> ExportFunctions { get; set; } = [];
         public List<DependencyInfo> Dependencies { get; set; } = [];

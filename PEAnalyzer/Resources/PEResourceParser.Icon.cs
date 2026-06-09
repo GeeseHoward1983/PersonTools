@@ -26,7 +26,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryResource].VirtualAddress != 0)
                 {
                     uint resourceRVA = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryResource].VirtualAddress;
-                    long resourceOffset = Utilities.RvaToOffset(resourceRVA, peInfo.SectionHeaders);
+                    long resourceOffset = PEParserUtils.RvaToOffset(resourceRVA, peInfo.SectionHeaders);
 
                     if (resourceOffset != -1 && resourceOffset < fs.Length)
                     {
@@ -88,7 +88,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 }
 
                 uint resourceRVA = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryResource].VirtualAddress;
-                long resourceOffset = Utilities.RvaToOffset(resourceRVA, peInfo.SectionHeaders);
+                long resourceOffset = PEParserUtils.RvaToOffset(resourceRVA, peInfo.SectionHeaders);
 
                 if (resourceOffset != -1 && resourceOffset < fs.Length)
                 {
@@ -121,7 +121,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 long originalPosition = fs.Position;
                 fs.Position = resourceOffset;
 
-                IMAGERESOURCEDIRECTORY rootDirectory = ResourceDirectoryReader.ReadDirectory(reader);
+                IMAGE_RESOURCE_DIRECTORY rootDirectory = ResourceDirectoryReader.ReadDirectory(reader);
                 int totalEntries = rootDirectory.NumberOfNamedEntries + rootDirectory.NumberOfIdEntries;
 
                 // 优先查找 RT_GROUP_ICON (ID=14)

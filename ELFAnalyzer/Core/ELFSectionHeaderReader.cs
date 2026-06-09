@@ -3,7 +3,7 @@ using System.IO;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    internal static class ELFSectionHeader
+    internal static class ELFSectionHeaderReader
     {
         public static string GetSectionType(uint shType)
         {

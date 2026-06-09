@@ -17,13 +17,13 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                     result.Add(new ELFSectionHeaderInfo
                     {
                         Index = i,
-                        Name = SymbolName.GetSectionName(Parser, i),
-                        Type = Core.ELFSectionHeader.GetSectionType(sh.sh_type),
+                        Name = ELFSymbolNameResolver.GetSectionName(Parser, i),
+                        Type = Core.ELFSectionHeaderReader.GetSectionType(sh.sh_type),
                         Address = $"0x{sh.sh_addr:x10}",
                         Offset = $"0x{sh.sh_offset:x8}",
                         Size = $"{sh.sh_size}",
                         EntSize = $"{sh.sh_entsize}",
-                        Flags = Core.ELFSectionHeader.GetSectionFlags(sh.sh_flags),
+                        Flags = Core.ELFSectionHeaderReader.GetSectionFlags(sh.sh_flags),
                         Link = $"{sh.sh_link}",
                         Info = $"{sh.sh_info}",
                         Align = $"0x{sh.sh_addralign:x}"

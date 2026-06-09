@@ -2,7 +2,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace PersonalTools
+namespace PersonalTools.Utils.Crypto
 {
     /// <summary>
     /// AES 加解密核心，与 UI 无关。把 Aes/CryptoStream 等加密类型从控件中剥离，降低控件类耦合。
@@ -14,7 +14,7 @@ namespace PersonalTools
         {
             using Aes aesAlg = CreateAes(key, iv, mode, padding);
 
-            byte[] inputBytes = hexMode ? Utils.HexStringToByteArray(input) : Encoding.UTF8.GetBytes(input);
+            byte[] inputBytes = hexMode ? ConvertUtils.HexStringToByteArray(input) : Encoding.UTF8.GetBytes(input);
 #pragma warning disable CA5401
             ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
 #pragma warning restore CA5401
@@ -25,12 +25,12 @@ namespace PersonalTools
             } // 释放 CryptoStream 即触发 FlushFinalBlock，写出最终块(含 PKCS7 填充)后再取字节，避免丢尾块
 
             byte[] encryptedBytes = msEncrypt.ToArray();
-            return Utils.ToHexString(encryptedBytes);
+            return ConvertUtils.ToHexString(encryptedBytes);
         }
 
         public static string Decrypt(string input, byte[] key, byte[]? iv, CipherMode mode, PaddingMode padding, bool hexMode)
         {
-            byte[] encryptedBytes = Utils.HexStringToByteArray(input);
+            byte[] encryptedBytes = ConvertUtils.HexStringToByteArray(input);
 
             using Aes aesAlg = CreateAes(key, iv, mode, padding);
             ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
@@ -42,7 +42,7 @@ namespace PersonalTools
             byte[] decryptedBytes = resultStream.ToArray();
 
             // 按明文表示方式输出：字符串模式 → UTF-8 文本；Hex 模式 → 十六进制，避免二进制数据丢失
-            return hexMode ? Utils.ToHexString(decryptedBytes) : Encoding.UTF8.GetString(decryptedBytes);
+            return hexMode ? ConvertUtils.ToHexString(decryptedBytes) : Encoding.UTF8.GetString(decryptedBytes);
         }
 
         private static Aes CreateAes(byte[] key, byte[]? iv, CipherMode mode, PaddingMode padding)

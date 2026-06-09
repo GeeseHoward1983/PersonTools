@@ -1,10 +1,11 @@
 using PersonalTools.ELFAnalyzer.Models;
+using PersonalTools.Utils;
 using PersonalTools.Enums;
 using System.Text;
 
 namespace PersonalTools.ELFAnalyzer.Core
 {
-    internal static class HeaderInfo
+    internal static class ELFHeaderDescriptions
     {
         internal static string GetArchitectureName(ELFHeader header)
         {
@@ -416,7 +417,7 @@ namespace PersonalTools.ELFAnalyzer.Core
         internal static string GetFormattedELFFlags(ELFHeader header)
         {
             // 根据架构类型解析不同的标志
-            return Utils.EnumerableToString(", ",
+            return ConvertUtils.EnumerableToString(", ",
                   header.e_machine switch
                   {
                       (ushort)EMachine.EM_MIPS => GetMIPSFormattedELFFlags(header.e_flags),

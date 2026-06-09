@@ -4,7 +4,7 @@ namespace PersonalTools.PEAnalyzer.Models
 {
     // 证书结构
     [StructLayout(LayoutKind.Sequential)]
-    internal struct WINCERTIFICATE
+    internal struct WIN_CERTIFICATE
     {
         public uint dwLength;
         public ushort wRevision;

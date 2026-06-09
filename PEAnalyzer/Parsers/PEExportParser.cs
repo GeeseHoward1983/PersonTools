@@ -27,7 +27,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 {
                     uint exportRVA = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryExport].VirtualAddress;
                     uint exportSize = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryExport].Size;
-                    long exportOffset = Utilities.RvaToOffset(exportRVA, peInfo.SectionHeaders, PEConstants.ExportDirectorySize);
+                    long exportOffset = PEParserUtils.RvaToOffset(exportRVA, peInfo.SectionHeaders, PEConstants.ExportDirectorySize);
 
                     if (exportOffset != -1 && exportOffset < fs.Length)
                     {
@@ -41,7 +41,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
                                 return;
                             }
 
-                            IMAGEEXPORTDIRECTORY exportDir = new()
+                            IMAGE_EXPORT_DIRECTORY exportDir = new()
                             {
                                 Characteristics = reader.ReadUInt32(),
                                 TimeDateStamp = reader.ReadUInt32(),
@@ -83,7 +83,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
         }
 
         // 构造单个导出函数项（含序号、名称、转发目标）
-        private static ExportFunctionInfo BuildExportFunction(FileStream fs, BinaryReader reader, List<IMAGESECTIONHEADER> sections, int i, uint functionRVA, uint baseOrdinal, Dictionary<int, string> functionNames, uint exportRVA, uint exportSize)
+        private static ExportFunctionInfo BuildExportFunction(FileStream fs, BinaryReader reader, List<IMAGE_SECTION_HEADER> sections, int i, uint functionRVA, uint baseOrdinal, Dictionary<int, string> functionNames, uint exportRVA, uint exportSize)
         {
             ExportFunctionInfo exportFunc = new()
             {
@@ -106,15 +106,15 @@ namespace PersonalTools.PEAnalyzer.Parsers
             return exportFunc;
         }
 
-        private static List<uint> ReadUInt32ListAtRva(FileStream fs, BinaryReader reader, List<IMAGESECTIONHEADER> sections, uint rva, uint count)
+        private static List<uint> ReadUInt32ListAtRva(FileStream fs, BinaryReader reader, List<IMAGE_SECTION_HEADER> sections, uint rva, uint count)
         {
             if (rva == 0 || count == 0)
             {
                 return [];
             }
 
-            long offset = Utilities.RvaToOffset(rva, sections);
-            return Utilities.ReadAtOffset(fs, offset, new List<uint>(), () =>
+            long offset = PEParserUtils.RvaToOffset(rva, sections);
+            return PEParserUtils.ReadAtOffset(fs, offset, new List<uint>(), () =>
             {
                 List<uint> result = [];
                 for (int i = 0; i < count && fs.Position + 4 <= fs.Length; i++)
@@ -126,15 +126,15 @@ namespace PersonalTools.PEAnalyzer.Parsers
             });
         }
 
-        private static List<ushort> ReadUInt16ListAtRva(FileStream fs, BinaryReader reader, List<IMAGESECTIONHEADER> sections, uint rva, uint count)
+        private static List<ushort> ReadUInt16ListAtRva(FileStream fs, BinaryReader reader, List<IMAGE_SECTION_HEADER> sections, uint rva, uint count)
         {
             if (rva == 0 || count == 0)
             {
                 return [];
             }
 
-            long offset = Utilities.RvaToOffset(rva, sections);
-            return Utilities.ReadAtOffset(fs, offset, new List<ushort>(), () =>
+            long offset = PEParserUtils.RvaToOffset(rva, sections);
+            return PEParserUtils.ReadAtOffset(fs, offset, new List<ushort>(), () =>
             {
                 List<ushort> result = [];
                 for (int i = 0; i < count && fs.Position + 2 <= fs.Length; i++)
@@ -146,21 +146,21 @@ namespace PersonalTools.PEAnalyzer.Parsers
             });
         }
 
-        private static string ReadForwarderString(FileStream fs, BinaryReader reader, List<IMAGESECTIONHEADER> sections, uint rva)
+        private static string ReadForwarderString(FileStream fs, BinaryReader reader, List<IMAGE_SECTION_HEADER> sections, uint rva)
         {
-            long offset = Utilities.RvaToOffset(rva, sections);
-            return Utilities.ReadAtOffset(fs, offset, string.Empty, () => Utilities.ReadNullTerminatedString(reader));
+            long offset = PEParserUtils.RvaToOffset(rva, sections);
+            return PEParserUtils.ReadAtOffset(fs, offset, string.Empty, () => PEParserUtils.ReadNullTerminatedString(reader));
         }
 
-        private static Dictionary<int, string> BuildExportFunctionNameMap(FileStream fs, BinaryReader reader, List<IMAGESECTIONHEADER> sections, List<uint> nameRVAs, List<ushort> ordinals)
+        private static Dictionary<int, string> BuildExportFunctionNameMap(FileStream fs, BinaryReader reader, List<IMAGE_SECTION_HEADER> sections, List<uint> nameRVAs, List<ushort> ordinals)
         {
             Dictionary<int, string> result = [];
             int entryCount = Math.Min(nameRVAs.Count, ordinals.Count);
 
             for (int i = 0; i < entryCount; i++)
             {
-                long nameOffset = Utilities.RvaToOffset(nameRVAs[i], sections);
-                string functionName = Utilities.ReadAtOffset(fs, nameOffset, string.Empty, () => Utilities.ReadNullTerminatedString(reader));
+                long nameOffset = PEParserUtils.RvaToOffset(nameRVAs[i], sections);
+                string functionName = PEParserUtils.ReadAtOffset(fs, nameOffset, string.Empty, () => PEParserUtils.ReadNullTerminatedString(reader));
                 if (!string.IsNullOrEmpty(functionName))
                 {
                     result[ordinals[i]] = functionName;
