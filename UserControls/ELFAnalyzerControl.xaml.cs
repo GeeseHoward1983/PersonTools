@@ -1,6 +1,7 @@
 using PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.ELFAnalyzer.UIHelper;
 using PersonalTools.Enums;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -186,11 +187,9 @@ namespace PersonalTools.UserControls
                     step(analyzer);
                 }
             }
-            catch (UnauthorizedAccessException ex)
-            {
-                MessageBox.Show($"分析ELF文件时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (ArgumentException ex)
+            catch (Exception ex) when (ex is UnauthorizedAccessException or ArgumentException
+                or IndexOutOfRangeException or EndOfStreamException or IOException
+                or OverflowException or DivideByZeroException or InvalidDataException or FormatException)
             {
                 MessageBox.Show($"分析ELF文件时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }

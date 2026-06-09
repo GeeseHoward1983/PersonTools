@@ -32,6 +32,9 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 return string.Empty;
             }
+
+            // 夹紧到剩余可读字节，防止 namesz/descsz 等越界导致 IndexOutOfRangeException
+            maxLength = Math.Min(maxLength, data.Length - startOffset);
             while (maxLength > 0 && data[startOffset + maxLength - 1] == 0)
             {
                 maxLength--;

@@ -42,9 +42,9 @@ namespace PersonalTools.ELFAnalyzer.Core
 
             bool isLittleEndian = parser.Header.IsLittleEndian();
             bool is64Bit = parser.Is64Bit;
-            ulong endOffset = offset + size;
+            ulong endOffset = Math.Min(offset + size, (ulong)parser.FileData.Length); // 夹紧到文件实际长度
 
-            while (offset < endOffset)
+            while (offset + 12 <= endOffset) // 至少能读完 namesz/descsz/type 三个字段
             {
                 // Note结构：namesz, descsz, type
                 uint namesz = ELFParserUtils.ReadUInt32(parser.FileData, (int)offset, isLittleEndian);
@@ -61,8 +61,14 @@ namespace PersonalTools.ELFAnalyzer.Core
                     sb.AppendLine(CultureInfo.InvariantCulture, $"  {owner,-18}0x{descsz:x8}           {noteInfo}");
                 }
 
-                // 推进到下一个 note（按位宽对齐）
-                offset = AlignNoteOffset(descOffset + descsz, is64Bit);
+                // 推进到下一个 note（按位宽对齐）；不前进或回绕则停止，避免死循环
+                ulong next = AlignNoteOffset(descOffset + descsz, is64Bit);
+                if (next <= offset)
+                {
+                    break;
+                }
+
+                offset = next;
             }
 
             return sb.ToString();
@@ -107,7 +113,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 "GNU" => type switch
                 {
-                    1 => $"{description} {GetABIVersion(parser, data, descOffset, descSize)}",
+                    1 => $"{description} {GetABIVersion(parser, data, descOffset, descSize)}".TrimEnd(),
                     2 => $"{description}",
                     3 => $"{GetBuildID(data, descOffset, descSize)}",
                     4 => $"{description} (gold version)\n    Version: gold {ELFParserUtils.ExtractStringFromBytes(data, descOffset)}",
@@ -149,11 +155,11 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 "GNU" => type switch
                 {
-                    0 => "NT_GNU_ABI_TAG",
-                    1 => "NT_GNU_HWCAP",
-                    2 => "NT_GNU_BUILD_ID",
-                    3 => "NT_GNU_GOLD_VERSION",
-                    4 => "NT_GNU_BUILD_ATTRIBUTE",
+                    1 => "NT_GNU_ABI_TAG",
+                    2 => "NT_GNU_HWCAP",
+                    3 => "NT_GNU_BUILD_ID",
+                    4 => "NT_GNU_GOLD_VERSION",
+                    5 => "NT_GNU_PROPERTY_TYPE_0",
                     _ => $"Unknown GNU note type {type}"
                 },
                 "Android" => type switch

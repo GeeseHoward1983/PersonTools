@@ -33,7 +33,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 uint certificateSize = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectorySecurity].Size;
 
                 if (certificateOffset == 0 || certificateSize == 0 ||
-                    certificateOffset >= fs.Length || certificateOffset + certificateSize > fs.Length)
+                    certificateOffset >= fs.Length || (long)certificateOffset + certificateSize > fs.Length)
                 {
                     return;
                 }

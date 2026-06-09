@@ -22,6 +22,11 @@ namespace PersonalTools.ELFAnalyzer.Core
             if (dynamicSectionIndex != -1 && parser.SectionHeaders != null)
             {
                 Models.ELFSectionHeader dynSection = parser.SectionHeaders[dynamicSectionIndex];
+                if (dynSection.sh_entsize == 0)
+                {
+                    return; // 畸形文件 sh_entsize 为 0 时跳过，避免除零
+                }
+
                 reader.BaseStream.Seek((long)dynSection.sh_offset, SeekOrigin.Begin);
 
                 int entryCount = (int)(dynSection.sh_size / dynSection.sh_entsize);

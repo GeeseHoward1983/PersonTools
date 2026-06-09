@@ -55,7 +55,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             long offset = sectionStart;
             int processed = 0;
 
-            while ((maxCount <= 0 || processed < maxCount) && offset < parser.FileData.Length)
+            while ((maxCount <= 0 || processed < maxCount) && offset + 16 <= parser.FileData.Length)
             {
                 ushort vn_cnt = ELFParserUtils.ReadUInt16(parser.FileData, (int)offset + 2, isLittleEndian);
                 uint vn_aux = ELFParserUtils.ReadUInt32(parser.FileData, (int)offset + 8, isLittleEndian);
@@ -65,7 +65,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 
                 long auxOffset = offset + vn_aux;
                 int auxProcessed = 0;
-                while (auxProcessed < vn_cnt && auxOffset < parser.FileData.Length)
+                while (auxProcessed < vn_cnt && auxOffset + 16 <= parser.FileData.Length)
                 {
                     uint auxNext = ELFParserUtils.ReadUInt32(parser.FileData, (int)auxOffset + 12, isLittleEndian);
                     onVernaux(auxOffset);

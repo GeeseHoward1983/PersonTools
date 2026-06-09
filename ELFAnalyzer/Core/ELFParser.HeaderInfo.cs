@@ -254,7 +254,6 @@ namespace PersonalTools.ELFAnalyzer.Core
             [(ushort)EMachine.EM_COFFEE] = "Codeplay Software Ltd. COFFEE",
             [(ushort)EMachine.EM_CISCO_IOS] = "Cisco IOS",
             [(ushort)EMachine.EM_CISCO_IOS64] = "Cisco IOS 64-bit",
-            [(ushort)EMachine.EM_HELIOX] = "Cohrence's Heliox",
         };
 
         internal static string GetMachineDescription(ELFHeader header)
@@ -359,19 +358,20 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             List<string> descriptions = [];
             // 解析ARM架构的标志
-            // 首先检查EABI版本 (高8位)
-            uint abiVersion = flags & 0xFF000000;
-            if ((abiVersion & 0x05000000) != 0)
+            // EABI 版本是高 8 位的精确值（EF_ARM_EABIMASK=0xFF000000），不能按位与判定
+            string? eabi = (flags & 0xFF000000) switch
             {
-                descriptions.Add("Version5 EABI");
-            }
-            else if ((abiVersion & 0x04000000) != 0)
+                0x05000000 => "Version5 EABI",
+                0x04000000 => "Version4 EABI",
+                0x03000000 => "Version3 EABI",
+                0x02000000 => "Version2 EABI",
+                0x01000000 => "Version1 EABI",
+                0 => "unknown",
+                _ => null,
+            };
+            if (eabi != null)
             {
-                descriptions.Add("Version4 EABI");
-            }
-            else if (abiVersion == 0)
-            {
-                descriptions.Add("unknown");
+                descriptions.Add(eabi);
             }
 
             // 检查浮点ABI类型

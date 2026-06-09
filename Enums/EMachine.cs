@@ -141,7 +141,7 @@ namespace PersonalTools.Enums
         EM_L10M = 180,    // Intel L10M
         EM_K10M = 181,    // Intel K10M
         EM_AARCH64 = 183, // ARM 64-bit architecture (AARCH64)
-        EM_AVR32 = 184,   // Atmel Corporation 32-bit microprocessor family - correct value
+        EM_AVR32 = 185,   // Atmel Corporation 32-bit microprocessor family (binutils EM_AVR32)
         EM_STM8 = 186,    // STMicroeletronics STM8 8-bit microcontroller
         EM_TILE64 = 187,  // Tilera TILE64 multicore architecture family
         EM_TILEPRO = 188, // Tilera TILEPro multicore architecture family
@@ -194,8 +194,6 @@ namespace PersonalTools.Enums
         EM_COFFEE = 304,  // Codeplay Software Ltd. COFFEE
         EM_CISCO_IOS = 305, // Cisco IOS
         EM_CISCO_IOS64 = 306, // Cisco IOS 64-bit
-        EM_ARM64_32 = EM_AVR32, // ARM 64-bit architecture, AArch32 state - correct value to match EM_AVR32
-        EM_HELIOX = 185,  // Cohrence's Heliox - correct value to match EM_AARCH64
         EM_SG1000 = EM_TILE64,  // Profile for a 32-bit processor - correct value
         EM_SG3000 = EM_TILEPRO   // Profile for a 32-bit processor - correct value
     }

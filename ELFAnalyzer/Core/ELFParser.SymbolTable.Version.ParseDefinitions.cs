@@ -62,7 +62,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             ulong offset = section.sh_offset;
             int processed = 0;
 
-            while (processed < count && offset < (ulong)parser.FileData.Length)
+            while (processed < count && offset + 20 <= (ulong)parser.FileData.Length)
             {
                 ushort vd_ndx = ELFParserUtils.ReadUInt16(parser.FileData, (int)offset + 4, isLittleEndian);
                 // Verdef 结构与位宽无关：vd_aux(+12)、vd_next(+16) 均为 4 字节

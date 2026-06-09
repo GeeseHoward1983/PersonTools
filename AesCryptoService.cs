@@ -19,8 +19,11 @@ namespace PersonalTools
             ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
 #pragma warning restore CA5401
             using MemoryStream msEncrypt = new();
-            using CryptoStream csEncrypt = new(msEncrypt, encryptor, CryptoStreamMode.Write);
-            csEncrypt.Write(inputBytes, 0, inputBytes.Length);
+            using (CryptoStream csEncrypt = new(msEncrypt, encryptor, CryptoStreamMode.Write))
+            {
+                csEncrypt.Write(inputBytes, 0, inputBytes.Length);
+            } // 释放 CryptoStream 即触发 FlushFinalBlock，写出最终块(含 PKCS7 填充)后再取字节，避免丢尾块
+
             byte[] encryptedBytes = msEncrypt.ToArray();
             return Utils.ToHexString(encryptedBytes);
         }

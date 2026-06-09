@@ -37,6 +37,11 @@ namespace PersonalTools.ELFAnalyzer.Core
                 return cached;
             }
 
+            if (sectionIndex < 0 || sectionIndex >= SectionHeaders.Count)
+            {
+                return []; // 索引越界（如 e_shstrndx 超出节数）返回空，避免 IndexOutOfRange
+            }
+
             Models.ELFSectionHeader section = SectionHeaders[sectionIndex];
             byte[] data = CopySectionData(section);
             _sectionDataCache[sectionIndex] = data;
@@ -48,6 +53,13 @@ namespace PersonalTools.ELFAnalyzer.Core
         /// </summary>
         internal byte[] CopySectionData(in Models.ELFSectionHeader section)
         {
+            // 校验偏移/大小落在文件内、且 size 适配 int，畸形节返回空，避免越界拷贝与 int 溢出
+            if (section.sh_size == 0 || section.sh_size > int.MaxValue ||
+                section.sh_offset + section.sh_size > (ulong)FileData.Length)
+            {
+                return [];
+            }
+
             byte[] data = new byte[section.sh_size];
             Array.Copy(FileData, (long)section.sh_offset, data, 0, (int)section.sh_size);
             return data;
