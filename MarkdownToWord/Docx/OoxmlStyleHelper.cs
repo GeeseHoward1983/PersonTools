@@ -1,0 +1,78 @@
+using System.Globalization;
+using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Wordprocessing;
+using PersonalTools.MarkdownToWord.Models;
+
+namespace PersonalTools.MarkdownToWord.Docx
+{
+    /// <summary>
+    /// 把 <see cref="ContentStyleRow"/> 翻译成 OOXML 运行属性/段落缩进的共享原语。
+    /// 中西文分槽（ascii/hAnsi=西文、eastAsia=中文）让同一 run 内中英文各用各的字体；
+    /// 字号写半磅值（sz/szCs）；首行缩进用字符单位（firstLineChars）并附 twips 回退。
+    /// </summary>
+    internal static class OoxmlStyleHelper
+    {
+        /// <summary>构造中西文分槽的字体定义。</summary>
+        public static RunFonts BuildFonts(ContentStyleRow row) => new()
+        {
+            Ascii = row.WesternFont,
+            HighAnsi = row.WesternFont,
+            EastAsia = row.ChineseFont,
+            ComplexScript = row.WesternFont,
+        };
+
+        /// <summary>
+        /// 按 OOXML 架构顺序（rFonts → b → bCs → sz → szCs → u）把字体/字号/加粗/下划线
+        /// 追加到运行属性容器。<paramref name="runProps"/> 可为内联 <see cref="RunProperties"/>
+        /// 或样式定义中的 <see cref="StyleRunProperties"/>，二者接受相同子元素。
+        /// </summary>
+        public static void ApplyRunFormatting(OpenXmlCompositeElement runProps, ContentStyleRow row)
+        {
+            runProps.AppendChild(BuildFonts(row));
+
+            if (row.Bold)
+            {
+                runProps.AppendChild(new Bold());
+                runProps.AppendChild(new BoldComplexScript());
+            }
+
+            string sz = row.HalfPoint.ToString(CultureInfo.InvariantCulture);
+            runProps.AppendChild(new FontSize { Val = sz });
+            runProps.AppendChild(new FontSizeComplexScript { Val = sz });
+
+            if (row.Underline)
+            {
+                runProps.AppendChild(new Underline { Val = UnderlineValues.Single });
+            }
+        }
+
+        /// <summary>构造直接用于 run 的运行属性。</summary>
+        public static RunProperties BuildRunProperties(ContentStyleRow row)
+        {
+            RunProperties rpr = new();
+            ApplyRunFormatting(rpr, row);
+            return rpr;
+        }
+
+        /// <summary>
+        /// 构造首行缩进（按字符）；字数 ≤ 0 返回 null。firstLineChars 单位为 1/100 字，
+        /// 同时给 firstLine(twips ≈ 字数 × 字号磅 × 20) 作非 Word 阅读器的回退。
+        /// </summary>
+        public static Indentation? BuildFirstLineIndent(ContentStyleRow row)
+        {
+            if (row.FirstLineIndentChars <= 0)
+            {
+                return null;
+            }
+
+            int chars = (int)Math.Round(row.FirstLineIndentChars * 100);
+            // 磅 = 半磅/2；twips = 磅 × 20 → 字数 × (半磅/2) × 20 = 字数 × 半磅 × 10
+            int twips = (int)Math.Round(row.FirstLineIndentChars * row.HalfPoint * 10);
+            return new Indentation
+            {
+                FirstLineChars = chars,
+                FirstLine = twips.ToString(CultureInfo.InvariantCulture),
+            };
+        }
+    }
+}

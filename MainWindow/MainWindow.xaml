@@ -66,6 +66,11 @@
                 <uc:RsaEncryptionControl/>
             </TabItem>
 
+            <!-- Markdown转Word标签页 -->
+            <TabItem Header="Markdown转Word">
+                <uc:MarkdownToWordControl/>
+            </TabItem>
+
         </TabControl>
     </Grid>
 </Window>
