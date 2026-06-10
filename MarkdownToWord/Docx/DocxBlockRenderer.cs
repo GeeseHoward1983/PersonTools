@@ -88,8 +88,23 @@ namespace PersonalTools.MarkdownToWord.Docx
             // 去掉 Markdown 标题文本里的编号前缀，改由 Word 多级编号自动生成（需求 3）
             StripLeadingNumber(heading.Inline);
 
-            Paragraph paragraph = new(new ParagraphProperties(
-                new ParagraphStyleId { Val = styled ? OoxmlIds.HeadingStyleId(wordLevel) : OoxmlIds.NormalStyleId }));
+            ParagraphProperties pPr = new(
+                new ParagraphStyleId { Val = styled ? OoxmlIds.HeadingStyleId(wordLevel) : OoxmlIds.NormalStyleId });
+
+            // 每个一级标题另起一页：首章前不插分页，其后每章在前面插入分页（需求 3）
+            if (wordLevel == 1)
+            {
+                if (ctx.FirstChapterRendered)
+                {
+                    pPr.AppendChild(new PageBreakBefore());
+                }
+                else
+                {
+                    ctx.FirstChapterRendered = true;
+                }
+            }
+
+            Paragraph paragraph = new(pPr);
 
             ContentStyleRow row = styled ? ctx.Settings.ForHeading(wordLevel) : ctx.Settings.For(ContentCategory.Body);
             DocxRunStyle style = DocxRunStyle.For(row);

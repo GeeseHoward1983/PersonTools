@@ -28,10 +28,11 @@ namespace PersonalTools.MarkdownToWord.Docx
 
             DocxRenderContext ctx = new(mainPart, settings, baseDir);
 
-            // Markdown 一级标题 → 封面，置于目录之前；其余块按序渲染
+            // 封面与目录同属第 1 节（不显示页码）；二者之间靠「目录段前分页」过渡，避免多余空段落
             List<Block> blocks = [.. ast];
             int coverIndex = blocks.FindIndex(b => b is HeadingBlock { Level: 1 });
-            if (coverIndex >= 0)
+            bool hasCover = coverIndex >= 0;
+            if (hasCover)
             {
                 DocxCoverBuilder.RenderCover((HeadingBlock)blocks[coverIndex], body, ctx);
                 blocks.RemoveAt(coverIndex);
@@ -39,8 +40,13 @@ namespace PersonalTools.MarkdownToWord.Docx
 
             if (settings.GenerateToc)
             {
-                DocxTocBuilder.EnsureUpdateFieldsOnOpen(mainPart);
-                DocxTocBuilder.AppendToc(body, settings);
+                body.AppendChild(DocxTocBuilder.BuildToc(settings, pageBreakBeforeTitle: hasCover));
+            }
+
+            // 封面/目录与正文之间唯一的分节符（下一页），正文从此另起一节并重排页码
+            if (hasCover || settings.GenerateToc)
+            {
+                body.AppendChild(DocxSectionBuilder.BuildSectionBreak());
             }
 
             foreach (Block block in blocks)
@@ -48,25 +54,9 @@ namespace PersonalTools.MarkdownToWord.Docx
                 DocxBlockRenderer.RenderBlock(block, body, ctx, 0);
             }
 
-            body.AppendChild(BuildSectionProperties());
+            // 正文末尾节：页码从 1 开始（封面/目录不计页数）
+            body.AppendChild(DocxSectionBuilder.BuildBodySection(mainPart));
             mainPart.Document.Save();
-        }
-
-        // A4 页面 + 1 英寸页边距，作为 body 末尾的节属性
-        private static SectionProperties BuildSectionProperties()
-        {
-            return new SectionProperties(
-                new PageSize { Width = 11906U, Height = 16838U },
-                new PageMargin
-                {
-                    Top = 1440,
-                    Bottom = 1440,
-                    Left = 1440U,
-                    Right = 1440U,
-                    Header = 720U,
-                    Footer = 720U,
-                    Gutter = 0U,
-                });
         }
     }
 }

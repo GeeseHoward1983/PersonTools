@@ -14,9 +14,9 @@ namespace PersonalTools.MarkdownToWord.Docx
         public static Paragraph BuildFigureCaption(string text, DocxRenderContext ctx) =>
             BuildCaption("Figure", "图", text, JustificationValues.Center, ctx);
 
-        /// <summary>表题注（左对齐，位于表上方）。</summary>
+        /// <summary>表题注（居中，位于表上方）。</summary>
         public static Paragraph BuildTableCaption(string text, DocxRenderContext ctx) =>
-            BuildCaption("Table", "表", text, JustificationValues.Left, ctx);
+            BuildCaption("Table", "表", text, JustificationValues.Center, ctx);
 
         private static Paragraph BuildCaption(string seqName, string label, string text, JustificationValues justification, DocxRenderContext ctx)
         {

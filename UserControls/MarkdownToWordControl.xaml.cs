@@ -2,6 +2,7 @@ using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Threading;
 using DocumentFormat.OpenXml.Packaging;
 using Markdig.Syntax;
@@ -26,6 +27,7 @@ namespace PersonalTools.UserControls
         private readonly DispatcherTimer previewTimer;
         private readonly string previewFilePath;
         private string? baseDir;
+        private string? currentMdPath;
         private bool previewReady;
 
         public MarkdownToWordControl()
@@ -123,6 +125,55 @@ namespace PersonalTools.UserControls
             }
         }
 
+        // 保存当前编辑的 Markdown：已有路径则直接写回，否则走「另存为」
+        private void SaveMd_Click(object sender, RoutedEventArgs e)
+        {
+            if (currentMdPath == null)
+            {
+                SaveMarkdownAs();
+                return;
+            }
+
+            try
+            {
+                File.WriteAllText(currentMdPath, Editor.Text);
+                MessageBox.Show($"已保存：{currentMdPath}", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                MessageBox.Show($"保存失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void SaveMarkdownAs()
+        {
+            SaveFileDialog dialog = new()
+            {
+                Filter = "Markdown 文件 (*.md)|*.md|所有文件 (*.*)|*.*",
+                DefaultExt = ".md",
+                AddExtension = true,
+                FileName = currentMdPath != null ? Path.GetFileName(currentMdPath) : "未命名.md",
+            };
+            if (dialog.ShowDialog() != true)
+            {
+                return;
+            }
+
+            try
+            {
+                File.WriteAllText(dialog.FileName, Editor.Text);
+                string fullPath = Path.GetFullPath(dialog.FileName);
+                currentMdPath = fullPath;
+                baseDir = Path.GetDirectoryName(fullPath);
+                RefreshPreview();
+                MessageBox.Show($"已保存：{fullPath}", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                MessageBox.Show($"保存失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void OnPreviewDragOver(object sender, DragEventArgs e)
         {
             e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
@@ -143,7 +194,9 @@ namespace PersonalTools.UserControls
             try
             {
                 Editor.Text = File.ReadAllText(path);
-                baseDir = Path.GetDirectoryName(Path.GetFullPath(path));
+                string fullPath = Path.GetFullPath(path);
+                currentMdPath = fullPath;
+                baseDir = Path.GetDirectoryName(fullPath);
                 RefreshPreview();
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
@@ -160,8 +213,20 @@ namespace PersonalTools.UserControls
             {
                 Filter = "Word 文档 (*.docx)|*.docx",
                 DefaultExt = ".docx",
-                FileName = "导出文档.docx",
+                AddExtension = true,
             };
+
+            // 默认路径=当前 md 所在目录，默认文件名=md 文件名(不含扩展名)+.docx（需求 3）
+            if (currentMdPath != null)
+            {
+                dialog.InitialDirectory = Path.GetDirectoryName(currentMdPath) ?? string.Empty;
+                dialog.FileName = Path.GetFileNameWithoutExtension(currentMdPath) + ".docx";
+            }
+            else
+            {
+                dialog.FileName = "导出文档.docx";
+            }
+
             if (dialog.ShowDialog() != true)
             {
                 return;
@@ -170,9 +235,24 @@ namespace PersonalTools.UserControls
             try
             {
                 MarkdownDocument ast = MarkdownService.Parse(Editor.Text);
-                DocxWriter.Write(ast, settings, dialog.FileName, baseDir);
+                bool updated;
+                Mouse.OverrideCursor = Cursors.Wait;
+                try
+                {
+                    DocxWriter.Write(ast, settings, dialog.FileName, baseDir);
+                    // 调用本机 Word 强制更新一次目录/编号域（生成即静态，无需打开时刷新）
+                    updated = WordFieldUpdater.TryUpdateFields(dialog.FileName);
+                }
+                finally
+                {
+                    Mouse.OverrideCursor = null;
+                }
+
                 DocxStyleSettingsStore.Save(settings);
-                MessageBox.Show($"导出成功：{dialog.FileName}", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                string message = updated
+                    ? $"导出成功（目录与图表编号已自动更新）：{dialog.FileName}"
+                    : $"导出成功：{dialog.FileName}\n未检测到本机 Word，目录页码请在 Word 中按 Ctrl+A 全选后按 F9 手动更新一次。";
+                MessageBox.Show(message, "提示", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or OpenXmlPackageException)
             {

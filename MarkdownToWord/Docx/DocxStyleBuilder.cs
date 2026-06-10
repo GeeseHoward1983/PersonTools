@@ -64,9 +64,12 @@ namespace PersonalTools.MarkdownToWord.Docx
             style.Append(new PrimaryStyle());
 
             // pPr 子元素顺序：keepNext → numPr → spacing → ind → outlineLvl
+            // numPr 必须显式带 ilvl，否则 Word 把所有标题都当作 0 级，导致 2–4 级不显示多级编号
             StyleParagraphProperties pPr = new();
             pPr.Append(new KeepNext());
-            pPr.Append(new NumberingProperties(new NumberingId { Val = OoxmlIds.HeadingNumId }));
+            pPr.Append(new NumberingProperties(
+                new NumberingLevelReference { Val = level - 1 },
+                new NumberingId { Val = OoxmlIds.HeadingNumId }));
             pPr.Append(new SpacingBetweenLines { Before = "240", After = "120" });
             pPr.Append(new Indentation { FirstLine = "0", FirstLineChars = 0, Left = "0", LeftChars = 0 }); // 标题不缩进（需求 7）
             pPr.Append(new OutlineLevel { Val = level - 1 });
