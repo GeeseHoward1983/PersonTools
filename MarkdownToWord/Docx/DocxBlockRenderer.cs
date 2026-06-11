@@ -14,14 +14,14 @@ namespace PersonalTools.MarkdownToWord.Docx
     /// 遍历 Markdig 块级 AST，渲染为 OOXML 段落/表格。标题套 Heading1–4 样式（>4 级降为加粗正文），
     /// 正文套 Normal（含首行缩进），列表/引用按层级左缩进，代码块加底纹，纯图片段落生成图题注。
     /// </summary>
-    internal static class DocxBlockRenderer
+    internal static partial class DocxBlockRenderer
     {
         private const int IndentTwips = 420;  // 每级左缩进 ~2 字
         private const int IndentChars = 200;
 
         // 匹配标题文本开头的编号前缀（如 "1 " / "1. " / "1.1 " / "1.1.1 "），含全角空格
-        private static readonly Regex HeadingNumberPrefix =
-            new(@"^\s*\d+(?:\.\d+)*\.?[ \t　]+", RegexOptions.Compiled);
+        [GeneratedRegex(@"^\s*\d+(?:\.\d+)*\.?[ \t　]+")]
+        private static partial Regex HeadingNumberPrefix();
 
         public static void RenderBlocks(IEnumerable<Block> blocks, OpenXmlElement container, DocxRenderContext ctx)
         {
@@ -123,7 +123,7 @@ namespace PersonalTools.MarkdownToWord.Docx
             if (inline?.FirstChild is LiteralInline literal)
             {
                 string text = literal.Content.ToString();
-                string stripped = HeadingNumberPrefix.Replace(text, string.Empty);
+                string stripped = HeadingNumberPrefix().Replace(text, string.Empty);
                 if (stripped.Length != text.Length)
                 {
                     literal.Content = new StringSlice(stripped);
