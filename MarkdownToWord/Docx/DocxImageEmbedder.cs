@@ -166,8 +166,16 @@ namespace PersonalTools.MarkdownToWord.Docx
                 BitmapFrame frame = decoder.Frames[0];
                 pixelWidth = frame.PixelWidth;
                 pixelHeight = frame.PixelHeight;
-                dpiX = frame.DpiX > 0 ? frame.DpiX : 96;
-                dpiY = frame.DpiY > 0 ? frame.DpiY : 96;
+                dpiX = frame.DpiX switch
+                {
+                    > 0 => frame.DpiX,
+                    _ => 96
+                };
+                dpiY = frame.DpiY switch
+                {
+                    > 0 => frame.DpiY,
+                    _ => 96
+                };
                 return pixelWidth > 0 && pixelHeight > 0;
             }
             catch (Exception ex) when (ex is NotSupportedException or ArgumentException or FileFormatException or OverflowException)
@@ -180,15 +188,21 @@ namespace PersonalTools.MarkdownToWord.Docx
         {
             long cx = (long)(pixelWidth / dpiX * EmuPerInch);
             long cy = (long)(pixelHeight / dpiY * EmuPerInch);
-
-            if (cx > MaxWidthEmu)
+            cy = cx switch
             {
-                double scale = (double)MaxWidthEmu / cx;
-                cx = MaxWidthEmu;
-                cy = (long)(cy * scale);
-            }
+                > MaxWidthEmu => (long)(cy * ((double)MaxWidthEmu / cx)),
+                _ => cy
+            };
 
-            return (cx > 0 ? cx : EmuPerInch, cy > 0 ? cy : EmuPerInch);
+            return (cx switch
+            {
+                > 0 => cx,
+                _ => EmuPerInch
+            }, cy switch
+            {
+                > 0 => cy,
+                _ => EmuPerInch
+            });
         }
 
         private static Drawing BuildDrawing(string relationshipId, long cx, long cy, uint drawingId, string name)
