@@ -60,18 +60,14 @@ namespace PersonalTools.MarkdownToWord.Docx
         /// </summary>
         public static Indentation? BuildFirstLineIndent(ContentStyleRow row)
         {
-            if (row.FirstLineIndentChars <= 0)
+            return row.FirstLineIndentChars switch
             {
-                return null;
-            }
-
-            int chars = (int)Math.Round(row.FirstLineIndentChars * 100);
-            // 磅 = 半磅/2；twips = 磅 × 20 → 字数 × (半磅/2) × 20 = 字数 × 半磅 × 10
-            int twips = (int)Math.Round(row.FirstLineIndentChars * row.HalfPoint * 10);
-            return new Indentation
-            {
-                FirstLineChars = chars,
-                FirstLine = twips.ToString(CultureInfo.InvariantCulture),
+                <= 0 => null,
+                _ => new Indentation
+                {
+                    FirstLineChars = (int)Math.Round(row.FirstLineIndentChars * 100),
+                    FirstLine = ((int)Math.Round(row.FirstLineIndentChars * row.HalfPoint * 10)).ToString(CultureInfo.InvariantCulture),
+                }
             };
         }
     }

@@ -64,11 +64,11 @@ namespace PersonalTools.MarkdownToWord.Docx
         // tblGrid（列定义）是 OOXML 表格 tblPr 之后、行之前的必需元素；按列数平分正文宽度
         private static TableGrid BuildTableGrid(MTable mdTable)
         {
-            int columns = mdTable.ColumnDefinitions.Count;
-            if (columns <= 0)
+            int columns = mdTable.ColumnDefinitions.Count switch
             {
-                columns = CountColumns(mdTable);
-            }
+                <= 0 => CountColumns(mdTable),
+                _ => mdTable.ColumnDefinitions.Count,
+            };
 
             const int contentWidthTwips = 9026; // A4 正文宽度（页宽 - 左右边距）
             string columnWidth = (contentWidthTwips / columns).ToString(CultureInfo.InvariantCulture);
@@ -104,7 +104,11 @@ namespace PersonalTools.MarkdownToWord.Docx
                 max = Math.Max(max, cells);
             }
 
-            return max == 0 ? 1 : max;
+            return max switch
+            {
+                0 => 1,
+                _ => max
+            };
         }
 
         private static TableCell BuildCell(MTableCell mdCell, DocxRunStyle style, bool isHeader, DocxRenderContext ctx)

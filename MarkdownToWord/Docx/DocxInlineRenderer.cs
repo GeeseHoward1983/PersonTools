@@ -58,9 +58,6 @@ namespace PersonalTools.MarkdownToWord.Docx
                 case AutolinkInline autolink:
                     RenderAutolink(autolink, parent, style, ctx);
                     break;
-                case HtmlInline:
-                case HtmlEntityInline:
-                    break; // 跳过原始 HTML
                 case ContainerInline container:
                     RenderInlines(container, parent, style, ctx); // 其它容器型内联兜底递归
                     break;
@@ -146,15 +143,13 @@ namespace PersonalTools.MarkdownToWord.Docx
         private static RunProperties BuildRunProperties(DocxRunStyle style)
         {
             RunProperties rpr = new();
-
-            if (style.Code)
-            {
-                rpr.AppendChild(new RunFonts { Ascii = CodeFont, HighAnsi = CodeFont, ComplexScript = CodeFont, EastAsia = style.Base.ChineseFont });
-            }
-            else
-            {
-                rpr.AppendChild(OoxmlStyleHelper.BuildFonts(style.Base));
-            }
+            rpr.AppendChild(
+                style.Code switch
+                {
+                    true => new RunFonts { Ascii = CodeFont, HighAnsi = CodeFont, ComplexScript = CodeFont, EastAsia = style.Base.ChineseFont },
+                    _ => OoxmlStyleHelper.BuildFonts(style.Base)
+                }
+            );
 
             if (style.Base.Bold || style.Bold)
             {

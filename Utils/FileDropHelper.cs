@@ -11,12 +11,11 @@ namespace PersonalTools.Utils
         /// <summary>从拖放事件取第一个文件路径；无文件返回 null。</summary>
         public static string? GetFirstDroppedFile(DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop)
-                && e.Data.GetData(DataFormats.FileDrop) is string[] { Length: > 0 } files)
+            return e.Data.GetDataPresent(DataFormats.FileDrop) switch
             {
-                return files[0];
-            }
-            return null;
+                true when e.Data.GetData(DataFormats.FileDrop) is string[] { Length: > 0 } files => files[0],
+                _ => null,
+            };
         }
 
         /// <summary>读取整个文件的字节。</summary>

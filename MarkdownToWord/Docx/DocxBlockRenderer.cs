@@ -160,7 +160,12 @@ namespace PersonalTools.MarkdownToWord.Docx
 
         private static void RenderList(ListBlock list, OpenXmlElement container, DocxRenderContext ctx, int indentLevel)
         {
-            int number = list.IsOrdered && int.TryParse(list.OrderedStart, out int start) ? start : 1;
+            int start;
+            int number = list.IsOrdered switch
+            {
+                true when int.TryParse(list.OrderedStart, out start) => start,
+                _ => 1,
+            };
             foreach (Block itemObj in list)
             {
                 if (itemObj is not ListItemBlock item)
@@ -168,9 +173,11 @@ namespace PersonalTools.MarkdownToWord.Docx
                     continue;
                 }
 
-                string marker = list.IsOrdered
-                    ? number.ToString(CultureInfo.InvariantCulture) + ". "
-                    : "• ";
+                string marker = list.IsOrdered switch
+                {
+                    true => number.ToString(CultureInfo.InvariantCulture) + ". ",
+                    _ => "• ",
+                };
                 RenderListItem(item, container, ctx, indentLevel + 1, marker);
                 number++;
             }
