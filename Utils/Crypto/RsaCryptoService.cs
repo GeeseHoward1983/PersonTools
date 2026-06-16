@@ -15,7 +15,7 @@ namespace PersonalTools.Utils.Crypto
 
             try
             {
-                byte[] inputBytes = isString ? Encoding.UTF8.GetBytes(input) : ConvertUtils.HexStringToByteArray(input);
+                byte[] inputBytes = ConvertUtils.InputBytes(input, !isString);
                 rsa.ImportFromPem(publicKey);
 
                 // OAEP-SHA256，避免 PKCS#1 v1.5 的填充预言攻击（会减小可加密明文上限，512 位密钥过小无法使用）
@@ -68,7 +68,7 @@ namespace PersonalTools.Utils.Crypto
 
             try
             {
-                byte[] inputBytes = isString ? Encoding.UTF8.GetBytes(input) : ConvertUtils.HexStringToByteArray(input);
+                byte[] inputBytes = ConvertUtils.InputBytes(input, !isString);
                 rsa.ImportFromPem(privateKey);
 
                 byte[] signatureBytes = rsa.SignData(inputBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
@@ -94,7 +94,7 @@ namespace PersonalTools.Utils.Crypto
 
             try
             {
-                byte[] inputBytes = isString ? Encoding.UTF8.GetBytes(input) : ConvertUtils.HexStringToByteArray(input);
+                byte[] inputBytes = ConvertUtils.InputBytes(input, !isString);
                 byte[] signatureBytes = ConvertUtils.HexStringToByteArray(signature);
                 rsa.ImportFromPem(publicKey);
 

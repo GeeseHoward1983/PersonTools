@@ -14,7 +14,7 @@ namespace PersonalTools.Utils.Crypto
         {
             using Aes aesAlg = CreateAes(key, iv, mode, padding);
 
-            byte[] inputBytes = hexMode ? ConvertUtils.HexStringToByteArray(input) : Encoding.UTF8.GetBytes(input);
+            byte[] inputBytes = ConvertUtils.InputBytes(input, hexMode);
 #pragma warning disable CA5401
             ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
 #pragma warning restore CA5401
@@ -42,7 +42,7 @@ namespace PersonalTools.Utils.Crypto
             byte[] decryptedBytes = resultStream.ToArray();
 
             // 按明文表示方式输出：字符串模式 → UTF-8 文本；Hex 模式 → 十六进制，避免二进制数据丢失
-            return hexMode ? ConvertUtils.ToHexString(decryptedBytes) : Encoding.UTF8.GetString(decryptedBytes);
+            return ConvertUtils.OutputString(decryptedBytes, hexMode);
         }
 
         private static Aes CreateAes(byte[] key, byte[]? iv, CipherMode mode, PaddingMode padding)
