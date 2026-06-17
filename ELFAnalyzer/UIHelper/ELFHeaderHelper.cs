@@ -15,11 +15,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             sb.AppendLine("ELF 头:");
             sb.AppendLine("================================================================================");
             sb.AppendLine(CultureInfo.InvariantCulture, $"  Magic:            {GetMagicString(parser.Header)}");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  类别:             {ELFHeaderDescriptions.GetELFClassName(parser.Header)} ({parser.Is64Bit switch
-            {
-                true => "64-bit",
-                _ => "32-bit"
-            }})");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  类别:             {ELFHeaderDescriptions.GetELFClassName(parser.Header)} ({(parser.Is64Bit ? "64-bit" : "32-bit")})");
             sb.AppendLine(CultureInfo.InvariantCulture, $"  数据:             {ELFHeaderDescriptions.GetELFDataName(parser.Header)} ({parser.Header.EI_DATA switch
             {
                 (byte)ELFData.LSB => "2's complement, little endian",

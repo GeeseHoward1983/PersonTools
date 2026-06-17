@@ -173,11 +173,9 @@ namespace PersonalTools.MarkdownToWord.Docx
                     continue;
                 }
 
-                string marker = list.IsOrdered switch
-                {
-                    true => number.ToString(CultureInfo.InvariantCulture) + ". ",
-                    _ => "• ",
-                };
+                string marker = list.IsOrdered
+                    ? number.ToString(CultureInfo.InvariantCulture) + ". "
+                    : "• ";
                 RenderListItem(item, container, ctx, indentLevel + 1, marker);
                 number++;
             }

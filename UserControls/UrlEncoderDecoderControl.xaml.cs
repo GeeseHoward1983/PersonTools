@@ -52,11 +52,7 @@ namespace PersonalTools.UserControls
                 string decoded = Uri.UnescapeDataString(input);
                 UrlInput.Text = decoded;
             }
-            catch (ArgumentNullException ex)
-            {
-                MessageBox.Show($"URL解码时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (UriFormatException ex)
+            catch (Exception ex) when (ex is ArgumentNullException or UriFormatException)
             {
                 MessageBox.Show($"URL解码时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }

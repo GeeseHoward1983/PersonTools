@@ -88,11 +88,7 @@ namespace PersonalTools.UserControls
                 byte[] inputBytes = ConvertUtils.InputBytes(row.InputText, row.IsHexMode);
                 row.Result = ConvertUtils.ToHexString(row.HashFunc(inputBytes));
             }
-            catch (FormatException ex)
-            {
-                MessageBox.Show($"计算{row.Name}时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (ArgumentException ex)
+            catch (Exception ex) when (ex is FormatException or ArgumentException)
             {
                 MessageBox.Show($"计算{row.Name}时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -125,15 +121,7 @@ namespace PersonalTools.UserControls
                 byte[] hashBytes = sha3.ComputeHash(inputBytes);
                 SHA3ResultLabel.Content = ConvertUtils.ToHexString(hashBytes);
             }
-            catch (FormatException ex)
-            {
-                MessageBox.Show($"计算SHA3时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (ArgumentNullException ex)
-            {
-                MessageBox.Show($"计算SHA3时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (ArgumentOutOfRangeException ex)
+            catch (Exception ex) when (ex is FormatException or ArgumentNullException or ArgumentOutOfRangeException)
             {
                 MessageBox.Show($"计算SHA3时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -172,11 +160,7 @@ namespace PersonalTools.UserControls
 
                 FileDropHint.Text = $"已加载文件: {Path.GetFileName(filePath)}，请在下方选择SHA3算法类型并计算";
             }
-            catch (IOException ex)
-            {
-                MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (UnauthorizedAccessException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
                 MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }

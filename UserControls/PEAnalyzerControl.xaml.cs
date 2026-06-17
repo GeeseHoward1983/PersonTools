@@ -60,19 +60,7 @@ namespace PersonalTools.UserControls
                 DisplayAdditionalInfo();
                 DisplayIcons();
             }
-            catch (FileNotFoundException ex)
-            {
-                MessageBox.Show($"加载文件时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                MessageBox.Show($"加载文件时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (IOException ex)
-            {
-                MessageBox.Show($"加载文件时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (ArgumentException ex)
+            catch (Exception ex) when (ex is FileNotFoundException or UnauthorizedAccessException or IOException or ArgumentException)
             {
                 MessageBox.Show($"加载文件时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }

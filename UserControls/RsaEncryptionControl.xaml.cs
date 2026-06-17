@@ -37,190 +37,130 @@ namespace PersonalTools.UserControls
         // RSA加密
         private void RsaEncrypt_Click(object sender, RoutedEventArgs e)
         {
+            string input = RsaInput.Text;
+            string publicKey = RsaPublicKey.Text;
+
+            if (string.IsNullOrEmpty(input))
+            {
+                MessageBox.Show("请输入要加密的文本", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(publicKey))
+            {
+                MessageBox.Show("请输入公钥", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
             try
             {
-                string input = RsaInput.Text;
-                string publicKey = RsaPublicKey.Text;
-
-                if (string.IsNullOrEmpty(input))
-                {
-                    MessageBox.Show("请输入要加密的文本", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
-
-                if (string.IsNullOrEmpty(publicKey))
-                {
-                    MessageBox.Show("请输入公钥", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
-
-                try
-                {
-                    string result = RsaCryptoService.Encrypt(input, publicKey, RsaInputStringRadio.IsChecked == true);
-                    RsaResult.Text = result;
-                }
-                catch (CryptographicException ex)
-                {
-                    MessageBox.Show($"RSA加密失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                catch (ArgumentException ex)
-                {
-                    MessageBox.Show($"RSA加密失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                string result = RsaCryptoService.Encrypt(input, publicKey, RsaInputStringRadio.IsChecked == true);
+                RsaResult.Text = result;
             }
-            catch (CryptographicException ex)
+            catch (Exception ex) when (ex is CryptographicException or ArgumentException)
             {
-                MessageBox.Show($"RSA加密时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (ArgumentException ex)
-            {
-                MessageBox.Show($"RSA加密时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"RSA加密失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         // RSA解密
         private void RsaDecrypt_Click(object sender, RoutedEventArgs e)
         {
+            string input = RsaResult.Text;
+            string privateKey = RsaPrivateKey.Text;
+
+            if (string.IsNullOrEmpty(input))
+            {
+                MessageBox.Show("请输入要解密的文本", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(privateKey))
+            {
+                MessageBox.Show("请输入私钥", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
             try
             {
-                string input = RsaResult.Text;
-                string privateKey = RsaPrivateKey.Text;
-
-                if (string.IsNullOrEmpty(input))
-                {
-                    MessageBox.Show("请输入要解密的文本", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
-
-                if (string.IsNullOrEmpty(privateKey))
-                {
-                    MessageBox.Show("请输入私钥", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
-
-                try
-                {
-                    string result = RsaCryptoService.Decrypt(input, privateKey);
-                    RsaInput.Text = result;
-                }
-                catch (CryptographicException ex)
-                {
-                    MessageBox.Show($"RSA解密失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                catch (ArgumentException ex)
-                {
-                    MessageBox.Show($"RSA解密失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                string result = RsaCryptoService.Decrypt(input, privateKey);
+                RsaInput.Text = result;
             }
-            catch (CryptographicException ex)
+            catch (Exception ex) when (ex is CryptographicException or ArgumentException)
             {
-                MessageBox.Show($"RSA解密时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (ArgumentException ex)
-            {
-                MessageBox.Show($"RSA解密时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"RSA解密失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         // RSA签名
         private void RsaSign_Click(object sender, RoutedEventArgs e)
         {
+            string input = RsaInput.Text;
+            string privateKey = RsaPrivateKey.Text;
+
+            if (string.IsNullOrEmpty(input))
+            {
+                MessageBox.Show("请输入要签名的数据", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(privateKey))
+            {
+                MessageBox.Show("请输入私钥", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
             try
             {
-                string input = RsaInput.Text;
-                string privateKey = RsaPrivateKey.Text;
-
-                if (string.IsNullOrEmpty(input))
-                {
-                    MessageBox.Show("请输入要签名的数据", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
-
-                if (string.IsNullOrEmpty(privateKey))
-                {
-                    MessageBox.Show("请输入私钥", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
-
-                try
-                {
-                    string result = RsaCryptoService.Sign(input, privateKey, RsaInputStringRadio.IsChecked == true);
-                    RsaResult.Text = result;
-                }
-                catch (CryptographicException ex)
-                {
-                    MessageBox.Show($"RSA签名失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                catch (ArgumentException ex)
-                {
-                    MessageBox.Show($"RSA签名失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                string result = RsaCryptoService.Sign(input, privateKey, RsaInputStringRadio.IsChecked == true);
+                RsaResult.Text = result;
             }
-            catch (CryptographicException ex)
+            catch (Exception ex) when (ex is CryptographicException or ArgumentException)
             {
-                MessageBox.Show($"RSA签名时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (ArgumentException ex)
-            {
-                MessageBox.Show($"RSA签名时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"RSA签名失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         // RSA验签
         private void RsaVerify_Click(object sender, RoutedEventArgs e)
         {
+            string input = RsaInput.Text;      // 原始数据
+            string signature = RsaResult.Text; // 签名值
+            string publicKey = RsaPublicKey.Text;
+
+            if (string.IsNullOrEmpty(input))
+            {
+                MessageBox.Show("请输入原始数据", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(signature))
+            {
+                MessageBox.Show("请输入签名值", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(publicKey))
+            {
+                MessageBox.Show("请输入公钥", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
             try
             {
-                string input = RsaInput.Text;      // 原始数据
-                string signature = RsaResult.Text; // 签名值
-                string publicKey = RsaPublicKey.Text;
-
-                if (string.IsNullOrEmpty(input))
+                bool isValid = RsaCryptoService.Verify(input, signature, publicKey, RsaInputStringRadio.IsChecked == true);
+                if (isValid)
                 {
-                    MessageBox.Show("请输入原始数据", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
+                    MessageBox.Show("验签成功！", "结果", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
-
-                if (string.IsNullOrEmpty(signature))
+                else
                 {
-                    MessageBox.Show("请输入签名值", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
-
-                if (string.IsNullOrEmpty(publicKey))
-                {
-                    MessageBox.Show("请输入公钥", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
-
-                try
-                {
-                    bool isValid = RsaCryptoService.Verify(input, signature, publicKey, RsaInputStringRadio.IsChecked == true);
-                    if (isValid)
-                    {
-                        MessageBox.Show("验签成功！", "结果", MessageBoxButton.OK, MessageBoxImage.Information);
-                    }
-                    else
-                    {
-                        MessageBox.Show("验签失败！", "结果", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    }
-                }
-                catch (CryptographicException ex)
-                {
-                    MessageBox.Show($"RSA验签失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                catch (ArgumentException ex)
-                {
-                    MessageBox.Show($"RSA验签失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("验签失败！", "结果", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
-            catch (CryptographicException ex)
+            catch (Exception ex) when (ex is CryptographicException or ArgumentException)
             {
-                MessageBox.Show($"RSA验签时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (ArgumentException ex)
-            {
-                MessageBox.Show($"RSA验签时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"RSA验签失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -242,11 +182,7 @@ namespace PersonalTools.UserControls
 
                 MessageBox.Show("密钥对生成成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-            catch (CryptographicException ex)
-            {
-                MessageBox.Show($"生成密钥对时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (ArgumentOutOfRangeException ex)
+            catch (Exception ex) when (ex is CryptographicException or ArgumentOutOfRangeException)
             {
                 MessageBox.Show($"生成密钥对时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -290,11 +226,7 @@ namespace PersonalTools.UserControls
                 }
                 MessageBox.Show($"{kind}导入成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-            catch (IOException ex)
-            {
-                MessageBox.Show($"导入{kind}时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (UnauthorizedAccessException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
                 MessageBox.Show($"导入{kind}时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -312,14 +244,10 @@ namespace PersonalTools.UserControls
         // 处理RSA标签页的文件拖放事件
         private void RsaTab_Drop(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            string? filePath = FileDropHelper.GetFirstDroppedFile(e);
+            if (filePath != null)
             {
-                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                if (files != null && files.Length > 0)
-                {
-                    string filePath = files[0]; // 只处理第一个文件
-                    ProcessFileForRsaEncryption(filePath);
-                }
+                ProcessFileForRsaEncryption(filePath);
             }
         }
 
@@ -328,14 +256,7 @@ namespace PersonalTools.UserControls
         {
             try
             {
-                byte[] fileBytes;
-
-                // 读取文件内容
-                using (FileStream fileStream = new(filePath, FileMode.Open, FileAccess.Read))
-                {
-                    fileBytes = new byte[fileStream.Length];
-                    fileStream.ReadExactly(fileBytes);
-                }
+                byte[] fileBytes = FileDropHelper.ReadAllBytes(filePath);
 
                 // 将文件内容显示在输入框中
                 RsaInput.Text = ConvertUtils.ToHexString(fileBytes);

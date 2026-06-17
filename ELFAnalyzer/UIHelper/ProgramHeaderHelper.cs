@@ -103,18 +103,8 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                 ELFProgramHeader interpHeader = Parser.ProgramHeaders.FirstOrDefault(ph => ph.p_type == (uint)ProgramHeaderType.PT_INTERP);
                 if (interpHeader.p_type != 0)
                 {
-                    // Read the interpreter string from the file data
-                    int start = (int)interpHeader.p_offset;
-                    int end = start;
-                    while (end < Parser.FileData.Length && Parser.FileData[end] != 0 && (ulong)(end - start) < interpHeader.p_filesz)
-                    {
-                        end++;
-                    }
-
-                    if (end > start)
-                    {
-                        return Encoding.UTF8.GetString(Parser.FileData, start, end - start);
-                    }
+                    // 从 PT_INTERP 段按 p_filesz 上限提取解释器路径（ExtractStringFromBytes 自带越界夹紧并去除尾部 NUL）
+                    return ELFParserUtils.ExtractStringFromBytes(Parser.FileData, (int)interpHeader.p_offset, (int)interpHeader.p_filesz);
                 }
             }
 

@@ -22,14 +22,6 @@ namespace PersonalTools.Utils.Crypto
                 byte[] encryptedBytes = rsa.Encrypt(inputBytes, RSAEncryptionPadding.OaepSHA256);
                 return ConvertUtils.ToHexString(encryptedBytes);
             }
-            catch (ArgumentException ex)
-            {
-                throw new CryptographicException($"导入公钥或加密失败: {ex.Message}", ex);
-            }
-            catch (CryptographicException ex)
-            {
-                throw new CryptographicException($"导入公钥或加密失败: {ex.Message}", ex);
-            }
             catch (Exception ex)
             {
                 throw new CryptographicException($"导入公钥或加密失败: {ex.Message}", ex);
@@ -48,14 +40,6 @@ namespace PersonalTools.Utils.Crypto
                 byte[] decryptedBytes = rsa.Decrypt(encryptedBytes, RSAEncryptionPadding.OaepSHA256);
                 return Encoding.UTF8.GetString(decryptedBytes);
             }
-            catch (ArgumentException ex)
-            {
-                throw new CryptographicException($"导入私钥或解密失败: {ex.Message}", ex);
-            }
-            catch (CryptographicException ex)
-            {
-                throw new CryptographicException($"导入私钥或解密失败: {ex.Message}", ex);
-            }
             catch (Exception ex)
             {
                 throw new CryptographicException($"导入私钥或解密失败: {ex.Message}", ex);
@@ -73,14 +57,6 @@ namespace PersonalTools.Utils.Crypto
 
                 byte[] signatureBytes = rsa.SignData(inputBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
                 return ConvertUtils.ToHexString(signatureBytes);
-            }
-            catch (ArgumentException ex)
-            {
-                throw new CryptographicException($"导入私钥或签名失败: {ex.Message}", ex);
-            }
-            catch (CryptographicException ex)
-            {
-                throw new CryptographicException($"导入私钥或签名失败: {ex.Message}", ex);
             }
             catch (Exception ex)
             {

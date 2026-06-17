@@ -162,17 +162,9 @@ namespace PersonalTools.ELFAnalyzer.Core
                     return Enum.GetName(enumType, value) ?? $"{prefix}UNKNOWN({type})";
                 }
             }
-            catch (ArgumentException)
+            catch (Exception ex) when (ex is ArgumentException or InvalidCastException or OverflowException)
             {
-                // 底层类型不匹配，按未知处理
-            }
-            catch (InvalidCastException)
-            {
-                // 数值无法转换为枚举底层类型，按未知处理
-            }
-            catch (OverflowException)
-            {
-                // 数值超出枚举底层类型范围，按未知处理
+                // 底层类型不匹配 / 无法转换 / 超出枚举底层类型范围，统一按未知处理
             }
             return $"{prefix}UNKNOWN({type})";
         }

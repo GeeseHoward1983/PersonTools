@@ -38,15 +38,7 @@ namespace PersonalTools.UserControls
                 string result = Convert.ToBase64String(bytes);
                 Base64Result.Text = result;
             }
-            catch (ArgumentNullException ex)
-            {
-                MessageBox.Show($"Base64编码时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (FormatException ex)
-            {
-                MessageBox.Show($"Base64编码时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (ObjectDisposedException ex)
+            catch (Exception ex) when (ex is ArgumentNullException or FormatException or ObjectDisposedException)
             {
                 MessageBox.Show($"Base64编码时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -69,15 +61,7 @@ namespace PersonalTools.UserControls
                 // 含不可见字符时转 Hex 显示避免乱码，否则按 UTF-8 文本显示
                 Base64Input.Text = ConvertUtils.OutputString(bytes, ContainsInvisibleCharacters(bytes));
             }
-            catch (ArgumentNullException ex)
-            {
-                MessageBox.Show($"Base64解码时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (FormatException ex)
-            {
-                MessageBox.Show($"Base64解码时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (ObjectDisposedException ex)
+            catch (Exception ex) when (ex is ArgumentNullException or FormatException or ObjectDisposedException)
             {
                 MessageBox.Show($"Base64解码时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -127,11 +111,7 @@ namespace PersonalTools.UserControls
                 Base64Result.Text = Convert.ToBase64String(fileBytes);
                 Base64HexInputRadio.IsChecked = true;
             }
-            catch (IOException ex)
-            {
-                MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (UnauthorizedAccessException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
                 MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }

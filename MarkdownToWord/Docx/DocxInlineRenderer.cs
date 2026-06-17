@@ -144,11 +144,9 @@ namespace PersonalTools.MarkdownToWord.Docx
         {
             RunProperties rpr = new();
             rpr.AppendChild(
-                style.Code switch
-                {
-                    true => new RunFonts { Ascii = CodeFont, HighAnsi = CodeFont, ComplexScript = CodeFont, EastAsia = style.Base.ChineseFont },
-                    _ => OoxmlStyleHelper.BuildFonts(style.Base)
-                }
+                style.Code
+                    ? new RunFonts { Ascii = CodeFont, HighAnsi = CodeFont, ComplexScript = CodeFont, EastAsia = style.Base.ChineseFont }
+                    : OoxmlStyleHelper.BuildFonts(style.Base)
             );
 
             if (style.Base.Bold || style.Bold)
