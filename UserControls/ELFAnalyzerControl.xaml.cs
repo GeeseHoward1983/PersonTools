@@ -1,6 +1,7 @@
 using PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.ELFAnalyzer.UIHelper;
 using PersonalTools.Enums;
+using PersonalTools.Utils;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -191,7 +192,7 @@ namespace PersonalTools.UserControls
                 or IndexOutOfRangeException or EndOfStreamException or IOException
                 or OverflowException or DivideByZeroException or InvalidDataException or FormatException)
             {
-                MessageBox.Show($"分析ELF文件时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"分析ELF文件时出错: {ex.Message}");
             }
         }
     }

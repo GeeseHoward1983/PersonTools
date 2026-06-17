@@ -46,7 +46,11 @@ namespace PersonalTools.Utils.Hash
 
             for (int i = 0; i < data.Length; i++)
             {
-                byte value = (byte)(algo.ReverseInput ? ConvertUtils.ReverseBits(data[i], 8) : data[i]);
+                byte value = algo.ReverseInput switch
+                {
+                    true => (byte)ConvertUtils.ReverseBits(data[i], 8),
+                    false => data[i]
+                };
                 crc ^= (uint)(value << (algo.Width - 8));
 
                 for (int j = 0; j < 8; j++)

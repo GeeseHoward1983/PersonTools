@@ -1,4 +1,5 @@
 using System.Windows;
+using PersonalTools.Utils;
 
 namespace PersonalTools
 {
@@ -20,7 +21,7 @@ namespace PersonalTools
 
         private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
         {
-            MessageBox.Show($"发生未处理的错误：{e.Exception.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageHelper.ShowError($"发生未处理的错误：{e.Exception.Message}");
             e.Handled = true; // 标记为已处理，避免应用崩溃
         }
 
@@ -28,7 +29,7 @@ namespace PersonalTools
         {
             if (e.ExceptionObject is Exception ex)
             {
-                MessageBox.Show($"发生严重错误：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"发生严重错误：{ex.Message}");
             }
         }
     }

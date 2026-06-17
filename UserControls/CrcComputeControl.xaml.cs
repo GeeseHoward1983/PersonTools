@@ -32,14 +32,14 @@ namespace PersonalTools.UserControls
         {
             if (CRCAlgorithmComboBox.SelectedItem == null)
             {
-                System.Windows.MessageBox.Show("请选择一个CRC算法", "提示", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                MessageHelper.ShowInfo("请选择一个CRC算法");
                 return;
             }
 
             string input = CRCInputTextBox.Text;
             if (string.IsNullOrEmpty(input))
             {
-                System.Windows.MessageBox.Show("请输入要计算CRC的值", "提示", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                MessageHelper.ShowInfo("请输入要计算CRC的值");
                 return;
             }
 
@@ -59,17 +59,9 @@ namespace PersonalTools.UserControls
                 };
                 CRCResultLabel.Content = crcResult.ToString(formatString, CultureInfo.InvariantCulture);
             }
-            catch (FormatException ex)
+            catch (Exception ex) when (ex is FormatException or ArgumentNullException or ArgumentOutOfRangeException)
             {
-                System.Windows.MessageBox.Show($"计算CRC时发生错误: {ex.Message}", "错误", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-            }
-            catch (ArgumentNullException ex)
-            {
-                System.Windows.MessageBox.Show($"计算CRC时发生错误: {ex.Message}", "错误", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                System.Windows.MessageBox.Show($"计算CRC时发生错误: {ex.Message}", "错误", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                MessageHelper.ShowError($"计算CRC时发生错误: {ex.Message}");
             }
         }
 
@@ -107,13 +99,9 @@ namespace PersonalTools.UserControls
                 CRCInputTextBox.Text = ConvertUtils.ToHexString(fileBytes);
                 CRCHexInputRadio.IsChecked = true;
             }
-            catch (IOException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                System.Windows.MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                System.Windows.MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                MessageHelper.ShowError($"处理文件时发生错误: {ex.Message}");
             }
         }
 

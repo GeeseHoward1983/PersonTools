@@ -68,7 +68,7 @@ namespace PersonalTools.UserControls
             }
             catch (Exception ex) when (ex is WebView2RuntimeNotFoundException or InvalidOperationException or IOException)
             {
-                MessageBox.Show($"预览初始化失败（需要 WebView2 运行时）：{ex.Message}", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageHelper.ShowWarning($"预览初始化失败（需要 WebView2 运行时）：{ex.Message}");
             }
         }
 
@@ -137,11 +137,11 @@ namespace PersonalTools.UserControls
             try
             {
                 File.WriteAllText(currentMdPath, Editor.Text);
-                MessageBox.Show($"已保存：{currentMdPath}", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageHelper.ShowInfo($"已保存：{currentMdPath}");
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                MessageBox.Show($"保存失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"保存失败: {ex.Message}");
             }
         }
 
@@ -166,11 +166,11 @@ namespace PersonalTools.UserControls
                 currentMdPath = fullPath;
                 baseDir = Path.GetDirectoryName(fullPath);
                 RefreshPreview();
-                MessageBox.Show($"已保存：{fullPath}", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageHelper.ShowInfo($"已保存：{fullPath}");
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                MessageBox.Show($"保存失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"保存失败: {ex.Message}");
             }
         }
 
@@ -201,7 +201,7 @@ namespace PersonalTools.UserControls
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
             {
-                MessageBox.Show($"打开文件失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"打开文件失败: {ex.Message}");
             }
         }
 
@@ -252,11 +252,11 @@ namespace PersonalTools.UserControls
                 string message = updated
                     ? $"导出成功（目录与图表编号已自动更新）：{dialog.FileName}"
                     : $"导出成功：{dialog.FileName}\n未检测到本机 Word，目录页码请在 Word 中按 Ctrl+A 全选后按 F9 手动更新一次。";
-                MessageBox.Show(message, "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageHelper.ShowInfo(message);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or OpenXmlPackageException)
             {
-                MessageBox.Show($"导出失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"导出失败: {ex.Message}");
             }
         }
 

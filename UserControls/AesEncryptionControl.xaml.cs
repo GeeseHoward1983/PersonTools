@@ -68,7 +68,7 @@ namespace PersonalTools.UserControls
                 string input = AesInput.Text;
                 if (string.IsNullOrEmpty(input))
                 {
-                    MessageBox.Show("请输入要加密的文本", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageHelper.ShowInfo("请输入要加密的文本");
                     return;
                 }
 
@@ -81,11 +81,11 @@ namespace PersonalTools.UserControls
             }
             catch (Exception ex) when (ex is CryptographicException or ArgumentException)
             {
-                MessageBox.Show($"AES加密时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"AES加密时发生错误: {ex.Message}");
             }
             catch (FormatException ex)
             {
-                MessageBox.Show($"AES处理时发生错误：输入的十六进制格式无效。{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"AES处理时发生错误：输入的十六进制格式无效。{ex.Message}");
             }
         }
 
@@ -97,7 +97,7 @@ namespace PersonalTools.UserControls
                 string input = AesResult.Text;
                 if (string.IsNullOrEmpty(input))
                 {
-                    MessageBox.Show("请输入要解密的文本", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageHelper.ShowInfo("请输入要解密的文本");
                     return;
                 }
 
@@ -110,11 +110,11 @@ namespace PersonalTools.UserControls
             }
             catch (Exception ex) when (ex is CryptographicException or ArgumentException)
             {
-                MessageBox.Show($"AES解密时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"AES解密时发生错误: {ex.Message}");
             }
             catch (FormatException ex)
             {
-                MessageBox.Show($"AES处理时发生错误：输入的十六进制格式无效。{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"AES处理时发生错误：输入的十六进制格式无效。{ex.Message}");
             }
         }
 
@@ -128,14 +128,14 @@ namespace PersonalTools.UserControls
             string keyInput = AesKey.Text;
             if (string.IsNullOrEmpty(keyInput))
             {
-                MessageBox.Show("请输入密钥", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageHelper.ShowInfo("请输入密钥");
                 return false;
             }
 
             // 验证密钥长度
             if (!IsValidKeyLength(keyInput, AesKeyStringRadio.IsChecked == true))
             {
-                MessageBox.Show("密钥长度不正确。支持16位、24位或32位密钥。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageHelper.ShowInfo("密钥长度不正确。支持16位、24位或32位密钥。");
                 return false;
             }
             key = GetKeyBytes(keyInput, AesKeyStringRadio.IsChecked == true);
@@ -150,14 +150,14 @@ namespace PersonalTools.UserControls
                 string ivInput = AesIV.Text;
                 if (string.IsNullOrEmpty(ivInput))
                 {
-                    MessageBox.Show("当前模式需要IV向量", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageHelper.ShowInfo("当前模式需要IV向量");
                     return false;
                 }
 
                 // 验证IV长度（对于AES，IV长度应该是16字节）
                 if (!IsValidIVLength(ivInput, AesIVStringRadio.IsChecked == true))
                 {
-                    MessageBox.Show("IV向量长度不正确。应为16字节", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageHelper.ShowInfo("IV向量长度不正确。应为16字节");
                     return false;
                 }
                 iv = GetIVBytes(ivInput, AesIVStringRadio.IsChecked == true);
@@ -237,7 +237,7 @@ namespace PersonalTools.UserControls
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"处理文件时发生错误: {ex.Message}");
             }
         }
 

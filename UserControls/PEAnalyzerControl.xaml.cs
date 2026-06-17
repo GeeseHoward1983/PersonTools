@@ -1,6 +1,7 @@
 using PersonalTools.PEAnalyzer;
 using PersonalTools.PEAnalyzer.Models;
 using PersonalTools.PEAnalyzer.Parsers;
+using PersonalTools.Utils;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -62,7 +63,7 @@ namespace PersonalTools.UserControls
             }
             catch (Exception ex) when (ex is FileNotFoundException or UnauthorizedAccessException or IOException or ArgumentException)
             {
-                MessageBox.Show($"加载文件时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"加载文件时出错: {ex.Message}");
             }
         }
 

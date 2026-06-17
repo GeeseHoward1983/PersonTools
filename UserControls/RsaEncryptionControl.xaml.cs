@@ -42,13 +42,13 @@ namespace PersonalTools.UserControls
 
             if (string.IsNullOrEmpty(input))
             {
-                MessageBox.Show("请输入要加密的文本", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageHelper.ShowInfo("请输入要加密的文本");
                 return;
             }
 
             if (string.IsNullOrEmpty(publicKey))
             {
-                MessageBox.Show("请输入公钥", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageHelper.ShowInfo("请输入公钥");
                 return;
             }
 
@@ -59,7 +59,7 @@ namespace PersonalTools.UserControls
             }
             catch (Exception ex) when (ex is CryptographicException or ArgumentException)
             {
-                MessageBox.Show($"RSA加密失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"RSA加密失败: {ex.Message}");
             }
         }
 
@@ -71,13 +71,13 @@ namespace PersonalTools.UserControls
 
             if (string.IsNullOrEmpty(input))
             {
-                MessageBox.Show("请输入要解密的文本", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageHelper.ShowInfo("请输入要解密的文本");
                 return;
             }
 
             if (string.IsNullOrEmpty(privateKey))
             {
-                MessageBox.Show("请输入私钥", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageHelper.ShowInfo("请输入私钥");
                 return;
             }
 
@@ -88,7 +88,7 @@ namespace PersonalTools.UserControls
             }
             catch (Exception ex) when (ex is CryptographicException or ArgumentException)
             {
-                MessageBox.Show($"RSA解密失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"RSA解密失败: {ex.Message}");
             }
         }
 
@@ -100,13 +100,13 @@ namespace PersonalTools.UserControls
 
             if (string.IsNullOrEmpty(input))
             {
-                MessageBox.Show("请输入要签名的数据", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageHelper.ShowInfo("请输入要签名的数据");
                 return;
             }
 
             if (string.IsNullOrEmpty(privateKey))
             {
-                MessageBox.Show("请输入私钥", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageHelper.ShowInfo("请输入私钥");
                 return;
             }
 
@@ -117,7 +117,7 @@ namespace PersonalTools.UserControls
             }
             catch (Exception ex) when (ex is CryptographicException or ArgumentException)
             {
-                MessageBox.Show($"RSA签名失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"RSA签名失败: {ex.Message}");
             }
         }
 
@@ -130,19 +130,19 @@ namespace PersonalTools.UserControls
 
             if (string.IsNullOrEmpty(input))
             {
-                MessageBox.Show("请输入原始数据", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageHelper.ShowInfo("请输入原始数据");
                 return;
             }
 
             if (string.IsNullOrEmpty(signature))
             {
-                MessageBox.Show("请输入签名值", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageHelper.ShowInfo("请输入签名值");
                 return;
             }
 
             if (string.IsNullOrEmpty(publicKey))
             {
-                MessageBox.Show("请输入公钥", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageHelper.ShowInfo("请输入公钥");
                 return;
             }
 
@@ -151,16 +151,16 @@ namespace PersonalTools.UserControls
                 bool isValid = RsaCryptoService.Verify(input, signature, publicKey, RsaInputStringRadio.IsChecked == true);
                 if (isValid)
                 {
-                    MessageBox.Show("验签成功！", "结果", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageHelper.ShowInfo("验签成功！", "结果");
                 }
                 else
                 {
-                    MessageBox.Show("验签失败！", "结果", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageHelper.ShowWarning("验签失败！", "结果");
                 }
             }
             catch (Exception ex) when (ex is CryptographicException or ArgumentException)
             {
-                MessageBox.Show($"RSA验签失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"RSA验签失败: {ex.Message}");
             }
         }
 
@@ -172,7 +172,7 @@ namespace PersonalTools.UserControls
                 RsaKeySizeOption? selectedOption = (RsaKeySizeOption?)RsaKeySizeComboBox.SelectedItem;
                 if (selectedOption == null)
                 {
-                    MessageBox.Show("请选择密钥长度", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageHelper.ShowInfo("请选择密钥长度");
                     return;
                 }
 
@@ -180,11 +180,11 @@ namespace PersonalTools.UserControls
                 RsaPublicKey.Text = publicKey;
                 RsaPrivateKey.Text = privateKey;
 
-                MessageBox.Show("密钥对生成成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageHelper.ShowInfo("密钥对生成成功！");
             }
             catch (Exception ex) when (ex is CryptographicException or ArgumentOutOfRangeException)
             {
-                MessageBox.Show($"生成密钥对时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"生成密钥对时发生错误: {ex.Message}");
             }
         }
 
@@ -212,7 +212,7 @@ namespace PersonalTools.UserControls
                 string pem = File.ReadAllText(openFileDialog.FileName);
                 if (!RsaCryptoService.IsValidPem(pem))
                 {
-                    MessageBox.Show($"选择的文件不是有效的{kind}文件！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageHelper.ShowError($"选择的文件不是有效的{kind}文件！");
                     return;
                 }
 
@@ -224,11 +224,11 @@ namespace PersonalTools.UserControls
                 {
                     RsaPrivateKey.Text = pem;
                 }
-                MessageBox.Show($"{kind}导入成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageHelper.ShowInfo($"{kind}导入成功！");
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                MessageBox.Show($"导入{kind}时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"导入{kind}时发生错误: {ex.Message}");
             }
         }
 
@@ -265,11 +265,11 @@ namespace PersonalTools.UserControls
             }
             catch (IOException ex)
             {
-                MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"处理文件时发生错误: {ex.Message}");
             }
             catch (UnauthorizedAccessException ex)
             {
-                MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"处理文件时发生错误: {ex.Message}");
             }
         }
 

@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using PersonalTools.Utils;
 
 namespace PersonalTools.UserControls
 {
@@ -24,7 +25,7 @@ namespace PersonalTools.UserControls
                 string input = UrlInput.Text;
                 if (string.IsNullOrEmpty(input))
                 {
-                    MessageBox.Show("请输入要编码的URL", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageHelper.ShowInfo("请输入要编码的URL");
                     return;
                 }
 
@@ -33,7 +34,7 @@ namespace PersonalTools.UserControls
             }
             catch (ArgumentNullException ex)
             {
-                MessageBox.Show($"URL编码时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"URL编码时发生错误: {ex.Message}");
             }
         }
 
@@ -45,7 +46,7 @@ namespace PersonalTools.UserControls
                 string input = UrlResult.Text;
                 if (string.IsNullOrEmpty(input))
                 {
-                    MessageBox.Show("输出框中没有可解码的内容", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageHelper.ShowInfo("输出框中没有可解码的内容");
                     return;
                 }
 
@@ -54,7 +55,7 @@ namespace PersonalTools.UserControls
             }
             catch (Exception ex) when (ex is ArgumentNullException or UriFormatException)
             {
-                MessageBox.Show($"URL解码时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"URL解码时发生错误: {ex.Message}");
             }
         }
 

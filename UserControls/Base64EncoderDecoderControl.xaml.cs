@@ -29,7 +29,7 @@ namespace PersonalTools.UserControls
                 string input = Base64Input.Text;
                 if (string.IsNullOrEmpty(input))
                 {
-                    MessageBox.Show("请输入要编码的文本", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageHelper.ShowInfo("请输入要编码的文本");
                     return;
                 }
 
@@ -40,7 +40,7 @@ namespace PersonalTools.UserControls
             }
             catch (Exception ex) when (ex is ArgumentNullException or FormatException or ObjectDisposedException)
             {
-                MessageBox.Show($"Base64编码时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"Base64编码时发生错误: {ex.Message}");
             }
         }
 
@@ -52,7 +52,7 @@ namespace PersonalTools.UserControls
                 string input = Base64Result.Text;
                 if (string.IsNullOrEmpty(input))
                 {
-                    MessageBox.Show("请输入要解码的文本", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageHelper.ShowInfo("请输入要解码的文本");
                     return;
                 }
 
@@ -63,7 +63,7 @@ namespace PersonalTools.UserControls
             }
             catch (Exception ex) when (ex is ArgumentNullException or FormatException or ObjectDisposedException)
             {
-                MessageBox.Show($"Base64解码时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"Base64解码时发生错误: {ex.Message}");
             }
         }
 
@@ -113,7 +113,7 @@ namespace PersonalTools.UserControls
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"处理文件时发生错误: {ex.Message}");
             }
         }
     }

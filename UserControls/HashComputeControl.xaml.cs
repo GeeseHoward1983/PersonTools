@@ -79,7 +79,7 @@ namespace PersonalTools.UserControls
         {
             if (string.IsNullOrEmpty(row.InputText))
             {
-                MessageBox.Show($"请输入要计算{row.Name}的值", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageHelper.ShowInfo($"请输入要计算{row.Name}的值");
                 return;
             }
 
@@ -90,7 +90,7 @@ namespace PersonalTools.UserControls
             }
             catch (Exception ex) when (ex is FormatException or ArgumentException)
             {
-                MessageBox.Show($"计算{row.Name}时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"计算{row.Name}时发生错误: {ex.Message}");
             }
         }
 
@@ -100,7 +100,7 @@ namespace PersonalTools.UserControls
             string input = SHA3InputTextBox.Text;
             if (string.IsNullOrEmpty(input))
             {
-                MessageBox.Show("请输入要计算SHA3的值", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageHelper.ShowInfo("请输入要计算SHA3的值");
                 return;
             }
 
@@ -112,7 +112,7 @@ namespace PersonalTools.UserControls
                 // 获取选中的算法选项
                 if (SHA3AlgorithmComboBox.SelectedItem is not Sha3AlgorithmOption selectedOption)
                 {
-                    MessageBox.Show("请选择SHA3算法类型", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageHelper.ShowInfo("请选择SHA3算法类型");
                     return;
                 }
 
@@ -123,7 +123,7 @@ namespace PersonalTools.UserControls
             }
             catch (Exception ex) when (ex is FormatException or ArgumentNullException or ArgumentOutOfRangeException)
             {
-                MessageBox.Show($"计算SHA3时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"计算SHA3时发生错误: {ex.Message}");
             }
         }
 
@@ -162,7 +162,7 @@ namespace PersonalTools.UserControls
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                MessageBox.Show($"处理文件时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageHelper.ShowError($"处理文件时发生错误: {ex.Message}");
             }
         }
 
