@@ -1,5 +1,4 @@
 using System.IO;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using PersonalTools.Utils;
@@ -34,18 +33,7 @@ namespace PersonalTools.UserControls
                     return;
                 }
 
-                byte[] bytes;
-
-                if (Base64HexInputRadio.IsChecked == true)
-                {
-                    // Hex字符串模式
-                    bytes = ConvertUtils.HexStringToByteArray(input);
-                }
-                else
-                {
-                    // 普通字符串模式
-                    bytes = Encoding.UTF8.GetBytes(input);
-                }
+                byte[] bytes = ConvertUtils.InputBytes(input, Base64HexInputRadio.IsChecked == true);
 
                 string result = Convert.ToBase64String(bytes);
                 Base64Result.Text = result;
@@ -78,20 +66,8 @@ namespace PersonalTools.UserControls
 
                 byte[] bytes = Convert.FromBase64String(input);
 
-                // 检查解码结果中是否包含不可见字符
-                string decodedString = Encoding.UTF8.GetString(bytes);
-
-                if (ContainsInvisibleCharacters(bytes))
-                {
-                    // 如果包含不可见字符，转换为Hex字符串显示
-                    string hexString = ConvertUtils.ToHexString(bytes);
-                    Base64Input.Text = hexString;
-                }
-                else
-                {
-                    // 否则显示普通字符串
-                    Base64Input.Text = decodedString;
-                }
+                // 含不可见字符时转 Hex 显示避免乱码，否则按 UTF-8 文本显示
+                Base64Input.Text = ConvertUtils.OutputString(bytes, ContainsInvisibleCharacters(bytes));
             }
             catch (ArgumentNullException ex)
             {

@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using System.Text;
 
 namespace PersonalTools.Utils
@@ -59,30 +58,20 @@ namespace PersonalTools.Utils
 
         public static string EnumerableToString(string? separator, IEnumerable<string> values)
         {
-            return values.Any() switch
-            {
-                true => string.Join(separator, values),
-                false => string.Empty
-            };
+            // string.Join 对空序列本就返回 string.Empty，无需额外 Any() 判空（避免二次枚举惰性序列）
+            return string.Join(separator, values);
         }
 
         /// <summary>按输入模式取字节：isHex=true 按十六进制解析，否则按 UTF-8。</summary>
         public static byte[] InputBytes(string text, bool isHex)
         {
-            return isHex switch
-            {
-                true => HexStringToByteArray(text),
-                false => Encoding.UTF8.GetBytes(text)
-            };
+            return isHex ? HexStringToByteArray(text) : Encoding.UTF8.GetBytes(text);
         }
 
+        /// <summary>按输出模式取字符串：isHex=true 转十六进制，否则按 UTF-8 解码。</summary>
         public static string OutputString(byte[] bytes, bool isHex)
         {
-            return isHex switch
-            {
-                true => ConvertUtils.ToHexString(bytes),
-                false => Encoding.UTF8.GetString(bytes)
-            };
+            return isHex ? ToHexString(bytes) : Encoding.UTF8.GetString(bytes);
         }
     }
 }

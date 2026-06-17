@@ -1,6 +1,5 @@
 using System.IO;
 using System.Security.Cryptography;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using PersonalTools.Utils;
@@ -86,9 +85,7 @@ namespace PersonalTools.UserControls
 
             try
             {
-                byte[] inputBytes = row.IsHexMode
-                    ? ConvertUtils.HexStringToByteArray(row.InputText)
-                    : Encoding.UTF8.GetBytes(row.InputText);
+                byte[] inputBytes = ConvertUtils.InputBytes(row.InputText, row.IsHexMode);
                 row.Result = ConvertUtils.ToHexString(row.HashFunc(inputBytes));
             }
             catch (FormatException ex)
@@ -113,23 +110,8 @@ namespace PersonalTools.UserControls
 
             try
             {
-                byte[] inputBytes;
-
-                if (SHA3StringInputRadio.IsChecked == true)
-                {
-                    // 普通字符串模式
-                    inputBytes = Encoding.UTF8.GetBytes(input);
-                }
-                else if (SHA3HexInputRadio.IsChecked == true)
-                {
-                    // Hex字符串模式
-                    inputBytes = ConvertUtils.HexStringToByteArray(input);
-                }
-                else
-                {
-                    // 默认使用普通字符串模式
-                    inputBytes = Encoding.UTF8.GetBytes(input);
-                }
+                // 仅 Hex 单选钮被选中时按十六进制解析，其余（含未选）默认 UTF-8
+                byte[] inputBytes = ConvertUtils.InputBytes(input, SHA3HexInputRadio.IsChecked == true);
 
                 // 获取选中的算法选项
                 if (SHA3AlgorithmComboBox.SelectedItem is not Sha3AlgorithmOption selectedOption)

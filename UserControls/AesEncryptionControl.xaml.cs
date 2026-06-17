@@ -1,6 +1,5 @@
 using System.IO;
 using System.Security.Cryptography;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using PersonalTools.Utils;
@@ -201,23 +200,14 @@ namespace PersonalTools.UserControls
         // 获取密钥字节数组
         private static byte[] GetKeyBytes(string keyInput, bool isString)
         {
-            if (isString)
-            {
-                // 普通字符串模式
-                return Encoding.UTF8.GetBytes(keyInput);
-            }
-            else
-            {
-                // Hex字符串模式
-                return ConvertUtils.HexStringToByteArray(keyInput);
-            }
+            return ConvertUtils.InputBytes(keyInput, !isString);
         }
 
         // 获取IV字节数组
         private static byte[] GetIVBytes(string ivInput, bool isString)
         {
             // 不做截断/补齐：交由 IsValidIVLength 按字节长度校验，避免静默改变用户输入的 IV
-            return isString ? Encoding.UTF8.GetBytes(ivInput) : ConvertUtils.HexStringToByteArray(ivInput);
+            return ConvertUtils.InputBytes(ivInput, !isString);
         }
 
         // 验证密钥长度是否正确（按实际字节数校验，兼容多字节字符）
