@@ -17,7 +17,7 @@ namespace PersonalTools
             PEHost.EmptyHintText = "拖入或打开 PE 文件 (*.exe / *.dll / *.sys)";
             PEHost.AnalyzerFactory = () => new PEAnalyzerControl();
 
-            ELFHost.FileFilter = "Executable and Linkable Format files (*.elf)|*.elf|All files (*.*)|*.*";
+            ELFHost.FileFilter = "ELF files (*.elf;*.so)|*.elf;*.so|All files (*.*)|*.*";
             ELFHost.EmptyHintText = "拖入或打开 ELF 文件 (*.elf / *.so / 可执行文件)";
             ELFHost.AnalyzerFactory = () => new ELFAnalyzerControl();
         }

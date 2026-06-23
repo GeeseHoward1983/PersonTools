@@ -79,8 +79,10 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 if (fs.Position + 16 > fs.Length)
                 {
+                    // 数据截断：保留已成功解析的前 i 个条目并按成功返回(降级)，
+                    // 而非整组丢弃，使损坏图标资源仍能展示已读到的部分。
                     iconDirEntries = iconDirEntries[0..i];
-                    return false;
+                    return i > 0;
                 }
 
                 iconDirEntries[i] = new ICONDIRENTRY
@@ -129,13 +131,12 @@ namespace PersonalTools.PEAnalyzer.Resources
                 return null;
             }
 
-            // 在 long 上计算以避免 6+16+BytesInRes 的 int 溢出
+            // 在 long 上计算以避免 6+16+BytesInRes 的 int 溢出；据声明的 BytesInRes 做上限拦截（拒绝过大图标）
             long fullIconDataSizeLong = 6L + 16 + entry.BytesInRes;
             if (fullIconDataSizeLong <= 0 || fullIconDataSizeLong >= 10 * 1024 * 1024)
             {
                 return null;
             }
-            int fullIconDataSize = (int)fullIconDataSizeLong;
 
             byte[]? imageData = ReadIconImageData(fs, reader, iconDataOffset, entry.BytesInRes);
             if (imageData == null)
@@ -143,13 +144,17 @@ namespace PersonalTools.PEAnalyzer.Resources
                 return null;
             }
 
+            // 以实际读到的 imageData.Length 重算尺寸：截断兜底时数据可能短于声明的 BytesInRes，
+            // 保证 .ico 缓冲大小与目录项 BytesInRes 三者一致，避免下游解码读到尾部填充零
+            int actualFullSize = 6 + 16 + imageData.Length;
+
             return new IconInfo
             {
                 Width = width,
                 Height = height,
                 BitsPerPixel = entry.BitCount,
-                Size = fullIconDataSize,
-                Data = BuildSingleIconFile(entry, imageData, fullIconDataSize)
+                Size = actualFullSize,
+                Data = BuildSingleIconFile(entry, imageData, actualFullSize)
             };
         }
 
@@ -179,7 +184,8 @@ namespace PersonalTools.PEAnalyzer.Resources
 
             fs.Position = iconDataOffset;
             byte[] partial = reader.ReadBytes((int)Math.Min(remainingBytes, bytesInRes));
-            return partial.Length == remainingBytes && partial.Length > 0 ? partial : null;
+            // 已按 Min(remaining, bytesInRes) 限制读取量，只要读到非空数据即可用（不与 remainingBytes 做脆弱的等值比较）
+            return partial.Length > 0 ? partial : null;
         }
 
         /// <summary>
@@ -201,7 +207,8 @@ namespace PersonalTools.PEAnalyzer.Resources
             fullIconData[9] = entry.Reserved;
             BitConverter.GetBytes(entry.Planes).CopyTo(fullIconData, 10);
             BitConverter.GetBytes(entry.BitCount).CopyTo(fullIconData, 12);
-            BitConverter.GetBytes(entry.BytesInRes).CopyTo(fullIconData, 14);
+            // 目录项 BytesInRes 写实际数据长度（而非声明的 entry.BytesInRes），与缓冲及位图数据保持一致
+            BitConverter.GetBytes((uint)imageData.Length).CopyTo(fullIconData, 14);
             BitConverter.GetBytes((uint)(6 + 16)).CopyTo(fullIconData, 18);
 
             // 位图数据 @ offset 22

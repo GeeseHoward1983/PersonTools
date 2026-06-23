@@ -28,15 +28,16 @@ namespace PersonalTools.MarkdownToWord.Docx
 
             DocxRenderContext ctx = new(mainPart, settings, baseDir);
 
-            // 封面与目录同属第 1 节（不显示页码）；二者之间靠「目录段前分页」过渡，避免多余空段落
+            // 封面与目录同属第 1 节（不显示页码）；二者之间靠「目录段前分页」过渡，避免多余空段落。
+            // 仅当文档首个块即为一级标题时才视作封面：否则把正文中间的一级标题抽出当封面，
+            // 会让它从原位置消失、出现在文首，与正文渲染时的标题判定不一致。
             List<Block> blocks = [.. ast];
-            int coverIndex = blocks.FindIndex(b => b is HeadingBlock { Level: 1 });
-            bool hasCover = coverIndex >= 0;
+            bool hasCover = blocks.Count > 0 && blocks[0] is HeadingBlock { Level: 1 };
             if (hasCover)
             {
-                DocxCoverBuilder.RenderCover((HeadingBlock)blocks[coverIndex], body, ctx);
+                DocxCoverBuilder.RenderCover((HeadingBlock)blocks[0], body, ctx);
                 ctx.CoverRendered = true;
-                blocks.RemoveAt(coverIndex);
+                blocks.RemoveAt(0);
             }
 
             if (settings.GenerateToc)

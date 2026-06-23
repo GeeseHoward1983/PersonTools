@@ -78,16 +78,19 @@ namespace PersonalTools.PEAnalyzer.Parsers
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 // 忽略导出表解析错误
-                Console.WriteLine($"导出表解析错误: {ex.Message}");
+                PersonalTools.Utils.AppLogger.Log($"导出表解析错误: {ex.Message}");
             }
         }
 
         // 构造单个导出函数项（含序号、名称、转发目标）
         private static ExportFunctionInfo BuildExportFunction(FileStream fs, BinaryReader reader, List<IMAGE_SECTION_HEADER> sections, int i, uint functionRVA, uint baseOrdinal, Dictionary<int, string> functionNames, uint exportRVA, uint exportSize)
         {
+            // baseOrdinal 取自不可信导出目录，i+baseOrdinal 用 long 计算避免回绕；
+            // 序号超出 int 范围时夹到 int.MaxValue，防止 (int) 强转得到负序号
+            long ordinal = (long)i + baseOrdinal;
             ExportFunctionInfo exportFunc = new()
             {
-                Ordinal = (int)(i + baseOrdinal),
+                Ordinal = ordinal > int.MaxValue ? int.MaxValue : (int)ordinal,
                 RVA = functionRVA
             };
 
@@ -113,11 +116,16 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 return [];
             }
 
-            long offset = PEParserUtils.RvaToOffset(rva, sections);
+            // 安全：count 取自不可信导出目录，先夹到 PE 序号上限(64K)，避免畸形巨值触发海量空对象构造/界面卡死。
+            int clampedCount = (int)Math.Min(count, (uint)PEConstants.MaxExportEntries);
+
+            // 用 requiredLength = clampedCount*4 让整段必须落在同一节内，否则 RvaToOffset 返回 -1：
+            // 既防越界，也避免内层循环以 fs.Length 为界跨节读到 EOF（旧实现的 DoS/误读向量）。
+            long offset = PEParserUtils.RvaToOffset(rva, sections, (uint)(clampedCount * 4));
             return PEParserUtils.ReadAtOffset(fs, offset, new List<uint>(), () =>
             {
-                List<uint> result = [];
-                for (int i = 0; i < count && fs.Position + 4 <= fs.Length; i++)
+                List<uint> result = new(clampedCount);
+                for (int i = 0; i < clampedCount; i++)
                 {
                     result.Add(reader.ReadUInt32());
                 }
@@ -133,11 +141,14 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 return [];
             }
 
-            long offset = PEParserUtils.RvaToOffset(rva, sections);
+            int clampedCount = (int)Math.Min(count, (uint)PEConstants.MaxExportEntries);
+
+            // 同 ReadUInt32ListAtRva：整段(每项 2 字节)须落在同一节内，否则返回 -1 降级为空表。
+            long offset = PEParserUtils.RvaToOffset(rva, sections, (uint)(clampedCount * 2));
             return PEParserUtils.ReadAtOffset(fs, offset, new List<ushort>(), () =>
             {
-                List<ushort> result = [];
-                for (int i = 0; i < count && fs.Position + 2 <= fs.Length; i++)
+                List<ushort> result = new(clampedCount);
+                for (int i = 0; i < clampedCount; i++)
                 {
                     result.Add(reader.ReadUInt16());
                 }

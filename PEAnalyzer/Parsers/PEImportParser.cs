@@ -26,7 +26,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
-                Console.WriteLine($"导入表解析错误: {ex.Message}");
+                PersonalTools.Utils.AppLogger.Log($"导入表解析错误: {ex.Message}");
             }
         }
 
@@ -53,9 +53,14 @@ namespace PersonalTools.PEAnalyzer.Parsers
             {
                 fs.Position = importOffset;
 
-                // 循环读取导入描述符直到遇到全零的描述符
-                while (fs.Position + PEConstants.ImportDescriptorSize <= fs.Length)
+                // 循环读取导入描述符直到遇到全零的描述符。
+                // 硬上限防御：满构造的大文件可让循环跑 fs.Length/20 次、每次再读字符串/解析函数，
+                // 故对描述符数量设上限（远超真实 PE 的依赖 DLL 数），避免 UI 线程长时间卡死。
+                int descriptorCount = 0;
+                while (fs.Position + PEConstants.ImportDescriptorSize <= fs.Length
+                    && descriptorCount < PEConstants.MaxImportDescriptors)
                 {
+                    descriptorCount++;
                     IMAGE_IMPORT_DESCRIPTOR importDesc = new()
                     {
                         OriginalFirstThunk = reader.ReadUInt32(),
@@ -70,11 +75,12 @@ namespace PersonalTools.PEAnalyzer.Parsers
                         break;
                     }
 
-                    // 解析 DLL 名称；名称 RVA 无法解析时跳过该描述符
+                    // 解析 DLL 名称；名称 RVA 无法解析通常意味着已越过表尾或数据损坏，结束扫描
+                    // （与延迟加载表一致用 break，而非 continue 继续把后续字节误读为描述符）
                     (long nameOffset, string dllName) = ReadStringAtRva(fs, reader, peInfo, importDesc.Name);
                     if (nameOffset == -1)
                     {
-                        continue;
+                        break;
                     }
 
                     if (!string.IsNullOrEmpty(dllName))
@@ -139,7 +145,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
-                Console.WriteLine($"导入函数解析错误: {ex.Message}");
+                PersonalTools.Utils.AppLogger.Log($"导入函数解析错误: {ex.Message}");
             }
         }
 
@@ -190,9 +196,19 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
         private static void AddDependencyIfMissing(PEInfo peInfo, string dllName)
         {
-            if (!peInfo.Dependencies.Exists(dep => dep.Name.Equals(dllName, StringComparison.OrdinalIgnoreCase)))
+            // 纵深防御：DLL 名取自不可信导入表。已是裸文件名则原样记录；含路径成分时仅保留文件名部分，
+            // 避免伪造名传播到 DependencyResolver 的路径拼接（与 DependencyResolver 的 IsBareFileName 入口校验形成双重防护）。
+            string safeName = PersonalTools.Utils.PathSafety.IsBareFileName(dllName)
+                ? dllName
+                : Path.GetFileName(dllName);
+            if (string.IsNullOrEmpty(safeName))
             {
-                peInfo.Dependencies.Add(new DependencyInfo { Name = dllName });
+                return;
+            }
+
+            if (!peInfo.Dependencies.Exists(dep => dep.Name.Equals(safeName, StringComparison.OrdinalIgnoreCase)))
+            {
+                peInfo.Dependencies.Add(new DependencyInfo { Name = safeName });
             }
         }
 
@@ -212,7 +228,8 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 return;
             }
 
-            long nameOffset = PEParserUtils.RvaToOffset((uint)thunkRva, sections);
+            // requiredLength=2 至少覆盖 Hint 字段，保证 hint 与函数名起始落在同一节内，减少跨节误读
+            long nameOffset = PEParserUtils.RvaToOffset((uint)thunkRva, sections, 2);
             if (nameOffset == -1 || nameOffset >= fs.Length)
             {
                 SetImportFunc(importFunc, $"INVALID_RVA_{thunkRva:X8}", 0, false);

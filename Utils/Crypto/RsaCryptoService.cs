@@ -21,7 +21,7 @@ namespace PersonalTools.Utils.Crypto
                 byte[] encryptedBytes = rsa.Encrypt(inputBytes, RSAEncryptionPadding.OaepSHA256);
                 return ConvertUtils.ToHexString(encryptedBytes);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is CryptographicException or ArgumentException or FormatException)
             {
                 throw new CryptographicException($"导入公钥或加密失败: {ex.Message}", ex);
             }
@@ -40,7 +40,7 @@ namespace PersonalTools.Utils.Crypto
                 // 与加密对称：String 模式按 UTF-8 文本输出，Hex 模式按十六进制输出，避免二进制明文被 UTF-8 解码损坏
                 return ConvertUtils.OutputString(decryptedBytes, !isString);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is CryptographicException or ArgumentException or FormatException)
             {
                 throw new CryptographicException($"导入私钥或解密失败: {ex.Message}", ex);
             }
@@ -58,7 +58,7 @@ namespace PersonalTools.Utils.Crypto
                 byte[] signatureBytes = rsa.SignData(inputBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
                 return ConvertUtils.ToHexString(signatureBytes);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is CryptographicException or ArgumentException or FormatException)
             {
                 throw new CryptographicException($"导入私钥或签名失败: {ex.Message}", ex);
             }

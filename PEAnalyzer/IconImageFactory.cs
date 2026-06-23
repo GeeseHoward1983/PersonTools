@@ -38,7 +38,7 @@ namespace PersonalTools.PEAnalyzer
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
             {
-                Console.WriteLine($"图标解码失败: {ex.Message}");
+                PersonalTools.Utils.AppLogger.Log($"图标解码失败: {ex.Message}");
                 return null;
             }
         }

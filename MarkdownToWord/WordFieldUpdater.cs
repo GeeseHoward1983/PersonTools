@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace PersonalTools.MarkdownToWord
 {
@@ -13,6 +14,10 @@ namespace PersonalTools.MarkdownToWord
         private const int WdDoNotSaveChanges = 0;
         private const int WdAlertsNone = 0;
 
+        // Word COM 操作总超时：遇模态弹窗(激活向导/加载项)等情形同步 COM 调用会无限阻塞，
+        // 在专用线程上执行并限时等待，超时即放弃，避免导出流程永久挂死。
+        private static readonly TimeSpan WordTimeout = TimeSpan.FromSeconds(60);
+
         /// <summary>用 Word 打开文档、更新全部域与目录、保存关闭。成功返回 true。</summary>
         public static bool TryUpdateFields(string docxPath)
         {
@@ -22,6 +27,20 @@ namespace PersonalTools.MarkdownToWord
                 return false; // 未安装 Word
             }
 
+            bool result = false;
+            // 专用 STA 线程执行 COM；主线程限时 Join，超时则不再等待（后台线程随进程结束回收）。
+            Thread worker = new(() => result = RunUpdate(wordType, docxPath))
+            {
+                IsBackground = true,
+            };
+            worker.SetApartmentState(ApartmentState.STA);
+            worker.Start();
+
+            return worker.Join(WordTimeout) && result;
+        }
+
+        private static bool RunUpdate(Type wordType, string docxPath)
+        {
             dynamic? app = null;
             dynamic? doc = null;
             try
@@ -48,16 +67,14 @@ namespace PersonalTools.MarkdownToWord
                 doc.Fields.Update();
 
                 doc.Save();
-                doc.Close(WdDoNotSaveChanges);
-                doc = null;
-                app.Quit();
-                app = null;
+                // 不在此手动 Close/Quit/置 null：统一交 finally 的 CleanUp 完成关闭、退出与
+                // Marshal.FinalReleaseComObject，确保成功路径下 RCW 也被释放（此前置 null 会令 CleanUp 跳过释放）
                 return true;
             }
 #pragma warning disable CA1031 // COM 互操作可抛出多种不可预知异常，统一兜底以免影响导出主流程
             catch (Exception ex)
             {
-                Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"调用 Word 更新域失败: {ex.Message}"));
+                PersonalTools.Utils.AppLogger.Log(string.Create(CultureInfo.InvariantCulture, $"调用 Word 更新域失败: {ex.Message}"));
                 return false;
             }
 #pragma warning restore CA1031

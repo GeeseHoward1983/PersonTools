@@ -53,7 +53,11 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             magic.Append(CultureInfo.InvariantCulture, $"{header.EI_OSABI:X2} ");
             magic.Append(CultureInfo.InvariantCulture, $"{header.EI_ABIVERSION:X2} ");
 
-            magic.Append(CultureInfo.InvariantCulture, $"{ConvertUtils.ToHexString(header.EI_PAD)}");
+            // EI_PAD 逐字节按 "XX " 格式追加，与前 9 字节保持一致的空格分隔（避免拼成无分隔的连串，与 readelf 的 16 字节格式一致）
+            foreach (byte pad in header.EI_PAD)
+            {
+                magic.Append(CultureInfo.InvariantCulture, $"{pad:X2} ");
+            }
             return magic.ToString().Trim();
         }
 

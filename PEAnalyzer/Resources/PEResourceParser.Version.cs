@@ -129,8 +129,9 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 IMAGE_RESOURCE_DATA_ENTRY dataEntry = ResourceDirectoryReader.ReadDataEntry(reader);
 
-                // OffsetToData 为 RVA
-                long dataOffset = PEParserUtils.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
+                // OffsetToData 为 RVA；传 Size 作为 requiredLength，确保整个版本数据块落在同一节内，
+                // 否则 Size 跨节时仍被判可读，VS_VERSIONINFO 会从错误节区起始解析致结果错乱。
+                long dataOffset = PEParserUtils.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders, dataEntry.Size);
                 if (ResourceDirectoryReader.IsReadableData(dataOffset, dataEntry.Size, fs))
                 {
                     fs.Position = dataOffset;

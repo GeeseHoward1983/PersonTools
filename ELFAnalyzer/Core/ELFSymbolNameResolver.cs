@@ -52,8 +52,9 @@ namespace PersonalTools.ELFAnalyzer.Core
                 return baseName;
             }
 
-            ushort versionIndex = (ushort)(parser.VersionSymbols[symbolIndex] & 0x7fff); // 去除隐藏标志
-            if (versionIndex < 2) // 版本索引从2开始是有效的外部版本
+            ushort rawVersion = parser.VersionSymbols[symbolIndex];
+            ushort versionIndex = (ushort)(rawVersion & 0x7fff); // 低 15 位为版本索引
+            if (versionIndex < 2) // 0=local,1=global(无版本)，≥2 才是有效外部版本
             {
                 return baseName;
             }
@@ -64,8 +65,9 @@ namespace PersonalTools.ELFAnalyzer.Core
                 return baseName;
             }
 
-            // 判断是否是默认版本符号 (@@ 表示默认版本，否则 @)
-            bool isDefaultVersion = IsDefaultVersionSymbol(parser, symbolIndex, symbols);
+            // 默认版本判定：.gnu.version 条目最高位(0x8000, VERSYM_HIDDEN) 未置位即默认版本，
+            // 默认版本用 "@@"，非默认(隐藏)用 "@"，与 readelf 一致
+            bool isDefaultVersion = (rawVersion & 0x8000) == 0;
             return baseName + (isDefaultVersion ? "@@" : "@") + versionName;
         }
 
@@ -75,27 +77,6 @@ namespace PersonalTools.ELFAnalyzer.Core
             return parser.VersionDefinitions.GetValueOrDefault(versionIndex)
                 ?? parser.VersionDependencies.GetValueOrDefault(versionIndex)
                 ?? $"VER_{versionIndex}";
-        }
-
-        private static bool IsDefaultVersionSymbol(ELFParser parser, int symbolIndex, List<ELFSymbol> symbols)
-        {
-            // 简化实现：对于动态符号，根据符号绑定类型判断
-            // 全局符号且版本号最低的为默认版本
-            if (symbolIndex < parser.VersionSymbols.Length && symbolIndex < symbols.Count)
-            {
-                ELFSymbol symbol = symbols[symbolIndex];
-                ushort versionIndex = (ushort)(parser.VersionSymbols[symbolIndex] & 0x7fff);
-
-                // 检查是否是全局符号
-                byte binding = (byte)(symbol.StInfo >> 4);
-                if (binding is ((byte)SymbolBinding.STB_GLOBAL) or ((byte)SymbolBinding.STB_WEAK))
-                {
-                    // 简化处理：如果符号版本号是某个特定值，则认为是默认版本
-                    return versionIndex == 1; // 版本1通常是默认版本
-                }
-            }
-
-            return false;
         }
 
         internal static string GetSectionName(ELFParser parser, int index)

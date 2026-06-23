@@ -61,7 +61,9 @@ namespace PersonalTools.PEAnalyzer.Resources
             long pos = certificateOffset;
             List<string> certs = [];
 
-            while (pos + 8 <= certEnd && pos + 8 <= fs.Length)
+            // 证书条目数硬上限：真实 PE 多重签名至多个位数，畸形安全目录可枚举大量伪证书撑内存
+            const int MaxCertificates = 64;
+            while (pos + 8 <= certEnd && pos + 8 <= fs.Length && certs.Count < MaxCertificates)
             {
                 fs.Position = pos;
                 WIN_CERTIFICATE certHeader = new()
@@ -71,7 +73,8 @@ namespace PersonalTools.PEAnalyzer.Resources
                     wCertificateType = reader.ReadUInt16()
                 };
 
-                if (certHeader.dwLength < 8 || pos + certHeader.dwLength > certEnd)
+                // dwLength 须 ≥8(含头) 且不超过证书表剩余；显式上限避免后续 (dwLength+7)&~7 对齐运算回绕
+                if (certHeader.dwLength < 8 || certHeader.dwLength > certificateSize || pos + certHeader.dwLength > certEnd)
                 {
                     break;
                 }

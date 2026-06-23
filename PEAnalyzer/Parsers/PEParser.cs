@@ -30,6 +30,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// <returns>PE文件信息</returns>
         public static PEInfo ParsePEFile(string filePath)
         {
+            // TODO(性能): 本方法为同步全量解析(磁盘 I/O + 六大目录)，当前由 UI 线程直接调用
+            // (PEAnalyzerControl.LoadPEFile / DependencyNode.EnsureLoaded)，大文件或频繁展开依赖树会卡顿。
+            // 后续可提供 ParsePEFileAsync 或调用侧 Task.Run 卸载到后台线程。
             PEInfo peInfo = new() { FilePath = filePath };
 
             using FileStream fs = new(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -53,9 +56,10 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 throw new InvalidDataException("文件不是有效的PE文件: DOS头签名错误。");
             }
 
-            if (peInfo.DosHeader.e_lfanew >= fs.Length)
+            // e_lfanew 须指向 DOS 头(64 字节)之后且在文件内；落在 DOS 头内或文件外均为畸形
+            if (peInfo.DosHeader.e_lfanew < 64 || peInfo.DosHeader.e_lfanew >= fs.Length)
             {
-                throw new InvalidDataException("文件不是有效的PE文件: e_lfanew 指向文件外部。");
+                throw new InvalidDataException("文件不是有效的PE文件: e_lfanew 指向文件外部或 DOS 头内。");
             }
 
             fs.Position = peInfo.DosHeader.e_lfanew;
@@ -98,7 +102,17 @@ namespace PersonalTools.PEAnalyzer.Parsers
         {
             foreach (Action<FileStream, BinaryReader, PEInfo> parse in ContentParsers)
             {
-                parse(fs, reader, peInfo);
+                // 隔离每个内容目录解析：单步对畸形数据抛出的异常（含 ArgumentOutOfRange/EndOfStream 等）
+                // 不应中断后续目录解析（如 CLR 失败不该让图标解析不再执行）
+                try
+                {
+                    parse(fs, reader, peInfo);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
+                    or ArgumentOutOfRangeException or EndOfStreamException or InvalidDataException or OverflowException)
+                {
+                    PersonalTools.Utils.AppLogger.Log($"内容目录解析错误（已跳过该步）: {ex.Message}");
+                }
             }
         }
     }

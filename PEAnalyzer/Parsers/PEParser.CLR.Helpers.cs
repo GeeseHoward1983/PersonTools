@@ -73,9 +73,10 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// <param name="fs">文件流</param>
         /// <param name="reader">二进制读取器</param>
         /// <param name="heapOffset">#Strings 堆的文件偏移</param>
+        /// <param name="heapSize">#Strings 堆声明大小（0 表示未知，仅退化为文件边界校验）</param>
         /// <param name="index">堆内索引</param>
         /// <returns>字符串</returns>
-        private static string ReadStringFromHeap(FileStream fs, BinaryReader reader, long heapOffset, uint index)
+        private static string ReadStringFromHeap(FileStream fs, BinaryReader reader, long heapOffset, uint heapSize, uint index)
         {
             try
             {
@@ -84,8 +85,16 @@ namespace PersonalTools.PEAnalyzer.Parsers
                     return string.Empty;
                 }
 
+                // 索引必须落在堆声明大小内：否则畸形的超大 index 虽仍在文件内，
+                // 会越过 #Strings 堆读到相邻流字节，被当作伪造的类型名注入导出列表
+                if (heapSize != 0 && index >= heapSize)
+                {
+                    return string.Empty;
+                }
+
                 long targetPosition = heapOffset + index;
-                if (targetPosition < 0 || targetPosition >= fs.Length)
+                long heapEnd = heapSize != 0 ? Math.Min(heapOffset + heapSize, fs.Length) : fs.Length;
+                if (targetPosition < 0 || targetPosition >= heapEnd)
                 {
                     return string.Empty;
                 }
@@ -93,10 +102,10 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 long originalPosition = fs.Position;
                 fs.Position = targetPosition;
 
-                // #Strings 堆为 UTF-8 编码，按 null 结尾读取并限制最大长度
+                // #Strings 堆为 UTF-8 编码，按 null 结尾读取并限制最大长度；同时不越过堆结束边界
                 const int MaxLength = 1024;
                 List<byte> bytes = [];
-                while (fs.Position < fs.Length && bytes.Count < MaxLength)
+                while (fs.Position < heapEnd && bytes.Count < MaxLength)
                 {
                     byte b = reader.ReadByte();
                     if (b == 0)
@@ -112,7 +121,8 @@ namespace PersonalTools.PEAnalyzer.Parsers
             }
             catch (Exception ex) when (ex is EndOfStreamException or IOException or ObjectDisposedException or ArgumentOutOfRangeException)
             {
-                return $"Unknown_Type_{index}";
+                // 读取失败返回空串，让上层 IsNullOrEmpty 跳过该行，避免向类型列表注入伪造的 Unknown_Type_N 数据
+                return string.Empty;
             }
         }
     }

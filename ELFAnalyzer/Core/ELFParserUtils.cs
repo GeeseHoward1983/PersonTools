@@ -11,6 +11,16 @@ namespace PersonalTools.ELFAnalyzer.Core
             return $"0x{address:X}";
         }
 
+        /// <summary>
+        /// 校验 [offset, offset+size) 是否完整落在长度为 <paramref name="length"/> 的缓冲/文件内。
+        /// 用减法式判断（先判 offset 越界，再判 size 超出剩余），避免 offset+size 两个 ulong 相加回绕绕过校验。
+        /// 各解析器(动态段/符号表/节头/程序头/GOT/版本)统一调用，消除重复且形态不一的边界检查。
+        /// </summary>
+        public static bool IsRangeWithin(ulong offset, ulong size, ulong length)
+        {
+            return offset <= length && size <= length - offset;
+        }
+
         public static string ExtractStringFromBytes(byte[] data, int startOffset)
         {
             if (data == null || startOffset < 0 || startOffset >= data.Length)
@@ -81,33 +91,60 @@ namespace PersonalTools.ELFAnalyzer.Core
         }
 
         // ---- Buffer-based readers (already-loaded data, no mutation of the source) ----
+        // 集中边界校验：offset 越界(负/超出剩余字节)时返回 0 而非让 AsSpan 抛异常，
+        // 使任何新增调用点对畸形截断数据都安全降级，而非崩溃中止整份分析。
+
+        private static bool InBounds(byte[] data, int offset, int size)
+        {
+            return data != null && offset >= 0 && offset <= data.Length - size;
+        }
 
         public static ushort ReadUInt16(byte[] data, int offset, bool isLittleEndian)
         {
+            if (!InBounds(data, offset, 2))
+            {
+                return 0;
+            }
             ReadOnlySpan<byte> span = data.AsSpan(offset, 2);
             return isLittleEndian ? BinaryPrimitives.ReadUInt16LittleEndian(span) : BinaryPrimitives.ReadUInt16BigEndian(span);
         }
 
         public static uint ReadUInt32(byte[] data, int offset, bool isLittleEndian)
         {
+            if (!InBounds(data, offset, 4))
+            {
+                return 0;
+            }
             ReadOnlySpan<byte> span = data.AsSpan(offset, 4);
             return isLittleEndian ? BinaryPrimitives.ReadUInt32LittleEndian(span) : BinaryPrimitives.ReadUInt32BigEndian(span);
         }
 
         public static ulong ReadUInt64(byte[] data, int offset, bool isLittleEndian)
         {
+            if (!InBounds(data, offset, 8))
+            {
+                return 0;
+            }
             ReadOnlySpan<byte> span = data.AsSpan(offset, 8);
             return isLittleEndian ? BinaryPrimitives.ReadUInt64LittleEndian(span) : BinaryPrimitives.ReadUInt64BigEndian(span);
         }
 
         public static int ReadInt32(byte[] data, int offset, bool isLittleEndian)
         {
+            if (!InBounds(data, offset, 4))
+            {
+                return 0;
+            }
             ReadOnlySpan<byte> span = data.AsSpan(offset, 4);
             return isLittleEndian ? BinaryPrimitives.ReadInt32LittleEndian(span) : BinaryPrimitives.ReadInt32BigEndian(span);
         }
 
         public static long ReadInt64(byte[] data, int offset, bool isLittleEndian)
         {
+            if (!InBounds(data, offset, 8))
+            {
+                return 0;
+            }
             ReadOnlySpan<byte> span = data.AsSpan(offset, 8);
             return isLittleEndian ? BinaryPrimitives.ReadInt64LittleEndian(span) : BinaryPrimitives.ReadInt64BigEndian(span);
         }

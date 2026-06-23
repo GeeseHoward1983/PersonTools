@@ -23,14 +23,6 @@ namespace PersonalTools.MarkdownToWord.Docx
         [GeneratedRegex(@"^\s*\d+(?:\.\d+)*\.?[ \t　]+")]
         private static partial Regex HeadingNumberPrefix();
 
-        public static void RenderBlocks(IEnumerable<Block> blocks, OpenXmlElement container, DocxRenderContext ctx)
-        {
-            foreach (Block block in blocks)
-            {
-                RenderBlock(block, container, ctx, 0);
-            }
-        }
-
         internal static void RenderBlock(Block block, OpenXmlElement container, DocxRenderContext ctx, int indentLevel)
         {
             switch (block)

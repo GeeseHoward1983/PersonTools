@@ -49,14 +49,18 @@ namespace PersonalTools.PEAnalyzer.Parsers
                     return;
                 }
 
-                // 跳过版本字符串（其长度 length 已按 4 字节对齐，直接定位到 Flags/Streams）
+                // 跳过版本字符串：length 应按 4 字节对齐，显式对齐后再定位，避免畸形非对齐 length 导致 Flags/Streams 错位。
+                // 全程用 long 运算：4GB+ 文件 (fs.Length-versionStart) 截 uint 会丢高位；(length+3) 用 long 也不会回绕。
                 long versionStart = fs.Position;
-                if (length > fs.Length - versionStart)
+                long remaining = fs.Length - versionStart;
+                long alignedLength = Math.Min(length, remaining);
+                alignedLength = (alignedLength + 3L) & ~3L; // 向上 4 字节对齐
+                if (alignedLength > remaining)
                 {
-                    length = (uint)(fs.Length - versionStart);
+                    alignedLength = remaining;
                 }
 
-                fs.Position = versionStart + length;
+                fs.Position = versionStart + alignedLength;
 
                 // 读取 Flags(2) 与 Streams(2)
                 if (fs.Position + 4 > fs.Length)
@@ -68,32 +72,33 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 ushort streams = reader.ReadUInt16();
 
                 // 先收集所有流的位置（#Strings 流可能位于 #~ 表流之后，必须先读全）
-                (long tablesStreamOffset, uint tablesStreamSize, long stringHeapOffset) =
+                (long tablesStreamOffset, uint tablesStreamSize, long stringHeapOffset, uint stringHeapSize) =
                     CollectStreamDirectory(fs, reader, streams, metaDataOffset);
 
                 if (tablesStreamOffset != -1 && stringHeapOffset != -1)
                 {
-                    ParseMetadataTables(fs, reader, peInfo, tablesStreamOffset, tablesStreamSize, stringHeapOffset);
+                    ParseMetadataTables(fs, reader, peInfo, tablesStreamOffset, tablesStreamSize, stringHeapOffset, stringHeapSize);
                 }
 
                 fs.Position = originalPosition;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                Console.WriteLine($"元数据解析错误: {ex.Message}");
+                PersonalTools.Utils.AppLogger.Log($"元数据解析错误: {ex.Message}");
             }
         }
 
         /// <summary>
         /// 读取元数据流目录，定位表流（#~ / #-）与 #Strings 堆。
         /// </summary>
-        /// <returns>(表流偏移, 表流大小, #Strings 堆偏移)；未找到的项为 -1 / 0。</returns>
-        private static (long tablesStreamOffset, uint tablesStreamSize, long stringHeapOffset) CollectStreamDirectory(
+        /// <returns>(表流偏移, 表流大小, #Strings 堆偏移, #Strings 堆大小)；未找到的项为 -1 / 0。</returns>
+        private static (long tablesStreamOffset, uint tablesStreamSize, long stringHeapOffset, uint stringHeapSize) CollectStreamDirectory(
             FileStream fs, BinaryReader reader, ushort streams, long metaDataOffset)
         {
             long tablesStreamOffset = -1;
             uint tablesStreamSize = 0;
             long stringHeapOffset = -1;
+            uint stringHeapSize = 0;
 
             for (int i = 0; i < streams; i++)
             {
@@ -114,10 +119,11 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 else if (streamName == "#Strings")
                 {
                     stringHeapOffset = metaDataOffset + offset;
+                    stringHeapSize = size;
                 }
             }
 
-            return (tablesStreamOffset, tablesStreamSize, stringHeapOffset);
+            return (tablesStreamOffset, tablesStreamSize, stringHeapOffset, stringHeapSize);
         }
 
         /// <summary>
@@ -157,7 +163,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// <param name="tablesOffset">表流偏移</param>
         /// <param name="size">表流大小</param>
         /// <param name="stringHeapOffset">#Strings 堆的文件偏移</param>
-        private static void ParseMetadataTables(FileStream fs, BinaryReader reader, PEInfo peInfo, long tablesOffset, uint size, long stringHeapOffset)
+        private static void ParseMetadataTables(FileStream fs, BinaryReader reader, PEInfo peInfo, long tablesOffset, uint size, long stringHeapOffset, uint stringHeapSize)
         {
             try
             {
@@ -204,14 +210,17 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 const int TypeDefTableIndex = 2;
                 if (IsTablePresent(maskValid, TypeDefTableIndex))
                 {
-                    ParseTypeDefTable(fs, reader, peInfo, tablesDataOffset, stringHeapOffset, heapSizes, maskValid, rowCounts);
+                    // 表数据上界用表流声明大小(tablesOffset+size)，而非整个文件长度，
+                    // 防止畸形 rowCount 让 TypeDef 行读到表流之外、把无关字节当作伪造导出类型
+                    long tablesEnd = Math.Min(tablesOffset + size, fs.Length);
+                    ParseTypeDefTable(fs, reader, peInfo, tablesDataOffset, stringHeapOffset, stringHeapSize, heapSizes, maskValid, rowCounts, tablesEnd);
                 }
 
                 fs.Position = originalPosition;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                Console.WriteLine($"元数据表解析错误: {ex.Message}");
+                PersonalTools.Utils.AppLogger.Log($"元数据表解析错误: {ex.Message}");
             }
         }
 
@@ -228,7 +237,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// <param name="heapSizes">堆大小标志</param>
         /// <param name="maskValid">有效表掩码</param>
         /// <param name="rowCounts">行数数组</param>
-        private static void ParseTypeDefTable(FileStream fs, BinaryReader reader, PEInfo peInfo, long tablesDataOffset, long stringHeapOffset, byte heapSizes, ulong maskValid, uint[] rowCounts)
+        private static void ParseTypeDefTable(FileStream fs, BinaryReader reader, PEInfo peInfo, long tablesDataOffset, long stringHeapOffset, uint stringHeapSize, byte heapSizes, ulong maskValid, uint[] rowCounts, long tablesEnd)
         {
             try
             {
@@ -251,18 +260,19 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 for (uint i = 0; i < typeDefCount; i++)
                 {
                     long rowStart = typeDefStart + (long)i * typeDefRowSize;
-                    if (rowStart < 0 || rowStart + typeDefRowSize > fs.Length)
+                    // 上界用表流声明结束位置 tablesEnd（≤ fs.Length），而非整个文件，避免越表读伪造类型
+                    if (rowStart < 0 || rowStart + typeDefRowSize > tablesEnd)
                     {
                         break;
                     }
 
                     fs.Position = rowStart;
-                    TryCollectTypeDefRow(fs, reader, peInfo, stringHeapOffset, stringIndexSize, i);
+                    TryCollectTypeDefRow(fs, reader, peInfo, stringHeapOffset, stringHeapSize, stringIndexSize, i);
                 }
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                Console.WriteLine($"TypeDef表解析错误: {ex.Message}");
+                PersonalTools.Utils.AppLogger.Log($"TypeDef表解析错误: {ex.Message}");
             }
         }
 
@@ -282,7 +292,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
         }
 
         // 读取一行 TypeDef，仅收集公开可见类型（Public=1 / NestedPublic=2）到导出列表
-        private static void TryCollectTypeDefRow(FileStream fs, BinaryReader reader, PEInfo peInfo, long stringHeapOffset, int stringIndexSize, uint i)
+        private static void TryCollectTypeDefRow(FileStream fs, BinaryReader reader, PEInfo peInfo, long stringHeapOffset, uint stringHeapSize, int stringIndexSize, uint i)
         {
             uint flags = reader.ReadUInt32();
             uint nameIndex = ReadHeapIndex(reader, stringIndexSize);
@@ -295,8 +305,8 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 return;
             }
 
-            string typeName = ReadStringFromHeap(fs, reader, stringHeapOffset, nameIndex);
-            string namespaceName = ReadStringFromHeap(fs, reader, stringHeapOffset, namespaceIndex);
+            string typeName = ReadStringFromHeap(fs, reader, stringHeapOffset, stringHeapSize, nameIndex);
+            string namespaceName = ReadStringFromHeap(fs, reader, stringHeapOffset, stringHeapSize, namespaceIndex);
             string fullName = string.IsNullOrEmpty(namespaceName) ? typeName : $"{namespaceName}.{typeName}";
 
             if (!string.IsNullOrEmpty(fullName))

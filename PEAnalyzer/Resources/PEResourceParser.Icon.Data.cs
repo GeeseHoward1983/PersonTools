@@ -80,7 +80,7 @@ namespace PersonalTools.PEAnalyzer.Resources
             }
             catch (Exception ex) when (ex is ArgumentException or IndexOutOfRangeException)
             {
-                Console.WriteLine($"处理图标数据错误: {ex.Message}");
+                PersonalTools.Utils.AppLogger.Log($"处理图标数据错误: {ex.Message}");
             }
         }
 
@@ -94,15 +94,18 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             try
             {
-                // 检查 BITMAPINFOHEADER
-                if (dibData.Length < 40 || BitConverter.ToUInt32(dibData, 0) != 40)
+                // 接受 BITMAPINFOHEADER(40) 及向后兼容的 V4(108)/V5(124) 头：
+                // 三者 width(+4)/height(+8)/bitCount(+14) 字段偏移一致，biSize>=40 即可正确读取，避免静默丢弃 V4/V5 图标
+                if (dibData.Length < 40 || BitConverter.ToUInt32(dibData, 0) < 40)
                 {
                     return;
                 }
 
                 int width = BitConverter.ToInt32(dibData, 4);
-                // 图标 DIB 高度为实际高度的两倍（XOR+AND 掩码）；负数表示自顶向下，先取绝对值
-                int height = Math.Abs(BitConverter.ToInt32(dibData, 8)) / 2;
+                // 图标 DIB 高度为实际高度的两倍（XOR+AND 掩码）；负数表示自顶向下，先取绝对值。
+                // 用 long 取绝对值：Math.Abs(int.MinValue) 会抛 OverflowException 逃逸出本方法致整轮图标解析中止。
+                long rawHeight = BitConverter.ToInt32(dibData, 8);
+                int height = (int)(Math.Abs(rawHeight) / 2);
                 ushort bitCount = BitConverter.ToUInt16(dibData, 14);
                 if (width <= 0 || height <= 0 || bitCount == 0)
                 {
@@ -124,9 +127,9 @@ namespace PersonalTools.PEAnalyzer.Resources
                     Data = BuildIcoFile(dibData, width, height, bitCount)
                 });
             }
-            catch (Exception ex) when (ex is ArgumentException or IndexOutOfRangeException)
+            catch (Exception ex) when (ex is ArgumentException or IndexOutOfRangeException or OverflowException)
             {
-                Console.WriteLine($"转换DIB到ICO错误: {ex.Message}");
+                PersonalTools.Utils.AppLogger.Log($"转换DIB到ICO错误: {ex.Message}");
             }
         }
 

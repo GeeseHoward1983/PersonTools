@@ -58,7 +58,11 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                 entrySize = (int)section.sh_entsize;
             }
 
-            int count = (int)(section.sh_size / (ulong)entrySize);
+            // 安全：槽位数取自不可信 sh_size，夹紧到文件实际可承载的条目数，避免超大节构造海量对象(OOM)
+            long maxReadable = section.sh_offset >= (ulong)Parser.FileData.Length
+                ? 0
+                : (Parser.FileData.Length - (long)section.sh_offset) / entrySize;
+            int count = (int)Math.Min(section.sh_size / (ulong)entrySize, (ulong)Math.Max(maxReadable, 0));
             for (int i = 0; i < count; i++)
             {
                 ulong slotAddr = section.sh_addr + (ulong)((long)i * entrySize);
@@ -81,7 +85,11 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
 
         private static string ReadSlotValue(ELFParser Parser, long fileOffset, int entrySize, bool isLittleEndian)
         {
-            if (fileOffset < 0 || fileOffset + entrySize > Parser.FileData.Length)
+            // 按实际读取宽度校验边界，而非不可信 entrySize：entrySize 可被夹为 1..7（<8），
+            // 但下方对 <8 一律 ReadUInt32 固定读 4 字节；若仅按 entrySize(如 3) 校验，
+            // 槽位落在文件末尾时 ReadUInt32 会越界抛异常崩溃。
+            int readWidth = entrySize >= 8 ? 8 : 4;
+            if (fileOffset < 0 || fileOffset + readWidth > Parser.FileData.Length)
             {
                 return string.Empty;
             }

@@ -57,12 +57,17 @@ namespace PersonalTools.UserControls
         {
             if (previewReady)
             {
+                // 切回 Tab 会再次触发 Loaded：WebView2 已初始化，仅重建导航让预览恢复(而非保持空白/陈旧)
+                RefreshPreview();
                 return;
             }
 
             try
             {
                 await Preview.EnsureCoreWebView2Async().ConfigureAwait(true);
+                // 安全：预览仅应展示我们生成的 file:// 临时 HTML。拦截一切非 file 协议的顶层导航
+                // （尤其 javascript:），防止不受信 Markdown 的链接在 file:// 源、无脚本沙箱的 WebView2 中点击执行。
+                Preview.CoreWebView2.NavigationStarting += OnPreviewNavigationStarting;
                 previewReady = true;
                 RefreshPreview();
             }
@@ -72,11 +77,22 @@ namespace PersonalTools.UserControls
             }
         }
 
+        // 仅放行 file:// 顶层导航（即我们写出的预览页本身）；http/https/javascript/data 等一律取消。
+        // 图片等子资源加载不经此事件，故远程/本地图片仍可正常显示。
+        private static void OnPreviewNavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
+        {
+            if (!Uri.TryCreate(e.Uri, UriKind.Absolute, out Uri? uri) || uri.Scheme != Uri.UriSchemeFile)
+            {
+                e.Cancel = true;
+            }
+        }
+
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
+            // 切 Tab 即触发 Unloaded：仅停预览计时器。不在此 Save（设置已在编辑/重置/导出各点持久化，
+            // 避免每次切 Tab 无谓写盘）。临时预览文件保留，切回时由 OnLoaded 的 RefreshPreview 重写复用，
+            // 最终清理交进程退出时统一处理。
             previewTimer.Stop();
-            DocxStyleSettingsStore.Save(settings);
-            TryDeleteTempPreview();
         }
 
         private void Editor_TextChanged(object sender, TextChangedEventArgs e)
@@ -207,7 +223,7 @@ namespace PersonalTools.UserControls
 
         // ---- 导出 docx ----
 
-        private void Export_Click(object sender, RoutedEventArgs e)
+        private async void Export_Click(object sender, RoutedEventArgs e)
         {
             SaveFileDialog dialog = new()
             {
@@ -232,16 +248,26 @@ namespace PersonalTools.UserControls
                 return;
             }
 
+            // 解析与文本读取在 UI 线程取值后即冻结为局部，后台线程不再触碰控件
+            string editorText = Editor.Text;
+            string? exportBaseDir = baseDir;
+            string outputPath = dialog.FileName;
+
             try
             {
-                MarkdownDocument ast = MarkdownService.Parse(Editor.Text);
-                bool updated;
                 Mouse.OverrideCursor = Cursors.Wait;
+                bool updated;
                 try
                 {
-                    DocxWriter.Write(ast, settings, dialog.FileName, baseDir);
-                    // 调用本机 Word 强制更新一次目录/编号域（生成即静态，无需打开时刷新）
-                    updated = WordFieldUpdater.TryUpdateFields(dialog.FileName);
+                    // DocxWriter.Write（含 BitmapDecoder 同步解码、OOXML 构建/保存）与 Word COM 自动化
+                    // 全部移到后台线程，避免大文档或 Word 启动慢时界面冻结
+                    updated = await Task.Run(() =>
+                    {
+                        MarkdownDocument ast = MarkdownService.Parse(editorText);
+                        DocxWriter.Write(ast, settings, outputPath, exportBaseDir);
+                        // 调用本机 Word 强制更新一次目录/编号域（生成即静态，无需打开时刷新）
+                        return WordFieldUpdater.TryUpdateFields(outputPath);
+                    }).ConfigureAwait(true);
                 }
                 finally
                 {
@@ -250,8 +276,8 @@ namespace PersonalTools.UserControls
 
                 DocxStyleSettingsStore.Save(settings);
                 string message = updated
-                    ? $"导出成功（目录与图表编号已自动更新）：{dialog.FileName}"
-                    : $"导出成功：{dialog.FileName}\n未检测到本机 Word，目录页码请在 Word 中按 Ctrl+A 全选后按 F9 手动更新一次。";
+                    ? $"导出成功（目录与图表编号已自动更新）：{outputPath}"
+                    : $"导出成功：{outputPath}\n未检测到本机 Word，目录页码请在 Word 中按 Ctrl+A 全选后按 F9 手动更新一次。";
                 MessageHelper.ShowInfo(message);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or OpenXmlPackageException)
@@ -286,21 +312,6 @@ namespace PersonalTools.UserControls
         {
             // 等绑定提交后再持久化
             Dispatcher.BeginInvoke(new Action(() => DocxStyleSettingsStore.Save(settings)), DispatcherPriority.Background);
-        }
-
-        private void TryDeleteTempPreview()
-        {
-            try
-            {
-                if (File.Exists(previewFilePath))
-                {
-                    File.Delete(previewFilePath);
-                }
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                // 临时文件清理失败可忽略
-            }
         }
 
         private const string DefaultSample =

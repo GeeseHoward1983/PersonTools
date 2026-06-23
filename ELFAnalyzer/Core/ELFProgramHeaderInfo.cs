@@ -41,11 +41,26 @@ namespace PersonalTools.ELFAnalyzer.Core
                 return;
             }
 
+            // 安全：校验程序头表起始偏移落在文件内；畸形 e_phoff/e_phnum 在越界 Seek 后会令
+            // ReadExactly 抛 EndOfStreamException 中止整份分析，这里提前拦截
+            if (parser.Header.e_phoff >= (ulong)parser.FileData.Length)
+            {
+                return;
+            }
+
+            // 每个程序头项的字节数（按位数固定），用于循环内逐项校验剩余空间
+            int phEntrySize = parser.Is64Bit ? ELFConstants.ProgramHeaderSize64 : ELFConstants.ProgramHeaderSize32;
             reader.BaseStream.Seek((long)parser.Header.e_phoff, SeekOrigin.Begin);
 
             parser.ProgramHeaders = [];
             for (ushort i = 0; i < parser.Header.e_phnum; i++)
             {
+                // 剩余字节不足一个完整程序头项时停止，避免越界读取（畸形 e_phnum 大于实际表项数）
+                if (reader.BaseStream.Position + phEntrySize > reader.BaseStream.Length)
+                {
+                    break;
+                }
+
                 ELFProgramHeader ph = new()
                 {
                     p_type = ELFParserUtils.ReadUInt32(reader, isLittleEndian)

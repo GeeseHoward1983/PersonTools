@@ -27,10 +27,19 @@ namespace PersonalTools.ELFAnalyzer.Core
                     return; // 畸形文件 sh_entsize 为 0 时跳过，避免除零
                 }
 
+                // 安全：校验整段落在文件内，避免畸形大小导致超大预分配(OOM)/读取越界
+                if (!ELFParserUtils.IsRangeWithin(dynSection.sh_offset, dynSection.sh_size, (ulong)parser.FileData.Length))
+                {
+                    return;
+                }
+
                 reader.BaseStream.Seek((long)dynSection.sh_offset, SeekOrigin.Begin);
 
-                int entryCount = (int)(dynSection.sh_size / dynSection.sh_entsize);
-                parser.DynamicEntries = new List<ELFDynamic>(entryCount);
+                // 安全：sh_entsize 不可信，实际按固定大小读取（64 位 Elf64_Dyn=16 / 32 位 Elf32_Dyn=8）。
+                // 按固定项大小算条目数，避免伪造 sh_entsize 令 count 暴增、越窗读到 EOF。
+                int entrySize = parser.Is64Bit ? ELFConstants.DynamicEntrySize64 : ELFConstants.DynamicEntrySize32;
+                int entryCount = (int)(dynSection.sh_size / (ulong)entrySize);
+                parser.DynamicEntries = new List<ELFDynamic>(Math.Min(entryCount, ELFConstants.MaxPreallocCount));
 
                 for (int i = 0; i < entryCount; i++)
                 {

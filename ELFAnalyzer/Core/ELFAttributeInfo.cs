@@ -63,6 +63,12 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             // 子节长度字段：含本 4 字节长度 + 供应商名 + 数据（ARM/GNU 规范）
             int subSectionStart = offset;
+            // 边界：尾部残留 1~3 字节时 ReadUInt32 会越界抛异常并中止整份分析，不足 4 字节即停止
+            if (offset + 4 > data.Length)
+            {
+                return false;
+            }
+
             uint subSectionLength = ELFParserUtils.ReadUInt32(data, offset, isLittleEndian);
             offset += 4;
 
@@ -244,9 +250,11 @@ namespace PersonalTools.ELFAnalyzer.Core
             return value;
         }
 
-        private static void AppendAEABIStringAttr(string name, byte[] data, ref int offset, StringBuilder sb)
+        private static void AppendAEABIStringAttr(string name, byte[] data, ref int offset, int endOffset, StringBuilder sb)
         {
-            string value = ELFParserUtils.ExtractStringFromBytes(data, offset);
+            // 限制最大读取长度为子节剩余字节(endOffset-offset)，避免子节末缺 NUL 终止符时串读到相邻子节数据
+            int maxLength = endOffset > offset ? endOffset - offset : 0;
+            string value = ELFParserUtils.ExtractStringFromBytes(data, offset, maxLength);
             offset += value.Length + 1; // 含 null 终止符
             sb.AppendLine(CultureInfo.InvariantCulture, $"  {name}: \"{value}\"");
         }
@@ -263,7 +271,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             else if ((tag & 1) != 0)
             {
                 // 未知奇数标签 → 字符串
-                AppendAEABIStringAttr(GetAEABITagName(tag), data, ref offset, sb);
+                AppendAEABIStringAttr(GetAEABITagName(tag), data, ref offset, endOffset, sb);
             }
             else
             {
@@ -351,7 +359,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 switch (tag)
                 {
                     case 4 or 5 or 67: // Tag_CPU_raw_name / Tag_CPU_name / Tag_conformance
-                        AppendAEABIStringAttr(GetAEABITagName(tag), data, ref offset, sb);
+                        AppendAEABIStringAttr(GetAEABITagName(tag), data, ref offset, endOffset, sb);
                         break;
                     case 7: // Tag_CPU_arch_profile
                         AppendAEABIProfileAttr(data, ref offset, endOffset, sb);
@@ -648,7 +656,11 @@ namespace PersonalTools.ELFAnalyzer.Core
             while (cur < max)
             {
                 byte b = data[cur++];
-                value |= (b & 0x7f) << shift;
+                // shift 超过 31 位后再 |= 会移位溢出/丢高位，停止吸收高位（ULEB128 最多 5 字节即覆盖 32 位）
+                if (shift < 32)
+                {
+                    value |= (b & 0x7f) << shift;
+                }
                 if ((b & 0x80) == 0)
                 {
                     break;

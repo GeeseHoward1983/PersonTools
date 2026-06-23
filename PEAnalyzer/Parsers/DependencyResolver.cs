@@ -27,6 +27,15 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 return null;
             }
 
+            // 安全：dllName 取自被分析(可能恶意)PE 的导入表，必须为纯文件名。
+            // 含目录分隔符/..、绝对路径或 UNC 时，Path.Combine 会跳出预期搜索目录，
+            // 造成任意路径探测/打开，UNC 还会触发出站 SMB 泄露 NTLM 凭据，故一律拒绝。
+            // 判定统一走 PathSafety.IsBareFileName（与 PEImportParser 同一防线）。
+            if (!PersonalTools.Utils.PathSafety.IsBareFileName(dllName))
+            {
+                return null;
+            }
+
             foreach (string? dir in EnumerateSearchDirs(baseDir, targetIs64Bit))
             {
                 if (string.IsNullOrEmpty(dir))

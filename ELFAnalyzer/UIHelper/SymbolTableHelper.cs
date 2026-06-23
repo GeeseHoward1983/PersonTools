@@ -1,5 +1,4 @@
 using PersonalTools.ELFAnalyzer.Core;
-using ELFModels = PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.Enums;
 using PersonalTools.ELFAnalyzer.Models;
 
@@ -7,27 +6,27 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
 {
     internal static class SymbolTableHelper
     {
-        internal static List<ELFModels.ELFSymbolTableInfo> GetSymbolTableInfoList(ELFParser Parser, SectionType sectionType)
+        internal static List<ELFSymbolTableInfo> GetSymbolTableInfoList(ELFParser Parser, SectionType sectionType)
         {
             List<ELFSymbolTableInfo> result = [];
 
             if (Parser.Symbols != null && Parser.Symbols.Count > 0)
             {
-                List<ELFModels.ELFSymbol>? symbols = Parser.Symbols.GetValueOrDefault(sectionType);
+                List<ELFSymbol>? symbols = Parser.Symbols.GetValueOrDefault(sectionType);
                 for (int i = 0; i < symbols?.Count; i++)
                 {
                     ELFSymbol sym = symbols[i];
-                    byte stType = (byte)(sym.StInfo & 0x0F);
+                    byte stType = (byte)(sym.StInfo & ELFConstants.ST_TYPE_MASK);
 
                     string name = ELFSymbolNameResolver.GetSymbolName(Parser, sym, sectionType, i);
                     // SECTION 符号 st_name 通常为 0，按 readelf 显示其所属节名
                     if (string.IsNullOrEmpty(name) && stType == (byte)SymbolType.STT_SECTION
-                        && sym.StShndx > 0 && sym.StShndx < 0xFF00)
+                        && sym.StShndx > 0 && sym.StShndx < ELFConstants.SHN_LORESERVE)
                     {
                         name = ELFSymbolNameResolver.GetSectionName(Parser, sym.StShndx);
                     }
 
-                    result.Add(new ELFModels.ELFSymbolTableInfo
+                    result.Add(new ELFSymbolTableInfo
                     {
                         Number = i,
                         Value = Parser.Is64Bit ? $"0x{sym.StValue:x16}" : $"0x{sym.StValue:x8}",
@@ -37,9 +36,9 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                         Vis = StripSymbolPrefix(ELFSymbolInfo.GetSymbolVisibility(sym.StOther)),
                         Ndx = sym.StShndx switch
                         {
-                            0 => "UND",
-                            0xFFF1 => "ABS",
-                            0xFFF2 => "COM",
+                            ELFConstants.SHN_UNDEF => "UND",
+                            ELFConstants.SHN_ABS => "ABS",
+                            ELFConstants.SHN_COMMON => "COM",
                             _ => $"{sym.StShndx}"
                         },
                         Name = name

@@ -39,7 +39,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
                 // CLR头解析错误不中断程序执行
-                Console.WriteLine($"CLR运行时头解析错误: {ex.Message}");
+                PersonalTools.Utils.AppLogger.Log($"CLR运行时头解析错误: {ex.Message}");
             }
         }
 
@@ -79,7 +79,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                Console.WriteLine($"CLR头解析错误: {ex.Message}");
+                PersonalTools.Utils.AppLogger.Log($"CLR头解析错误: {ex.Message}");
             }
         }
 

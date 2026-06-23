@@ -35,7 +35,7 @@ namespace PersonalTools.UserControls
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
                 string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                if (files.Length > 0)
+                if (files != null && files.Length > 0)
                 {
                     e.Handled = true; // 阻止冒泡到宿主，避免重复处理
                     FilesDropped?.Invoke(files);

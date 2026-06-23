@@ -3,15 +3,12 @@ using System.Text;
 
 namespace PersonalTools.Utils.Hash
 {
-    internal sealed class Sha3(int variant) : IDisposable
+    /// <summary>
+    /// SHA3 包装：委托 System.Security.Cryptography 的 SHA3_256/384/512 静态实现。
+    /// 无实例状态、无需释放资源，故为纯静态工具类。
+    /// </summary>
+    internal static class Sha3
     {
-        private readonly int _outputLengthBits = variant;
-
-        public byte[] ComputeHash(byte[] input)
-        {
-            return ComputeHash(input, _outputLengthBits);
-        }
-
         public static string ComputeHash(string input, int outputLengthBits = 256)
         {
             return ConvertUtils.ToHexString(ComputeHash(Encoding.UTF8.GetBytes(input), outputLengthBits));
@@ -37,11 +34,5 @@ namespace PersonalTools.Utils.Hash
             SHA3_256.IsSupported &&
             SHA3_384.IsSupported &&
             SHA3_512.IsSupported;
-
-        public void Dispose()
-        {
-            // 释放资源（如果需要）
-            GC.SuppressFinalize(this);
-        }
     }
 }

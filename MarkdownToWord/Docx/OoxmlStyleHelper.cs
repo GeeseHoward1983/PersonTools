@@ -46,28 +46,25 @@ namespace PersonalTools.MarkdownToWord.Docx
             }
         }
 
-        /// <summary>构造直接用于 run 的运行属性。</summary>
-        public static RunProperties BuildRunProperties(ContentStyleRow row)
-        {
-            RunProperties rpr = new();
-            ApplyRunFormatting(rpr, row);
-            return rpr;
-        }
-
         /// <summary>
         /// 构造首行缩进（按字符）；字数 ≤ 0 返回 null。firstLineChars 单位为 1/100 字，
         /// 同时给 firstLine(twips ≈ 字数 × 字号磅 × 20) 作非 Word 阅读器的回退。
         /// </summary>
         public static Indentation? BuildFirstLineIndent(ContentStyleRow row)
         {
-            return row.FirstLineIndentChars switch
+            double chars = row.FirstLineIndentChars;
+            // FirstLineIndentChars 取自可编辑/可损坏的 JSON：NaN(<=0 比较为 false 会漏过)与极大值
+            // 会让 *100 / Math.Round 溢出成垃圾缩进。先排除非有限值，再夹到合理上限(99 字)。
+            if (double.IsNaN(chars) || double.IsInfinity(chars) || chars <= 0)
             {
-                <= 0 => null,
-                _ => new Indentation
-                {
-                    FirstLineChars = (int)Math.Round(row.FirstLineIndentChars * 100),
-                    FirstLine = ((int)Math.Round(row.FirstLineIndentChars * row.HalfPoint * 10)).ToString(CultureInfo.InvariantCulture),
-                }
+                return null;
+            }
+
+            chars = Math.Min(chars, 99);
+            return new Indentation
+            {
+                FirstLineChars = (int)Math.Round(chars * 100),
+                FirstLine = ((int)Math.Round(chars * row.HalfPoint * 10)).ToString(CultureInfo.InvariantCulture),
             };
         }
     }

@@ -37,8 +37,8 @@ namespace PersonalTools.MarkdownToWord.Models
         }
 
         /// <summary>
-        /// 构造符合需求 3/4/8/9 的默认样式：标题黑体加粗、正文宋体/Times New Roman 首行缩进 2 字、
-        /// 各级字号二/三/四/五号、表格随正文且小五、目录字体随标题。
+        /// 构造符合需求 3/4/8/9 的默认样式：标题黑体加粗、正文宋体/Times New Roman（首行不缩进，
+        /// 可在样式设置中调整）、各级字号二/三/四/五号、表格随正文且小五、目录字体随标题。
         /// </summary>
         public static DocxStyleSettings CreateDefault()
         {

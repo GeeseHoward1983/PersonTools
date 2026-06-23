@@ -11,8 +11,14 @@ namespace PersonalTools.MarkdownToWord
     internal static class MarkdownService
     {
         // 共享管道：UseAdvancedExtensions 启用管道/网格表格、自动链接、任务列表等常见扩展
+        // 仅供导出取 AST（DocxBlockRenderer 已跳过 HtmlBlock，导出侧不输出原始 HTML）
         private static readonly MarkdownPipeline Pipeline =
             new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+
+        // 预览专用管道：额外 DisableHtml() 禁用原始 HTML 解析，防止不受信 Markdown 中的
+        // <script>/<img onerror> 等在 WebView2(file:// 源) 下执行导致 XSS / 本地文件外泄
+        private static readonly MarkdownPipeline PreviewPipeline =
+            new MarkdownPipelineBuilder().UseAdvancedExtensions().DisableHtml().Build();
 
         /// <summary>把 Markdown 文本解析为 Markdig AST，供 OOXML 生成层遍历。</summary>
         public static MarkdownDocument Parse(string markdown)
@@ -27,7 +33,7 @@ namespace PersonalTools.MarkdownToWord
         /// </summary>
         public static string BuildPreviewHtml(string markdown, string? baseDir)
         {
-            string body = Markdown.ToHtml(markdown ?? string.Empty, Pipeline);
+            string body = Markdown.ToHtml(markdown ?? string.Empty, PreviewPipeline);
             string baseTag = BuildBaseTag(baseDir);
 
             return PreviewTemplate
@@ -36,11 +42,14 @@ namespace PersonalTools.MarkdownToWord
         }
 
         // 预览 HTML 模板（%%BASE%%/%%BODY%% 为占位符，避免与 CSS 大括号冲突）
+        // CSP：script-src 'none' 禁止任何脚本执行（含 javascript: 链接），default-src 'none' 默认全禁，
+        // 仅放行预览所需的内联样式与本地/远程图片；与 DisableHtml() 互补防御 XSS / 本地文件外泄。
         private const string PreviewTemplate = """
             <!DOCTYPE html>
             <html lang="zh-CN">
             <head>
             <meta charset="utf-8">
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; img-src 'self' file: data: http: https:; font-src 'self' file:; object-src 'none'; form-action 'none';">
             %%BASE%%
             <style>
               body { font-family: "宋体", SimSun, serif; font-size: 16px; line-height: 1.7; margin: 24px; color: #222; }

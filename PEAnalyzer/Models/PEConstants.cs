@@ -33,6 +33,13 @@ namespace PersonalTools.PEAnalyzer.Models
         public const uint OrdinalFlag32 = 0x80000000U;
         public const ulong OrdinalFlag64 = 0x8000000000000000UL;
 
+        // 导出表条目数硬上限：PE 序号为 16 位，单个模块的导出函数/名称理论上限 64K。
+        // 用于夹紧取自不可信导出目录的 NumberOfFunctions/NumberOfNames，防止畸形巨值触发海量对象构造（DoS）。
+        public const int MaxExportEntries = 65536;
+
+        // 导入描述符数量硬上限：远超真实 PE 的依赖 DLL 数，防止畸形大文件让导入表循环跑满 fs.Length/20 次。
+        public const int MaxImportDescriptors = 4096;
+
         // 数据目录索引（IMAGE_DIRECTORY_ENTRY_*）
         public const int DirectoryExport = 0;
         public const int DirectoryImport = 1;

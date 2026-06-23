@@ -116,12 +116,11 @@ namespace PersonalTools.UserControls
                     return;
                 }
 
-                // 使用真正的SHA3算法
-                using Sha3 sha3 = new(selectedOption.Value);
-                byte[] hashBytes = sha3.ComputeHash(inputBytes);
+                // 使用真正的SHA3算法（静态调用，无需实例化）
+                byte[] hashBytes = Sha3.ComputeHash(inputBytes, selectedOption.Value);
                 SHA3ResultLabel.Content = ConvertUtils.ToHexString(hashBytes);
             }
-            catch (Exception ex) when (ex is FormatException or ArgumentNullException or ArgumentOutOfRangeException)
+            catch (Exception ex) when (ex is FormatException or ArgumentException)
             {
                 MessageHelper.ShowError($"计算SHA3时发生错误: {ex.Message}");
             }

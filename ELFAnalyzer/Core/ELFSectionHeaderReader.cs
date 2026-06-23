@@ -46,11 +46,24 @@ namespace PersonalTools.ELFAnalyzer.Core
                 return;
             }
 
+            // 安全：校验节头表起始偏移落在文件内，避免越界 Seek 后 ReadExactly 抛 EndOfStreamException
+            if (parser.Header.e_shoff >= (ulong)parser.FileData.Length)
+            {
+                return;
+            }
+
+            int shEntrySize = parser.Is64Bit ? ELFConstants.SectionHeaderSize64 : ELFConstants.SectionHeaderSize32;
             reader.BaseStream.Seek((long)parser.Header.e_shoff, SeekOrigin.Begin);
 
             parser.SectionHeaders = [];
             for (int i = 0; i < parser.Header.e_shnum; i++)
             {
+                // 剩余字节不足一个完整节头项时停止，避免畸形 e_shnum 导致越界读取
+                if (reader.BaseStream.Position + shEntrySize > reader.BaseStream.Length)
+                {
+                    break;
+                }
+
                 Models.ELFSectionHeader sh = new()
                 {
                     sh_name = ELFParserUtils.ReadUInt32(reader, isLittleEndian),

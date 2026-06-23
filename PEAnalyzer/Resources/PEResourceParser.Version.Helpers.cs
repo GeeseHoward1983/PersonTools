@@ -169,9 +169,11 @@ namespace PersonalTools.PEAnalyzer.Resources
                         PEResourceParserVersionVar.ParseVarFileInfo(fs, reader, peInfo, endPosition);
                     }
 
-                    // 移动到下一个子项
-                    long nextChildPos = childStartPos + wLength + 3 & ~3;
-                    if (nextChildPos >= endPosition || nextChildPos < fs.Position)
+                    // 移动到下一个子项：基于 childStartPos+wLength 计算并直接定位。
+                    // 退步判断须对比 childStartPos（而非已被子解析器 ParseStringFileInfo/ParseVarFileInfo 改动的 fs.Position），
+                    // 否则会因 fs.Position 已前移而误判退步提前 break，漏掉后续兄弟节点（如 StringFileInfo 之后的 VarFileInfo）
+                    long nextChildPos = (childStartPos + wLength + 3) & ~3;
+                    if (nextChildPos >= endPosition || nextChildPos <= childStartPos)
                     {
                         break;
                     }

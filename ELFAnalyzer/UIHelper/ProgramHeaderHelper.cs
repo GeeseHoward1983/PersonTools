@@ -72,6 +72,13 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                     continue;
                 }
 
+                // 仅加载(SHF_ALLOC)节参与段映射：非分配节(.symtab/.strtab/.comment/.debug* 等)的 sh_addr 多为 0，
+                // 在 PIE/共享库(首个 PT_LOAD 的 p_vaddr=0)时会与段地址 0 伪重叠而被错误归入起始段，与 readelf 不符
+                if ((sh.sh_flags & (ulong)SectionAttributes.SHF_ALLOC) == 0)
+                {
+                    continue;
+                }
+
                 string sectionName = ELFSymbolNameResolver.GetSectionName(_parser, i);
                 if (string.IsNullOrEmpty(sectionName))
                 {

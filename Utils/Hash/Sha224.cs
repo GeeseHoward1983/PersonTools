@@ -27,6 +27,13 @@ namespace PersonalTools.Utils.Hash
         {
             ArgumentNullException.ThrowIfNull(data);
 
+            // 防 paddedLength(int) 溢出：输入接近 int.MaxValue 时 data.Length+1+8+对齐 会回绕为负导致分配错误。
+            // 预留 72 字节(0x80 + 最长填充 + 8 字节长度)余量，超限明确拒绝而非产生错误结果/OverflowException
+            if (data.Length > int.MaxValue - 72)
+            {
+                throw new ArgumentException("输入数据过大，无法计算 SHA-224", nameof(data));
+            }
+
             // SHA-224 初始哈希值
             uint h0 = 0xc1059ed8, h1 = 0x367cd507, h2 = 0x3070dd17, h3 = 0xf70e5939,
                  h4 = 0xffc00b31, h5 = 0x68581511, h6 = 0x64f98fa7, h7 = 0xbefa4fa4;

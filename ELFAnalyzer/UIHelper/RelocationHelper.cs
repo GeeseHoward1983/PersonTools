@@ -82,21 +82,25 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             return -1;
         }
 
-        // 读取重定位节关联的符号表（处理 32/64 位与字节序）。按节索引走缓存，多个重定位节共享同一符号表时避免整表重复拷贝
+        // 读取重定位节关联的符号表（处理 32/64 位与字节序）。结果按 symTabIndex 缓存于 Parser，
+        // 多个重定位/GOT 节共享同一符号表时避免整表重复解析（此前仅缓存了字节、仍重复 new ELFSymbol）
         private static List<ELFSymbol> ReadRelocationSymbols(ELFParser Parser, int symTabIndex)
         {
-            byte[] symTabData = Parser.GetSectionData(symTabIndex);
-            List<ELFSymbol> symbols = [];
-            bool little = Parser.Header.IsLittleEndian();
-            int symEntrySize = Parser.Is64Bit ? 24 : 16; // 64位符号表项24字节，32位16字节
-            int symCount = symTabData.Length / symEntrySize;
-
-            for (int symIdx = 0; symIdx < symCount; symIdx++)
+            return Parser.GetOrParseSymbols(symTabIndex, () =>
             {
-                int b = symIdx * symEntrySize;
-                symbols.Add(Parser.Is64Bit ? ReadSymbol64(symTabData, b, little) : ReadSymbol32(symTabData, b, little));
-            }
-            return symbols;
+                byte[] symTabData = Parser.GetSectionData(symTabIndex);
+                List<ELFSymbol> symbols = [];
+                bool little = Parser.Header.IsLittleEndian();
+                int symEntrySize = Parser.Is64Bit ? 24 : 16; // 64位符号表项24字节，32位16字节
+                int symCount = symTabData.Length / symEntrySize;
+
+                for (int symIdx = 0; symIdx < symCount; symIdx++)
+                {
+                    int b = symIdx * symEntrySize;
+                    symbols.Add(Parser.Is64Bit ? ReadSymbol64(symTabData, b, little) : ReadSymbol32(symTabData, b, little));
+                }
+                return symbols;
+            });
         }
 
         private static ELFSymbol ReadSymbol64(byte[] d, int b, bool little) => new()
@@ -180,8 +184,8 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
         {
             string name = ELFSymbolNameResolver.GetSymbolName(Parser, symbol, SectionType.SHT_DYNSYM, index);
             if (string.IsNullOrEmpty(name)
-                && (byte)(symbol.StInfo & 0x0F) == (byte)SymbolType.STT_SECTION
-                && symbol.StShndx > 0 && symbol.StShndx < 0xFF00)
+                && (byte)(symbol.StInfo & ELFConstants.ST_TYPE_MASK) == (byte)SymbolType.STT_SECTION
+                && symbol.StShndx > 0 && symbol.StShndx < ELFConstants.SHN_LORESERVE)
             {
                 name = ELFSymbolNameResolver.GetSectionName(Parser, symbol.StShndx);
             }

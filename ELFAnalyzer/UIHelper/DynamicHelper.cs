@@ -1,14 +1,12 @@
 using PersonalTools.ELFAnalyzer.Core;
-using ELFModels = PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.Enums;
-using System.Text;
 using PersonalTools.ELFAnalyzer.Models;
 
 namespace PersonalTools.ELFAnalyzer.UIHelper
 {
     internal static class DynamicHelper
     {
-        private static string GetDynamicSectionInfoTableEntryValue(ELFParser _parser, ELFModels.ELFDynamic entry)
+        private static string GetDynamicSectionInfoTableEntryValue(ELFParser _parser, ELFDynamic entry)
         {
             string value = string.Empty;
             ulong strTabAddr = GetStringValueFromDynamicEntries(_parser, DynamicTag.DT_STRTAB);
@@ -17,7 +15,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             if (strTabAddr != 0 && strTabSize != 0 && _parser.SectionHeaders != null)
             {
                 // Find the section that contains the string table
-                ELFModels.ELFSectionHeader? stringTableSection = ELFParserUtils.FindSectionByAddress(_parser, strTabAddr);
+                ELFSectionHeader? stringTableSection = ELFParserUtils.FindSectionByAddress(_parser, strTabAddr);
                 if (stringTableSection != null)
                 {
                     value = ReadStringFromSection(_parser, stringTableSection, entry.d_val);
@@ -26,7 +24,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             return value;
 
         }
-        private static string GetDynamicSectionInfoValue(ELFParser _parser, ELFModels.ELFDynamic entry)
+        private static string GetDynamicSectionInfoValue(ELFParser _parser, ELFDynamic entry)
         {
             return entry.d_tag switch
             {
@@ -36,7 +34,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             };
         }
 
-        internal static List<ELFModels.ELFDynamicSectionInfo> GetDynamicSectionInfoList(ELFParser Parser)
+        internal static List<ELFDynamicSectionInfo> GetDynamicSectionInfoList(ELFParser Parser)
         {
             List<ELFDynamicSectionInfo> result = [];
 
@@ -44,7 +42,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             {
                 foreach (ELFDynamic entry in Parser.DynamicEntries)
                 {
-                    result.Add(new ELFModels.ELFDynamicSectionInfo
+                    result.Add(new ELFDynamicSectionInfo
                     {
                         Tag = $"0x{entry.d_tag:x16}",
                         Type = ELFDynamicInfo.GetDynamicTagDescription((ulong)entry.d_tag),
@@ -73,11 +71,13 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             return 0;
         }
 
-        private static string ReadStringFromSection(ELFParser _parser, ELFModels.ELFSectionHeader? section, ulong offset)
+        private static string ReadStringFromSection(ELFParser _parser, ELFSectionHeader? section, ulong offset)
         {
+            // 用减法式校验避免 sh_offset + offset 两个 ulong 相加回绕越过 < Length 检查
+            // （offset 来自不可信 d_val，可被构造为巨值令和回绕到小值绕过边界）
             if (section != null && _parser.FileData != null
-                && offset < (ulong)_parser.FileData.Length
-                && section.Value.sh_offset + offset < (ulong)_parser.FileData.Length)
+                && section.Value.sh_offset < (ulong)_parser.FileData.Length
+                && offset < (ulong)_parser.FileData.Length - section.Value.sh_offset)
             {
                 int start = (int)(section.Value.sh_offset + offset);
                 string value = ELFParserUtils.ExtractStringFromBytes(_parser.FileData, start);

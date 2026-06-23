@@ -11,12 +11,22 @@ namespace PersonalTools.Utils
         /// <returns>字节数组</returns>
         public static byte[] HexStringToByteArray(string hex)
         {
-            ArgumentNullException.ThrowIfNull(hex, nameof(hex));
+            ArgumentNullException.ThrowIfNull(hex);
             // 移除空格分隔；仅剥离整串开头的一个 0x/0X 前缀——不全局替换，避免删除数据内部的 "0x" 子串或漏删大写 "0X"
-            hex = hex.Replace(" ", "", StringComparison.Ordinal);
+            // 仅在确含空格时才 Replace，避免对大字符串(文件 hex)无谓整串复制
+            if (hex.Contains(' ', StringComparison.Ordinal))
+            {
+                hex = hex.Replace(" ", "", StringComparison.Ordinal);
+            }
             if (hex.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
             {
                 hex = hex[2..];
+            }
+
+            // 空串（或仅 "0x"）不视为合法的 0 字节数据：否则解密/解码路径会把"未输入"当作空密文继续，掩盖真实问题
+            if (hex.Length == 0)
+            {
+                throw new ArgumentException("Hex字符串不能为空");
             }
 
             if (hex.Length % 2 != 0)
@@ -24,21 +34,18 @@ namespace PersonalTools.Utils
                 throw new ArgumentException("Hex字符串长度必须是偶数");
             }
 
-            byte[] bytes = new byte[hex.Length / 2];
-            for (int i = 0; i < hex.Length; i += 2)
-            {
-                // 含非十六进制字符时 Convert.ToByte 抛 FormatException（各调用方均已捕获并提示）
-                bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
-            }
-            return bytes;
+            // Convert.FromHexString 内部高效解析，零额外子串分配（替代逐对 Substring + Convert.ToByte 的分配热点）；
+            // 含非十六进制字符时抛 FormatException（各调用方均已捕获并提示）
+            return Convert.FromHexString(hex);
         }
 
         /// <summary>
-        /// 
+        /// 在指定位宽内将整数按位反转（CRC 的 refin/refout 子步骤）：把 <paramref name="value"/> 的低
+        /// <paramref name="width"/> 位按位镜像。<paramref name="width"/> 被钳制到 [0,32]。
         /// </summary>
-        /// <param name="value"></param>
-        /// <param name="width"></param>
-        /// <returns></returns>
+        /// <param name="value">待反转的值</param>
+        /// <param name="width">参与反转的位宽（0~32）</param>
+        /// <returns>低 width 位按位反序后的结果</returns>
         public static uint ReverseBits(uint value, int width)
         {
             // 限制在 [0,32]：width>32 会移位溢出丢高位、width<0 直接返回 0，均非"反转 width 位"的预期结果

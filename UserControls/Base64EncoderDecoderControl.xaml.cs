@@ -38,7 +38,7 @@ namespace PersonalTools.UserControls
                 string result = Convert.ToBase64String(bytes);
                 Base64Result.Text = result;
             }
-            catch (Exception ex) when (ex is ArgumentNullException or FormatException or ObjectDisposedException)
+            catch (Exception ex) when (ex is FormatException or ArgumentException or ObjectDisposedException)
             {
                 MessageHelper.ShowError($"Base64编码时发生错误: {ex.Message}");
             }
@@ -61,7 +61,7 @@ namespace PersonalTools.UserControls
                 // 含不可见字符时转 Hex 显示避免乱码，否则按 UTF-8 文本显示
                 Base64Input.Text = ConvertUtils.OutputString(bytes, ContainsInvisibleCharacters(bytes));
             }
-            catch (Exception ex) when (ex is ArgumentNullException or FormatException or ObjectDisposedException)
+            catch (Exception ex) when (ex is FormatException or ArgumentException or ObjectDisposedException)
             {
                 MessageHelper.ShowError($"Base64解码时发生错误: {ex.Message}");
             }

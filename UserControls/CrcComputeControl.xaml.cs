@@ -59,7 +59,7 @@ namespace PersonalTools.UserControls
                 };
                 CRCResultLabel.Content = crcResult.ToString(formatString, CultureInfo.InvariantCulture);
             }
-            catch (Exception ex) when (ex is FormatException or ArgumentNullException or ArgumentOutOfRangeException)
+            catch (Exception ex) when (ex is FormatException or ArgumentException)
             {
                 MessageHelper.ShowError($"计算CRC时发生错误: {ex.Message}");
             }

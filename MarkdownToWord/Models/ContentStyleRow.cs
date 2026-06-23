@@ -55,7 +55,7 @@ namespace PersonalTools.MarkdownToWord.Models
             set => SetField(ref underline, value);
         }
 
-        // 首行缩进字数（汉字数）。0 表示不缩进；正文默认 2。
+        // 首行缩进字数（汉字数）。0 表示不缩进；正文默认 0（用户可在样式设置中调整）。
         private double firstLineIndentChars;
         public double FirstLineIndentChars
         {

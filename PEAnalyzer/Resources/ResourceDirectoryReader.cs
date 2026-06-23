@@ -236,7 +236,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// 临时定位到 <paramref name="offset"/> 执行 <paramref name="action"/>，成功后恢复原流位置。
         /// 若 offset 越界（小于 0 或加上 <paramref name="minBytes"/> 超出文件）直接返回且不移动流；
         /// 若 action 抛出可恢复异常，则以 <paramref name="errorContext"/> 记录日志且不恢复流位置
-        /// （与各 void 图标解析方法原有 try/catch + Console.WriteLine 语义一致）。
+        /// （与各 void 图标解析方法原有 try/catch + PersonalTools.Utils.AppLogger.Log 语义一致）。
         /// </summary>
         public static void RunAtOffset(FileStream fs, long offset, int minBytes, string errorContext, Action action)
         {
@@ -254,7 +254,7 @@ namespace PersonalTools.PEAnalyzer.Resources
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
-                Console.WriteLine($"{errorContext}: {ex.Message}");
+                PersonalTools.Utils.AppLogger.Log($"{errorContext}: {ex.Message}");
             }
         }
     }

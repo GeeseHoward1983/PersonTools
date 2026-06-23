@@ -42,7 +42,7 @@ namespace PersonalTools.PEAnalyzer.Resources
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
-                Console.WriteLine($"图标信息解析错误: {ex.Message}");
+                PersonalTools.Utils.AppLogger.Log($"图标信息解析错误: {ex.Message}");
                 // 图标信息解析错误不中断程序执行
             }
         }
@@ -66,7 +66,7 @@ namespace PersonalTools.PEAnalyzer.Resources
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
-                Console.WriteLine($".NET图标解析错误: {ex.Message}");
+                PersonalTools.Utils.AppLogger.Log($".NET图标解析错误: {ex.Message}");
             }
         }
 
@@ -98,7 +98,7 @@ namespace PersonalTools.PEAnalyzer.Resources
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
-                Console.WriteLine($".NET资源图标解析错误: {ex.Message}");
+                PersonalTools.Utils.AppLogger.Log($".NET资源图标解析错误: {ex.Message}");
             }
         }
 
@@ -111,14 +111,15 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <param name="resourceOffset">资源节偏移</param>
         private static void ParseResourceDirectoryForIcons(FileStream fs, BinaryReader reader, PEInfo peInfo, long resourceOffset)
         {
+            if (resourceOffset < 0 || resourceOffset + ResourceDirectoryReader.DirectoryHeaderSize > fs.Length)
+            {
+                return;
+            }
+
+            // 在 finally 中恢复位置：异常路径下也要还原 fs.Position，避免污染后续兄弟资源的解析
+            long originalPosition = fs.Position;
             try
             {
-                if (resourceOffset < 0 || resourceOffset + ResourceDirectoryReader.DirectoryHeaderSize > fs.Length)
-                {
-                    return;
-                }
-
-                long originalPosition = fs.Position;
                 fs.Position = resourceOffset;
 
                 IMAGE_RESOURCE_DIRECTORY rootDirectory = ResourceDirectoryReader.ReadDirectory(reader);
@@ -137,12 +138,14 @@ namespace PersonalTools.PEAnalyzer.Resources
                     ResourceDirectoryReader.ScanNamedEntries(fs, reader, resourceOffset, rootDirectory.NumberOfNamedEntries,
                         nextLevelOffset => PEResourceParserIconNamed.ParseResourceDirectoryForNamedIcons(fs, reader, peInfo, nextLevelOffset));
                 }
-
-                fs.Position = originalPosition;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
-                Console.WriteLine($"解析资源目录以查找图标信息错误: {ex.Message}");
+                PersonalTools.Utils.AppLogger.Log($"解析资源目录以查找图标信息错误: {ex.Message}");
+            }
+            finally
+            {
+                fs.Position = originalPosition;
             }
         }
     }

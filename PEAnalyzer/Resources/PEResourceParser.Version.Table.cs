@@ -67,7 +67,16 @@ namespace PersonalTools.PEAnalyzer.Resources
                 while (fs.Position < tableEndPosition && fs.Position + 6 <= fs.Length)
                 {
                     long before = fs.Position;
-                    if (!ParseStringPair(fs, reader, peInfo, tableEndPosition) || fs.Position <= before)
+                    if (!ParseStringPair(fs, reader, peInfo, tableEndPosition))
+                    {
+                        break;
+                    }
+
+                    // 末项时 AdvanceToSibling 不会前进（下一兄弟落在表尾外），若 fs.Position 停在
+                    // 非对齐处会让下一轮从错位读取；统一对齐前进，无实质前进则结束，避免静默错位解析。
+                    long aligned = PEParserUtils.AlignTo4(fs.Position);
+                    fs.Position = aligned <= fs.Length ? aligned : fs.Length;
+                    if (fs.Position <= before)
                     {
                         break;
                     }
@@ -136,7 +145,9 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// </summary>
         private static string ReadUnicodeWithin(FileStream fs, BinaryReader reader, long limit)
         {
-            int maxBytes = (int)Math.Max(0, Math.Min(limit, fs.Length) - fs.Position);
+            // 用 long 计算可读字节数后再夹到 int 范围：>2GB 文件直接 (int) 强转会回绕成负值/巨值
+            long available = Math.Max(0, Math.Min(limit, fs.Length) - fs.Position);
+            int maxBytes = (int)Math.Min(available, int.MaxValue);
             return PEParserUtils.ReadUnicodeStringWithMaxBytes(reader, maxBytes);
         }
     }

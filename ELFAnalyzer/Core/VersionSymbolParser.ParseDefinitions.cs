@@ -18,7 +18,10 @@ namespace PersonalTools.ELFAnalyzer.Core
                 Models.ELFSectionHeader? verdefSection = ELFParserUtils.FindSectionByAddress(parser, (ulong)verdefAddr);
                 if (verdefSection != null)
                 {
-                    ParseVerDefEntries(parser, verdefSection.Value, (int)verdefNum);
+                    // verdefNum 来自不可信 DT_VERDEFNUM；夹到 [0, int.MaxValue] 而非直接 (int) 截断，
+                    // 否则 >int.MaxValue 时截成负值/小值导致版本定义被少解析。ParseVerDefEntries 内另有节边界兜底。
+                    int count = verdefNum > int.MaxValue ? int.MaxValue : (int)verdefNum;
+                    ParseVerDefEntries(parser, verdefSection.Value, count);
                 }
             }
             else
@@ -70,7 +73,19 @@ namespace PersonalTools.ELFAnalyzer.Core
                 uint vd_next = ELFParserUtils.ReadUInt32(parser.FileData, (int)offset + 16, isLittleEndian);
 
                 // Verdaux 紧随其后：vda_name(+0) 为版本名在字符串表中的偏移
+                // 边界：vd_aux 不可信，校验 nameOffset+4 落在文件内，越界则跳过本项（避免越界异常中止整份分析）
                 ulong nameOffset = offset + vd_aux;
+                if (nameOffset + 4 > (ulong)parser.FileData.Length)
+                {
+                    if (vd_next == 0 || offset + vd_next >= (ulong)parser.FileData.Length)
+                    {
+                        break;
+                    }
+                    offset += vd_next;
+                    processed++;
+                    continue;
+                }
+
                 uint nameOffsetInStrTab = ELFParserUtils.ReadUInt32(parser.FileData, (int)nameOffset, isLittleEndian);
                 string versionName = ELFParserUtils.ExtractStringFromBytes(strTabData, (int)nameOffsetInStrTab);
 

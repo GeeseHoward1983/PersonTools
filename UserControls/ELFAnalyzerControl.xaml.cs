@@ -3,6 +3,7 @@ using PersonalTools.ELFAnalyzer.UIHelper;
 using PersonalTools.Enums;
 using PersonalTools.Utils;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -38,155 +39,116 @@ namespace PersonalTools.UserControls
             }
         }
 
-        private void SetELFHeaderInfo(ELFAnalyzer.ELFAnalyzer analyzer)
+        // 后台线程一次性算出的全部展示数据；UI 线程仅据此赋值控件，避免解析/格式化在 UI 线程卡死，
+        // 也避免逐步刷新时中途异常造成"新旧文件混合视图"（全部算完才整体应用）。
+        private sealed record ElfDisplayData(
+            string HeaderInfo,
+            string Interpreter,
+            List<ProgramHeaderInfo> ProgramHeaders,
+            List<ELFSectionHeaderInfo> SectionHeaders,
+            string SectionToSegment,
+            List<ELFSymbolTableInfo> SymbolTable,
+            List<ELFSymbolTableInfo> DynsymTable,
+            List<ELFDynamicSectionInfo> DynamicSection,
+            string VersionSymbolInfo,
+            string VersionDependencyInfo,
+            List<ELFRelocationInfo> RelaDyn,
+            List<ELFRelocationInfo> RelaPlt,
+            List<ELFGotInfo> GotPlt,
+            List<ELFGotInfo> Got,
+            string NoteInfo,
+            string AttributeInfo,
+            string ExidxInfo);
+
+        // 纯计算：全部在后台线程执行，不触碰任何 WPF 控件
+        private static ElfDisplayData ComputeDisplayData(ELFAnalyzer.ELFAnalyzer analyzer)
         {
-            ELFHeaderInfoControl.SetELFHeaderInfo(ELFHeaderHelper.GetFormattedELFHeaderInfo(analyzer.Parser));
+            List<ELFRelocationInfo> relaDyn = RelocationHelper.GetRelocationInfoForSpecificSection(analyzer.Parser, ".rela.dyn");
+            relaDyn.AddRange(RelocationHelper.GetRelocationInfoForSpecificSection(analyzer.Parser, ".rel.dyn"));
+
+            List<ELFRelocationInfo> relaPlt = RelocationHelper.GetRelocationInfoForSpecificSection(analyzer.Parser, ".rela.plt");
+            relaPlt.AddRange(RelocationHelper.GetRelocationInfoForSpecificSection(analyzer.Parser, ".rel.plt"));
+
+            return new ElfDisplayData(
+                ELFHeaderHelper.GetFormattedELFHeaderInfo(analyzer.Parser),
+                ProgramHeaderHelper.GetInterpreterInfo(analyzer.Parser),
+                ProgramHeaderHelper.GetProgramHeaderInfoList(analyzer.Parser),
+                SectionHeaderHelper.GetSectionHeaderInfoList(analyzer.Parser),
+                ProgramHeaderHelper.GetSectionToSegmentMappingInfo(analyzer.Parser),
+                SymbolTableHelper.GetSymbolTableInfoList(analyzer.Parser, SectionType.SHT_SYMTAB),
+                SymbolTableHelper.GetSymbolTableInfoList(analyzer.Parser, SectionType.SHT_DYNSYM),
+                DynamicHelper.GetDynamicSectionInfoList(analyzer.Parser),
+                analyzer.GetFormattedVersionSymbolInfo(),
+                analyzer.GetFormattedVersionDependencyInfo(),
+                relaDyn,
+                relaPlt,
+                GotHelper.GetGotInfoList(analyzer.Parser, ".got.plt"),
+                GotHelper.GetGotInfoList(analyzer.Parser, ".got"),
+                analyzer.GetFormattedNotesInfo(),
+                AttributesHelper.GetAttributeInfo(analyzer.Parser),
+                ExidxInfoHelper.GetExidxInfo(analyzer.Parser));
         }
 
-        private void SetInterpreterInfo(ELFAnalyzer.ELFAnalyzer analyzer)
+        // UI 线程：仅赋值控件，几乎不会抛业务异常，从而保证视图整体一致
+        private void ApplyDisplayData(ElfDisplayData data)
         {
-            string interpreter = ProgramHeaderHelper.GetInterpreterInfo(analyzer.Parser);
-            if (!string.IsNullOrEmpty(interpreter))
+            ELFHeaderInfoControl.SetELFHeaderInfo(data.HeaderInfo);
+            if (!string.IsNullOrEmpty(data.Interpreter))
             {
-                ELFHeaderInfoControl.SetInterpreterInfo(interpreter);
+                ELFHeaderInfoControl.SetInterpreterInfo(data.Interpreter);
             }
+            ELFProgramHeaderControl.SetProgramHeadersData(data.ProgramHeaders);
+            ELFSectionHeaderControl.SetSectionHeadersData(data.SectionHeaders);
+            ELFSectionToSegmentMappingControl.SetSectionToSegmentInfo(data.SectionToSegment);
+
+            ELFSymbolTableControl.SetSymbolTableData(data.SymbolTable);
+            ELFSymbolTableTabItem.Visibility = data.SymbolTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+            ELFDynsymControl.SetDynsymData(data.DynsymTable);
+            ELFDynsymTabItem.Visibility = data.DynsymTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+            ELFDynamicSectionControl.SetDynamicSectionData(data.DynamicSection);
+            ELFDynamicSectionTabItem.Visibility = data.DynamicSection.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+            ELFVersionSymbolInfoControl.SetVersionSymbolInfo(data.VersionSymbolInfo);
+            ELFVersionDependencyInfoControl.SetVersionDependencyInfo(data.VersionDependencyInfo);
+
+            ELFRelocationControl.SetRelaDynData(data.RelaDyn);
+            ELFRelaDynTabItem.Visibility = data.RelaDyn.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+            ELFPltRelocationControl.SetRelaPltData(data.RelaPlt);
+            ELFRelaPltTabItem.Visibility = data.RelaPlt.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+            ELFGotPltControl.SetGotData(data.GotPlt, "GOT.PLT 表 (.got.plt)");
+            ELFGotPltTabItem.Visibility = data.GotPlt.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            ELFGotControl.SetGotData(data.Got, "GOT 表 (.got)");
+            ELFGotTabItem.Visibility = data.Got.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+            ELFNoteInfoControl.SetNoteInfo(data.NoteInfo);
+            ELFNoteInfoTabItem.Visibility = data.NoteInfo.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+            ELFAttributeInfoControl.SetAttributeInfo(data.AttributeInfo);
+            ELFAttributeInfoTabItem.Visibility = data.AttributeInfo.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+            ELFExidxInfoControl.SetExidxInfo(data.ExidxInfo);
+            ELFExidxInfoTabItem.Visibility = !data.ExidxInfo.Contains("There are no exception index entries", StringComparison.CurrentCulture) ? Visibility.Visible : Visibility.Collapsed;
         }
-
-        private void SetProgramHeadersData(ELFAnalyzer.ELFAnalyzer analyzer)
-        {
-            List<ProgramHeaderInfo> programHeaders = ProgramHeaderHelper.GetProgramHeaderInfoList(analyzer.Parser);
-            ELFProgramHeaderControl.SetProgramHeadersData(programHeaders);
-        }
-
-        private void SetSectionHeadersData(ELFAnalyzer.ELFAnalyzer analyzer)
-        {
-            List<ELFSectionHeaderInfo> sectionHeaders = SectionHeaderHelper.GetSectionHeaderInfoList(analyzer.Parser);
-            ELFSectionHeaderControl.SetSectionHeadersData(sectionHeaders);
-        }
-
-        private void SetSectionToSegmentInfo(ELFAnalyzer.ELFAnalyzer analyzer)
-        {
-            ELFSectionToSegmentMappingControl.SetSectionToSegmentInfo(ProgramHeaderHelper.GetSectionToSegmentMappingInfo(analyzer.Parser));
-        }
-
-        private void SetSymbolTableData(ELFAnalyzer.ELFAnalyzer analyzer)
-        {
-            List<ELFSymbolTableInfo> symbolTable = SymbolTableHelper.GetSymbolTableInfoList(analyzer.Parser, SectionType.SHT_SYMTAB);
-            ELFSymbolTableControl.SetSymbolTableData(symbolTable);
-            ELFSymbolTableTabItem.Visibility = symbolTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        private void SetDynamicSymbolTableData(ELFAnalyzer.ELFAnalyzer analyzer)
-        {
-            List<ELFSymbolTableInfo> dynsymTable = SymbolTableHelper.GetSymbolTableInfoList(analyzer.Parser, SectionType.SHT_DYNSYM);
-            ELFDynsymControl.SetDynsymData(dynsymTable);
-            ELFDynsymTabItem.Visibility = dynsymTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        private void SetDynamicSectionData(ELFAnalyzer.ELFAnalyzer analyzer)
-        {
-            List<ELFDynamicSectionInfo> dynamicSection = DynamicHelper.GetDynamicSectionInfoList(analyzer.Parser);
-            ELFDynamicSectionControl.SetDynamicSectionData(dynamicSection);
-            ELFDynamicSectionTabItem.Visibility = dynamicSection.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        private void SetVersionSymbolInfo(ELFAnalyzer.ELFAnalyzer analyzer)
-        {
-            ELFVersionSymbolInfoControl.SetVersionSymbolInfo(analyzer.GetFormattedVersionSymbolInfo());
-        }
-
-        private void SetVersionDependencyInfo(ELFAnalyzer.ELFAnalyzer analyzer)
-        {
-            ELFVersionDependencyInfoControl.SetVersionDependencyInfo(analyzer.GetFormattedVersionDependencyInfo());
-        }
-
-        private void SetRelaDynData(ELFAnalyzer.ELFAnalyzer analyzer)
-        {
-            List<ELFRelocationInfo> relaDynTable = RelocationHelper.GetRelocationInfoForSpecificSection(analyzer.Parser, ".rela.dyn");
-            List<ELFRelocationInfo> relDynTable = RelocationHelper.GetRelocationInfoForSpecificSection(analyzer.Parser, ".rel.dyn");
-            relaDynTable.AddRange(relDynTable);
-            ELFRelocationControl.SetRelaDynData(relaDynTable);
-            ELFRelaDynTabItem.Visibility = relaDynTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        private void SetRelaPltData(ELFAnalyzer.ELFAnalyzer analyzer)
-        {
-            List<ELFRelocationInfo> relaPltTable = RelocationHelper.GetRelocationInfoForSpecificSection(analyzer.Parser, ".rela.plt");
-            List<ELFRelocationInfo> relPltTable = RelocationHelper.GetRelocationInfoForSpecificSection(analyzer.Parser, ".rel.plt");
-            relaPltTable.AddRange(relPltTable);
-            ELFPltRelocationControl.SetRelaPltData(relaPltTable);
-            ELFRelaPltTabItem.Visibility = relaPltTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        private void SetGotData(ELFAnalyzer.ELFAnalyzer analyzer)
-        {
-            List<ELFGotInfo> gotPltTable = GotHelper.GetGotInfoList(analyzer.Parser, ".got.plt");
-            ELFGotPltControl.SetGotData(gotPltTable, "GOT.PLT 表 (.got.plt)");
-            ELFGotPltTabItem.Visibility = gotPltTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-
-            List<ELFGotInfo> gotTable = GotHelper.GetGotInfoList(analyzer.Parser, ".got");
-            ELFGotControl.SetGotData(gotTable, "GOT 表 (.got)");
-            ELFGotTabItem.Visibility = gotTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        private void SetNoteInfo(ELFAnalyzer.ELFAnalyzer analyzer)
-        {
-            string noteInfo = analyzer.GetFormattedNotesInfo();
-            ELFNoteInfoControl.SetNoteInfo(noteInfo);
-            ELFNoteInfoTabItem.Visibility = noteInfo.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        private void SetAttributeInfo(ELFAnalyzer.ELFAnalyzer analyzer)
-        {
-            string attributeInfo = AttributesHelper.GetAttributeInfo(analyzer.Parser);
-            ELFAttributeInfoControl.SetAttributeInfo(attributeInfo);
-            ELFAttributeInfoTabItem.Visibility = attributeInfo.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        private void SetExidxInfo(ELFAnalyzer.ELFAnalyzer analyzer)
-        {
-            string exidxInfo = ExidxInfoHelper.GetExidxInfo(analyzer.Parser);
-            ELFExidxInfoControl.SetExidxInfo(exidxInfo);
-            ELFExidxInfoTabItem.Visibility = !exidxInfo.Contains("There are no exception index entries", StringComparison.CurrentCulture) ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        private Action<ELFAnalyzer.ELFAnalyzer>[]? displaySteps;
-
-        // 各分析展示步骤（表驱动：统一遍历调用，增删步骤只需改这张表）
-        private Action<ELFAnalyzer.ELFAnalyzer>[] DisplaySteps => displaySteps ??=
-        [
-            SetELFHeaderInfo,
-            SetInterpreterInfo,
-            SetProgramHeadersData,
-            SetSectionHeadersData,
-            SetSectionToSegmentInfo,
-            SetSymbolTableData,
-            SetDynamicSymbolTableData,
-            SetDynamicSectionData,
-            SetVersionSymbolInfo,
-            SetVersionDependencyInfo,
-            SetRelaDynData,
-            SetRelaPltData,
-            SetGotData,
-            SetNoteInfo,
-            SetAttributeInfo,
-            SetExidxInfo,
-        ];
 
         // IFileAnalyzerView：供宿主统一调用
         public void LoadFile(string filePath) => AnalyzeELFFile(filePath);
 
-        public void AnalyzeELFFile(string filePath)
+        // async void：UI 事件式入口。解析+格式化在后台线程，UI 线程只做控件赋值，避免畸形/大文件卡死界面
+        public async void AnalyzeELFFile(string filePath)
         {
             try
             {
-                ELFAnalyzer.ELFAnalyzer analyzer = new(filePath);
-
-                // 更新各控件的信息
-                foreach (Action<ELFAnalyzer.ELFAnalyzer> step in DisplaySteps)
+                ElfDisplayData data = await Task.Run(() =>
                 {
-                    step(analyzer);
-                }
+                    ELFAnalyzer.ELFAnalyzer analyzer = new(filePath);
+                    return ComputeDisplayData(analyzer);
+                }).ConfigureAwait(true);
+
+                ApplyDisplayData(data);
             }
             catch (Exception ex) when (ex is UnauthorizedAccessException or ArgumentException
                 or IndexOutOfRangeException or EndOfStreamException or IOException
