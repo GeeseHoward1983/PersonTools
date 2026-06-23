@@ -56,7 +56,11 @@ namespace PersonalTools.ELFAnalyzer.Core
                 string owner = ELFParserUtils.ExtractStringFromBytes(parser.FileData, (int)nameOffset, (int)namesz);
 
                 ulong descOffset = AlignNoteOffset(nameOffset + namesz, is64Bit);
-                string noteInfo = ProcessNoteEntry(parser, type, owner, parser.FileData, (int)descOffset, (int)descsz);
+                // descOffset/descsz 超出文件范围时跳过描述解析（owner 仍有效）：namesz 为 uint 可使 descOffset 超 int.MaxValue，
+                // 既避免 (int) 截断错位，也堵住 GetABIVersion/GetBuildID 等对 FileData 的越界读取
+                string noteInfo = descOffset + descsz <= (ulong)parser.FileData.Length
+                    ? ProcessNoteEntry(parser, type, owner, parser.FileData, (int)descOffset, (int)descsz)
+                    : string.Empty;
                 if (!string.IsNullOrEmpty(noteInfo))
                 {
                     sb.AppendLine(CultureInfo.InvariantCulture, $"  {owner,-18}0x{descsz:x8}           {noteInfo}");

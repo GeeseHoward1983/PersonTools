@@ -43,8 +43,8 @@ namespace PersonalTools.ELFAnalyzer.Core
             byte[] data = parser.CopySectionData(in exidxSection);
             bool isLittleEndian = parser.Header.IsLittleEndian();
 
-            // ARM异常索引表由8字节(2个字)的条目组成
-            int entryCount = (int)(exidxSection.sh_size / 8); // 8字节每条目
+            // ARM异常索引表由8字节(2个字)的条目组成；按实际读到的字节数计算条目，避免越界/截断节越界读取
+            int entryCount = data.Length / 8; // 8字节每条目
 
             for (int idx = 0; idx < entryCount; idx++)
             {
@@ -148,6 +148,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             bInstruction[0] = (byte)(unwindInfo >> 8 & 0xFF);
             bInstruction[1] = (byte)(unwindInfo & 0xFF);
 
+            int filled = 0;
             for (int i = 0; i < remainDWords; i++)
             {
                 extabFileOff += 4;
@@ -160,6 +161,14 @@ namespace PersonalTools.ELFAnalyzer.Core
                 {
                     Array.Reverse(bInstruction, 2 + i * 4, 4);
                 }
+                filled = i + 1;
+            }
+
+            // 文件截断导致部分 dword 未填充时，裁掉尾部全 0 残留，避免被 ParseUnwindInstructions 当作 nop 指令输出
+            int actualLength = 2 + filled * 4;
+            if (actualLength < bInstruction.Length)
+            {
+                Array.Resize(ref bInstruction, actualLength);
             }
 
             return bInstruction;

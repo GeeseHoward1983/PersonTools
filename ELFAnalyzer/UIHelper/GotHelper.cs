@@ -61,8 +61,8 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             int count = (int)(section.sh_size / (ulong)entrySize);
             for (int i = 0; i < count; i++)
             {
-                ulong slotAddr = section.sh_addr + (ulong)(i * entrySize);
-                long fileOffset = (long)section.sh_offset + (i * entrySize);
+                ulong slotAddr = section.sh_addr + (ulong)((long)i * entrySize);
+                long fileOffset = (long)section.sh_offset + (long)i * entrySize;
 
                 string value = ReadSlotValue(Parser, fileOffset, entrySize, isLittleEndian);
                 (string type, string symbol) = ResolveSlot(relocByOffset, slotAddr, sectionName, i);

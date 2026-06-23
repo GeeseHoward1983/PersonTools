@@ -18,13 +18,20 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             }
 
             Models.ELFSectionHeader section = Parser.SectionHeaders![sectionIndex];
-            int entryCount = (int)(section.sh_size / section.sh_entsize);
-            byte[] data = Parser.CopySectionData(in section);
+            if (section.sh_entsize == 0)
+            {
+                return result; // 防除零：畸形节 sh_entsize 为 0
+            }
 
-            Models.ELFSectionHeader symTabSection = Parser.SectionHeaders[(int)section.sh_link];
-            List<ELFSymbol> symbols = ReadRelocationSymbols(Parser, symTabSection);
+            byte[] data = Parser.GetSectionData(sectionIndex);
+            List<ELFSymbol> symbols = ReadRelocationSymbols(Parser, (int)section.sh_link);
 
-            bool isRela = sectionName.Contains("rela", StringComparison.CurrentCulture);
+            // 按真实 sh_type 判定 RELA/REL（条目大小不同），而非依赖节名是否含 "rela"
+            bool isRela = section.sh_type == (uint)SectionType.SHT_RELA;
+            int entrySize = Parser.Is64Bit ? (isRela ? 24 : 16) : (isRela ? 12 : 8);
+
+            // entryCount 同时受声明条目数与实际可读字节约束，避免越界/截断节(data 为空或偏短)时越界读取
+            int entryCount = (int)Math.Min(section.sh_size / section.sh_entsize, (ulong)(data.Length / entrySize));
             for (int j = 0; j < entryCount; j++)
             {
                 ReadRelocationEntry(Parser, data, j, isRela, out ulong offset, out ulong info, out long addend);
@@ -75,10 +82,10 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             return -1;
         }
 
-        // 读取重定位节关联的符号表（处理 32/64 位与字节序）
-        private static List<ELFSymbol> ReadRelocationSymbols(ELFParser Parser, Models.ELFSectionHeader symTabSection)
+        // 读取重定位节关联的符号表（处理 32/64 位与字节序）。按节索引走缓存，多个重定位节共享同一符号表时避免整表重复拷贝
+        private static List<ELFSymbol> ReadRelocationSymbols(ELFParser Parser, int symTabIndex)
         {
-            byte[] symTabData = Parser.CopySectionData(in symTabSection);
+            byte[] symTabData = Parser.GetSectionData(symTabIndex);
             List<ELFSymbol> symbols = [];
             bool little = Parser.Header.IsLittleEndian();
             int symEntrySize = Parser.Is64Bit ? 24 : 16; // 64位符号表项24字节，32位16字节
@@ -159,7 +166,8 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
         {
             if (sym >= symbols.Count)
             {
-                return (string.Empty, "0000000000000000");
+                // 回退值宽度与正常值一致：64 位 16 位十六进制，32 位 8 位
+                return (string.Empty, Parser.Is64Bit ? "0000000000000000" : "00000000");
             }
             ELFSymbol symbol = symbols[(int)sym];
             string name = ResolveRelocSymbolName(Parser, symbol, (int)sym);

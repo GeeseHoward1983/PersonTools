@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using System.Text;
 
 namespace PersonalTools.Utils.Crypto
 {
@@ -28,7 +27,7 @@ namespace PersonalTools.Utils.Crypto
             }
         }
 
-        public static string Decrypt(string input, string privateKey)
+        public static string Decrypt(string input, string privateKey, bool isString)
         {
             using RSA rsa = RSA.Create();
 
@@ -38,7 +37,8 @@ namespace PersonalTools.Utils.Crypto
                 rsa.ImportFromPem(privateKey);
 
                 byte[] decryptedBytes = rsa.Decrypt(encryptedBytes, RSAEncryptionPadding.OaepSHA256);
-                return Encoding.UTF8.GetString(decryptedBytes);
+                // 与加密对称：String 模式按 UTF-8 文本输出，Hex 模式按十六进制输出，避免二进制明文被 UTF-8 解码损坏
+                return ConvertUtils.OutputString(decryptedBytes, !isString);
             }
             catch (Exception ex)
             {
@@ -76,12 +76,9 @@ namespace PersonalTools.Utils.Crypto
 
                 return rsa.VerifyData(inputBytes, signatureBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
             }
-            catch (CryptographicException)
+            catch (Exception ex) when (ex is CryptographicException or ArgumentException or FormatException)
             {
-                return false;
-            }
-            catch (ArgumentException)
-            {
+                // FormatException：input/signature 为非法十六进制时 HexStringToByteArray 会抛，按验签失败处理而非崩溃
                 return false;
             }
         }

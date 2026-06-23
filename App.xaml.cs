@@ -29,7 +29,8 @@ namespace PersonalTools
         {
             if (e.ExceptionObject is Exception ex)
             {
-                MessageHelper.ShowError($"发生严重错误：{ex.Message}");
+                // 该回调可能在非 UI 线程触发，封送到 UI 线程再弹窗，避免在后台线程直接 MessageBox 的不可靠行为
+                Application.Current?.Dispatcher.Invoke(() => MessageHelper.ShowError($"发生严重错误：{ex.Message}"));
             }
         }
     }

@@ -188,11 +188,12 @@ namespace PersonalTools.MarkdownToWord.Docx
         {
             long cx = (long)(pixelWidth / dpiX * EmuPerInch);
             long cy = (long)(pixelHeight / dpiY * EmuPerInch);
-            cy = cx switch
+            // 宽度超过正文可用宽度时：先按原始宽度比例缩小高度，再把宽度钳到上限，避免图片溢出页面同时保持宽高比
+            if (cx > MaxWidthEmu)
             {
-                > MaxWidthEmu => (long)(cy * ((double)MaxWidthEmu / cx)),
-                _ => cy
-            };
+                cy = (long)(cy * ((double)MaxWidthEmu / cx));
+                cx = MaxWidthEmu;
+            }
 
             return (cx switch
             {

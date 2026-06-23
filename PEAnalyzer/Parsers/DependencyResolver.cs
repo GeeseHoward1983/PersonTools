@@ -8,6 +8,17 @@ namespace PersonalTools.PEAnalyzer.Parsers
     /// </summary>
     internal static class DependencyResolver
     {
+        // PATH 在应用生命周期内基本不变：解析一次并缓存，避免每次依赖解析回退到 PATH 时都重新读取并 split
+        private static readonly string[] PathDirectories = ParsePathDirectories();
+
+        private static string[] ParsePathDirectories()
+        {
+            string? pathEnv = Environment.GetEnvironmentVariable("PATH");
+            return string.IsNullOrEmpty(pathEnv)
+                ? []
+                : pathEnv.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        }
+
         /// <param name="targetIs64Bit">目标 PE 位数：true=64位优先 System32；false=32位优先 SysWOW64；null=未知，按 System32 优先。</param>
         public static string? Resolve(string dllName, string? baseDir, bool? targetIs64Bit = null)
         {
@@ -67,13 +78,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
             }
 
             // PATH 环境变量中的各目录（与 Windows 默认 DLL 搜索顺序一致，置于最后）
-            string? pathEnv = Environment.GetEnvironmentVariable("PATH");
-            if (!string.IsNullOrEmpty(pathEnv))
+            foreach (string dir in PathDirectories)
             {
-                foreach (string dir in pathEnv.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-                {
-                    yield return dir;
-                }
+                yield return dir;
             }
         }
     }

@@ -40,6 +40,12 @@ namespace PersonalTools.ELFAnalyzer.Core
         // 若该符号有有效外部版本（索引≥2），按是否默认版本追加 "@@版本"/"@版本"，否则原样返回
         private static string AppendVersionSuffix(ELFParser parser, string baseName, int symbolIndex, SectionType sectionType)
         {
+            // .gnu.version 表按 .dynsym 索引建立，仅动态符号可据此追加版本后缀；symtab 符号索引语义不同，避免错配后缀
+            if (sectionType != SectionType.SHT_DYNSYM)
+            {
+                return baseName;
+            }
+
             List<ELFSymbol>? symbols = parser.Symbols.GetValueOrDefault(sectionType);
             if (symbols == null || symbolIndex < 0 || symbolIndex >= parser.VersionSymbols.Length)
             {

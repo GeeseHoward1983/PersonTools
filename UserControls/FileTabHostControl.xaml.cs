@@ -94,6 +94,11 @@ namespace PersonalTools.UserControls
                 return; // 非法路径
             }
 
+            if (!File.Exists(full))
+            {
+                return; // 仅处理存在的文件，跳过目录/不存在路径，避免建立无法加载的残留 tab
+            }
+
             // 已存在同完整路径的 tab → 覆盖其内容并选中
             foreach (object item in FileTabs.Items)
             {

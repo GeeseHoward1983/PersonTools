@@ -30,7 +30,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                     result.Add(new ELFModels.ELFSymbolTableInfo
                     {
                         Number = i,
-                        Value = $"0x{sym.StValue:x12}",
+                        Value = Parser.Is64Bit ? $"0x{sym.StValue:x16}" : $"0x{sym.StValue:x8}",
                         Size = $"{sym.StSize}",
                         Type = StripSymbolPrefix(ELFSymbolInfo.GetSymbolType(sym.StInfo)),
                         Bind = StripSymbolPrefix(ELFSymbolInfo.GetSymbolBinding(sym.StInfo)),

@@ -12,8 +12,12 @@ namespace PersonalTools.Utils
         public static byte[] HexStringToByteArray(string hex)
         {
             ArgumentNullException.ThrowIfNull(hex, nameof(hex));
-            // 移除可能的空格和0x前缀
-            hex = hex.Replace(" ", "", StringComparison.CurrentCulture).Replace("0x", "", StringComparison.CurrentCulture);
+            // 移除空格分隔；仅剥离整串开头的一个 0x/0X 前缀——不全局替换，避免删除数据内部的 "0x" 子串或漏删大写 "0X"
+            hex = hex.Replace(" ", "", StringComparison.Ordinal);
+            if (hex.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+            {
+                hex = hex[2..];
+            }
 
             if (hex.Length % 2 != 0)
             {
@@ -23,6 +27,7 @@ namespace PersonalTools.Utils
             byte[] bytes = new byte[hex.Length / 2];
             for (int i = 0; i < hex.Length; i += 2)
             {
+                // 含非十六进制字符时 Convert.ToByte 抛 FormatException（各调用方均已捕获并提示）
                 bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
             }
             return bytes;
@@ -36,6 +41,8 @@ namespace PersonalTools.Utils
         /// <returns></returns>
         public static uint ReverseBits(uint value, int width)
         {
+            // 限制在 [0,32]：width>32 会移位溢出丢高位、width<0 直接返回 0，均非"反转 width 位"的预期结果
+            width = Math.Clamp(width, 0, 32);
             uint result = 0;
             for (int i = 0; i < width; i++)
             {

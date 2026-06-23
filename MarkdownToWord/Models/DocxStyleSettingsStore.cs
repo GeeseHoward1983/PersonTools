@@ -42,11 +42,15 @@ namespace PersonalTools.MarkdownToWord.Models
                 }
 
                 settings.GenerateToc = persisted.GenerateToc;
-                foreach (ContentStyleRow row in settings.Rows)
+                // persisted.Rows 可能因 JSON 显式 "Rows": null 反序列化为 null，需判空避免 NRE 逃逸出本 catch
+                if (persisted.Rows != null)
                 {
-                    if (persisted.Rows.TryGetValue(row.Category.ToString(), out PersistedRow? p) && p != null)
+                    foreach (ContentStyleRow row in settings.Rows)
                     {
-                        ApplyTo(row, p);
+                        if (persisted.Rows.TryGetValue(row.Category.ToString(), out PersistedRow? p) && p != null)
+                        {
+                            ApplyTo(row, p);
+                        }
                     }
                 }
             }

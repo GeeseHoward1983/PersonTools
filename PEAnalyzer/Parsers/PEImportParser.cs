@@ -205,6 +205,13 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
         private static void ImportByName(List<IMAGE_SECTION_HEADER> sections, ulong thunkRva, FileStream fs, BinaryReader reader, ImportFunctionInfo importFunc)
         {
+            // RVA 为 32 位概念；name import 的 thunk 高 32 位本应为 0，非零说明畸形数据，避免 (uint) 截断后碰巧落入有效节读出错误名称
+            if (thunkRva > uint.MaxValue)
+            {
+                SetImportFunc(importFunc, $"INVALID_RVA_{thunkRva:X}", 0, false);
+                return;
+            }
+
             long nameOffset = PEParserUtils.RvaToOffset((uint)thunkRva, sections);
             if (nameOffset == -1 || nameOffset >= fs.Length)
             {

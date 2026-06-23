@@ -97,7 +97,8 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 bool isBase = kvp.Key == 1;
                 string flags = isBase ? "BASE" : "";
-                ulong entryDelta = isBase ? 0UL : (ulong)entryIndex * vd.sh_entsize;
+                // 条目偏移按排序序号推进；BASE(Key=1)经 OrderBy 居首即 entryIndex=0，无需对其特判（特判会与自增的 entryIndex 不一致）
+                ulong entryDelta = (ulong)entryIndex * vd.sh_entsize;
                 ulong addr = vd.sh_addr + entryDelta;
                 ulong fileOffset = vd.sh_offset + entryDelta;
                 sb.AppendLine(CultureInfo.InvariantCulture, $"  地址：0x{addr:x8}  Offset: 0x{fileOffset:x6}  Link: {vd.sh_link} (.dynstr)  {entryIndex:D4}: Rev: 1  Flags: {flags,-6}   Index: {kvp.Key}  Cnt: 1  名称：{kvp.Value}");

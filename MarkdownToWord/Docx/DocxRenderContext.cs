@@ -20,6 +20,9 @@ namespace PersonalTools.MarkdownToWord.Docx
         public DocxStyleSettings Settings { get; }
         public string? BaseDir { get; }
 
+        /// <summary>是否已渲染过封面（Markdown 首个一级标题）。封面只渲染一次，其余一级标题降级为 Word 一级标题，避免重复整页封面。</summary>
+        public bool CoverRendered { get; set; }
+
         /// <summary>是否已渲染过首个一级标题（首章前不插分页，其后每章插分页，需求 3）。</summary>
         public bool FirstChapterRendered { get; set; }
 

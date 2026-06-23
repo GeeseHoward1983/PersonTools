@@ -83,7 +83,7 @@ namespace PersonalTools.UserControls
 
             try
             {
-                string result = RsaCryptoService.Decrypt(input, privateKey);
+                string result = RsaCryptoService.Decrypt(input, privateKey, RsaInputStringRadio.IsChecked == true);
                 RsaInput.Text = result;
             }
             catch (Exception ex) when (ex is CryptographicException or ArgumentException)

@@ -18,7 +18,8 @@ namespace PersonalTools.ELFAnalyzer.Core
                 {
                     byte[] data = parser.CopySectionData(versymSection.Value);
 
-                    int count = (int)(versymSection.Value.sh_size / 2); // 每个版本符号是2字节
+                    // 按实际读到的字节数计算条目，避免越界/截断节(CopySectionData 返回空)时 sh_size 仍驱动越界读取
+                    int count = data.Length / 2; // 每个版本符号是2字节
                     bool isLittleEndian = parser.Header.IsLittleEndian();
                     parser.VersionSymbols = new ushort[count];
 

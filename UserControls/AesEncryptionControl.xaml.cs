@@ -55,7 +55,7 @@ namespace PersonalTools.UserControls
             AesPaddingComboBox.Items.Add(new AesPaddingOption { Name = "PKCS7 (默认)", Padding = PaddingMode.PKCS7 });
             AesPaddingComboBox.Items.Add(new AesPaddingOption { Name = "Zero Padding", Padding = PaddingMode.Zeros });
             AesPaddingComboBox.Items.Add(new AesPaddingOption { Name = "PKCS5 Padding", Padding = PaddingMode.PKCS7 });
-            AesPaddingComboBox.Items.Add(new AesPaddingOption { Name = "ISO7816 Padding", Padding = PaddingMode.ISO10126 });
+            AesPaddingComboBox.Items.Add(new AesPaddingOption { Name = "ISO10126 Padding", Padding = PaddingMode.ISO10126 });
             AesPaddingComboBox.Items.Add(new AesPaddingOption { Name = "ANSI X923 Padding", Padding = PaddingMode.ANSIX923 });
             AesPaddingComboBox.SelectedIndex = 0; // 默认选择PKCS7
         }

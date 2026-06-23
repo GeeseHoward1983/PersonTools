@@ -76,13 +76,15 @@ namespace PersonalTools.MarkdownToWord.Docx
         private static void RenderHeading(HeadingBlock heading, OpenXmlElement container, DocxRenderContext ctx)
         {
             // Markdown 一级标题 → Word 封面；二级→Word 一级，依次右移一级（需求 1/2）
-            if (heading.Level == 1)
+            // 封面只生成一次：文档若含多个一级标题，仅首个作封面，其余降级为 Word 一级标题，避免正文中重复整页封面
+            if (heading.Level == 1 && !ctx.CoverRendered)
             {
                 DocxCoverBuilder.RenderCover(heading, container, ctx);
+                ctx.CoverRendered = true;
                 return;
             }
 
-            int wordLevel = heading.Level - 1;
+            int wordLevel = Math.Max(1, heading.Level - 1);
             bool styled = wordLevel is >= 1 and <= 4;
 
             // 去掉 Markdown 标题文本里的编号前缀，改由 Word 多级编号自动生成（需求 3）

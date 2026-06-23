@@ -154,6 +154,12 @@ namespace PersonalTools.PEAnalyzer.Resources
                     break;
                 }
 
+                // 跳过命名条目（最高位为1），仅匹配 ID 类型条目——否则命名条目低16位（名称偏移）恰为 typeId 时会误判
+                if ((entry.NameOrId & 0x80000000) != 0)
+                {
+                    continue;
+                }
+
                 if ((entry.NameOrId & 0xFFFF) != typeId)
                 {
                     continue;

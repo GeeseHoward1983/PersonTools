@@ -45,8 +45,8 @@ namespace PersonalTools.UserControls
 
             if (CanExpand)
             {
-                // 占位子节点：使节点显示“+”，展开时由 EnsureLoaded 替换为真实子节点
-                Children.Add(new DependencyNode("加载中...", null, null, ancestors, depth, false, isPlaceholder: true));
+                // 占位子节点：使节点显示“+”，展开时由 EnsureLoaded 替换为真实子节点。depth 取 depth+1 与替换后的真实子节点层级一致
+                Children.Add(new DependencyNode("加载中...", null, null, ancestors, depth + 1, false, isPlaceholder: true));
             }
         }
 

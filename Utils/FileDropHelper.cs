@@ -22,6 +22,12 @@ namespace PersonalTools.Utils
         public static byte[] ReadAllBytes(string filePath)
         {
             using FileStream fileStream = new(filePath, FileMode.Open, FileAccess.Read);
+            // 单个 byte[] 上限为 int.MaxValue：超 2GB 文件直接以可控的 IOException 报错，避免 new byte[long] 抛 OverflowException
+            if (fileStream.Length > int.MaxValue)
+            {
+                throw new IOException($"文件过大（{fileStream.Length} 字节），无法一次性加载到内存");
+            }
+
             byte[] bytes = new byte[fileStream.Length];
             fileStream.ReadExactly(bytes);
             return bytes;
