@@ -18,7 +18,11 @@ namespace PersonalTools.ELFAnalyzer.Core
                 Models.ELFSectionHeader? verneedSection = ELFParserUtils.FindSectionByAddress(parser, (ulong)verneedAddr);
                 if (verneedSection != null)
                 {
-                    ParseVerNeedEntries(parser, verneedSection.Value, (int)verneedNum);
+                    // verneedNum 来自不可信 DT_VERNEEDNUM；夹到 [0, int.MaxValue] 而非直接 (int) 截断，
+                    // 与 ParseVersionDefinitions 对 verdefNum 的处理一致，否则 >int.MaxValue 时截成负值会被
+                    // WalkVerneed 当作"不限项数"。ParseVerNeedEntries 内另有节边界兜底。
+                    int count = verneedNum > int.MaxValue ? int.MaxValue : (int)verneedNum;
+                    ParseVerNeedEntries(parser, verneedSection.Value, count);
                 }
             }
         }

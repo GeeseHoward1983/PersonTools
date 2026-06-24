@@ -255,7 +255,8 @@ namespace PersonalTools.ELFAnalyzer.Core
             // 限制最大读取长度为子节剩余字节(endOffset-offset)，避免子节末缺 NUL 终止符时串读到相邻子节数据
             int maxLength = endOffset > offset ? endOffset - offset : 0;
             string value = ELFParserUtils.ExtractStringFromBytes(data, offset, maxLength);
-            offset += value.Length + 1; // 含 null 终止符
+            // 按原始 UTF-8 字节跨度推进，而非 value.Length(UTF-16 字符数)，否则含多字节字符时偏移错位
+            offset += ELFParserUtils.MeasureCStringByteLength(data, offset, endOffset) + 1; // 含 null 终止符
             sb.AppendLine(CultureInfo.InvariantCulture, $"  {name}: \"{value}\"");
         }
 
@@ -317,7 +318,7 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             int flag = ReadAEABIUleb128(data, ref offset, endOffset);
             string vendor = ELFParserUtils.ExtractStringFromBytes(data, offset);
-            offset += vendor.Length + 1;
+            offset += ELFParserUtils.MeasureCStringByteLength(data, offset, endOffset) + 1;
             string line = flag == 0
                 ? "  Tag_compatibility: No"
                 : string.Create(CultureInfo.InvariantCulture, $"  Tag_compatibility: flag = {flag}, vendor = {vendor}");
@@ -344,7 +345,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             else
             {
                 string s = ELFParserUtils.ExtractStringFromBytes(data, offset);
-                offset += s.Length + 1;
+                offset += ELFParserUtils.MeasureCStringByteLength(data, offset, endOffset) + 1;
                 text = s;
             }
             sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_also_compatible_with: {text}");
@@ -423,7 +424,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 string value = ELFParserUtils.ExtractStringFromBytes(data, offset);
                 sb.AppendLine(CultureInfo.InvariantCulture, $"  {name}: \"{value}\"");
-                return value.Length + 1;
+                return ELFParserUtils.MeasureCStringByteLength(data, offset, endOffset) + 1;
             }
 
             int bytesRead = ReadULEB128(data, offset, endOffset, out int val);
@@ -437,7 +438,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             int start = offset;
             offset += ReadULEB128(data, offset, endOffset, out int flag);
             string vendor = ELFParserUtils.ExtractStringFromBytes(data, offset);
-            offset += vendor.Length + 1;
+            offset += ELFParserUtils.MeasureCStringByteLength(data, offset, endOffset) + 1;
             sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_compatibility: flag = {flag}, vendor = {vendor}");
             return offset - start;
         }
@@ -593,7 +594,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                     case 5: // Tag_RISCV_arch（字符串）
                     {
                         string value = ELFParserUtils.ExtractStringFromBytes(data, offset);
-                        offset += value.Length + 1;
+                        offset += ELFParserUtils.MeasureCStringByteLength(data, offset, limit) + 1;
                         sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_RISCV_arch: \"{value}\"");
                         break;
                     }

@@ -252,6 +252,8 @@ namespace PersonalTools.UserControls
             string editorText = Editor.Text;
             string? exportBaseDir = baseDir;
             string outputPath = dialog.FileName;
+            // settings.Rows 即 DataGrid 的 ItemsSource，后台读取与用户编辑会竞争；先在 UI 线程冻结快照
+            DocxStyleSettings exportSettings = settings.Snapshot();
 
             try
             {
@@ -264,7 +266,7 @@ namespace PersonalTools.UserControls
                     updated = await Task.Run(() =>
                     {
                         MarkdownDocument ast = MarkdownService.Parse(editorText);
-                        DocxWriter.Write(ast, settings, outputPath, exportBaseDir);
+                        DocxWriter.Write(ast, exportSettings, outputPath, exportBaseDir);
                         // 调用本机 Word 强制更新一次目录/编号域（生成即静态，无需打开时刷新）
                         return WordFieldUpdater.TryUpdateFields(outputPath);
                     }).ConfigureAwait(true);

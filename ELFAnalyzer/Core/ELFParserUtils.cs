@@ -53,6 +53,26 @@ namespace PersonalTools.ELFAnalyzer.Core
             return maxLength > 0 ? System.Text.Encoding.UTF8.GetString(data, startOffset, maxLength) : string.Empty;
         }
 
+        /// <summary>
+        /// 测量从 <paramref name="startOffset"/> 起到 NUL 终止符（或缓冲/limit 末尾）的原始字节数（不含 NUL）。
+        /// 解码后的 .NET 字符串 .Length 是 UTF-16 字符数，不能用来推进字节偏移（含多字节 UTF-8 字符时会错位）；
+        /// 解析 .ARM.attributes 等含 null 终止字符串的结构时，调用方应按本函数返回的"字节跨度 + 1"推进偏移。
+        /// </summary>
+        public static int MeasureCStringByteLength(byte[] data, int startOffset, int endOffset)
+        {
+            if (data == null || startOffset < 0 || startOffset >= data.Length)
+            {
+                return 0;
+            }
+            int limit = Math.Min(endOffset, data.Length);
+            int cur = startOffset;
+            while (cur < limit && data[cur] != 0)
+            {
+                cur++;
+            }
+            return cur - startOffset;
+        }
+
         // ---- Stream-based readers (sequential parse) ----
 
         public static long ReadInt64(BinaryReader reader, bool isLittleEndian)

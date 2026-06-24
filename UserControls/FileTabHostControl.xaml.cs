@@ -57,9 +57,11 @@ namespace PersonalTools.UserControls
 
         private void Host_Drop(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            // 某些拖放源声明了 FileDrop 格式但 GetData 返回 null，直接强转后 foreach 会 NRE。
+            if (e.Data.GetDataPresent(DataFormats.FileDrop)
+                && e.Data.GetData(DataFormats.FileDrop) is string[] files)
             {
-                OpenOrUpdateFiles((string[])e.Data.GetData(DataFormats.FileDrop));
+                OpenOrUpdateFiles(files);
             }
         }
 

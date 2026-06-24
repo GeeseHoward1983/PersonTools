@@ -37,6 +37,21 @@ namespace PersonalTools.MarkdownToWord.Models
         }
 
         /// <summary>
+        /// 在 UI 线程冻结出一份独立快照：拷贝各样式行与全局选项，副本的 Rows 不与 DataGrid 绑定。
+        /// 导出时把快照（而非实时绑定的 settings）交给后台线程，避免用户在导出过程中编辑样式造成数据竞争。
+        /// </summary>
+        public DocxStyleSettings Snapshot()
+        {
+            DocxStyleSettings copy = new() { GenerateToc = GenerateToc };
+            foreach (ContentStyleRow row in Rows)
+            {
+                copy.Rows.Add(row.Clone());
+            }
+
+            return copy;
+        }
+
+        /// <summary>
         /// 构造符合需求 3/4/8/9 的默认样式：标题黑体加粗、正文宋体/Times New Roman（首行不缩进，
         /// 可在样式设置中调整）、各级字号二/三/四/五号、表格随正文且小五、目录字体随标题。
         /// </summary>

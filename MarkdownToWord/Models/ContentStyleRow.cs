@@ -66,6 +66,20 @@ namespace PersonalTools.MarkdownToWord.Models
         /// <summary>当前字号名对应的 OOXML 半磅值。</summary>
         public int HalfPoint => DocxStyleOptions.HalfPoint(FontSizeName);
 
+        /// <summary>
+        /// 复制出一份独立的样式行（同类别、同字段值）。用于导出前在 UI 线程冻结快照，
+        /// 让后台 OOXML 生成读到的是不可变副本，避免与 DataGrid 的并发编辑发生数据竞争。
+        /// </summary>
+        public ContentStyleRow Clone() => new(Category)
+        {
+            ChineseFont = ChineseFont,
+            WesternFont = WesternFont,
+            FontSizeName = FontSizeName,
+            Bold = Bold,
+            Underline = Underline,
+            FirstLineIndentChars = FirstLineIndentChars,
+        };
+
         private static string GetDisplayName(ContentCategory category) => category switch
         {
             ContentCategory.Heading1 => "一级标题",

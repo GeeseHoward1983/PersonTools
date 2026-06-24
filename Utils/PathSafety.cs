@@ -19,8 +19,15 @@ namespace PersonalTools.Utils
                 return false;
             }
 
-            // 含目录分隔符或 .. 或绝对/UNC 路径 → 非裸名
+            // 含目录分隔符或绝对/UNC 路径 → 非裸名
             if (name.IndexOfAny(['/', '\\']) >= 0 || Path.IsPathRooted(name))
+            {
+                return false;
+            }
+
+            // "." / ".." 是当前/上级目录引用：不含分隔符、非 rooted、GetFileName 又原样返回，
+            // 会漏过下面的等值校验。显式拒绝，兑现"含 .. 即拒绝"的防穿越契约。
+            if (name == "." || name == "..")
             {
                 return false;
             }

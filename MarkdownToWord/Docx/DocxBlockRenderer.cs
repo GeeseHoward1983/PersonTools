@@ -19,12 +19,23 @@ namespace PersonalTools.MarkdownToWord.Docx
         private const int IndentTwips = 420;  // 每级左缩进 ~2 字
         private const int IndentChars = 200;
 
+        // 块级递归最大深度：RenderBlock↔RenderQuote/RenderList/RenderListItem 互相递归，深度由不可信
+        // Markdown 的嵌套层数决定。超千层的嵌套引用/列表会触发不可捕获的 StackOverflowException 直接崩进程，
+        // 故对递归深度设上限（远超任何正常文档），超限即停止下钻而非崩溃。
+        private const int MaxNestingDepth = 64;
+
         // 匹配标题文本开头的编号前缀（如 "1 " / "1. " / "1.1 " / "1.1.1 "），含全角空格
         [GeneratedRegex(@"^\s*\d+(?:\.\d+)*\.?[ \t　]+")]
         private static partial Regex HeadingNumberPrefix();
 
         internal static void RenderBlock(Block block, OpenXmlElement container, DocxRenderContext ctx, int indentLevel)
         {
+            // indentLevel 随每层 quote/list 递增，直接用作深度计量；超限丢弃更深内容，防递归爆栈。
+            if (indentLevel > MaxNestingDepth)
+            {
+                return;
+            }
+
             switch (block)
             {
                 case HeadingBlock heading:

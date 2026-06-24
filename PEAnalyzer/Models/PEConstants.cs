@@ -40,6 +40,10 @@ namespace PersonalTools.PEAnalyzer.Models
         // 导入描述符数量硬上限：远超真实 PE 的依赖 DLL 数，防止畸形大文件让导入表循环跑满 fs.Length/20 次。
         public const int MaxImportDescriptors = 4096;
 
+        // 单个模块 thunk 表（ILT/IAT）的导入函数数量硬上限：PE 序号为 16 位，单模块导入项理论上限 64K。
+        // 防止畸形 thunk 表（无 0 终止符）让 WalkThunkTable 一路读到 EOF、构造海量导入项卡死解析线程（DoS）。
+        public const int MaxThunksPerModule = 65536;
+
         // 数据目录索引（IMAGE_DIRECTORY_ENTRY_*）
         public const int DirectoryExport = 0;
         public const int DirectoryImport = 1;

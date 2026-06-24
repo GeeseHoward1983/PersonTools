@@ -161,8 +161,12 @@ namespace PersonalTools.PEAnalyzer.Parsers
             ulong ordinalFlag = is64Bit ? PEConstants.OrdinalFlag64 : PEConstants.OrdinalFlag32;
 
             fs.Position = thunkTableOffset;
-            while (fs.Position + thunkSize <= fs.Length)
+            // 硬上限防御：畸形 thunk 表若无 0 终止符会一路读到 EOF，每个名称导入还触发 RvaToOffset + 字符串读取，
+            // 让导入项膨胀到数十万项卡死解析线程（与导入描述符循环的 MaxImportDescriptors 同款防御）。
+            int thunkCount = 0;
+            while (fs.Position + thunkSize <= fs.Length && thunkCount < PEConstants.MaxThunksPerModule)
             {
+                thunkCount++;
                 ulong thunkValue = is64Bit ? reader.ReadUInt64() : reader.ReadUInt32();
                 if (thunkValue == 0)
                 {
