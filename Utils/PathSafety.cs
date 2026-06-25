@@ -38,7 +38,36 @@ namespace PersonalTools.Utils
                 return false;
             }
 
+            // Windows 保留设备名(CON/PRN/AUX/NUL/COM1-9/LPT1-9，含带扩展名形式如 "NUL.dll")参与文件打开时
+            // 会被系统重定向到设备而非目录内文件；尾部点/空格会被 Windows 归一化，导致"校验名≠实际访问名"。一律拒绝。
+            if (name[^1] == '.' || name[^1] == ' ' || IsReservedDeviceName(name))
+            {
+                return false;
+            }
+
             return string.Equals(Path.GetFileName(name), name, StringComparison.Ordinal);
+        }
+
+        private static readonly string[] ReservedDeviceNames =
+        [
+            "CON", "PRN", "AUX", "NUL",
+            "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+            "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+        ];
+
+        // 设备名在任意扩展名下均生效（"NUL.dll" 的设备名仍是 NUL），故取首个点之前的基名做比对
+        private static bool IsReservedDeviceName(string name)
+        {
+            int dot = name.IndexOf('.', StringComparison.Ordinal);
+            string baseName = dot >= 0 ? name[..dot] : name;
+            foreach (string reserved in ReservedDeviceNames)
+            {
+                if (string.Equals(baseName, reserved, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

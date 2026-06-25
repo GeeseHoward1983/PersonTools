@@ -12,11 +12,11 @@ namespace PersonalTools.Utils
         public static byte[] HexStringToByteArray(string hex)
         {
             ArgumentNullException.ThrowIfNull(hex);
-            // 移除空格分隔；仅剥离整串开头的一个 0x/0X 前缀——不全局替换，避免删除数据内部的 "0x" 子串或漏删大写 "0X"
-            // 仅在确含空格时才 Replace，避免对大字符串(文件 hex)无谓整串复制
-            if (hex.Contains(' ', StringComparison.Ordinal))
+            // 移除所有空白(空格/Tab/CR/LF 等)；仅剥离整串开头的一个 0x/0X 前缀——不全局替换，避免删除数据内部的 "0x" 子串或漏删大写 "0X"
+            // 仅在确含空白时才重建字符串，避免对无空白的大字符串(文件 hex)无谓整串复制；用户常从多行/带制表符的 hex dump 粘贴密文
+            if (ContainsWhitespace(hex))
             {
-                hex = hex.Replace(" ", "", StringComparison.Ordinal);
+                hex = RemoveWhitespace(hex);
             }
             if (hex.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
             {
@@ -37,6 +37,33 @@ namespace PersonalTools.Utils
             // Convert.FromHexString 内部高效解析，零额外子串分配（替代逐对 Substring + Convert.ToByte 的分配热点）；
             // 含非十六进制字符时抛 FormatException（各调用方均已捕获并提示）
             return Convert.FromHexString(hex);
+        }
+
+        // 是否含任意空白字符（仅扫描，不分配）——用于决定是否需要重建字符串
+        private static bool ContainsWhitespace(string s)
+        {
+            foreach (char c in s)
+            {
+                if (char.IsWhiteSpace(c))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // 去除所有空白字符
+        private static string RemoveWhitespace(string s)
+        {
+            StringBuilder sb = new(s.Length);
+            foreach (char c in s)
+            {
+                if (!char.IsWhiteSpace(c))
+                {
+                    sb.Append(c);
+                }
+            }
+            return sb.ToString();
         }
 
         /// <summary>

@@ -28,14 +28,12 @@ namespace PersonalTools.UserControls
 
         private void ELFAnalyzerTab_Drop(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            // 某些拖放源声明了 FileDrop 格式但 GetData 返回 null 或非 string[]，直接强转会抛 NRE/InvalidCastException
+            if (e.Data.GetDataPresent(DataFormats.FileDrop)
+                && e.Data.GetData(DataFormats.FileDrop) is string[] files && files.Length > 0)
             {
-                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                if (files != null && files.Length > 0)
-                {
-                    e.Handled = true; // 阻止冒泡到宿主，避免重复处理
-                    FilesDropped?.Invoke(files);
-                }
+                e.Handled = true; // 阻止冒泡到宿主，避免重复处理
+                FilesDropped?.Invoke(files);
             }
         }
 

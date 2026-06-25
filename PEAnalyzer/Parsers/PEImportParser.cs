@@ -295,7 +295,10 @@ namespace PersonalTools.PEAnalyzer.Parsers
             bool is64Bit = PEParserUtils.Is64Bit(peInfo.OptionalHeader);
             int descriptorCount = 0;
 
-            while (startOffset + ((long)descriptorCount + 1) * PEConstants.DelayLoadDescriptorSize <= fs.Length)
+            // 硬上限防御：与标准导入表的 MaxImportDescriptors 对称。畸形大文件可让每个描述符的 DllNameRVA
+            // 都解析为有效名称，使本循环跑到 fs.Length/32 次并对每个再遍历 thunk 表，膨胀导入项卡死解析线程。
+            while (descriptorCount < PEConstants.MaxImportDescriptors
+                && startOffset + ((long)descriptorCount + 1) * PEConstants.DelayLoadDescriptorSize <= fs.Length)
             {
                 fs.Position = startOffset + (long)descriptorCount * PEConstants.DelayLoadDescriptorSize;
                 IMAGE_DELAYLOAD_DESCRIPTOR delayLoadDesc = ReadDelayLoadDescriptor(reader);

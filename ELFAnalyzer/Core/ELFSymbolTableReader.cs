@@ -28,6 +28,14 @@ namespace PersonalTools.ELFAnalyzer.Core
                     continue;
                 }
 
+                // 畸形文件可能含多个同类型(SHT_SYMTAB/SHT_DYNSYM)符号表节：保留首个、跳过后续重复键，
+                // 避免下方 Dictionary.Add 因重复键抛 ArgumentException 中止整份分析（被上层 catch 后表现为整文件无法解析）
+                SectionType symKey = (SectionType)section.sh_type;
+                if (parser.Symbols.ContainsKey(symKey))
+                {
+                    continue;
+                }
+
                 reader.BaseStream.Seek((long)section.sh_offset, SeekOrigin.Begin);
 
                 // 安全：sh_entsize 不可信，实际按固定大小读取（Elf64_Sym=24 / Elf32_Sym=16）。
@@ -41,9 +49,9 @@ namespace PersonalTools.ELFAnalyzer.Core
                     symbols.Add(ReadSymbol(reader, parser.Is64Bit, isLittleEndian));
                 }
 
-                parser.Symbols.Add((SectionType)section.sh_type, symbols);
+                parser.Symbols.Add(symKey, symbols);
                 // 记录符号表关联的字符串表索引
-                parser.LinkedStrTabIdx.Add((SectionType)section.sh_type, section.sh_link);
+                parser.LinkedStrTabIdx.Add(symKey, section.sh_link);
             }
         }
 

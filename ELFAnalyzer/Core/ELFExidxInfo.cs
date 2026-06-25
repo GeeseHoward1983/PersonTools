@@ -431,7 +431,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 sb.AppendLine(CultureInfo.InvariantCulture, $"  vsp = vsp - {CalcVsp(cmd)}");
             }
-            else if ((cmd & 0x90) == 0x90)
+            else if ((cmd & 0xF0) == 0x90) // 0x9n: vsp = r[nnnn]（掩码须为 0xF0，仅匹配 0x90-0x9F）
             {
                 int imm = cmd & 0x0F;
                 if (imm is 0xC or 0xF)

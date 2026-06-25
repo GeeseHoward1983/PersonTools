@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -66,7 +67,7 @@ namespace PersonalTools.UserControls
             // 首先尝试使用数字类型的错误码字典
             if (ErrorCodeMap != null)
             {
-                ResultTextBox.Text = long.TryParse(input, out long errorCode)
+                ResultTextBox.Text = TryParseErrorCode(input, out long errorCode)
                     ? ErrorCodeMap.TryGetValue(errorCode, out string? errorMessage)
                         ? $"错误码: {errorCode}\n错误信息: {errorMessage}"
                         : $"未找到错误码 {errorCode} 的相关信息"
@@ -80,6 +81,17 @@ namespace PersonalTools.UserControls
                     : $"未找到错误码 {input} 的相关信息"
                     : "错误码字典未设置";
             }
+        }
+
+        // 同时支持十进制与十六进制(0x/0X 前缀，常见于 HRESULT/NTSTATUS)错误码输入
+        private static bool TryParseErrorCode(string input, out long value)
+        {
+            if (input.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+            {
+                return long.TryParse(input.AsSpan(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out value);
+            }
+
+            return long.TryParse(input, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
         }
     }
 }

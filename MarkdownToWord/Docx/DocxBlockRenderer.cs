@@ -78,15 +78,9 @@ namespace PersonalTools.MarkdownToWord.Docx
 
         private static void RenderHeading(HeadingBlock heading, OpenXmlElement container, DocxRenderContext ctx)
         {
-            // Markdown 一级标题 → Word 封面；二级→Word 一级，依次右移一级（需求 1/2）
-            // 封面只生成一次：文档若含多个一级标题，仅首个作封面，其余降级为 Word 一级标题，避免正文中重复整页封面
-            if (heading.Level == 1 && !ctx.CoverRendered)
-            {
-                DocxCoverBuilder.RenderCover(heading, container, ctx);
-                ctx.CoverRendered = true;
-                return;
-            }
-
+            // 封面仅由 DocxWriter 对「文档首块即一级标题」的情形生成(并已从块列表移除)；此处不再把正文中
+            // 任何一级标题当封面——否则文档不以 H1 开头时，正文中部的首个 H1 会被抽成整页伪封面、从原位置消失。
+            // 走到这里的一级标题(含文首非 H1 时的后续 H1)统一降级为 Word 一级标题(wordLevel=1)。
             int wordLevel = Math.Max(1, heading.Level - 1);
             bool styled = wordLevel is >= 1 and <= 4;
 
@@ -153,7 +147,10 @@ namespace PersonalTools.MarkdownToWord.Docx
         private static void RenderFigure(LinkInline image, OpenXmlElement container, DocxRenderContext ctx)
         {
             DocxRunStyle bodyStyle = DocxRunStyle.For(ctx.Settings.For(ContentCategory.Body));
-            Paragraph imageParagraph = new(new ParagraphProperties(new Justification { Val = JustificationValues.Center }));
+            // KeepNext：让图片段与紧随其下的图题注保持同页，避免图在页底时被与题注拆到两页
+            Paragraph imageParagraph = new(new ParagraphProperties(
+                new KeepNext(),
+                new Justification { Val = JustificationValues.Center }));
             bool embedded = DocxImageEmbedder.AppendInlineImage(imageParagraph, image, bodyStyle, ctx);
             container.AppendChild(imageParagraph);
 

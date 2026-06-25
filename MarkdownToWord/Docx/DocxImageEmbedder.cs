@@ -19,6 +19,7 @@ namespace PersonalTools.MarkdownToWord.Docx
     {
         private const long EmuPerInch = 914400;
         private const long MaxWidthEmu = 5_486_400; // 约 6 英寸，限制图片不超页面正文宽度
+        private const long MaxHeightEmu = 8_229_600; // 约 9 英寸，限制图片不超页面正文高度，防畸形极小 dpiY 产生天文高度
         private const long MaxImageBytes = 50L * 1024 * 1024;   // 单张图片字节上限，防超大文件/解压炸弹耗尽内存
         private const long MaxImagePixels = 100_000_000L;       // 解码后像素总数上限（约 1 亿，10000×10000）
 
@@ -307,8 +308,11 @@ namespace PersonalTools.MarkdownToWord.Docx
                 };
                 return pixelWidth > 0 && pixelHeight > 0;
             }
-            catch (Exception ex) when (ex is NotSupportedException or ArgumentException or FileFormatException or OverflowException)
+            catch (Exception ex) when (ex is NotSupportedException or ArgumentException or FileFormatException or OverflowException
+                or InvalidOperationException or System.Runtime.InteropServices.COMException)
             {
+                // 解码失败(畸形图片，或后台 MTA 线程上 WPF 成像/编解码器抛 COM/InvalidOperation)：
+                // 视为无法嵌入，由调用方插占位文字，不让异常逃逸中断整篇导出
                 return false;
             }
         }
@@ -322,6 +326,13 @@ namespace PersonalTools.MarkdownToWord.Docx
             {
                 cy = (long)(cy * ((double)MaxWidthEmu / cx));
                 cx = MaxWidthEmu;
+            }
+
+            // 高度超过正文可用高度时(如畸形极小 dpiY 的高窄图，宽度未超但高度天文)：按比例缩小宽度后把高度钳到上限
+            if (cy > MaxHeightEmu)
+            {
+                cx = (long)(cx * ((double)MaxHeightEmu / cy));
+                cy = MaxHeightEmu;
             }
 
             return (cx switch
