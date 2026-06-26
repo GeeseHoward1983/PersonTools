@@ -5,7 +5,6 @@ namespace PersonalTools.Enums
     /// <summary>
     /// X86_64 Relocation Types
     /// </summary>
-    [Flags]
     internal enum X86_64RelocationType : uint
     {
         R_X86_64_NONE = 0,             /* No reloc */

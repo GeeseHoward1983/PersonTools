@@ -162,10 +162,10 @@ namespace PersonalTools.MarkdownToWord.Docx
 
         private static void RenderList(ListBlock list, OpenXmlElement container, DocxRenderContext ctx, int indentLevel)
         {
-            int start;
-            int number = list.IsOrdered switch
+            long start;
+            long number = list.IsOrdered switch
             {
-                true when int.TryParse(list.OrderedStart, out start) => start,
+                true when long.TryParse(list.OrderedStart, out start) => start,
                 _ => 1,
             };
             foreach (Block itemObj in list)
@@ -185,6 +185,13 @@ namespace PersonalTools.MarkdownToWord.Docx
 
         private static void RenderListItem(ListItemBlock item, OpenXmlElement container, DocxRenderContext ctx, int indentLevel, string marker)
         {
+            // 嵌套列表经 RenderList↔RenderListItem 互递归，绕过 RenderBlock 入口的深度守卫；
+            // 在此对已递增的 indentLevel 施加同一上限，防深层嵌套列表触发不可捕获的 StackOverflow（见 MaxNestingDepth）。
+            if (indentLevel > MaxNestingDepth)
+            {
+                return;
+            }
+
             bool first = true;
             DocxRunStyle style = DocxRunStyle.For(ctx.Settings.For(ContentCategory.Body));
             foreach (Block child in item)

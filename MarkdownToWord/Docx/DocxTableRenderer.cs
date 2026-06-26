@@ -17,7 +17,7 @@ namespace PersonalTools.MarkdownToWord.Docx
     {
         public static void Render(MTable mdTable, OpenXmlElement container, DocxRenderContext ctx)
         {
-            container.AppendChild(DocxCaptionBuilder.BuildTableCaption(string.Empty, ctx));
+            container.AppendChild(DocxCaptionBuilder.BuildTableCaption(ctx));
 
             Table table = new();
             table.AppendChild(BuildTableProperties());

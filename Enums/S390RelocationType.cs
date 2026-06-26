@@ -5,7 +5,6 @@ namespace PersonalTools.Enums
     /// <summary>
     /// S390 Relocation Types
     /// </summary>
-    [Flags]
     internal enum S390RelocationType : uint
     {
         R_390_NONE = 0,        /* No reloc. */

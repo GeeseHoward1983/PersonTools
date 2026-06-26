@@ -5,7 +5,6 @@ namespace PersonalTools.Enums
     /// <summary>
     /// I386 Relocation Types
     /// </summary>
-    [Flags]
     internal enum I386RelocationType : uint
     {
         R_386_NONE = 0,        /* No reloc */

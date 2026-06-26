@@ -18,6 +18,10 @@ namespace PersonalTools.UserControls
         }
         private void Grid_PreviewDragOver(object sender, System.Windows.DragEventArgs e)
         {
+            // 拖入文件时显示“复制”光标反馈，非文件拖放则禁止；与 FileTabHostControl/MarkdownToWordControl 行为一致
+            e.Effects = e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop)
+                ? System.Windows.DragDropEffects.Copy
+                : System.Windows.DragDropEffects.None;
             e.Handled = true;
         }
 
@@ -99,16 +103,20 @@ namespace PersonalTools.UserControls
             }
         }
 
-        // 处理文件Base64编码
-        private void ProcessFileForBase64Encoding(string filePath)
+        // 处理文件Base64编码：读盘 + hex/Base64 编码移后台线程，UI 线程仅回填，避免大文件卡界面
+        private async void ProcessFileForBase64Encoding(string filePath)
         {
             try
             {
-                byte[] fileBytes = FileDropHelper.ReadAllBytes(filePath);
+                (string hex, string base64) = await Task.Run(() =>
+                {
+                    byte[] fileBytes = FileDropHelper.ReadAllBytes(filePath);
+                    return (ConvertUtils.ToHexString(fileBytes), Convert.ToBase64String(fileBytes));
+                }).ConfigureAwait(true);
 
                 // 输入框显示 hex，结果框显示 Base64，并切到 Hex 模式
-                Base64Input.Text = ConvertUtils.ToHexString(fileBytes);
-                Base64Result.Text = Convert.ToBase64String(fileBytes);
+                Base64Input.Text = hex;
+                Base64Result.Text = base64;
                 Base64HexInputRadio.IsChecked = true;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)

@@ -40,6 +40,10 @@ namespace PersonalTools.UserControls
 
         private void Grid_PreviewDragOver(object sender, System.Windows.DragEventArgs e)
         {
+            // 拖入文件时显示“复制”光标反馈，非文件拖放则禁止；与 FileTabHostControl/MarkdownToWordControl 行为一致
+            e.Effects = e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop)
+                ? System.Windows.DragDropEffects.Copy
+                : System.Windows.DragDropEffects.None;
             e.Handled = true;
         }
 
@@ -143,18 +147,30 @@ namespace PersonalTools.UserControls
             }
         }
 
-        // 处理文件哈希计算
-        private void ProcessFileForHashCalculation(string filePath)
+        // 处理文件哈希计算：读盘 + 各哈希计算 + hex 编码移后台线程，UI 线程仅回填结果，避免大文件卡界面
+        private async void ProcessFileForHashCalculation(string filePath)
         {
             try
             {
-                byte[] fileBytes = FileDropHelper.ReadAllBytes(filePath);
+                (string[] hashes, string sha3Hex) = await Task.Run(() =>
+                {
+                    byte[] fileBytes = FileDropHelper.ReadAllBytes(filePath);
+                    string[] results = new string[hashRows.Count];
+                    for (int i = 0; i < hashRows.Count; i++)
+                    {
+                        results[i] = ConvertUtils.ToHexString(hashRows[i].HashFunc(fileBytes));
+                    }
 
-                // 计算除SHA3外的所有哈希值
-                CalculateAndDisplayHashValues(fileBytes);
+                    return (results, ConvertUtils.ToHexString(fileBytes));
+                }).ConfigureAwait(true);
 
-                // 将文件内容转为 hex 显示在 SHA3 输入框，并切换到 hex 模式
-                SHA3InputTextBox.Text = ConvertUtils.ToHexString(fileBytes);
+                for (int i = 0; i < hashRows.Count; i++)
+                {
+                    hashRows[i].Result = hashes[i];
+                }
+
+                // 将文件内容（hex）显示在 SHA3 输入框，并切换到 hex 模式
+                SHA3InputTextBox.Text = sha3Hex;
                 SHA3HexInputRadio.IsChecked = true;
 
                 FileDropHint.Text = $"已加载文件: {Path.GetFileName(filePath)}，请在下方选择SHA3算法类型并计算";
@@ -162,15 +178,6 @@ namespace PersonalTools.UserControls
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
                 MessageHelper.ShowError($"处理文件时发生错误: {ex.Message}");
-            }
-        }
-
-        // 计算并显示各种哈希值（SHA3 单独处理）
-        private void CalculateAndDisplayHashValues(byte[] data)
-        {
-            foreach (HashAlgorithmRow row in hashRows)
-            {
-                row.Result = ConvertUtils.ToHexString(row.HashFunc(data));
             }
         }
     }

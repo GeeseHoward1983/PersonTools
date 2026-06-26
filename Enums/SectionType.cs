@@ -41,8 +41,6 @@ namespace PersonalTools.Enums
         SHT_ARM_ATTRIBUTES = 0x70000003, // ARM attributes section
         SHT_ARM_PREEMPTMAP = 0x70000004, // ARM preemption map section
         SHT_ARM_DEBUGOVERLAY = 0x70000005,// ARM debug overlay section
-        SHT_ARM_OVERLAYSECTION = 0x70000006, // ARM overlay section
-        SHF_ARM_PURECODE = 0x20000000 // The contents of this section contains only program instructions and no program data
-
+        SHT_ARM_OVERLAYSECTION = 0x70000006 // ARM overlay section（注：SHF_ARM_PURECODE 是 section flag，已迁至 SectionAttributes）
     }
 }

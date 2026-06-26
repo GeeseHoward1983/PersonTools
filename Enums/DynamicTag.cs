@@ -33,8 +33,7 @@ namespace PersonalTools.Enums
         DT_FINI_ARRAYSZ = 28,           // Size in bytes of DT_FINI_ARRAY
         DT_RUNPATH = 29,                // Library search path
         DT_FLAGS = 30,                  // Flags for the object being loaded
-        DT_ENCODING = 32,               // Start of encoded range
-        DT_PREINIT_ARRAY = 31,          // Array with addresses of preinit fct (was incorrectly set to 32, changed to 31 to avoid conflict)
+        DT_PREINIT_ARRAY = 32,          // Array with addresses of preinit fct（ELF 标准值即 32，与 DT_ENCODING 边界同值；仅声明此项使 GetName(32) 确定性解析为 DT_PREINIT_ARRAY，与 readelf 一致）
         DT_PREINIT_ARRAYSZ = 33,        // Size in bytes of DT_PREINIT_ARRAY
         DT_NUM = 34,                    // Number used
         DT_LOOS = 0x6000000D,           // Start of OS-specific

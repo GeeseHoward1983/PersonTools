@@ -5,7 +5,6 @@ namespace PersonalTools.Enums
     /// <summary>
     /// ARM架构的重定位类型枚举
     /// </summary>
-    [Flags]
     internal enum ARMRelocationType : uint
     {
         R_ARM_NONE = 0,               /* No reloc */

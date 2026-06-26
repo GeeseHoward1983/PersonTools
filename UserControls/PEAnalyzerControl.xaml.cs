@@ -22,6 +22,10 @@ namespace PersonalTools.UserControls
 
         private void Grid_PreviewDragOver(object sender, System.Windows.DragEventArgs e)
         {
+            // 拖入文件时显示“复制”光标反馈，非文件拖放则禁止；与 FileTabHostControl/MarkdownToWordControl 行为一致
+            e.Effects = e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop)
+                ? System.Windows.DragDropEffects.Copy
+                : System.Windows.DragDropEffects.None;
             e.Handled = true;
         }
 
@@ -44,17 +48,18 @@ namespace PersonalTools.UserControls
         // IFileAnalyzerView：供宿主统一调用
         public void LoadFile(string filePath) => LoadPEFile(filePath);
 
-        public void LoadPEFile(string filePath)
+        // async void：UI 事件式入口。PE 解析与依赖解析移到后台线程，UI 线程只做控件赋值，避免大文件/深依赖树卡界面
+        public async void LoadPEFile(string filePath)
         {
             try
             {
-                currentPEInfo = PEParser.ParsePEFile(filePath);
+                currentPEInfo = await Task.Run(() => PEParser.ParsePEFile(filePath)).ConfigureAwait(true);
                 if (currentPEInfo == null)
                 {
                     return;
                 }
                 DisplayHeaderInfo();
-                DisplayDependencies();
+                await DisplayDependenciesAsync().ConfigureAwait(true);
                 DisplayImportExportFunctions();
                 DisplayAdditionalInfo();
                 DisplayIcons();
@@ -111,7 +116,7 @@ namespace PersonalTools.UserControls
             IconsDataGrid.ItemsSource = iconViewModels;
         }
 
-        private void DisplayDependencies()
+        private async Task DisplayDependenciesAsync()
         {
             if (currentPEInfo == null)
             {
@@ -119,19 +124,19 @@ namespace PersonalTools.UserControls
                 return;
             }
 
-            // 根节点为已打开文件；预解析直接依赖并默认展开
+            // 根节点为已打开文件；预解析直接依赖并默认展开（根 PE 已解析，故仅做依赖路径解析）
             DependencyNode root = DependencyNode.CreateRoot(currentPEInfo);
-            root.EnsureLoaded();
+            await root.EnsureLoadedAsync().ConfigureAwait(true);
             root.IsExpanded = true;
             DependencyTree.ItemsSource = new[] { root };
         }
 
         // 惰性展开：首次展开某依赖节点时解析它，得到其下层依赖
-        private void DependencyNode_Expanded(object sender, RoutedEventArgs e)
+        private async void DependencyNode_Expanded(object sender, RoutedEventArgs e)
         {
             if (sender is TreeViewItem item && item.DataContext is DependencyNode node)
             {
-                node.EnsureLoaded();
+                await node.EnsureLoadedAsync().ConfigureAwait(true);
             }
         }
 
@@ -148,12 +153,12 @@ namespace PersonalTools.UserControls
             ExportFunctionsGrid.ItemsSource = info?.ExportFunctions;
         }
 
-        private void DependencyTree_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private async void DependencyTree_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             if (DependencyTree.SelectedItem is DependencyNode node)
             {
-                // 确保该依赖已解析，然后把导入/导出列表切换为它自身的数据
-                node.EnsureLoaded();
+                // 确保该依赖已解析（后台线程解析），然后把导入/导出列表切换为它自身的数据
+                await node.EnsureLoadedAsync().ConfigureAwait(true);
                 ShowFunctions(node.Info);
             }
         }

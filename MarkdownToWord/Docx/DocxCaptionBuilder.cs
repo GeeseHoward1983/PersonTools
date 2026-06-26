@@ -14,9 +14,9 @@ namespace PersonalTools.MarkdownToWord.Docx
         public static Paragraph BuildFigureCaption(string text, DocxRenderContext ctx) =>
             BuildCaption("Figure", "图", text, JustificationValues.Center, ctx);
 
-        /// <summary>表题注（居中，位于表上方）。</summary>
-        public static Paragraph BuildTableCaption(string text, DocxRenderContext ctx) =>
-            BuildCaption("Table", "表", text, JustificationValues.Center, ctx);
+        /// <summary>表题注（居中，位于表上方）。Markdown 无表标题语法，故无标题文字，仅 SEQ 自动编号。</summary>
+        public static Paragraph BuildTableCaption(DocxRenderContext ctx) =>
+            BuildCaption("Table", "表", string.Empty, JustificationValues.Center, ctx);
 
         private static Paragraph BuildCaption(string seqName, string label, string text, JustificationValues justification, DocxRenderContext ctx)
         {

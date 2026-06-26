@@ -5,7 +5,6 @@ namespace PersonalTools.Enums
     /// <summary>
     /// PowerPC Relocation Types
     /// </summary>
-    [Flags]
     internal enum PowerPCRelocationType : uint
     {
         R_PPC_NONE = 0,

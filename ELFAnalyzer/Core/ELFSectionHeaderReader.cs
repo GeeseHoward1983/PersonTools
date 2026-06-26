@@ -7,7 +7,14 @@ namespace PersonalTools.ELFAnalyzer.Core
     {
         public static string GetSectionType(uint shType)
         {
-            return ELFParserUtils.GetTypeName(typeof(SectionType), shType, "");
+            // 同值别名：边界标记(SHT_HIOS/SHT_HISUNW、SHT_LOSUNW)与真实段类型共值，Enum.GetName 对重复值返回不确定；
+            // 对常见真实段类型显式优先返回与 readelf 一致的名字（.gnu.version 段 sh_type=0x6fffffff 为常见情形）。
+            return shType switch
+            {
+                0x6fffffff => "SHT_GNU_versym",
+                0x6ffffffa => "SHT_SUNW_move",
+                _ => ELFParserUtils.GetTypeName(typeof(SectionType), shType, ""),
+            };
         }
 
         // 节标志位 → 字符（顺序与 readelf 一致）

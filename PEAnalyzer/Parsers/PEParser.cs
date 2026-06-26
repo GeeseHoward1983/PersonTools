@@ -30,9 +30,8 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// <returns>PE文件信息</returns>
         public static PEInfo ParsePEFile(string filePath)
         {
-            // TODO(性能): 本方法为同步全量解析(磁盘 I/O + 六大目录)，当前由 UI 线程直接调用
-            // (PEAnalyzerControl.LoadPEFile / DependencyNode.EnsureLoaded)，大文件或频繁展开依赖树会卡顿。
-            // 后续可提供 ParsePEFileAsync 或调用侧 Task.Run 卸载到后台线程。
+            // 同步全量解析(磁盘 I/O + 六大目录)，可能耗时；调用侧(PEAnalyzerControl.LoadPEFile /
+            // DependencyNode.EnsureLoadedAsync)已用 Task.Run 卸载到后台线程，避免卡 UI。
             PEInfo peInfo = new() { FilePath = filePath };
 
             using FileStream fs = new(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);

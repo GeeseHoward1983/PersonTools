@@ -5,7 +5,6 @@ namespace PersonalTools.Enums
     /// <summary>
     /// CRIS Relocation Types
     /// </summary>
-    [Flags]
     internal enum CRISRelocationType : uint
     {
         R_CRIS_NONE = 0,

@@ -85,18 +85,22 @@ namespace PersonalTools.UserControls
         // 预览拖拽事件，确保拖拽事件不被子控件拦截
         private void Grid_PreviewDragOver(object sender, System.Windows.DragEventArgs e)
         {
+            // 拖入文件时显示“复制”光标反馈，非文件拖放则禁止；与 FileTabHostControl/MarkdownToWordControl 行为一致
+            e.Effects = e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop)
+                ? System.Windows.DragDropEffects.Copy
+                : System.Windows.DragDropEffects.None;
             e.Handled = true;
         }
 
-        // 处理文件CRC计算
-        private void ProcessFileForCrcCalculation(string filePath)
+        // 处理文件CRC计算：读盘 + hex 编码移后台线程，UI 线程仅回填，避免大文件卡界面
+        private async void ProcessFileForCrcCalculation(string filePath)
         {
             try
             {
-                byte[] fileBytes = FileDropHelper.ReadAllBytes(filePath);
+                string hex = await Task.Run(() => ConvertUtils.ToHexString(FileDropHelper.ReadAllBytes(filePath))).ConfigureAwait(true);
 
-                // 将文件内容转换为hex字符串显示在输入框中，并切换到 hex 输入模式
-                CRCInputTextBox.Text = ConvertUtils.ToHexString(fileBytes);
+                // 将文件内容（hex）显示在输入框中，并切换到 hex 输入模式
+                CRCInputTextBox.Text = hex;
                 CRCHexInputRadio.IsChecked = true;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)

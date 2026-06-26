@@ -5,7 +5,6 @@ namespace PersonalTools.Enums
     /// <summary>
     /// M32R Relocation Types
     /// </summary>
-    [Flags]
     internal enum M32RRelocationType : uint
     {
         R_M32R_NONE = 0,            /* No reloc. */

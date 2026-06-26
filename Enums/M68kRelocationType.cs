@@ -3,7 +3,6 @@ namespace PersonalTools.Enums
     /// <summary>
     /// Motorola 68k Relocation Types
     /// </summary>
-    [Flags]
     internal enum M68kRelocationType : uint
     {
         R_68K_NONE = 0,        /* No reloc */

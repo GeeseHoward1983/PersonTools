@@ -5,7 +5,6 @@ namespace PersonalTools.Enums
     /// <summary>
     /// Alpha Relocation Types
     /// </summary>
-    [Flags]
     internal enum AlphaRelocationType : uint
     {
         R_ALPHA_NONE = 0,        /* No reloc */

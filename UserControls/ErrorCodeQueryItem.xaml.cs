@@ -83,7 +83,8 @@ namespace PersonalTools.UserControls
             }
         }
 
-        // 同时支持十进制与十六进制(0x/0X 前缀，常见于 HRESULT/NTSTATUS)错误码输入
+        // 同时支持十进制与十六进制(0x/0X 前缀)错误码输入：十六进制按无符号解析为正 long，
+        // 与字典中以正值存储的 Win32/系统错误码匹配（不对 HRESULT/NTSTATUS 做有符号 int32 扩展）。
         private static bool TryParseErrorCode(string input, out long value)
         {
             if (input.StartsWith("0x", StringComparison.OrdinalIgnoreCase))

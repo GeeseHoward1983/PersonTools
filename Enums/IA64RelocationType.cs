@@ -5,7 +5,6 @@ namespace PersonalTools.Enums
     /// <summary>
     /// IA64 Relocation Types
     /// </summary>
-    [Flags]
     internal enum IA64RelocationType : uint
     {
         R_IA64_NONE = 0x00,        /* none */

@@ -5,7 +5,6 @@ namespace PersonalTools.Enums
     /// <summary>
     /// SPARC Relocation Types
     /// </summary>
-    [Flags]
     internal enum SPARCRelocationType : uint
     {
         R_SPARC_NONE = 0,        /* No reloc */

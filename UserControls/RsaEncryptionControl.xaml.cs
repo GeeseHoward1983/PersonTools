@@ -24,6 +24,10 @@ namespace PersonalTools.UserControls
 
         private void Grid_PreviewDragOver(object sender, System.Windows.DragEventArgs e)
         {
+            // 拖入文件时显示“复制”光标反馈，非文件拖放则禁止；与 FileTabHostControl/MarkdownToWordControl 行为一致
+            e.Effects = e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop)
+                ? System.Windows.DragDropEffects.Copy
+                : System.Windows.DragDropEffects.None;
             e.Handled = true;
         }
 

@@ -45,7 +45,7 @@ namespace PersonalTools.UserControls
 
             if (CanExpand)
             {
-                // 占位子节点：使节点显示“+”，展开时由 EnsureLoaded 替换为真实子节点。depth 取 depth+1 与替换后的真实子节点层级一致
+                // 占位子节点：使节点显示“+”，展开时由 EnsureLoadedAsync 替换为真实子节点。depth 取 depth+1 与替换后的真实子节点层级一致
                 Children.Add(new DependencyNode("加载中...", null, null, ancestors, depth + 1, false, isPlaceholder: true));
             }
         }
@@ -71,7 +71,7 @@ namespace PersonalTools.UserControls
         }
 
         /// <summary>首次展开或双击时调用：解析自身（若需要）并构建真实子节点。可重复调用（幂等）。</summary>
-        public void EnsureLoaded()
+        public async Task EnsureLoadedAsync()
         {
             if (IsLoaded || isPlaceholder)
             {
@@ -79,25 +79,12 @@ namespace PersonalTools.UserControls
             }
             IsLoaded = true;
 
-            // 解析自身以取得其依赖与导入/导出
+            // 解析自身 PE 以取得其依赖与导入/导出。解析为 IO/CPU 密集，移到后台线程避免卡 UI；
+            // await 默认回到 UI 线程后再修改 Children（ObservableCollection 绑定 TreeView，须在 UI 线程变更）。
             if (Info == null && FullPath != null)
             {
-                try
-                {
-                    Info = PEParser.ParsePEFile(FullPath);
-                }
-                catch (IOException)
-                {
-                    Info = null;
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    Info = null;
-                }
-                catch (ArgumentException)
-                {
-                    Info = null;
-                }
+                string path = FullPath;
+                Info = await Task.Run(() => TryParsePE(path)).ConfigureAwait(true);
             }
 
             Children.Clear(); // 移除占位节点
@@ -124,6 +111,27 @@ namespace PersonalTools.UserControls
                 }
 
                 Children.Add(new DependencyNode(dep.Name, childPath, null, childAncestors, depth + 1, cyclic));
+            }
+        }
+
+        // 后台线程解析 PE：吞掉 IO/权限/参数异常返回 null，由调用方按 Info==null 处理。
+        private static PEInfo? TryParsePE(string path)
+        {
+            try
+            {
+                return PEParser.ParsePEFile(path);
+            }
+            catch (IOException)
+            {
+                return null;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return null;
+            }
+            catch (ArgumentException)
+            {
+                return null;
             }
         }
     }
