@@ -1,4 +1,3 @@
-using System;
 using System.Windows;
 using System.Windows.Controls;
 using PersonalTools.Utils;
@@ -20,43 +19,35 @@ namespace PersonalTools.UserControls
         // URL编码
         private void UrlEncode_Click(object sender, RoutedEventArgs e)
         {
-            try
+            string input = UrlInput.Text;
+            if (string.IsNullOrEmpty(input))
             {
-                string input = UrlInput.Text;
-                if (string.IsNullOrEmpty(input))
-                {
-                    MessageHelper.ShowInfo("请输入要编码的URL");
-                    return;
-                }
+                MessageHelper.ShowInfo("请输入要编码的URL");
+                return;
+            }
 
-                string encoded = Uri.EscapeDataString(input);
-                UrlResult.Text = encoded;
-            }
-            catch (ArgumentNullException ex)
-            {
-                MessageHelper.ShowError($"URL编码时发生错误: {ex.Message}");
-            }
+            // Uri.EscapeDataString 在 net10 仅会因入参为 null 抛 ArgumentNullException
+            //（UriFormatException 的“长度超 32766”限制是 .NET Framework only，net10 已移除）。
+            // input 取自 TextBox.Text，永不为 null 且上方已判空，原 catch 为不可达死捕获，故移除 try。
+            string encoded = Uri.EscapeDataString(input);
+            UrlResult.Text = encoded;
         }
 
         // URL解码
         private void UrlDecode_Click(object sender, RoutedEventArgs e)
         {
-            try
+            string input = UrlResult.Text;
+            if (string.IsNullOrEmpty(input))
             {
-                string input = UrlResult.Text;
-                if (string.IsNullOrEmpty(input))
-                {
-                    MessageHelper.ShowInfo("输出框中没有可解码的内容");
-                    return;
-                }
+                MessageHelper.ShowInfo("输出框中没有可解码的内容");
+                return;
+            }
 
-                string decoded = Uri.UnescapeDataString(input);
-                UrlInput.Text = decoded;
-            }
-            catch (Exception ex) when (ex is ArgumentNullException or UriFormatException)
-            {
-                MessageHelper.ShowError($"URL解码时发生错误: {ex.Message}");
-            }
+            // Uri.UnescapeDataString 在 net10 仅会因入参为 null 抛 ArgumentNullException，从不抛 UriFormatException
+            //（非法转义序列会原样保留而非校验）。input 取自 TextBox.Text，永不为 null 且上方已判空，
+            // 原 catch 的 ArgumentNullException/UriFormatException 均为不可达死捕获，故移除 try。
+            string decoded = Uri.UnescapeDataString(input);
+            UrlInput.Text = decoded;
         }
 
         // URL清空

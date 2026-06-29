@@ -15,8 +15,15 @@ namespace PersonalTools.MarkdownToWord.Docx
     /// </summary>
     internal static class DocxTableRenderer
     {
-        public static void Render(MTable mdTable, OpenXmlElement container, DocxRenderContext ctx)
+        public static void Render(MTable mdTable, OpenXmlElement container, DocxRenderContext ctx, int indentLevel)
         {
+            // 表格是递归入口：单元格可含块级内容乃至嵌套 grid table。深度由调用链沿 indentLevel 传入，
+            // 与 DocxBlockRenderer 共用同一 MaxNestingDepth 守卫；超限直接返回，防嵌套表格栈溢出。
+            if (indentLevel > DocxBlockRenderer.MaxNestingDepth)
+            {
+                return;
+            }
+
             container.AppendChild(DocxCaptionBuilder.BuildTableCaption(ctx));
 
             Table table = new();
@@ -37,7 +44,7 @@ namespace PersonalTools.MarkdownToWord.Docx
                 {
                     if (cellObj is MTableCell mdCell)
                     {
-                        row.AppendChild(BuildCell(mdCell, cellStyle, mdRow.IsHeader, ctx));
+                        row.AppendChild(BuildCell(mdCell, cellStyle, mdRow.IsHeader, ctx, indentLevel));
                     }
                 }
 
@@ -71,7 +78,9 @@ namespace PersonalTools.MarkdownToWord.Docx
             };
 
             const int contentWidthTwips = 9026; // A4 正文宽度（页宽 - 左右边距）
-            string columnWidth = (contentWidthTwips / columns).ToString(CultureInfo.InvariantCulture);
+            const int minColumnTwips = 240;     // 列宽下限 ~240 twips（最小可读列宽）：超多列时均分会得到个位/0 致列塌陷，故取下限兜底
+            int perColumn = Math.Max(minColumnTwips, contentWidthTwips / columns);
+            string columnWidth = perColumn.ToString(CultureInfo.InvariantCulture);
 
             TableGrid grid = new();
             for (int i = 0; i < columns; i++)
@@ -111,7 +120,7 @@ namespace PersonalTools.MarkdownToWord.Docx
             };
         }
 
-        private static TableCell BuildCell(MTableCell mdCell, DocxRunStyle style, bool isHeader, DocxRenderContext ctx)
+        private static TableCell BuildCell(MTableCell mdCell, DocxRunStyle style, bool isHeader, DocxRenderContext ctx, int indentLevel)
         {
             TableCell cell = new();
 
@@ -136,7 +145,9 @@ namespace PersonalTools.MarkdownToWord.Docx
                 }
                 else
                 {
-                    DocxBlockRenderer.RenderBlock(block, cell, ctx, 0);
+                    // 单元格内的非段落块（含嵌套表格/列表/引用）须把深度沿调用链递增传入，不再重置为 0，
+                    // 否则每层单元格都重置深度会让 MaxNestingDepth 守卫失效 → 嵌套 grid table 栈溢出。
+                    DocxBlockRenderer.RenderBlock(block, cell, ctx, indentLevel + 1);
                 }
             }
 

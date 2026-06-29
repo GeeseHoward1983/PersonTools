@@ -20,7 +20,7 @@ namespace PersonalTools.Enums
         R_ARM_THM_PC22 = 10,          /* PC relative 24 bit (Thumb32 BL). */
         R_ARM_THM_PC8 = 11,           /* PC relative & 0x3FC (Thumb16 LDR, ADD, ADR). */
         R_ARM_AMP_VCALL9 = 12,
-        R_ARM_TLS_DESC = 13,             /* Obsolete static relocation. */
+        R_ARM_TLS_DESC = 13,             /* AAELF32 动态重定位（复用已废弃的 R_ARM_SWI24 旧槽位 13）。 */
         R_ARM_THM_SWI8 = 14,          /* Reserved. */
         R_ARM_XPC25 = 15,             /* Reserved. */
         R_ARM_THM_XPC22 = 16,         /* Reserved. */

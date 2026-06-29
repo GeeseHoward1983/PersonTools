@@ -75,12 +75,14 @@ namespace PersonalTools.PEAnalyzer.Parsers
                         break;
                     }
 
-                    // 解析 DLL 名称；名称 RVA 无法解析通常意味着已越过表尾或数据损坏，结束扫描
-                    // （与延迟加载表一致用 break，而非 continue 继续把后续字节误读为描述符）
+                    // 全零终止符已在上方 IsTerminatorDescriptor 判过，到此描述符必非表尾。
+                    // 其 Name RVA 指向 .bss/跨节时 RvaToOffset 返回 -1，仅说明这一项名称取不出，
+                    // 不代表表已结束；用 continue 跳过本项继续扫描后续合法 DLL（循环有 MaxImportDescriptors
+                    // 上限保护，不会无限循环），避免误当表尾 break 漏掉其后所有依赖。
                     (long nameOffset, string dllName) = ReadStringAtRva(fs, reader, peInfo, importDesc.Name);
                     if (nameOffset == -1)
                     {
-                        break;
+                        continue;
                     }
 
                     if (!string.IsNullOrEmpty(dllName))
@@ -304,11 +306,14 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 IMAGE_DELAYLOAD_DESCRIPTOR delayLoadDesc = ReadDelayLoadDescriptor(reader);
                 descriptorCount++;
 
-                // 解析 DLL 名称；名称 RVA 无效则结束扫描，名称为空则跳过该描述符
+                // 解析 DLL 名称；Name RVA 解析失败仅说明这一项名称取不出（如指向 .bss/跨节），
+                // 描述符循环本身按 descriptorCount/DelayLoadDescriptorSize 步进且有 MaxImportDescriptors
+                // 上限，不依赖名称作表尾，故用 continue 跳过本项继续扫描后续合法 DLL（与标准导入表一致），
+                // 避免误当表尾 break 漏掉其后所有延迟加载依赖。名称为空也跳过该描述符。
                 (long nameOffset, string dllName) = ReadStringAtRva(fs, reader, peInfo, delayLoadDesc.DllNameRVA);
                 if (nameOffset == -1)
                 {
-                    break;
+                    continue;
                 }
 
                 if (string.IsNullOrEmpty(dllName))

@@ -46,31 +46,9 @@ namespace PersonalTools.PEAnalyzer.Resources
                 // 检查是否已经是完整的ICO文件
                 if (IsCompleteIcoHeader(iconData))
                 {
-                    // 已经是完整的ICO文件，直接使用
-                    IconInfo iconInfo = new()
-                    {
-                        Width = 0, // 从ICO文件头中提取
-                        Height = 0, // 从ICO文件头中提取
-                        BitsPerPixel = 0, // 从ICO文件头中提取
-                        Size = iconData.Length,
-                        Data = iconData
-                    };
-
-                    // 尝试从ICO文件头中提取信息
-                    if (iconData.Length >= 22)
-                    {
-                        // 读取第一项目录信息
-                        byte width = iconData[6];
-                        byte height = iconData[7];
-
-                        ushort bitCount = BitConverter.ToUInt16(iconData, 12);
-
-                        iconInfo.Width = width == 0 ? 256 : width;
-                        iconInfo.Height = height == 0 ? 256 : height;
-                        iconInfo.BitsPerPixel = bitCount;
-                    }
-
-                    peInfo.Icons.Add(iconInfo);
+                    // 已经是完整的ICO文件：从 ICONDIR 头与各 ICONDIRENTRY 正确提取每个尺寸的宽/高/位深，
+                    // 修复旧实现"宽高位深恒 0 或仅取首项 wBitCount(@12)"且多尺寸 ICO 只记首个的问题。
+                    AddIconsFromCompleteIco(peInfo, iconData);
                 }
                 else
                 {
@@ -81,6 +59,58 @@ namespace PersonalTools.PEAnalyzer.Resources
             catch (Exception ex) when (ex is ArgumentException or IndexOutOfRangeException)
             {
                 PersonalTools.Utils.AppLogger.Log($"处理图标数据错误: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 从完整 ICO 文件字节中按 ICONDIR/ICONDIRENTRY 解析所有图标条目，逐个加入 PE 信息。
+        /// 每条目从 ICONDIRENTRY 读取宽(@0)、高(@1)（字段值 0 表示 256）、位深 wBitCount(@6)。
+        /// 多尺寸 ICO 会记录全部条目而非仅首个；任一字段缺失/越界则保守降级。
+        /// </summary>
+        private static void AddIconsFromCompleteIco(PEInfo peInfo, byte[] iconData)
+        {
+            const int IconDirHeaderSize = 6;   // ICONDIR: Reserved(2)+Type(2)+Count(2)
+            const int IconDirEntrySize = 16;   // ICONDIRENTRY 固定 16 字节
+
+            // 目录头不完整时退回保守行为：仅登记整段数据、宽高位深保持 0，不抛异常。
+            if (iconData.Length < IconDirHeaderSize)
+            {
+                peInfo.Icons.Add(new IconInfo { Size = iconData.Length, Data = iconData });
+                return;
+            }
+
+            // Count 字段在偏移 4（ICONDIRHEADER.Count）；为 0 视为无有效条目。
+            ushort count = BitConverter.ToUInt16(iconData, 4);
+            bool anyAdded = false;
+            for (int i = 0; i < count; i++)
+            {
+                int entryOffset = IconDirHeaderSize + (i * IconDirEntrySize);
+                // 目录项越界即停止（畸形/截断 ICO 不抛异常，已读到的条目保留）。
+                if (entryOffset + IconDirEntrySize > iconData.Length)
+                {
+                    break;
+                }
+
+                // ICONDIRENTRY：Width(@0,字节,0=256)、Height(@1,字节,0=256)、wBitCount(@6,ushort)。
+                byte widthByte = iconData[entryOffset];
+                byte heightByte = iconData[entryOffset + 1];
+                ushort bitCount = BitConverter.ToUInt16(iconData, entryOffset + 6);
+
+                peInfo.Icons.Add(new IconInfo
+                {
+                    Width = widthByte == 0 ? 256 : widthByte,
+                    Height = heightByte == 0 ? 256 : heightByte,
+                    BitsPerPixel = bitCount,
+                    Size = iconData.Length, // 完整 ICO 各条目共享同一份文件字节，故大小记整段长度
+                    Data = iconData
+                });
+                anyAdded = true;
+            }
+
+            // 无任何有效条目（Count=0 或首项即越界）时保留旧的保守降级：登记整段、宽高位深为 0。
+            if (!anyAdded)
+            {
+                peInfo.Icons.Add(new IconInfo { Size = iconData.Length, Data = iconData });
             }
         }
 

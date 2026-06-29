@@ -29,7 +29,9 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             return entry.d_tag switch
             {
                 (long)DynamicTag.DT_NEEDED or (long)DynamicTag.DT_SONAME or (long)DynamicTag.DT_RPATH or (long)DynamicTag.DT_RUNPATH => $"{GetDynamicSectionInfoTableEntryValue(_parser, entry)}",
-                (long)DynamicTag.DT_FLAGS or (long)DynamicTag.DT_FLAGS_1 => $"{ELFDynamicInfo.GetDynamicFlagDescription((uint)entry.d_val)}",
+                // DT_FLAGS 与 DT_FLAGS_1 位含义完全不同：前者走 DF_* 命名空间，后者走 DF_1_* 命名空间，必须分别解码
+                (long)DynamicTag.DT_FLAGS => $"{ELFDynamicInfo.GetDynamicFlagDescription((uint)entry.d_val)}",
+                (long)DynamicTag.DT_FLAGS_1 => $"{ELFDynamicInfo.GetDynamicFlag1Description((uint)entry.d_val)}",
                 _ => entry.d_tag == (long)DynamicTag.DT_PLTREL ? ELFParserUtils.GetTypeName(typeof(DynamicTag), entry.d_val, "") : $"0x{entry.d_val:x}"
             };
         }

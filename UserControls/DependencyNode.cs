@@ -133,6 +133,11 @@ namespace PersonalTools.UserControls
             {
                 return null;
             }
+            catch (InvalidDataException)
+            {
+                // 畸形/非 PE 依赖 DLL：ParsePEFile 抛 InvalidDataException，优雅降级为“无子节点”返回 null
+                return null;
+            }
         }
     }
 }

@@ -43,7 +43,7 @@ namespace PersonalTools.Enums
         R_390_GOTPLTENT = 33,  /* 32 bit rel. offset to jump slot. */
         R_390_PLTOFF16 = 34,   /* 16 bit offset from GOT to PLT. */
         R_390_PLTOFF32 = 35,   /* 32 bit offset from GOT to PLT. */
-        R_390_PLTOFF64 = 36,   /* 16 bit offset from GOT to PLT. */
+        R_390_PLTOFF64 = 36,   /* 64 bit offset from GOT to PLT. */
         R_390_TLS_LOAD = 37,   /* Tag for load insn in TLS code. */
         R_390_TLS_GDCALL = 38, /* Tag for function call in general dynamic TLS code. */
         R_390_TLS_LDCALL = 39, /* Tag for function call in local dynamic TLS code. */

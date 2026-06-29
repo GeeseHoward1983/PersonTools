@@ -31,6 +31,11 @@ namespace PersonalTools.UserControls
 
         private PEInfo? currentPEInfo;
 
+        // I6 重入保护：currentPEInfo 为共享字段，LoadPEFile 又是 async void，快速连续切换文件时
+        // 多次加载会交错，await 之后的 Display* 步骤可能把旧文件的数据写到已切换的新视图（新旧混合）。
+        // 每次加载自增取令牌，await 之后比对：令牌已变说明本次加载已过期，立即丢弃后续 UI 更新步骤。
+        private int loadToken;
+
         /// <summary>拖入文件时回调宿主，由宿主按完整路径决定新建/覆盖 tab。</summary>
         public Action<IReadOnlyList<string>>? FilesDropped { get; set; }
 
@@ -51,21 +56,34 @@ namespace PersonalTools.UserControls
         // async void：UI 事件式入口。PE 解析与依赖解析移到后台线程，UI 线程只做控件赋值，避免大文件/深依赖树卡界面
         public async void LoadPEFile(string filePath)
         {
+            int token = ++loadToken; // I6：取本次加载令牌，await 后据此判断是否已被更新的加载取代
             try
             {
-                currentPEInfo = await Task.Run(() => PEParser.ParsePEFile(filePath)).ConfigureAwait(true);
+                PEInfo? loaded = await Task.Run(() => PEParser.ParsePEFile(filePath)).ConfigureAwait(true);
+                if (token != loadToken)
+                {
+                    return; // 已有更新的加载在进行，丢弃本次过期结果，避免新旧文件视图混合
+                }
+                currentPEInfo = loaded;
                 if (currentPEInfo == null)
                 {
                     return;
                 }
                 DisplayHeaderInfo();
                 await DisplayDependenciesAsync().ConfigureAwait(true);
+                if (token != loadToken)
+                {
+                    return; // 依赖解析（含 await）期间被新加载取代，停止后续步骤
+                }
                 DisplayImportExportFunctions();
                 DisplayAdditionalInfo();
                 DisplayIcons();
             }
-            catch (Exception ex) when (ex is FileNotFoundException or UnauthorizedAccessException or IOException or ArgumentException)
+            catch (Exception ex) when (ex is FileNotFoundException or UnauthorizedAccessException or IOException
+                or ArgumentException or InvalidDataException or OverflowException or ArgumentOutOfRangeException)
             {
+                // I4：PEParser.ParsePEFile 对畸形/非 PE 文件抛 InvalidDataException；越界字段还可能抛
+                // OverflowException/ArgumentOutOfRangeException。一并捕获并给出精准提示，符合“畸形输入即提示不冒泡”契约。
                 MessageHelper.ShowError($"加载文件时出错: {ex.Message}");
             }
         }
@@ -136,7 +154,15 @@ namespace PersonalTools.UserControls
         {
             if (sender is TreeViewItem item && item.DataContext is DependencyNode node)
             {
-                await node.EnsureLoadedAsync().ConfigureAwait(true);
+                try
+                {
+                    await node.EnsureLoadedAsync().ConfigureAwait(true);
+                }
+                catch (InvalidDataException)
+                {
+                    // M7：async void 无返回值，异常会逃到全局兜底。畸形依赖 PE 解析抛 InvalidDataException 时
+                    // 静默降级（该节点 EnsureLoadedAsync 内已按 Info==null 处理为无子节点），不打断展开交互。
+                }
             }
         }
 
@@ -157,9 +183,17 @@ namespace PersonalTools.UserControls
         {
             if (DependencyTree.SelectedItem is DependencyNode node)
             {
-                // 确保该依赖已解析（后台线程解析），然后把导入/导出列表切换为它自身的数据
-                await node.EnsureLoadedAsync().ConfigureAwait(true);
-                ShowFunctions(node.Info);
+                try
+                {
+                    // 确保该依赖已解析（后台线程解析），然后把导入/导出列表切换为它自身的数据
+                    await node.EnsureLoadedAsync().ConfigureAwait(true);
+                    ShowFunctions(node.Info);
+                }
+                catch (InvalidDataException ex)
+                {
+                    // M7：async void 入口，畸形依赖 PE 解析抛 InvalidDataException 时给精准提示而非冒泡到全局兜底
+                    MessageHelper.ShowError($"解析依赖文件时出错: {ex.Message}");
+                }
             }
         }
 

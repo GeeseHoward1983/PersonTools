@@ -26,7 +26,9 @@ namespace PersonalTools.MarkdownToWord.Docx
         /// <summary>把图片作为内联 run 嵌入容器；成功返回 true，远程/失败时插占位文字返回 false。</summary>
         public static bool AppendInlineImage(OpenXmlElement parent, LinkInline image, DocxRunStyle style, DocxRenderContext ctx)
         {
-            if (!TryResolveLocalImage(image.Url, ctx.BaseDir, out string fullPath, out PartTypeInfo type))
+            // 扩展名映射仅作"是否受支持图片"的前置门禁；真实 ImagePart 类型一律由下方魔数嗅探决定，
+            // 故此处丢弃解析期得到的扩展名 type（out _），避免与嗅探结果冲突。
+            if (!TryResolveLocalImage(image.Url, ctx.BaseDir, out string fullPath, out _))
             {
                 AppendPlaceholder(parent, image.Url, style);
                 return false;
@@ -55,11 +57,12 @@ namespace PersonalTools.MarkdownToWord.Docx
                     return false;
                 }
 
-                // 按文件头魔数嗅探真实格式覆盖按扩展名得到的 type：扩展名与内容不符(如 .png 实为 jpeg)时
-                // 若仍按扩展名声明 ImagePart 类型，Word 端会因内容不匹配破图
-                if (TrySniffImageType(bytes, out PartTypeInfo sniffed))
+                // 按文件头魔数嗅探真实格式：嗅探无法确定真实格式时不盲信扩展名声明 ImagePart（fail-closed），
+                // 改走占位文字——否则扩展名与内容不符(如 .png 实为未知/损坏数据)会让 Word 端解码破图。
+                if (!TrySniffImageType(bytes, out PartTypeInfo type))
                 {
-                    type = sniffed;
+                    AppendPlaceholder(parent, image.Url, style);
+                    return false;
                 }
 
                 ImagePart part = ctx.MainPart.AddImagePart(type);
@@ -296,14 +299,16 @@ namespace PersonalTools.MarkdownToWord.Docx
                 BitmapFrame frame = decoder.Frames[0];
                 pixelWidth = frame.PixelWidth;
                 pixelHeight = frame.PixelHeight;
+                // DPI 下限 1：极小正 DPI（如 0.01）虽 >0 但会在 ComputeEmu 把该轴尺寸放大成天文值、令宽高比严重失真，
+                // 故低于阈值的畸形 DPI 一律视为无效、回退默认 96，保持与像素一致的宽高比。
                 dpiX = frame.DpiX switch
                 {
-                    > 0 => frame.DpiX,
+                    >= 1 => frame.DpiX,
                     _ => 96
                 };
                 dpiY = frame.DpiY switch
                 {
-                    > 0 => frame.DpiY,
+                    >= 1 => frame.DpiY,
                     _ => 96
                 };
                 return pixelWidth > 0 && pixelHeight > 0;

@@ -51,9 +51,12 @@ namespace PersonalTools.PEAnalyzer.Parsers
                         return Path.GetFullPath(candidate);
                     }
                 }
-                catch (ArgumentException)
+                catch (Exception ex) when (ex is ArgumentException or IOException or NotSupportedException or System.Security.SecurityException)
                 {
-                    // dllName 含非法路径字符，跳过该候选
+                    // dllName 含非法路径字符（ArgumentException）；或 Path.GetFullPath 因路径过长
+                    // （PathTooLongException 派生自 IOException）、格式不受支持（NotSupportedException）、
+                    // 权限不足（SecurityException）抛错——均源自本机环境而非畸形输入，跳过该候选继续下一个目录
+                    continue;
                 }
             }
 

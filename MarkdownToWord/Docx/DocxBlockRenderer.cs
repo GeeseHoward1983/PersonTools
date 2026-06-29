@@ -22,7 +22,8 @@ namespace PersonalTools.MarkdownToWord.Docx
         // 块级递归最大深度：RenderBlock↔RenderQuote/RenderList/RenderListItem 互相递归，深度由不可信
         // Markdown 的嵌套层数决定。超千层的嵌套引用/列表会触发不可捕获的 StackOverflowException 直接崩进程，
         // 故对递归深度设上限（远超任何正常文档），超限即停止下钻而非崩溃。
-        private const int MaxNestingDepth = 64;
+        // internal：表格单元格也是递归入口（grid table 单元格可含嵌套表格），DocxTableRenderer 需引用同一上限作单一来源，勿复制字面量。
+        internal const int MaxNestingDepth = 64;
 
         // 匹配标题文本开头的编号前缀（如 "1 " / "1. " / "1.1 " / "1.1.1 "），含全角空格
         [GeneratedRegex(@"^\s*\d+(?:\.\d+)*\.?[ \t　]+")]
@@ -42,7 +43,9 @@ namespace PersonalTools.MarkdownToWord.Docx
                     RenderHeading(heading, container, ctx);
                     break;
                 case MTable table:
-                    DocxTableRenderer.Render(table, container, ctx);
+                    // 表格也是递归入口（grid table 单元格可含块级内容乃至嵌套表格），须把当前深度沿调用链传入，
+                    // 与 RenderBlock 共用 MaxNestingDepth 守卫，防深层嵌套 grid table 绕过守卫栈溢出。
+                    DocxTableRenderer.Render(table, container, ctx, indentLevel);
                     break;
                 case ListBlock list:
                     RenderList(list, container, ctx, indentLevel);

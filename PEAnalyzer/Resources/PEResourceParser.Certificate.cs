@@ -73,8 +73,11 @@ namespace PersonalTools.PEAnalyzer.Resources
                     wCertificateType = reader.ReadUInt16()
                 };
 
-                // dwLength 须 ≥8(含头) 且不超过证书表剩余；显式上限避免后续 (dwLength+7)&~7 对齐运算回绕
-                if (certHeader.dwLength < 8 || certHeader.dwLength > certificateSize || pos + certHeader.dwLength > certEnd)
+                // dwLength 须 ≥8(含头)，且不超过"从当前偏移到 certEnd 的剩余字节"（比整张证书表更严格，
+                // 防止单个伪证书声明长度吃掉表内已被前序证书占用的空间）；上界用 long 比较，
+                // 与 pos + dwLength > certEnd 共同避免后续 (dwLength+7)&~7 对齐运算回绕。
+                long remaining = certEnd - pos;
+                if (certHeader.dwLength < 8 || certHeader.dwLength > remaining || pos + certHeader.dwLength > certEnd)
                 {
                     break;
                 }

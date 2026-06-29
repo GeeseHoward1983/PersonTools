@@ -36,11 +36,17 @@ namespace PersonalTools.PEAnalyzer
                     ImageSource = bitmap
                 };
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+            // 尽力解码单个图标，任何解码异常都降级为返回 null 不影响其余图标，符合本方法契约。
+            // WPF BitmapImage.EndInit() 对损坏图标最常抛 NotSupportedException（.NET 9/10 还可能
+            // NullReferenceException/FileFormatException），若不兜住会逃出 DisplayIcons 的 foreach，
+            // 导致整个图标列表都不显示。故放宽为 catch (Exception)。
+            #pragma warning disable CA1031 // 故意捕获所有异常：契约即“解码失败返回 null”，避免坏图标拖垮整列表
+            catch (Exception ex)
             {
                 PersonalTools.Utils.AppLogger.Log($"图标解码失败: {ex.Message}");
                 return null;
             }
+            #pragma warning restore CA1031
         }
     }
 }

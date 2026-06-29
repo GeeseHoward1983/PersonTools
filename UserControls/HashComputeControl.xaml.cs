@@ -35,6 +35,7 @@ namespace PersonalTools.UserControls
         {
             InitializeComponent();
             InitializeSHA3AlgorithmComboBox();
+            ApplySha3PlatformSupport();
             HashItemsControl.ItemsSource = hashRows;
         }
 
@@ -57,6 +58,28 @@ namespace PersonalTools.UserControls
 
             // 设置默认选中项
             SHA3AlgorithmComboBox.SelectedIndex = 0; // 默认选择SHA3-256
+        }
+
+        // 按平台能力启用/禁用 SHA3 交互：CNG SHA3 仅 Win11 build 25324+ 提供，
+        // 目标框架 net10.0-windows7.0 可运行在更低版本 Windows 上，此时直接禁用相关控件并给出提示，
+        // 避免用户点击后才在 Sha3.ComputeHash 抛 PlatformNotSupportedException
+        private void ApplySha3PlatformSupport()
+        {
+            if (Sha3.IsSupported)
+            {
+                return;
+            }
+
+            // 不支持 SHA3：禁用输入框、模式单选、算法下拉框、计算/清空按钮，避免无效交互
+            SHA3InputTextBox.IsEnabled = false;
+            SHA3StringInputRadio.IsEnabled = false;
+            SHA3HexInputRadio.IsEnabled = false;
+            SHA3AlgorithmComboBox.IsEnabled = false;
+            CalculateSHA3Button.IsEnabled = false;
+            ClearSHA3Button.IsEnabled = false;
+
+            // 结果 Label 给出明确提示文案，告知当前平台不可用
+            SHA3ResultLabel.Content = "当前平台不支持 SHA3 算法（需 Windows 11 build 25324 及以上）";
         }
 
         // 计算按钮：从 DataContext 取出该行算法并计算
@@ -124,8 +147,9 @@ namespace PersonalTools.UserControls
                 byte[] hashBytes = Sha3.ComputeHash(inputBytes, selectedOption.Value);
                 SHA3ResultLabel.Content = ConvertUtils.ToHexString(hashBytes);
             }
-            catch (Exception ex) when (ex is FormatException or ArgumentException)
+            catch (Exception ex) when (ex is FormatException or ArgumentException or PlatformNotSupportedException)
             {
+                // PlatformNotSupportedException：低版本 Windows 缺少 CNG SHA3，展示 Sha3.cs 写好的“当前平台不支持SHA3算法”提示
                 MessageHelper.ShowError($"计算SHA3时发生错误: {ex.Message}");
             }
         }

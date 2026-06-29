@@ -201,6 +201,10 @@ namespace PersonalTools.PEAnalyzer.Parsers
             long available = (reader.BaseStream.Length - reader.BaseStream.Position) / 8;
             if (available < dataDirCount)
             {
+                // 文件截断致可读目录项少于应有数量：解析行为不变（仍按可读数量返回短数组），
+                // 但记录日志，便于排查"数组长度与 Presenter 显示的 NumberOfRvaAndSizes 不一致"的现象。
+                PersonalTools.Utils.AppLogger.Log(
+                    $"数据目录被截断：应有 {dataDirCount} 项(NumberOfRvaAndSizes={numberOfRvaAndSizes})，文件仅可读 {Math.Max(0, available)} 项。");
                 dataDirCount = (int)Math.Max(0, available);
             }
 

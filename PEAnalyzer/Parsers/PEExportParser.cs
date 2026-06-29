@@ -121,7 +121,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
             // 用 requiredLength = clampedCount*4 让整段必须落在同一节内，否则 RvaToOffset 返回 -1：
             // 既防越界，也避免内层循环以 fs.Length 为界跨节读到 EOF（旧实现的 DoS/误读向量）。
-            long offset = PEParserUtils.RvaToOffset(rva, sections, (uint)(clampedCount * 4));
+            // 用 uint 运算 (clampedCount*4u) 而非 int*int 再转 uint：不依赖 MaxExportEntries 上限，
+            // 即使未来上调上限也不会因 int 乘法溢出得到错误的 requiredLength。
+            long offset = PEParserUtils.RvaToOffset(rva, sections, (uint)clampedCount * 4u);
             return PEParserUtils.ReadAtOffset(fs, offset, new List<uint>(), () =>
             {
                 List<uint> result = new(clampedCount);
@@ -144,7 +146,8 @@ namespace PersonalTools.PEAnalyzer.Parsers
             int clampedCount = (int)Math.Min(count, (uint)PEConstants.MaxExportEntries);
 
             // 同 ReadUInt32ListAtRva：整段(每项 2 字节)须落在同一节内，否则返回 -1 降级为空表。
-            long offset = PEParserUtils.RvaToOffset(rva, sections, (uint)(clampedCount * 2));
+            // 用 uint 运算 (clampedCount*2u) 不依赖 MaxExportEntries 上限，避免改上限后 int 乘法回归溢出。
+            long offset = PEParserUtils.RvaToOffset(rva, sections, (uint)clampedCount * 2u);
             return PEParserUtils.ReadAtOffset(fs, offset, new List<ushort>(), () =>
             {
                 List<ushort> result = new(clampedCount);

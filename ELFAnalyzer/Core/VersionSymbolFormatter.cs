@@ -50,6 +50,12 @@ namespace PersonalTools.ELFAnalyzer.Core
                         sb.AppendLine();
                     }
                 }
+
+                // 条目数非 4 倍数时末行停在行内未换行，会与后续输出粘连；此处补一次换行收尾
+                if ((parser.VersionSymbols.Length & 0x3) != 0)
+                {
+                    sb.AppendLine();
+                }
             }
 
             return sb.ToString();
@@ -98,6 +104,9 @@ namespace PersonalTools.ELFAnalyzer.Core
                 bool isBase = kvp.Key == 1;
                 string flags = isBase ? "BASE" : "";
                 // 条目偏移按排序序号推进；BASE(Key=1)经 OrderBy 居首即 entryIndex=0，无需对其特判（特判会与自增的 entryIndex 不一致）
+                // 注意：此处 addr/fileOffset 系按「序号 × sh_entsize」等长估算。verdef 条目实为变长（含可变个 verdaux），
+                // 解析阶段未保留每条真实文件偏移，故变长布局下该地址/Offset 仅供参考、可能偏离真实值；
+                // 真实偏移需在 VersionSymbolParser 解析时逐条记录后回填，此处保守不重构。
                 ulong entryDelta = (ulong)entryIndex * vd.sh_entsize;
                 ulong addr = vd.sh_addr + entryDelta;
                 ulong fileOffset = vd.sh_offset + entryDelta;

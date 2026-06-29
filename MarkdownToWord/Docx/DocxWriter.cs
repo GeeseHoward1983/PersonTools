@@ -46,7 +46,6 @@ namespace PersonalTools.MarkdownToWord.Docx
                     if (hasCover)
                     {
                         DocxCoverBuilder.RenderCover((HeadingBlock)blocks[0], body, ctx);
-                        ctx.CoverRendered = true;
                         blocks.RemoveAt(0);
                     }
 

@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using PersonalTools.Utils;
@@ -62,8 +63,9 @@ namespace PersonalTools.UserControls
 
                 byte[] bytes = Convert.FromBase64String(input);
 
-                // 含不可见字符时转 Hex 显示避免乱码，否则按 UTF-8 文本显示
-                Base64Input.Text = ConvertUtils.OutputString(bytes, ContainsInvisibleCharacters(bytes));
+                // 含不可见控制字符、或不是合法 UTF-8 序列时转 Hex 显示，避免乱码或被 U+FFFD 静默替换；否则按 UTF-8 文本显示
+                bool useHex = ContainsInvisibleCharacters(bytes) || !IsValidUtf8(bytes);
+                Base64Input.Text = ConvertUtils.OutputString(bytes, useHex);
             }
             catch (Exception ex) when (ex is FormatException or ArgumentException or ObjectDisposedException)
             {
@@ -84,6 +86,23 @@ namespace PersonalTools.UserControls
                 }
             }
             return false;
+        }
+
+        // 严格校验字节是否为合法 UTF-8 序列：
+        // 默认 Encoding.UTF8 对非法字节（如孤立的 ≥0x80 高位字节）用 U+FFFD 静默替换而不抛异常，
+        // 会导致二进制数据被解码为乱码且无任何提示。此处用 throwOnInvalidBytes:true 的严格解码器试探，
+        // 抛 DecoderFallbackException 即说明非合法 UTF-8，应回退到 Hex 展示。
+        private static bool IsValidUtf8(byte[] bytes)
+        {
+            try
+            {
+                _ = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true).GetString(bytes);
+                return true;
+            }
+            catch (DecoderFallbackException)
+            {
+                return false;
+            }
         }
 
         // Base64清空

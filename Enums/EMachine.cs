@@ -193,8 +193,6 @@ namespace PersonalTools.Enums
         EM_COGEY = 303,   // Codeplay Software Ltd. COGEY
         EM_COFFEE = 304,  // Codeplay Software Ltd. COFFEE
         EM_CISCO_IOS = 305, // Cisco IOS
-        EM_CISCO_IOS64 = 306, // Cisco IOS 64-bit
-        EM_SG1000 = EM_TILE64,  // Profile for a 32-bit processor - correct value
-        EM_SG3000 = EM_TILEPRO   // Profile for a 32-bit processor - correct value
+        EM_CISCO_IOS64 = 306 // Cisco IOS 64-bit
     }
 }

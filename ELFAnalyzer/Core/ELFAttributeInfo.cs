@@ -89,11 +89,12 @@ namespace PersonalTools.ELFAnalyzer.Core
             sb.AppendLine(CultureInfo.InvariantCulture, $"Attribute Section: {vendorName}");
 
             // 子节结束位置 = 子节起始 + 子节长度（length 字段含其自身与 vendor 名）
-            int subSectionEnd = subSectionStart + (int)subSectionLength;
-            if (subSectionEnd > data.Length || subSectionLength == 0)
-            {
-                subSectionEnd = data.Length;
-            }
+            // 畸形 subSectionLength（如高位置位）经 (int) 截断会变负，令 subSectionEnd < subSectionStart 致截断/早退；
+            // 用 long 计算并校验：长度为 0、或结束位置越界(回退到数据末尾)、或结束位置不在 [当前 offset, data.Length] 内即视为畸形，收敛到数据末尾
+            long subSectionEndLong = (long)subSectionStart + subSectionLength;
+            int subSectionEnd = subSectionLength == 0 || subSectionEndLong > data.Length || subSectionEndLong < offset
+                ? data.Length
+                : (int)subSectionEndLong;
 
             if (vendorName == "aeabi")
             {
@@ -300,13 +301,15 @@ namespace PersonalTools.ELFAnalyzer.Core
         private static void AppendAEABIAlignAttr(string name, bool preserved, byte[] data, ref int offset, int endOffset, StringBuilder sb)
         {
             int val = ReadAEABIUleb128(data, ref offset, endOffset);
+            // 畸形/超长 ULEB128 可能解出负值或超范围值，直接 1<<val 会因 C# 移位掩低 5 位而显示错乱（如 1<<-1 实为 1<<31）；
+            // 仅当 val 落在 [4,12] 合理区间才做 1<<val（4~12 才走扩展对齐公式），其余越界值归入未知分支显示原始值
             string text = val switch
             {
                 0 => "None",
                 1 => preserved ? "8-byte, except leaf SP" : "8-byte",
                 2 => preserved ? "8-byte" : "4-byte",
                 3 => "??? 3",
-                <= 12 => preserved
+                >= 4 and <= 12 => preserved
                     ? $"8-byte and up to {1 << val}-byte extended, except leaf SP"
                     : $"8-byte and up to {1 << val}-byte extended",
                 _ => $"??? ({val})",
