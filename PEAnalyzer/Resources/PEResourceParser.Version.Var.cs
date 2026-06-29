@@ -47,7 +47,8 @@ namespace PersonalTools.PEAnalyzer.Resources
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
-                peInfo.AdditionalInfo.FileVersion += $"; VarFileInfo解析错误: {ex.Message}";
+                // 仅记录日志，保留已成功解析的版本字段，不把异常细节追加到展示字段
+                PersonalTools.Utils.AppLogger.Log($"VarFileInfo解析错误: {ex.Message}");
             }
         }
 
@@ -64,6 +65,7 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 while (fs.Position < endPosition)
                 {
+                    long before = fs.Position;
                     long startPosition = fs.Position;
                     if (!VersionNodeReader.TryReadNodeHeader(fs, reader, out ushort wLength, out ushort wValueLength, out _))
                     {
@@ -86,11 +88,19 @@ namespace PersonalTools.PEAnalyzer.Resources
                     {
                         break;
                     }
+
+                    // 位置必前进兜底：与 ParseStringTable/ParseVersionChildren 同款守卫，
+                    // 防止解析未实质推进流位置时陷入死循环。
+                    if (fs.Position <= before)
+                    {
+                        break;
+                    }
                 }
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
-                peInfo.AdditionalInfo.FileVersion += $"; Var解析错误: {ex.Message}";
+                // 仅记录日志，保留已成功解析的版本字段，不把异常细节追加到展示字段
+                PersonalTools.Utils.AppLogger.Log($"Var解析错误: {ex.Message}");
             }
         }
 

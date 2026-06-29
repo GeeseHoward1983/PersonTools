@@ -55,6 +55,12 @@ namespace PersonalTools.Utils.Crypto
                 throw new ArgumentException($"加密模式 {mode} 必须提供 IV 向量", nameof(iv));
             }
 
+            // 服务层自洽：显式校验密钥长度(与下方 IV 校验对称)，否则 KeySize setter 仅抛较不直观的 CryptographicException
+            if (key.Length is not (16 or 24 or 32))
+            {
+                throw new ArgumentException($"AES 密钥长度必须为 16/24/32 字节，实际 {key.Length}", nameof(key));
+            }
+
             Aes aesAlg = Aes.Create();
             aesAlg.KeySize = key.Length * 8; // 根据密钥长度设置 KeySize
             aesAlg.Key = key;

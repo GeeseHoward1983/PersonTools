@@ -18,6 +18,23 @@ namespace PersonalTools.Utils
             };
         }
 
+        // hex/Base64 展示到 TextBox 的实用大小上限：超过则提示用户取消，避免数百 MB 文件转成巨串后卡死 UI 渲染。
+        // 远低于 ReadAllBytes 的 2GB 硬上限，目的是可用性而非内存安全。
+        public const long HexDisplayWarnBytes = 50L * 1024 * 1024;
+
+        /// <summary>拖放文件用于 hex/Base64 展示前的大小预检：≤上限返回 true；取大小失败时返回 true(不阻断，交后续读盘异常处理)。</summary>
+        public static bool IsWithinHexDisplayLimit(string filePath)
+        {
+            try
+            {
+                return new FileInfo(filePath).Length <= HexDisplayWarnBytes;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+            {
+                return true;
+            }
+        }
+
         /// <summary>读取整个文件的字节。</summary>
         public static byte[] ReadAllBytes(string filePath)
         {

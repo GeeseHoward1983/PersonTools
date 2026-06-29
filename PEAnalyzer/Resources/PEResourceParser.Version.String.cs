@@ -46,8 +46,8 @@ namespace PersonalTools.PEAnalyzer.Resources
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
-                // 忽略StringFileInfo解析错误
-                peInfo.AdditionalInfo.FileVersion += $"; StringFileInfo解析错误: {ex.Message}";
+                // 仅记录日志，保留已成功解析的版本字段，不把异常细节追加到展示字段
+                PersonalTools.Utils.AppLogger.Log($"StringFileInfo解析错误: {ex.Message}");
             }
         }
     }

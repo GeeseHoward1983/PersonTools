@@ -81,7 +81,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         internal static string GetSectionName(ELFParser parser, int index)
         {
-            if (parser.SectionHeaders == null || index >= parser.SectionHeaders.Count)
+            if (parser.SectionHeaders == null || index < 0 || index >= parser.SectionHeaders.Count)
             {
                 return string.Empty;
             }

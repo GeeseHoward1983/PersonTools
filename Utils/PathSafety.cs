@@ -32,7 +32,7 @@ namespace PersonalTools.Utils
                 return false;
             }
 
-            // GetFileName 与原串不等说明含被规范化掉的路径成分；含非法路径字符也按非裸名处理
+            // 含非法路径字符按非裸名处理（GetInvalidFileNameChars 也涵盖目录分隔符等）
             if (name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
             {
                 return false;
@@ -45,6 +45,7 @@ namespace PersonalTools.Utils
                 return false;
             }
 
+            // 最终兜底：GetFileName 与原串不等，说明仍含被规范化掉的路径成分，按非裸名处理
             return string.Equals(Path.GetFileName(name), name, StringComparison.Ordinal);
         }
 

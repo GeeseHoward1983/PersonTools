@@ -62,8 +62,16 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                 return sections;
             }
 
-            // 段在虚拟内存中的结束地址
-            ulong segEndAddr = ph.p_vaddr + ph.p_memsz;
+            // 段在虚拟内存中的结束地址（防 ulong 相加回绕，溢出时夹紧到 ulong.MaxValue）
+            ulong segEndAddr;
+            if (ph.p_memsz > ulong.MaxValue - ph.p_vaddr)
+            {
+                segEndAddr = ulong.MaxValue;
+            }
+            else
+            {
+                segEndAddr = ph.p_vaddr + ph.p_memsz;
+            }
             for (int i = 0; i < _parser.SectionHeaders.Count; i++)
             {
                 Models.ELFSectionHeader sh = _parser.SectionHeaders[i];
@@ -110,8 +118,15 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                 ELFProgramHeader interpHeader = Parser.ProgramHeaders.FirstOrDefault(ph => ph.p_type == (uint)ProgramHeaderType.PT_INTERP);
                 if (interpHeader.p_type != 0)
                 {
+                    // p_offset/p_filesz 为 ulong，>int.MaxValue 时 (int) 强转会变负，须先做越界夹紧
+                    if (interpHeader.p_offset >= (ulong)Parser.FileData.Length)
+                    {
+                        return string.Empty;
+                    }
+                    int interpOffset = (int)interpHeader.p_offset;
+                    int interpLength = (int)Math.Min(interpHeader.p_filesz, (ulong)Parser.FileData.Length - interpHeader.p_offset);
                     // 从 PT_INTERP 段按 p_filesz 上限提取解释器路径（ExtractStringFromBytes 自带越界夹紧并去除尾部 NUL）
-                    return ELFParserUtils.ExtractStringFromBytes(Parser.FileData, (int)interpHeader.p_offset, (int)interpHeader.p_filesz);
+                    return ELFParserUtils.ExtractStringFromBytes(Parser.FileData, interpOffset, interpLength);
                 }
             }
 

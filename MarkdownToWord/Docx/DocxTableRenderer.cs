@@ -78,8 +78,10 @@ namespace PersonalTools.MarkdownToWord.Docx
             };
 
             const int contentWidthTwips = 9026; // A4 正文宽度（页宽 - 左右边距）
-            const int minColumnTwips = 240;     // 列宽下限 ~240 twips（最小可读列宽）：超多列时均分会得到个位/0 致列塌陷，故取下限兜底
-            int perColumn = Math.Max(minColumnTwips, contentWidthTwips / columns);
+            // 各列等分正文宽度，列宽之和恒 ≤ contentWidthTwips，避免超多列时溢出页面右边距。
+            // 不再对单列宽设过大下限（旧 minColumnTwips=240），否则列数过多时 240*列数 会超出正文宽度致表格右溢；
+            // 仅以 1 twip 兜底防 0 宽列塌陷（Autofit 布局下 Word 仍会按内容回弹，不会真退化为 1 twip）。
+            int perColumn = Math.Max(1, contentWidthTwips / columns);
             string columnWidth = perColumn.ToString(CultureInfo.InvariantCulture);
 
             TableGrid grid = new();

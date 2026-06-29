@@ -25,8 +25,9 @@ namespace PersonalTools.MarkdownToWord.Models
                 }
             }
 
-            // 兜底：理论上 CreateDefault 已覆盖所有类别
-            return Rows.Count > 0 ? Rows[0] : new ContentStyleRow(category);
+            // 兜底：理论上 CreateDefault 已覆盖所有类别；缺失时返回带该类别正确默认值的新行，
+            // 不退回 Rows[0]（那会用错类别的字体/字号，造成类别错配）。
+            return new ContentStyleRow(category);
         }
 
         /// <summary>取某级标题（1–4）的样式行。</summary>

@@ -21,13 +21,14 @@ namespace PersonalTools.MarkdownToWord.Docx
         private const long MaxWidthEmu = 5_486_400; // 约 6 英寸，限制图片不超页面正文宽度
         private const long MaxHeightEmu = 8_229_600; // 约 9 英寸，限制图片不超页面正文高度，防畸形极小 dpiY 产生天文高度
         private const long MaxImageBytes = 50L * 1024 * 1024;   // 单张图片字节上限，防超大文件/解压炸弹耗尽内存
+        private const long MaxTotalImageBytes = 200L * 1024 * 1024; // 单次导出所有图片累计字节上限，防多图叠加撑爆内存/产出超大文档
         private const long MaxImagePixels = 100_000_000L;       // 解码后像素总数上限（约 1 亿，10000×10000）
 
         /// <summary>把图片作为内联 run 嵌入容器；成功返回 true，远程/失败时插占位文字返回 false。</summary>
         public static bool AppendInlineImage(OpenXmlElement parent, LinkInline image, DocxRunStyle style, DocxRenderContext ctx)
         {
-            // 扩展名映射仅作"是否受支持图片"的前置门禁；真实 ImagePart 类型一律由下方魔数嗅探决定，
-            // 故此处丢弃解析期得到的扩展名 type（out _），避免与嗅探结果冲突。
+            // 真实 ImagePart 类型一律由下方魔数嗅探决定（内容为准，不再用扩展名门禁），
+            // 故此处丢弃 TryResolveLocalImage 的 type（out _），避免与嗅探结果冲突。
             if (!TryResolveLocalImage(image.Url, ctx.BaseDir, out string fullPath, out _))
             {
                 AppendPlaceholder(parent, image.Url, style);
@@ -37,7 +38,16 @@ namespace PersonalTools.MarkdownToWord.Docx
             try
             {
                 // 读取前先按文件大小拦截：超大文件不读入内存，避免解压炸弹/巨图耗尽内存
-                if (new FileInfo(fullPath).Length > MaxImageBytes)
+                long fileBytes = new FileInfo(fullPath).Length;
+                if (fileBytes > MaxImageBytes)
+                {
+                    AppendPlaceholder(parent, image.Url, style);
+                    return false;
+                }
+
+                // 单次导出总字节预算：多图叠加即使每张都不超单图上限，累计仍可能撑爆内存/产出超大文档。
+                // 若把本张计入后会超总预算，则不读入/不解码，直接降级占位（fail-closed，复用占位逻辑）。
+                if (ctx.EmbeddedImageBytes + fileBytes > MaxTotalImageBytes)
                 {
                     AppendPlaceholder(parent, image.Url, style);
                     return false;
@@ -75,6 +85,7 @@ namespace PersonalTools.MarkdownToWord.Docx
                 (long cx, long cy) = ComputeEmu(pixelWidth, pixelHeight, dpiX, dpiY);
                 Run run = new(BuildDrawing(relationshipId, cx, cy, ctx.NextDrawingId(), Path.GetFileName(fullPath)));
                 parent.AppendChild(run);
+                ctx.AddEmbeddedImageBytes(bytes.Length); // 计入本次导出总字节预算，供后续图片判断是否超总预算
                 return true;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException)
@@ -157,9 +168,22 @@ namespace PersonalTools.MarkdownToWord.Docx
                 // 进一步防符号链接/junction 穿越：GetFullPath/StartsWith 仅做文本前缀判断，
                 // 不解析链接。若路径中任一级是指向 baseDir 之外的链接（如 pics→C:\...\.ssh），
                 // 文本上仍落在 baseWithSep 内 → 解析真实目标后再次校验前缀，拒绝越界。
+                // baseDir 自身也可能落在符号链接下，故对 base 同样调 ResolveFinalPath 取已解析坐标，
+                // 与图片的 realPath 处于同一"已解析"坐标系比较，否则会误拒库内合法图片；base 解析失败则 fail-closed 拒绝。
+                string? resolvedBase = ResolveFinalPath(fullBase);
+                if (resolvedBase == null)
+                {
+                    return false;
+                }
+
+                string resolvedBaseFull = Path.GetFullPath(resolvedBase);
+                string resolvedBaseWithSep = resolvedBaseFull.EndsWith(Path.DirectorySeparatorChar)
+                    ? resolvedBaseFull
+                    : resolvedBaseFull + Path.DirectorySeparatorChar;
+
                 string? realPath = ResolveFinalPath(path);
                 if (realPath == null
-                    || !Path.GetFullPath(realPath).StartsWith(baseWithSep, StringComparison.OrdinalIgnoreCase))
+                    || !Path.GetFullPath(realPath).StartsWith(resolvedBaseWithSep, StringComparison.OrdinalIgnoreCase))
                 {
                     return false;
                 }
@@ -170,7 +194,10 @@ namespace PersonalTools.MarkdownToWord.Docx
                 return false;
             }
 
-            if (!File.Exists(path) || !TryMapImageType(Path.GetExtension(path), out type))
+            // 不再用扩展名（TryMapImageType）门禁判定"是否受支持图片"：真实类型一律由 AppendInlineImage 中的
+            // 魔数嗅探 TrySniffImageType 决定（嗅探失败→占位，fail-closed）。否则内容合法但扩展名不符的图片会被误拒为占位。
+            // type 保持方法顶部默认 ImagePartType.Png（调用方以 out _ 丢弃，真实类型由嗅探给出）。
+            if (!File.Exists(path))
             {
                 return false;
             }
@@ -179,20 +206,7 @@ namespace PersonalTools.MarkdownToWord.Docx
             return true;
         }
 
-        private static bool TryMapImageType(string extension, out PartTypeInfo type)
-        {
-            switch (extension.ToUpperInvariant())
-            {
-                case ".PNG": type = ImagePartType.Png; return true;
-                case ".JPG" or ".JPEG": type = ImagePartType.Jpeg; return true;
-                case ".GIF": type = ImagePartType.Gif; return true;
-                case ".BMP": type = ImagePartType.Bmp; return true;
-                case ".TIF" or ".TIFF": type = ImagePartType.Tiff; return true;
-                default: type = ImagePartType.Png; return false;
-            }
-        }
-
-        // 按文件头魔数识别真实图片格式（与 TryMapImageType 的扩展名映射互补，用于覆盖名实不符的情况）
+        // 按文件头魔数识别真实图片格式（内容为准；不再用扩展名映射，覆盖名实不符的情况）
         private static bool TrySniffImageType(byte[] bytes, out PartTypeInfo type)
         {
             type = ImagePartType.Png;

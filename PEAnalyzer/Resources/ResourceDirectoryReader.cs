@@ -209,7 +209,8 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <summary>
         /// 临时定位到 <paramref name="offset"/> 执行 <paramref name="read"/>，成功后恢复原流位置并返回其结果。
         /// 若 offset 越界（小于 0 或加上 <paramref name="minBytes"/> 超出文件）直接返回 <paramref name="fallback"/> 且不移动流；
-        /// 若 read 抛出可恢复异常，返回 fallback 且不恢复流位置（与各图标查找方法原有语义一致）。
+        /// 若 read 抛出可恢复异常，返回 fallback 并恢复原流位置
+        /// （与 PEParserUtils.ReadAtOffset 的 finally 总恢复语义一致，避免嵌套调用中途异常后兄弟条目错位解析）。
         /// </summary>
         public static T ReadAtOffset<T>(FileStream fs, long offset, int minBytes, T fallback, Func<T> read)
         {
@@ -228,6 +229,7 @@ namespace PersonalTools.PEAnalyzer.Resources
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
+                fs.Position = originalPosition;
                 return fallback;
             }
         }

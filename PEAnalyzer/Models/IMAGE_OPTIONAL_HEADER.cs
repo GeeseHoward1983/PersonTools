@@ -1,6 +1,7 @@
 namespace PersonalTools.PEAnalyzer.Models
 {
-    // 统一的可选头结构
+    // 可选头聚合视图：含引用类型数组 DataDirectory 且为属性式结构，不可用 Marshal.PtrToStructure
+    // 整体映射，由 PEHeaderParser 手工逐字段读取后填充（非内存布局体，故不标注 [StructLayout]）。
     internal struct IMAGE_OPTIONAL_HEADER
     {
         public ushort Magic { get; set; }

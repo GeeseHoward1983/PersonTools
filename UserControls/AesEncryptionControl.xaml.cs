@@ -49,7 +49,7 @@ namespace PersonalTools.UserControls
             // 初始化加密模式下拉框
             AesModeComboBox.Items.Add(new AesModeOption { Name = "CBC (默认)", Mode = CipherMode.CBC });
 #pragma warning disable CA5358
-            AesModeComboBox.Items.Add(new AesModeOption { Name = "ECB", Mode = CipherMode.ECB });
+            AesModeComboBox.Items.Add(new AesModeOption { Name = "ECB (不推荐：无IV、相同明文块产生相同密文)", Mode = CipherMode.ECB });
             AesModeComboBox.Items.Add(new AesModeOption { Name = "CFB", Mode = CipherMode.CFB });
             AesModeComboBox.Items.Add(new AesModeOption { Name = "OFB", Mode = CipherMode.OFB });
 #pragma warning restore CA5358
@@ -143,7 +143,12 @@ namespace PersonalTools.UserControls
             }
             key = GetKeyBytes(keyInput, AesKeyStringRadio.IsChecked == true);
 
-            mode = ((AesModeOption)AesModeComboBox.SelectedItem).Mode;
+            if (AesModeComboBox.SelectedItem is not AesModeOption modeOption)
+            {
+                MessageHelper.ShowInfo("请选择加密模式");
+                return false;
+            }
+            mode = modeOption.Mode;
 
             // 对于CBC/CFB/OFB等模式，需要IV向量
 #pragma warning disable CA5358
@@ -181,14 +186,14 @@ namespace PersonalTools.UserControls
         // AES加密字符串
         private string AesEncryptString(string input, byte[] key, byte[]? iv, CipherMode mode)
         {
-            PaddingMode padding = ((AesPaddingOption)AesPaddingComboBox.SelectedItem).Padding;
+            PaddingMode padding = AesPaddingComboBox.SelectedItem is AesPaddingOption paddingOption ? paddingOption.Padding : PaddingMode.PKCS7;
             return AesCryptoService.Encrypt(input, key, iv, mode, padding, AesInputStringRadio.IsChecked != true);
         }
 
         // AES解密字符串
         private string AesDecryptString(string input, byte[] key, byte[]? iv, CipherMode mode)
         {
-            PaddingMode padding = ((AesPaddingOption)AesPaddingComboBox.SelectedItem).Padding;
+            PaddingMode padding = AesPaddingComboBox.SelectedItem is AesPaddingOption paddingOption ? paddingOption.Padding : PaddingMode.PKCS7;
             return AesCryptoService.Decrypt(input, key, iv, mode, padding, AesInputStringRadio.IsChecked != true);
         }
 
@@ -230,6 +235,12 @@ namespace PersonalTools.UserControls
         // 处理文件AES加密
         private void ProcessFileForAesEncryption(string filePath)
         {
+            if (!FileDropHelper.IsWithinHexDisplayLimit(filePath))
+            {
+                MessageHelper.ShowWarning($"文件较大（超过 {FileDropHelper.HexDisplayWarnBytes / (1024 * 1024)} MB），转为十六进制显示会导致界面长时间无响应，已取消。");
+                return;
+            }
+
             try
             {
                 byte[] fileBytes = FileDropHelper.ReadAllBytes(filePath);

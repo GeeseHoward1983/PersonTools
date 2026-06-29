@@ -31,7 +31,7 @@ namespace PersonalTools.PEAnalyzer
 
             sections.Add(("DOS头信息", new Dictionary<string, string>
             {
-                { "签名(e_magic)", $"0x{peInfo.DosHeader.e_magic:X4} ('{(char)(peInfo.DosHeader.e_magic & 0xFF)}{(char)(peInfo.DosHeader.e_magic >> 8)}')" },
+                { "签名(e_magic)", $"0x{peInfo.DosHeader.e_magic:X4} ('{ToPrintableChar(peInfo.DosHeader.e_magic & 0xFF)}{ToPrintableChar(peInfo.DosHeader.e_magic >> 8)}')" },
                 { "NT头偏移(e_lfanew)", $"0x{peInfo.DosHeader.e_lfanew:X8}" }
             }));
 
@@ -140,7 +140,7 @@ namespace PersonalTools.PEAnalyzer
             for (int i = 0; i < peInfo.SectionHeaders.Count; i++)
             {
                 IMAGE_SECTION_HEADER section = peInfo.SectionHeaders[i];
-                string sectionName = System.Text.Encoding.UTF8.GetString(section.Name).Trim('\0');
+                string sectionName = System.Text.Encoding.Latin1.GetString(section.Name).Trim('\0');
                 sectionInfo[$"节 {i} ({sectionName})"] = $"RVA: 0x{section.VirtualAddress:X8}, 大小: 0x{section.VirtualSize:X8}, Raw大小: 0x{section.SizeOfRawData:X8}, 特征: 0x{section.Characteristics:X8}";
             }
 
@@ -171,10 +171,25 @@ namespace PersonalTools.PEAnalyzer
             };
         }
 
+        // 仅当字节可打印（ASCII 0x20~0x7E）时转为字符，否则用 '.' 占位，避免控制字节破坏排版
+        private static char ToPrintableChar(int value)
+        {
+            int b = value & 0xFF;
+            return b >= 0x20 && b < 0x7F ? (char)b : '.';
+        }
+
         private static DateTime UnixTimeStampToDateTime(long unixTimeStamp)
         {
-            DateTime dt = new(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-            return dt.AddSeconds(unixTimeStamp).ToLocalTime();
+            try
+            {
+                // FromUnixTimeSeconds 接受 long 秒，有效范围远宽于 uint 时间戳；
+                // 极端越界值（理论上的畸形输入）会抛 ArgumentOutOfRangeException，捕获后夹紧到最小值兜底，避免冒泡。
+                return DateTimeOffset.FromUnixTimeSeconds(unixTimeStamp).LocalDateTime;
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                return DateTimeOffset.UnixEpoch.LocalDateTime;
+            }
         }
     }
 }

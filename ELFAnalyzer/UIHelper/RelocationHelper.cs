@@ -41,8 +41,8 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                 string typeName = ELFRelocation.GetRelocationTypeName(type, Parser.Header.e_machine);
                 result.Add(new ELFRelocationInfo
                 {
-                    Offset = $"{offset:x16}".PadLeft(12),
-                    Info = $"{info:x16}".PadLeft(12),
+                    Offset = Parser.Is64Bit ? $"{offset:x16}" : $"{offset:x8}",
+                    Info = Parser.Is64Bit ? $"{info:x16}" : $"{info:x8}",
                     Type = typeName ?? "",
                     SymbolValue = symbolValue.PadLeft(16),
                     Symbol = symbolName,

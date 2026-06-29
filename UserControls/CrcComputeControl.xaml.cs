@@ -95,6 +95,12 @@ namespace PersonalTools.UserControls
         // 处理文件CRC计算：读盘 + hex 编码移后台线程，UI 线程仅回填，避免大文件卡界面
         private async void ProcessFileForCrcCalculation(string filePath)
         {
+            if (!FileDropHelper.IsWithinHexDisplayLimit(filePath))
+            {
+                MessageHelper.ShowWarning($"文件较大（超过 {FileDropHelper.HexDisplayWarnBytes / (1024 * 1024)} MB），转为十六进制显示会导致界面长时间无响应，已取消。");
+                return;
+            }
+
             try
             {
                 string hex = await Task.Run(() => ConvertUtils.ToHexString(FileDropHelper.ReadAllBytes(filePath))).ConfigureAwait(true);

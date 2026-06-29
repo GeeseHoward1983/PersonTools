@@ -125,6 +125,12 @@ namespace PersonalTools.UserControls
         // 处理文件Base64编码：读盘 + hex/Base64 编码移后台线程，UI 线程仅回填，避免大文件卡界面
         private async void ProcessFileForBase64Encoding(string filePath)
         {
+            if (!FileDropHelper.IsWithinHexDisplayLimit(filePath))
+            {
+                MessageHelper.ShowWarning($"文件较大（超过 {FileDropHelper.HexDisplayWarnBytes / (1024 * 1024)} MB），转为十六进制/Base64 显示会导致界面长时间无响应，已取消。");
+                return;
+            }
+
             try
             {
                 (string hex, string base64) = await Task.Run(() =>

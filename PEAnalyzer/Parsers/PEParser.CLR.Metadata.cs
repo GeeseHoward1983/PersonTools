@@ -100,7 +100,10 @@ namespace PersonalTools.PEAnalyzer.Parsers
             long stringHeapOffset = -1;
             uint stringHeapSize = 0;
 
-            for (int i = 0; i < streams; i++)
+            // 流数量上限：真实 .NET 程序集流数 ≤ ~6（#~/#-、#Strings、#US、#GUID、#Blob、#Pdb），
+            // 用宽松上限 16 夹紧不可信的 streams，防止畸形巨值导致过多迭代。
+            int streamCount = Math.Min((int)streams, 16);
+            for (int i = 0; i < streamCount; i++)
             {
                 if (fs.Position + 8 > fs.Length)
                 {
@@ -111,15 +114,22 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 uint size = reader.ReadUInt32();
                 string streamName = ReadStreamName(fs, reader);
 
+                // 同名流只取首次出现的项，跳过后续重复项而非静默覆盖
                 if (streamName is "#~" or "#-")
                 {
-                    tablesStreamOffset = metaDataOffset + offset;
-                    tablesStreamSize = size;
+                    if (tablesStreamOffset == -1)
+                    {
+                        tablesStreamOffset = metaDataOffset + offset;
+                        tablesStreamSize = size;
+                    }
                 }
                 else if (streamName == "#Strings")
                 {
-                    stringHeapOffset = metaDataOffset + offset;
-                    stringHeapSize = size;
+                    if (stringHeapOffset == -1)
+                    {
+                        stringHeapOffset = metaDataOffset + offset;
+                        stringHeapSize = size;
+                    }
                 }
             }
 

@@ -66,7 +66,8 @@ namespace PersonalTools.PEAnalyzer.Resources
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
-                peInfo.AdditionalInfo.FileVersion = $"版本信息结构解析错误: {ex.Message}";
+                PersonalTools.Utils.AppLogger.Log($"版本信息结构解析错误: {ex.Message}");
+                peInfo.AdditionalInfo.FileVersion = "版本信息不完整";
             }
         }
 
@@ -183,7 +184,8 @@ namespace PersonalTools.PEAnalyzer.Resources
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
-                peInfo.AdditionalInfo.FileVersion += $"; 版本子项解析错误: {ex.Message}";
+                // 仅记录日志，保留已成功解析的版本字段，不把异常细节追加到展示字段
+                PersonalTools.Utils.AppLogger.Log($"版本子项解析错误: {ex.Message}");
             }
         }
     }

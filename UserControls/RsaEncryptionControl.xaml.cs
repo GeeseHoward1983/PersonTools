@@ -186,7 +186,7 @@ namespace PersonalTools.UserControls
 
                 MessageHelper.ShowInfo("密钥对生成成功！");
             }
-            catch (Exception ex) when (ex is CryptographicException or ArgumentOutOfRangeException)
+            catch (Exception ex) when (ex is CryptographicException or ArgumentException)
             {
                 MessageHelper.ShowError($"生成密钥对时发生错误: {ex.Message}");
             }
@@ -258,6 +258,12 @@ namespace PersonalTools.UserControls
         // 处理文件RSA加密
         private void ProcessFileForRsaEncryption(string filePath)
         {
+            if (!FileDropHelper.IsWithinHexDisplayLimit(filePath))
+            {
+                MessageHelper.ShowWarning($"文件较大（超过 {FileDropHelper.HexDisplayWarnBytes / (1024 * 1024)} MB），转为十六进制显示会导致界面长时间无响应，已取消。");
+                return;
+            }
+
             try
             {
                 byte[] fileBytes = FileDropHelper.ReadAllBytes(filePath);

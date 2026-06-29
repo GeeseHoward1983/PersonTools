@@ -49,7 +49,8 @@ namespace PersonalTools.PEAnalyzer.Resources
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
-                peInfo.AdditionalInfo.CertificateInfo = $"解析错误: {ex.Message}";
+                PersonalTools.Utils.AppLogger.Log($"证书信息解析错误: {ex.Message}");
+                peInfo.AdditionalInfo.CertificateInfo = "证书信息不完整";
             }
         }
 

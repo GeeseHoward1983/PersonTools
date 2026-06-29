@@ -8,6 +8,12 @@ namespace PersonalTools.ELFAnalyzer.Core
     {
         public static ELFHeader ReadELFHeader(BinaryReader reader, ref bool is64Bit, ref bool isLittleEndian)
         {
+            // e_ident 占 16 字节，文件过短直接读取会抛 EndOfStreamException，信息不清晰，提前校验
+            if (reader.BaseStream.Length < 16)
+            {
+                throw new InvalidDataException("文件过短，非有效 ELF 文件");
+            }
+
             ELFHeader header = new()
             {
                 EI_MAG0 = reader.ReadByte(),

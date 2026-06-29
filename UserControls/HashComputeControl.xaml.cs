@@ -174,6 +174,8 @@ namespace PersonalTools.UserControls
         // 处理文件哈希计算：读盘 + 各哈希计算 + hex 编码移后台线程，UI 线程仅回填结果，避免大文件卡界面
         private async void ProcessFileForHashCalculation(string filePath)
         {
+            // 大文件仍计算各哈希(直接对原始字节哈希)，但不把完整内容转 hex 填入 SHA3 输入框，避免巨串卡死 UI
+            bool withinHexLimit = FileDropHelper.IsWithinHexDisplayLimit(filePath);
             try
             {
                 (string[] hashes, string sha3Hex) = await Task.Run(() =>
@@ -185,7 +187,8 @@ namespace PersonalTools.UserControls
                         results[i] = ConvertUtils.ToHexString(hashRows[i].HashFunc(fileBytes));
                     }
 
-                    return (results, ConvertUtils.ToHexString(fileBytes));
+                    string hex = withinHexLimit ? ConvertUtils.ToHexString(fileBytes) : string.Empty;
+                    return (results, hex);
                 }).ConfigureAwait(true);
 
                 for (int i = 0; i < hashRows.Count; i++)
@@ -193,11 +196,17 @@ namespace PersonalTools.UserControls
                     hashRows[i].Result = hashes[i];
                 }
 
-                // 将文件内容（hex）显示在 SHA3 输入框，并切换到 hex 模式
-                SHA3InputTextBox.Text = sha3Hex;
-                SHA3HexInputRadio.IsChecked = true;
-
-                FileDropHint.Text = $"已加载文件: {Path.GetFileName(filePath)}，请在下方选择SHA3算法类型并计算";
+                if (withinHexLimit)
+                {
+                    // 将文件内容（hex）显示在 SHA3 输入框，并切换到 hex 模式
+                    SHA3InputTextBox.Text = sha3Hex;
+                    SHA3HexInputRadio.IsChecked = true;
+                    FileDropHint.Text = $"已加载文件: {Path.GetFileName(filePath)}，请在下方选择SHA3算法类型并计算";
+                }
+                else
+                {
+                    FileDropHint.Text = $"已加载文件: {Path.GetFileName(filePath)}（文件较大，已计算上方各哈希；为避免界面卡顿，未把内容填入 SHA3 输入框）";
+                }
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {

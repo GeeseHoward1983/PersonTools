@@ -27,7 +27,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
                     peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryClrHeader].VirtualAddress != 0)
                 {
                     uint clrHeaderRVA = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryClrHeader].VirtualAddress;
-                    long clrHeaderOffset = PEParserUtils.RvaToOffset(clrHeaderRVA, peInfo.SectionHeaders);
+                    long clrHeaderOffset = PEParserUtils.RvaToOffset(clrHeaderRVA, peInfo.SectionHeaders, PEConstants.Cor20HeaderMinSize, fs.Length);
 
                     if (clrHeaderOffset != -1 && clrHeaderOffset < fs.Length)
                     {
@@ -65,6 +65,14 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
                 // 读取CLR运行时头
                 IMAGE_COR20_HEADER clrHeader = ReadCor20Header(reader);
+
+                // cb 合理性校验：COR20 头声明大小不应小于已知最小值，也不应超过文件长度。
+                // 畸形 cb 视为非法，安全降级（不解析 CLR），避免按错误结构继续推进。
+                if (clrHeader.cb < PEConstants.Cor20HeaderMinSize || clrHeader.cb > fs.Length)
+                {
+                    fs.Position = originalPosition;
+                    return;
+                }
 
                 // 保存CLR信息到PEInfo
                 peInfo.CLRInfo = BuildClrInfo(clrHeader, peInfo.NtHeaders.FileHeader.Machine);

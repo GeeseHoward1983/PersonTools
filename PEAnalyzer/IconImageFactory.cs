@@ -10,10 +10,23 @@ namespace PersonalTools.PEAnalyzer
     /// </summary>
     internal static class IconImageFactory
     {
+        // 单个图标编码字节上限：与 DIB 解码路径(PEResourceParser.Icon.Data)的 10MB 一致，防超大嵌入图/解压炸弹
+        private const int MaxIconBytes = 10 * 1024 * 1024;
+
+        // 解码像素上限：恶意图标可声明小尺寸却内嵌巨幅 PNG/BMP，EndInit 会按真实尺寸解码到非托管内存致 OOM
+        private const int MaxDecodePixels = 256;
+
         public static IconViewModel? TryCreate(IconInfo icon)
         {
             if (icon.Data == null || icon.Data.Length == 0 || icon.Width <= 0 || icon.Height <= 0)
             {
+                return null;
+            }
+
+            // 字节上限：超大图标数据直接拒绝，避免读入/解码巨幅图像
+            if (icon.Data.Length > MaxIconBytes)
+            {
+                PersonalTools.Utils.AppLogger.Log($"图标数据过大({icon.Data.Length} 字节)，已跳过解码");
                 return null;
             }
 
@@ -24,6 +37,8 @@ namespace PersonalTools.PEAnalyzer
                 bitmap.BeginInit();
                 bitmap.StreamSource = stream;
                 bitmap.CacheOption = BitmapCacheOption.OnLoad; // 确保加载完成后可释放流
+                // 解码像素上限：限制解码后位图宽度(高度按比例)，防止"声明小、实际巨幅"的图标解码爆内存
+                bitmap.DecodePixelWidth = Math.Min(icon.Width, MaxDecodePixels);
                 bitmap.EndInit();
                 bitmap.Freeze();
 

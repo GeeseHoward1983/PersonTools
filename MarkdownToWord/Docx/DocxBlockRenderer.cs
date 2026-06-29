@@ -166,7 +166,8 @@ namespace PersonalTools.MarkdownToWord.Docx
         private static void RenderList(ListBlock list, OpenXmlElement container, DocxRenderContext ctx, int indentLevel)
         {
             long start;
-            long number = list.IsOrdered switch
+            // 起始序号以源 Markdown 的 OrderedStart 为准（如 "3." 开头则从 3 起），解析失败回退 1
+            long fallback = list.IsOrdered switch
             {
                 true when long.TryParse(list.OrderedStart, out start) => start,
                 _ => 1,
@@ -178,11 +179,21 @@ namespace PersonalTools.MarkdownToWord.Docx
                     continue;
                 }
 
-                string marker = list.IsOrdered
-                    ? number.ToString(CultureInfo.InvariantCulture) + ". "
-                    : "• ";
+                // 尊重源数据的实际序号：优先用 Markdig 解析出的逐项 Order（覆盖非连续起始/跳号），
+                // Order 非正（未设置）时回退到按 fallback 递增。
+                string marker;
+                if (list.IsOrdered)
+                {
+                    long number = item.Order > 0 ? item.Order : fallback;
+                    marker = number.ToString(CultureInfo.InvariantCulture) + ". ";
+                    fallback = number + 1;
+                }
+                else
+                {
+                    marker = "• ";
+                }
+
                 RenderListItem(item, container, ctx, indentLevel + 1, marker);
-                number++;
             }
         }
 

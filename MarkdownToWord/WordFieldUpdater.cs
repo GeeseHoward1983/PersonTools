@@ -36,7 +36,15 @@ namespace PersonalTools.MarkdownToWord
             worker.SetApartmentState(ApartmentState.STA);
             worker.Start();
 
-            return worker.Join(WordTimeout) && result;
+            if (!worker.Join(WordTimeout))
+            {
+                // 超时通常因 Word 弹出模态对话框卡死：后台 STA 线程仍阻塞在 COM 调用，
+                // 其 finally/CleanUp(含 Quit) 可能无法触发，导致残留隐藏的 WINWORD.EXE 进程
+                PersonalTools.Utils.AppLogger.Log("Word 域更新超时(可能因 Word 弹出模态对话框)；后台 COM 线程仍在运行，可能残留 WINWORD.EXE 进程，建议在任务管理器中手动结束。");
+                return false;
+            }
+
+            return result;
         }
 
         private static bool RunUpdate(Type wordType, string docxPath)

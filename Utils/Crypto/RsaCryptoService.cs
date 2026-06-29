@@ -23,7 +23,8 @@ namespace PersonalTools.Utils.Crypto
             }
             catch (Exception ex) when (ex is CryptographicException or ArgumentException or FormatException)
             {
-                throw new CryptographicException($"导入公钥或加密失败: {ex.Message}", ex);
+                PersonalTools.Utils.AppLogger.Log($"RSA 加密失败: {ex}");
+                throw new CryptographicException("导入公钥或加密失败，请检查公钥格式与输入数据。", ex);
             }
         }
 
@@ -42,7 +43,8 @@ namespace PersonalTools.Utils.Crypto
             }
             catch (Exception ex) when (ex is CryptographicException or ArgumentException or FormatException)
             {
-                throw new CryptographicException($"导入私钥或解密失败: {ex.Message}", ex);
+                PersonalTools.Utils.AppLogger.Log($"RSA 解密失败: {ex}");
+                throw new CryptographicException("导入私钥或解密失败，请检查私钥格式与密文。", ex);
             }
         }
 
@@ -60,7 +62,8 @@ namespace PersonalTools.Utils.Crypto
             }
             catch (Exception ex) when (ex is CryptographicException or ArgumentException or FormatException)
             {
-                throw new CryptographicException($"导入私钥或签名失败: {ex.Message}", ex);
+                PersonalTools.Utils.AppLogger.Log($"RSA 签名失败: {ex}");
+                throw new CryptographicException("导入私钥或签名失败，请检查私钥格式与输入数据。", ex);
             }
         }
 
@@ -86,6 +89,13 @@ namespace PersonalTools.Utils.Crypto
         /// <summary>生成指定长度的 RSA 密钥对，返回 (公钥PEM, 私钥PEM)。</summary>
         public static (string PublicKey, string PrivateKey) GenerateKeyPair(int keySize)
         {
+            // 服务层参数兜底：拒绝明显非法的密钥长度并给出清晰错误(平台对过小/非对齐值仅抛较隐晦异常)。
+            // 注：不强制 2048 下限，保留工具按需生成较短密钥用于测试/教学的能力。
+            if (keySize < 512 || keySize % 8 != 0)
+            {
+                throw new ArgumentException($"RSA 密钥长度非法: {keySize}，须为 ≥512 且 8 的倍数", nameof(keySize));
+            }
+
             using RSA rsa = RSA.Create(keySize);
             return (rsa.ExportRSAPublicKeyPem(), rsa.ExportRSAPrivateKeyPem());
         }

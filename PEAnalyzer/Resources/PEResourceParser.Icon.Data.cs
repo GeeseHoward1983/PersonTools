@@ -80,9 +80,12 @@ namespace PersonalTools.PEAnalyzer.Resources
             }
 
             // Count 字段在偏移 4（ICONDIRHEADER.Count）；为 0 视为无有效条目。
+            // 对 count 施加 256 上限（与组图标 ParseIconDirectory 的 Count<=256 一致），
+            // 防止畸形文件用最高 65535 的 count 膨胀出大量条目。
             ushort count = BitConverter.ToUInt16(iconData, 4);
+            int maxCount = Math.Min((int)count, 256);
             bool anyAdded = false;
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < maxCount; i++)
             {
                 int entryOffset = IconDirHeaderSize + (i * IconDirEntrySize);
                 // 目录项越界即停止（畸形/截断 ICO 不抛异常，已读到的条目保留）。

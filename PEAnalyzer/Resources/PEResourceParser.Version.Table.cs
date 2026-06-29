@@ -84,7 +84,8 @@ namespace PersonalTools.PEAnalyzer.Resources
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
-                peInfo.AdditionalInfo.FileVersion += $"; StringTable解析错误: {ex.Message}";
+                // 仅记录日志，保留已成功解析的字符串字段，不把异常细节追加到展示字段
+                PersonalTools.Utils.AppLogger.Log($"StringTable解析错误: {ex.Message}");
             }
         }
 
@@ -135,7 +136,7 @@ namespace PersonalTools.PEAnalyzer.Resources
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
-                peInfo.AdditionalInfo.FileVersion += $"; StringPair解析错误: {ex.Message}";
+                PersonalTools.Utils.AppLogger.Log($"StringPair解析错误: {ex.Message}");
                 return false;
             }
         }

@@ -141,12 +141,14 @@ namespace PersonalTools.PEAnalyzer.Resources
             return ResourceDirectoryReader.ReadAtOffset(fs, nameOffset, 2, string.Empty, () =>
             {
                 ushort nameLength = reader.ReadUInt16();
-                if (nameLength == 0 || fs.Position + ((long)nameLength * 2) > fs.Length)
+                // 名称长度上限：nameLength 最高 65535，限制为 1024 个字符，避免一次性分配过大缓冲。
+                int safeLen = Math.Min((int)nameLength, 1024);
+                if (safeLen == 0 || fs.Position + ((long)safeLen * 2) > fs.Length)
                 {
                     return string.Empty;
                 }
 
-                byte[] nameBytes = reader.ReadBytes(nameLength * 2);
+                byte[] nameBytes = reader.ReadBytes(safeLen * 2);
                 return Encoding.Unicode.GetString(nameBytes);
             });
         }

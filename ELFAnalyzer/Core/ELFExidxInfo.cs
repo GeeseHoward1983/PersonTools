@@ -240,7 +240,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 {
                     continue;
                 }
-                if (vaddr >= section.sh_addr && vaddr < section.sh_addr + section.sh_size)
+                if (vaddr >= section.sh_addr && vaddr - section.sh_addr < section.sh_size)
                 {
                     return (long)(section.sh_offset + (vaddr - section.sh_addr));
                 }

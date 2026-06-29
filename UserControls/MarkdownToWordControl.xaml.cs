@@ -46,7 +46,7 @@ namespace PersonalTools.UserControls
             previewFilePath = Path.Combine(previewDir, "md-preview-" + Guid.NewGuid().ToString("N") + ".html");
 
             previewTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
-            previewTimer.Tick += PreviewTimer_Tick;
+            // Tick 的订阅/退订改到 OnLoaded/OnUnloaded 做平衡生命周期管理，避免计时器长期持有控件引用
 
             Editor.Text = DefaultSample;
         }
@@ -55,6 +55,10 @@ namespace PersonalTools.UserControls
 
         private async void OnLoaded(object sender, RoutedEventArgs e)
         {
+            // 平衡订阅：先退订再订阅，避免 Loaded 多次触发导致 Tick 重复挂接
+            previewTimer.Tick -= PreviewTimer_Tick;
+            previewTimer.Tick += PreviewTimer_Tick;
+
             if (previewReady)
             {
                 // 切回 Tab 会再次触发 Loaded：WebView2 已初始化，仅重建导航让预览恢复(而非保持空白/陈旧)
@@ -65,6 +69,11 @@ namespace PersonalTools.UserControls
             try
             {
                 await Preview.EnsureCoreWebView2Async().ConfigureAwait(true);
+                if (!IsLoaded)
+                {
+                    return; // await 期间控件已卸载：放弃后续 CoreWebView2 访问，避免空引用
+                }
+
                 // 安全：预览仅应展示我们生成的 file:// 临时 HTML。拦截一切非 file 协议的顶层导航
                 // （尤其 javascript:），防止不受信 Markdown 的链接在 file:// 源、无脚本沙箱的 WebView2 中点击执行。
                 Preview.CoreWebView2.NavigationStarting += OnPreviewNavigationStarting;
@@ -93,6 +102,7 @@ namespace PersonalTools.UserControls
             // 避免每次切 Tab 无谓写盘）。临时预览文件保留，切回时由 OnLoaded 的 RefreshPreview 重写复用，
             // 最终清理交进程退出时统一处理。
             previewTimer.Stop();
+            previewTimer.Tick -= PreviewTimer_Tick; // 退订，释放计时器对控件的引用
         }
 
         private void Editor_TextChanged(object sender, TextChangedEventArgs e)
@@ -152,7 +162,7 @@ namespace PersonalTools.UserControls
 
             try
             {
-                File.WriteAllText(currentMdPath, Editor.Text);
+                File.WriteAllText(currentMdPath, Editor.Text, Encoding.UTF8);
                 MessageHelper.ShowInfo($"已保存：{currentMdPath}");
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -177,7 +187,7 @@ namespace PersonalTools.UserControls
 
             try
             {
-                File.WriteAllText(dialog.FileName, Editor.Text);
+                File.WriteAllText(dialog.FileName, Editor.Text, Encoding.UTF8);
                 string fullPath = Path.GetFullPath(dialog.FileName);
                 currentMdPath = fullPath;
                 baseDir = Path.GetDirectoryName(fullPath);

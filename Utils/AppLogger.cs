@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.IO;
+using System.Threading;
 
 namespace PersonalTools.Utils
 {
@@ -13,7 +14,11 @@ namespace PersonalTools.Utils
         private static readonly object Gate = new();
         private static readonly Lazy<string?> LogFilePath = new(ResolveLogFilePath);
 
-        // 单个日志文件大小上限：超过则截断重建，避免长期运行无限增长
+        // 跨进程串行化日志写入：同一工具多开时，避免「判大小→滚动→追加」的 TOCTOU。
+        // 构造失败（命名/权限）时为 null，退化为仅进程内 lock，绝不影响主流程。
+        private static readonly Lazy<Mutex?> CrossProcessLock = new(CreateCrossProcessMutex);
+
+        // 单个日志文件大小上限：超过则滚动保留一代(.1)，避免长期运行无限增长
         private const long MaxLogBytes = 5L * 1024 * 1024;
 
         public static void Log(string message)
@@ -27,15 +32,44 @@ namespace PersonalTools.Utils
 #pragma warning disable CA1031 // 日志 sink 自身绝不得抛出影响主流程
             try
             {
+                // 清洗 CR/LF 及控制字符：message 常含解析恶意文件得到的异常文本，防止伪造/注入额外日志行
+                string sanitized = SanitizeForLog(message);
+                string line = string.Create(CultureInfo.InvariantCulture, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {sanitized}{Environment.NewLine}");
+
                 lock (Gate)
                 {
-                    if (File.Exists(path) && new FileInfo(path).Length > MaxLogBytes)
+                    Mutex? mtx = CrossProcessLock.Value;
+                    bool acquired = false;
+                    try
                     {
-                        File.Delete(path);
-                    }
+                        if (mtx != null)
+                        {
+                            try
+                            {
+                                acquired = mtx.WaitOne(TimeSpan.FromSeconds(2));
+                            }
+                            catch (AbandonedMutexException)
+                            {
+                                acquired = true; // 持锁进程崩溃，本进程已获所有权，可继续
+                            }
+                        }
 
-                    string line = string.Create(CultureInfo.InvariantCulture, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {message}{Environment.NewLine}");
-                    File.AppendAllText(path, line);
+                        if (File.Exists(path) && new FileInfo(path).Length > MaxLogBytes)
+                        {
+                            string rolled = path + ".1";
+                            File.Delete(rolled);     // 删除上一代(不存在则无操作)
+                            File.Move(path, rolled); // 当前转为 .1，保留一代历史而非整删
+                        }
+
+                        File.AppendAllText(path, line);
+                    }
+                    finally
+                    {
+                        if (acquired && mtx != null)
+                        {
+                            mtx.ReleaseMutex();
+                        }
+                    }
                 }
             }
             catch (Exception)
@@ -61,6 +95,38 @@ namespace PersonalTools.Utils
                 return null; // 无法建日志目录时静默禁用日志
             }
 #pragma warning restore CA1031
+        }
+
+        private static Mutex? CreateCrossProcessMutex()
+        {
+#pragma warning disable CA1031 // 构造失败不得影响主流程，退化为仅进程内锁
+            try
+            {
+                return new Mutex(false, @"Global\PersonalTools_AppLogger_app_log");
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+#pragma warning restore CA1031
+        }
+
+        // 将 message 中的 CR/LF 及其它 C0 控制字符替换为空格，防止日志行注入
+        private static string SanitizeForLog(string message)
+        {
+            if (string.IsNullOrEmpty(message))
+            {
+                return string.Empty;
+            }
+
+            return string.Create(message.Length, message, static (span, src) =>
+            {
+                for (int i = 0; i < src.Length; i++)
+                {
+                    char c = src[i];
+                    span[i] = c < 0x20 ? ' ' : c; // 含 \r \n \t 等控制符统一为空格
+                }
+            });
         }
     }
 }
