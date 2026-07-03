@@ -1,8 +1,7 @@
-using System.Runtime.InteropServices;
-
 namespace PersonalTools.ELFAnalyzer.Models
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    // 注意：本结构不用于 Marshal，字段全部由 ELFHeaderInfo.ReadELFHeader 经 BinaryReader 逐字段填充。
+    // 故不加 [StructLayout(Pack=1)]/[MarshalAs]（此前的这些属性是死属性且具误导性）。
     internal struct ELFHeader
     {
         public byte EI_MAG0;      // 0x7F
@@ -14,8 +13,7 @@ namespace PersonalTools.ELFAnalyzer.Models
         public byte EI_VERSION;   // ELF version
         public byte EI_OSABI;     // OS-specific ELF extensions
         public byte EI_ABIVERSION; // ABI version
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 7)]
-        public byte[] EI_PAD;     // Padding
+        public byte[] EI_PAD;     // Padding (7 字节，由 ReadBytes(7) 填充)
 
         public ushort e_type;      // Object file type
         public ushort e_machine;   // Architecture

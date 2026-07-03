@@ -116,7 +116,10 @@ namespace PersonalTools.PEAnalyzer.Parsers
             optionalHeader.LoaderFlags = reader.ReadUInt32();
             optionalHeader.NumberOfRvaAndSizes = reader.ReadUInt32();
 
-            optionalHeader.DataDirectory = ReadDataDirectories(reader, optionalHeader.NumberOfRvaAndSizes);
+            // 数据目录是可选头的一部分，必须落在 [optionalHeaderStart, optionalHeaderStart+SizeOfOptionalHeader) 内。
+            // 传入该边界，避免畸形 PE（SizeOfOptionalHeader 声明为无目录的基准值却把 NumberOfRvaAndSizes 报为 16）
+            // 把紧随其后的节表字节当作目录项误读。
+            optionalHeader.DataDirectory = ReadDataDirectories(reader, optionalHeader.NumberOfRvaAndSizes, optionalHeaderStart + sizeOfOptionalHeader);
 
             // 直接定位到可选头之后（即节表起始处），不再依赖对 96/112 基准与目录数量的算术推断，
             // 对异常的 SizeOfOptionalHeader 更健壮（调用方已校验该范围在文件内）。
@@ -194,9 +197,17 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// <summary>
         /// 读取数据目录数组（每项 8 字节，最多 16 项；项布局与位数无关）。
         /// </summary>
-        private static IMAGE_DATA_DIRECTORY[] ReadDataDirectories(BinaryReader reader, uint numberOfRvaAndSizes)
+        private static IMAGE_DATA_DIRECTORY[] ReadDataDirectories(BinaryReader reader, uint numberOfRvaAndSizes, long optionalHeaderEnd)
         {
             int dataDirCount = (int)Math.Min(numberOfRvaAndSizes, PEConstants.MaxDataDirectories);
+            // 目录项必须位于可选头范围内：按 SizeOfOptionalHeader 声明的可选头结尾再夹一次，
+            // 阻止畸形文件把节表字节当作目录项（每项 8 字节）。
+            long maxByOptionalHeader = (optionalHeaderEnd - reader.BaseStream.Position) / 8;
+            if (maxByOptionalHeader < dataDirCount)
+            {
+                dataDirCount = (int)Math.Max(0, maxByOptionalHeader);
+            }
+
             // 限制为文件实际可读的数量，避免被截断的文件触发未捕获的 EndOfStreamException
             long available = (reader.BaseStream.Length - reader.BaseStream.Position) / 8;
             if (available < dataDirCount)

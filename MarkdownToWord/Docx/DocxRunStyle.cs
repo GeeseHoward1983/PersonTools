@@ -14,6 +14,10 @@ namespace PersonalTools.MarkdownToWord.Docx
         public bool Strike { get; init; }
         public bool Code { get; init; }
         public bool Hyperlink { get; init; }
+        public bool Subscript { get; init; }   // EmphasisExtras: ~下标~
+        public bool Superscript { get; init; } // EmphasisExtras: ^上标^
+        public bool Inserted { get; init; }    // EmphasisExtras: ++插入++（以下划线表示）
+        public bool Highlight { get; init; }   // EmphasisExtras: ==高亮==
 
         public static DocxRunStyle For(ContentStyleRow row) => new() { Base = row };
 
@@ -22,5 +26,9 @@ namespace PersonalTools.MarkdownToWord.Docx
         public DocxRunStyle AsStrike() => this with { Strike = true };
         public DocxRunStyle AsCode() => this with { Code = true };
         public DocxRunStyle AsHyperlink() => this with { Hyperlink = true };
+        public DocxRunStyle AsSubscript() => this with { Subscript = true };
+        public DocxRunStyle AsSuperscript() => this with { Superscript = true };
+        public DocxRunStyle AsInserted() => this with { Inserted = true };
+        public DocxRunStyle AsHighlight() => this with { Highlight = true };
     }
 }

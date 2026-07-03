@@ -232,8 +232,8 @@ namespace PersonalTools.UserControls
             }
         }
 
-        // 处理文件AES加密
-        private void ProcessFileForAesEncryption(string filePath)
+        // 处理文件AES加密：读盘 + hex 编码移后台线程，UI 线程仅回填，避免近 50MB 文件生成 ~100MB 十六进制串卡界面
+        private async void ProcessFileForAesEncryption(string filePath)
         {
             if (!FileDropHelper.IsWithinHexDisplayLimit(filePath))
             {
@@ -243,10 +243,10 @@ namespace PersonalTools.UserControls
 
             try
             {
-                byte[] fileBytes = FileDropHelper.ReadAllBytes(filePath);
+                string hex = await Task.Run(() => ConvertUtils.ToHexString(FileDropHelper.ReadAllBytes(filePath))).ConfigureAwait(true);
 
                 // 将文件内容以 hex 显示在输入框，并切换到 Hex 模式
-                AesInput.Text = ConvertUtils.ToHexString(fileBytes);
+                AesInput.Text = hex;
                 AesInputHexRadio.IsChecked = true;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)

@@ -320,8 +320,10 @@ namespace PersonalTools.ELFAnalyzer.Core
         private static void AppendAEABICompatibilityAttr(byte[] data, ref int offset, int endOffset, StringBuilder sb)
         {
             int flag = ReadAEABIUleb128(data, ref offset, endOffset);
-            string vendor = ELFParserUtils.ExtractStringFromBytes(data, offset);
-            offset += ELFParserUtils.MeasureCStringByteLength(data, offset, endOffset) + 1;
+            // 以 endOffset 为界读取 vendor C 字符串，避免无界读取跨入相邻子节导致显示"串味"
+            int vendorLen = ELFParserUtils.MeasureCStringByteLength(data, offset, endOffset);
+            string vendor = ELFParserUtils.ExtractStringFromBytes(data, offset, vendorLen);
+            offset += vendorLen + 1;
             string line = flag == 0
                 ? "  Tag_compatibility: No"
                 : string.Create(CultureInfo.InvariantCulture, $"  Tag_compatibility: flag = {flag}, vendor = {vendor}");
@@ -347,8 +349,10 @@ namespace PersonalTools.ELFAnalyzer.Core
             }
             else
             {
-                string s = ELFParserUtils.ExtractStringFromBytes(data, offset);
-                offset += ELFParserUtils.MeasureCStringByteLength(data, offset, endOffset) + 1;
+                // 以 endOffset 为界读取，避免跨子节
+                int sLen = ELFParserUtils.MeasureCStringByteLength(data, offset, endOffset);
+                string s = ELFParserUtils.ExtractStringFromBytes(data, offset, sLen);
+                offset += sLen + 1;
                 text = s;
             }
             sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_also_compatible_with: {text}");
@@ -425,9 +429,11 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             if ((tag & 1) != 0)
             {
-                string value = ELFParserUtils.ExtractStringFromBytes(data, offset);
+                // 以 endOffset 为界读取字符串值，避免无界读取跨入相邻子节
+                int valueLen = ELFParserUtils.MeasureCStringByteLength(data, offset, endOffset);
+                string value = ELFParserUtils.ExtractStringFromBytes(data, offset, valueLen);
                 sb.AppendLine(CultureInfo.InvariantCulture, $"  {name}: \"{value}\"");
-                return ELFParserUtils.MeasureCStringByteLength(data, offset, endOffset) + 1;
+                return valueLen + 1;
             }
 
             int bytesRead = ReadULEB128(data, offset, endOffset, out int val);
@@ -440,8 +446,10 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             int start = offset;
             offset += ReadULEB128(data, offset, endOffset, out int flag);
-            string vendor = ELFParserUtils.ExtractStringFromBytes(data, offset);
-            offset += ELFParserUtils.MeasureCStringByteLength(data, offset, endOffset) + 1;
+            // 以 endOffset 为界读取 vendor C 字符串，避免跨子节
+            int vendorLen = ELFParserUtils.MeasureCStringByteLength(data, offset, endOffset);
+            string vendor = ELFParserUtils.ExtractStringFromBytes(data, offset, vendorLen);
+            offset += vendorLen + 1;
             sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_compatibility: flag = {flag}, vendor = {vendor}");
             return offset - start;
         }

@@ -52,17 +52,18 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             Models.ELFSectionHeader section = Parser.SectionHeaders[sectionIndex];
             bool isLittleEndian = Parser.Header.IsLittleEndian();
 
+            // GOT 槽宽在架构上恒为指针大小(64位=8/32位=4)，不采信不可信的 sh_entsize：
+            // 若采信，畸形节可把 sh_entsize 置 1 使 count≈文件长度 → 构造海量对象 OOM；
+            // 或在 64 位下置 4 使步长/读取宽度错误、产出错误的 GOT dump。
             int entrySize = Parser.Is64Bit ? 8 : 4;
-            if (section.sh_entsize is > 0 and <= 8)
-            {
-                entrySize = (int)section.sh_entsize;
-            }
 
             // 安全：槽位数取自不可信 sh_size，夹紧到文件实际可承载的条目数，避免超大节构造海量对象(OOM)
             long maxReadable = section.sh_offset >= (ulong)Parser.FileData.Length
                 ? 0
                 : (Parser.FileData.Length - (long)section.sh_offset) / entrySize;
-            int count = (int)Math.Min(section.sh_size / (ulong)entrySize, (ulong)Math.Max(maxReadable, 0));
+            // 再设一个合理硬上界：真实 GOT 至多数十万项，2,000,000 远超任何正常文件，纯防御畸形巨型节
+            const int MaxGotEntries = 2_000_000;
+            int count = (int)Math.Min(Math.Min(section.sh_size / (ulong)entrySize, (ulong)Math.Max(maxReadable, 0)), MaxGotEntries);
             for (int i = 0; i < count; i++)
             {
                 ulong slotAddr = section.sh_addr + (ulong)((long)i * entrySize);

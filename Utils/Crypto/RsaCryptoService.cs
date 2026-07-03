@@ -71,19 +71,24 @@ namespace PersonalTools.Utils.Crypto
         {
             using RSA rsa = RSA.Create();
 
+            byte[] inputBytes;
+            byte[] signatureBytes;
             try
             {
-                byte[] inputBytes = ConvertUtils.InputBytes(input, !isString);
-                byte[] signatureBytes = ConvertUtils.HexStringToByteArray(signature);
+                inputBytes = ConvertUtils.InputBytes(input, !isString);
+                signatureBytes = ConvertUtils.HexStringToByteArray(signature);
                 rsa.ImportFromPem(publicKey);
-
-                return rsa.VerifyData(inputBytes, signatureBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
             }
             catch (Exception ex) when (ex is CryptographicException or ArgumentException or FormatException)
             {
-                // FormatException：input/signature 为非法十六进制时 HexStringToByteArray 会抛，按验签失败处理而非崩溃
-                return false;
+                // 公钥 PEM 非法 / input 或签名为非法十六进制：属"输入格式错误"，与"签名不匹配"是两回事。
+                // 记录日志（与 Sign/Encrypt/Decrypt 一致，不再无痕）并抛出清晰错误，避免被静默归为验签失败误导排查。
+                PersonalTools.Utils.AppLogger.Log($"RSA 验签输入无效: {ex}");
+                throw new CryptographicException("导入公钥或解析输入/签名失败，请检查公钥格式与输入数据。", ex);
             }
+
+            // 仅此处的 false 才是真正的"签名与数据不匹配"（VerifyData 对格式合法但不匹配的签名返回 false，不抛异常）
+            return rsa.VerifyData(inputBytes, signatureBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
         }
 
         /// <summary>生成指定长度的 RSA 密钥对，返回 (公钥PEM, 私钥PEM)。</summary>

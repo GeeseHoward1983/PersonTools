@@ -304,7 +304,10 @@ namespace PersonalTools.MarkdownToWord.Docx
             try
             {
                 using MemoryStream ms = new(bytes);
-                BitmapDecoder decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                // 仅读图像头的维度/DPI，不做整图解码：用 DelayCreation + BitmapCacheOption.None 延迟像素解码，
+                // 使"像素总数超上限"的解压炸弹在读到声明维度后即被上层拒绝，而不会先把整图(数百 MB BGRA)解码进内存。
+                // 本方法只取维度与 DPI；图片字节另经 part.FeedData 原样交给 Word，不依赖解码后的位图。
+                BitmapDecoder decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.DelayCreation | BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.None);
                 if (decoder.Frames.Count == 0)
                 {
                     return false;
@@ -377,7 +380,8 @@ namespace PersonalTools.MarkdownToWord.Docx
                         new A.GraphicData(
                             new PIC.Picture(
                                 new PIC.NonVisualPictureProperties(
-                                    new PIC.NonVisualDrawingProperties { Id = 0U, Name = name },
+                                    // 每张图片的 pic:cNvPr Id 须唯一（复用自增 drawingId），否则多图时重复 Id=0 会让部分 Word 版本弹"文档需修复"
+                                    new PIC.NonVisualDrawingProperties { Id = drawingId, Name = name },
                                     new PIC.NonVisualPictureDrawingProperties()),
                                 new PIC.BlipFill(
                                     new A.Blip { Embed = relationshipId },

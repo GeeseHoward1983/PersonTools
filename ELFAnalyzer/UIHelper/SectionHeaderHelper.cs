@@ -19,8 +19,9 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                         Index = i,
                         Name = ELFSymbolNameResolver.GetSectionName(Parser, i),
                         Type = Core.ELFSectionHeaderReader.GetSectionType(sh.sh_type),
-                        Address = $"0x{sh.sh_addr:x10}",
-                        Offset = $"0x{sh.sh_offset:x8}",
+                        // 十六进制宽度按位宽区分(64位=16位宽/32位=8位宽)，与 SymbolTableHelper 及 readelf 一致
+                        Address = Parser.Is64Bit ? $"0x{sh.sh_addr:x16}" : $"0x{sh.sh_addr:x8}",
+                        Offset = Parser.Is64Bit ? $"0x{sh.sh_offset:x16}" : $"0x{sh.sh_offset:x8}",
                         Size = $"{sh.sh_size}",
                         EntSize = $"{sh.sh_entsize}",
                         Flags = Core.ELFSectionHeaderReader.GetSectionFlags(sh.sh_flags),

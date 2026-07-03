@@ -25,6 +25,8 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
 
             byte[] data = Parser.GetSectionData(sectionIndex);
             List<ELFSymbol> symbols = ReadRelocationSymbols(Parser, (int)section.sh_link);
+            // 符号名要按 sh_link 指向的符号表类型解析(.dynsym→.dynstr / .symtab→.strtab)，不硬编码 SHT_DYNSYM
+            SectionType symTabType = ResolveSymbolTableType(Parser, (int)section.sh_link);
 
             // 按真实 sh_type 判定 RELA/REL（条目大小不同），而非依赖节名是否含 "rela"
             bool isRela = section.sh_type == (uint)SectionType.SHT_RELA;
@@ -36,7 +38,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             {
                 ReadRelocationEntry(Parser, data, j, isRela, out ulong offset, out ulong info, out long addend);
                 SplitRelocInfo(Parser.Is64Bit, info, out uint sym, out uint type);
-                (string symbolName, string symbolValue) = ResolveRelocSymbol(Parser, symbols, sym);
+                (string symbolName, string symbolValue) = ResolveRelocSymbol(Parser, symbols, sym, symTabType);
 
                 string typeName = ELFRelocation.GetRelocationTypeName(type, Parser.Header.e_machine);
                 result.Add(new ELFRelocationInfo
@@ -166,7 +168,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
         }
 
         // 解析符号名与符号值（越界返回默认零值）
-        private static (string name, string value) ResolveRelocSymbol(ELFParser Parser, List<ELFSymbol> symbols, uint sym)
+        private static (string name, string value) ResolveRelocSymbol(ELFParser Parser, List<ELFSymbol> symbols, uint sym, SectionType symTabType)
         {
             if (sym >= symbols.Count)
             {
@@ -174,15 +176,27 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                 return (string.Empty, Parser.Is64Bit ? "0000000000000000" : "00000000");
             }
             ELFSymbol symbol = symbols[(int)sym];
-            string name = ResolveRelocSymbolName(Parser, symbol, (int)sym);
+            string name = ResolveRelocSymbolName(Parser, symbol, (int)sym, symTabType);
             string value = Parser.Is64Bit ? $"{symbol.StValue:x16}" : $"{symbol.StValue:x8}";
             return (name, value);
         }
 
-        // 解析重定位符号名：SECTION 类符号 st_name 通常为 0，回退显示其所属节名（与符号表一致）
-        private static string ResolveRelocSymbolName(ELFParser Parser, ELFSymbol symbol, int index)
+        // 由 sh_link 目标节的 sh_type 推导符号表类型：确为 SHT_SYMTAB 时用 .symtab/.strtab 解析名字，
+        // 否则回退 SHT_DYNSYM(.dynsym/.dynstr)。避免硬编码 SHT_DYNSYM 对链接 .symtab 的重定位节取错字符串表偏移。
+        private static SectionType ResolveSymbolTableType(ELFParser Parser, int symTabIndex)
         {
-            string name = ELFSymbolNameResolver.GetSymbolName(Parser, symbol, SectionType.SHT_DYNSYM, index);
+            if (Parser.SectionHeaders != null && symTabIndex >= 0 && symTabIndex < Parser.SectionHeaders.Count
+                && Parser.SectionHeaders[symTabIndex].sh_type == (uint)SectionType.SHT_SYMTAB)
+            {
+                return SectionType.SHT_SYMTAB;
+            }
+            return SectionType.SHT_DYNSYM;
+        }
+
+        // 解析重定位符号名：SECTION 类符号 st_name 通常为 0，回退显示其所属节名（与符号表一致）
+        private static string ResolveRelocSymbolName(ELFParser Parser, ELFSymbol symbol, int index, SectionType symTabType)
+        {
+            string name = ELFSymbolNameResolver.GetSymbolName(Parser, symbol, symTabType, index);
             if (string.IsNullOrEmpty(name)
                 && (byte)(symbol.StInfo & ELFConstants.ST_TYPE_MASK) == (byte)SymbolType.STT_SECTION
                 && symbol.StShndx > 0 && symbol.StShndx < ELFConstants.SHN_LORESERVE)

@@ -42,7 +42,6 @@ namespace PersonalTools.ELFAnalyzer.Core
             sb.AppendLine("  Owner             Data size            Description");
 
             bool isLittleEndian = parser.Header.IsLittleEndian();
-            bool is64Bit = parser.Is64Bit;
             ulong endOffset = Math.Min(offset + size, (ulong)parser.FileData.Length); // 夹紧到文件实际长度
 
             while (offset + 12 <= endOffset) // 至少能读完 namesz/descsz/type 三个字段
@@ -55,7 +54,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 ulong nameOffset = offset + 12;
                 string owner = ELFParserUtils.ExtractStringFromBytes(parser.FileData, (int)nameOffset, (int)namesz);
 
-                ulong descOffset = AlignNoteOffset(nameOffset + namesz, is64Bit);
+                ulong descOffset = AlignNoteOffset(nameOffset + namesz);
                 // descOffset/descsz 超出文件范围时跳过描述解析（owner 仍有效）：namesz 为 uint 可使 descOffset 超 int.MaxValue，
                 // 既避免 (int) 截断错位，也堵住 GetABIVersion/GetBuildID 等对 FileData 的越界读取
                 string noteInfo = descOffset + descsz <= (ulong)parser.FileData.Length
@@ -67,7 +66,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 }
 
                 // 推进到下一个 note（按位宽对齐）；不前进或回绕则停止，避免死循环
-                ulong next = AlignNoteOffset(descOffset + descsz, is64Bit);
+                ulong next = AlignNoteOffset(descOffset + descsz);
                 if (next <= offset)
                 {
                     break;
@@ -79,10 +78,12 @@ namespace PersonalTools.ELFAnalyzer.Core
             return sb.ToString();
         }
 
-        // note 偏移按位宽对齐（64位→8字节边界，32位→4字节边界）；已对齐时返回原值
-        private static ulong AlignNoteOffset(ulong value, bool is64Bit)
+        // ELF note 的 name/desc 一律按 4 字节对齐：Linux/glibc/binutils 及 readelf 对 ELF32 与 ELF64
+        // 均按 4 字节(不随 ELFCLASS 变为 8)。此前 64 位按 8 字节对齐会使多 note 段(core dump、
+        // build-id 后接其它 note)从第二个 note 起错位。已对齐时返回原值。
+        private static ulong AlignNoteOffset(ulong value)
         {
-            return is64Bit ? (value + 7) & ~7UL : (value + 3) & ~3UL;
+            return (value + 3) & ~3UL;
         }
 
         private static string ParseNoteSection(ELFParser parser, Models.ELFSectionHeader section)
@@ -142,14 +143,23 @@ namespace PersonalTools.ELFAnalyzer.Core
                 return string.Empty;
             }
 
-            StringBuilder sb = new(descSize * 3);
-            for (int i = 0; i < descSize; i++)
+            // descSize 受文件大小约束但仍可能很大：对 hex-dump 设显示上限。既防 descSize*3 的 int 溢出
+            // （descSize>~715M 时溢出为负，StringBuilder(负数) 抛未捕获 ArgumentOutOfRangeException），
+            // 也避免为畸形巨型 note 分配约 3×descSize 的字符串。
+            const int MaxDisplayBytes = 64 * 1024;
+            int displayCount = Math.Min(descSize, MaxDisplayBytes);
+            StringBuilder sb = new((displayCount * 3) + 4);
+            for (int i = 0; i < displayCount; i++)
             {
                 if (i > 0)
                 {
                     sb.Append(' ');
                 }
                 sb.Append(data[descOffset + i].ToString("x2", CultureInfo.InvariantCulture));
+            }
+            if (displayCount < descSize)
+            {
+                sb.Append(" …");
             }
             return sb.ToString();
         }

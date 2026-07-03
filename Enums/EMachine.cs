@@ -18,7 +18,7 @@ namespace PersonalTools.Enums
         EM_960 = 19,      // Intel 80960
         EM_PPC = 20,      // PowerPC
         EM_PPC64 = 21,    // 64-bit PowerPC
-        EM_S390 = 22,     // IBM System/370 Processor
+        EM_S390 = 22,     // IBM S/390
         EM_V800 = 36,     // NEC V800
         EM_FR20 = 37,     // Fujitsu FR20
         EM_RH32 = 38,     // TRW RH-32

@@ -1,8 +1,6 @@
-using System.Runtime.InteropServices;
-
 namespace PersonalTools.ELFAnalyzer.Models
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    // 不用于 Marshal（字段由解析器逐字段填充），故不加 [StructLayout(Pack=1)]（死属性且误导）。
     internal struct ELFProgramHeader
     {
         public uint p_type { get; set; }    // Segment type

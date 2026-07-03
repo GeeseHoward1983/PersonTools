@@ -30,12 +30,22 @@ namespace PersonalTools.PEAnalyzer.Models
         {
             get
             {
-                // 根据CLR头标志位判断目标架构（(Is32BitRequired, Is32BitPreferred) 四种组合已穷尽）
+                // 依据 CorFlags 的 (32BITREQUIRED, 32BITPREFERRED) 组合判定目标架构。
+                // 注意：32BITPREFERRED(anycpu32bitpreferred) 是 VS2012 起 AnyCPU EXE 的默认，
+                // 架构中立、仅在 64 位系统上默认以 32 位进程运行，不能等同于纯 x86。
+                // 当两标志都未置位时，程序集为架构中立，需借 COFF Machine 字段区分原生 x64/ARM64。
                 return (Is32BitRequired, Is32BitPreferred) switch
                 {
-                    (true, _) => "x86",         // 明确要求32位运行
-                    (false, true) => "x86",     // 32位首选（在64位系统上通过WoW64运行）
-                    (false, false) => "Any CPU" // 可以在任何CPU架构上运行
+                    (true, true) => "Any CPU (32-bit preferred)", // anycpu32bitpreferred
+                    (true, false) => "x86",                        // 明确要求32位运行
+                    (false, true) => "Any CPU (32-bit preferred)", // 罕见：首选但不强制，语义同上
+                    (false, false) => PEMachineType switch          // 无32位标志：由 Machine 判原生架构
+                    {
+                        0x8664 => "x64",   // IMAGE_FILE_MACHINE_AMD64
+                        0xAA64 => "ARM64", // IMAGE_FILE_MACHINE_ARM64
+                        0x01C4 => "ARM",   // IMAGE_FILE_MACHINE_ARMNT
+                        _ => "Any CPU"     // I386(0x14C) 等：架构中立
+                    }
                 };
             }
         }

@@ -20,9 +20,10 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                     result.Add(new ProgramHeaderInfo
                     {
                         Type = ELFProgramHeaderInfo.GetProgramHeaderType(ph.p_type) ?? "UNKNOWN",
-                        Offset = $"0x{ph.p_offset:x16}",
-                        VirtAddr = $"0x{ph.p_vaddr:x16}",
-                        PhysAddr = $"0x{ph.p_paddr:x16}",
+                        // 十六进制宽度按位宽区分(64位=16位宽/32位=8位宽)，与 SymbolTableHelper 及 readelf 一致
+                        Offset = Parser.Is64Bit ? $"0x{ph.p_offset:x16}" : $"0x{ph.p_offset:x8}",
+                        VirtAddr = Parser.Is64Bit ? $"0x{ph.p_vaddr:x16}" : $"0x{ph.p_vaddr:x8}",
+                        PhysAddr = Parser.Is64Bit ? $"0x{ph.p_paddr:x16}" : $"0x{ph.p_paddr:x8}",
                         FileSize = $"{ph.p_filesz}",
                         MemSize = $"{ph.p_memsz}",
                         Flags = ELFProgramHeaderInfo.GetProgramHeaderFlags(ph.p_flags) ?? "",
@@ -104,7 +105,9 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
         // 节是否与段在虚拟内存空间重叠：起始落入段 / 结束落入段 / 节包含段，三者之一即重叠
         private static bool SectionOverlapsSegment(Models.ELFSectionHeader sh, ulong segStart, ulong segEnd)
         {
-            ulong secEndAddr = sh.sh_addr + sh.sh_size;
+            // 防 ulong 相加回绕（与上方 segEndAddr 对称）：溢出时夹紧到 ulong.MaxValue，
+            // 避免畸形 sh_size 使 secEndAddr 回绕成小值导致重叠三判定错乱、节到段映射错误
+            ulong secEndAddr = sh.sh_size > ulong.MaxValue - sh.sh_addr ? ulong.MaxValue : sh.sh_addr + sh.sh_size;
             return (sh.sh_addr >= segStart && sh.sh_addr < segEnd) ||
                    (secEndAddr > segStart && secEndAddr <= segEnd) ||
                    (sh.sh_addr <= segStart && secEndAddr >= segEnd);

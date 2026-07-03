@@ -114,13 +114,14 @@ namespace PersonalTools.PEAnalyzer
         // MSVC 14.x 的次版本 → (Visual Studio 年份, 版本号范围标签)，链接器/编译器描述共用此分类
         private static (string Year, string Range)? MsvcVisualStudio(byte minorVersion)
         {
+            // MSVC 工具集 14.x 次版本与 Visual Studio 的对应关系：
+            //   14.0x → VS2015、14.1x → VS2017、14.2x → VS2019、14.3x/14.4x → VS2022
             return minorVersion switch
             {
-                10 => ("2015", "14.10"),
-                20 => ("2017", "14.20"),
-                >= 26 and <= 29 => ("2019", "14.26-14.29"),
-                >= 30 => ("2022", "14.30+"),
-                _ => null
+                < 10 => ("2015", "14.0x"),
+                >= 10 and < 20 => ("2017", "14.1x"),
+                >= 20 and < 30 => ("2019", "14.2x"),
+                _ => ("2022", "14.3x")
             };
         }
 
@@ -183,7 +184,7 @@ namespace PersonalTools.PEAnalyzer
 
             return $"{fileType}{subsystem switch
             {
-                1 => fileType switch { "Driver/System File" => " (Native Driver)", _ => "Windows Driver" },
+                1 => fileType == "Driver/System File" ? " (Native Driver)" : " (Native Image)",
                 2 => " (Windows GUI Application)",
                 3 => " (Windows Console Application)",
                 5 => " (OS/2 Console Application)",
@@ -215,7 +216,7 @@ namespace PersonalTools.PEAnalyzer
                 _ => "Windows Driver",
             };
 
-            if ((dllCharacteristics & 0x0020) != 0) // IMAGE_DLLCHARACTERISTICS_WDM_DRIVER
+            if ((dllCharacteristics & 0x2000) != 0) // IMAGE_DLLCHARACTERISTICS_WDM_DRIVER (0x2000)
             {
                 driverType += " (WDM)";
             }

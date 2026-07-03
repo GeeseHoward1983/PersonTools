@@ -1,8 +1,7 @@
-using System.Runtime.InteropServices;
-
 namespace PersonalTools.ELFAnalyzer.Models
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    // 不用于 Marshal（字段由 ReadSymbol32/64 逐字段填充，且 ELF32/ELF64 磁盘布局不同），
+    // 故不加 [StructLayout(Pack=1)]（死属性且误导）。
     internal struct ELFSymbol
     {
         public uint StName { get; set; }    // Symbol name (index into string table)

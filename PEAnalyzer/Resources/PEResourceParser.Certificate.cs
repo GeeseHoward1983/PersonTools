@@ -92,8 +92,8 @@ namespace PersonalTools.PEAnalyzer.Resources
                 };
                 certs.Add($"类型: {certType}, 长度: {certHeader.dwLength} 字节, 修订版: 0x{certHeader.wRevision:X4}");
 
-                // 下一个证书按 8 字节对齐
-                pos += (long)((certHeader.dwLength + 7u) & ~7u);
+                // 下一个证书按 8 字节对齐；在 long 上做对齐运算，避免 dwLength 逼近 uint.MaxValue 时 +7 回绕导致 pos 不前进
+                pos += ((long)certHeader.dwLength + 7) & ~7L;
             }
 
             fs.Position = originalPosition;

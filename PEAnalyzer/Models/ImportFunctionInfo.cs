@@ -9,7 +9,7 @@ namespace PersonalTools.PEAnalyzer.Models
         public bool IsOrdinalImport { get; set; }
         public bool IsDelayLoaded { get; set; }   // 添加延迟加载标记
 
-        // 添加序号显示属性，同时显示十进制和十六进制
-        public string OrdinalDisplay => $"{Ordinal} (0x{Ordinal:X8})";
+        // 序号显示属性：同时显示十进制和十六进制。PE 序号为 16 位，用 X4 补齐 4 位十六进制
+        public string OrdinalDisplay => $"{Ordinal} (0x{Ordinal:X4})";
     }
 }

@@ -67,6 +67,8 @@ namespace PersonalTools.UserControls
                 currentPEInfo = loaded;
                 if (currentPEInfo == null)
                 {
+                    // 解析返回 null（非抛异常）时也要反馈，否则宿主已建好的 tab 会残留为空白、无任何提示
+                    MessageHelper.ShowWarning($"无法将文件解析为有效的 PE 文件：{filePath}");
                     return;
                 }
                 DisplayHeaderInfo();

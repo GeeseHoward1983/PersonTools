@@ -26,6 +26,8 @@ namespace PersonalTools.PEAnalyzer.Models
         public ushort e_oeminfo;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 10)]
         public ushort[] e_res2;
-        public uint e_lfanew;        // NT头偏移
+        // NT头偏移。PE 规范类型为 LONG(有符号)，此处用 uint：该偏移恒非负，且下游 RvaToOffset/边界校验
+        // 均对其做范围检查，故以无符号存储无实际风险（仅与规范类型不完全一致）。
+        public uint e_lfanew;
     }
 }

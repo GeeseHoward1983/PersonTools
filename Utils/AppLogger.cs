@@ -111,7 +111,8 @@ namespace PersonalTools.Utils
 #pragma warning restore CA1031
         }
 
-        // 将 message 中的 CR/LF 及其它 C0 控制字符替换为空格，防止日志行注入
+        // 将 message 中的 CR/LF 及其它可被日志查看器当作换行/行分隔的字符替换为空格，防止日志行注入/伪造。
+        // 覆盖：C0 控制符(<0x20)、DEL(0x7F)、C1 控制符(0x80-0x9F)、Unicode 行/段分隔符 U+2028/U+2029。
         private static string SanitizeForLog(string message)
         {
             if (string.IsNullOrEmpty(message))
@@ -124,7 +125,9 @@ namespace PersonalTools.Utils
                 for (int i = 0; i < src.Length; i++)
                 {
                     char c = src[i];
-                    span[i] = c < 0x20 ? ' ' : c; // 含 \r \n \t 等控制符统一为空格
+                    bool isLineForging = c < 0x20 || c == 0x7F || (c >= 0x80 && c <= 0x9F)
+                        || c == '\u2028' || c == '\u2029';
+                    span[i] = isLineForging ? ' ' : c; // 含 \r \n \t 等一律归一为空格
                 }
             });
         }

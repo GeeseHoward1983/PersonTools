@@ -22,8 +22,10 @@ namespace PersonalTools.ELFAnalyzer.Core
         }
 
         // 一次性构建按 StValue 升序的符号索引；exidx 条目可达数百万，避免每条全量扫符号表的 O(N×M)。
-        private static SymbolEntry[] BuildSortedSymbolIndex(ELFParser parser)
+        // 同时返回全表最大 StSize，供 FindContainingSymbolName 对"未命中回扫"设精确窗口上界。
+        private static SymbolEntry[] BuildSortedSymbolIndex(ELFParser parser, out ulong maxSymbolSize)
         {
+            maxSymbolSize = 0;
             if (parser.Symbols == null)
             {
                 return [];
@@ -36,6 +38,10 @@ namespace PersonalTools.ELFAnalyzer.Core
                 {
                     ELFSymbol symbol = symbolList.Value[symbolIndex];
                     entries.Add(new SymbolEntry(symbol.StName, symbol.StValue, symbol.StSize, symbol.StInfo, symbol.StShndx, symbolList.Key, symbolIndex));
+                    if (symbol.StSize > maxSymbolSize)
+                    {
+                        maxSymbolSize = symbol.StSize;
+                    }
                 }
             }
 
@@ -49,7 +55,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             StringBuilder sb = new();
 
             // 在解析所有 exidx 节之前构建一次有序符号索引，下游地址→符号名查找均走二分
-            SymbolEntry[] sortedSymbols = BuildSortedSymbolIndex(parser);
+            SymbolEntry[] sortedSymbols = BuildSortedSymbolIndex(parser, out ulong maxSymbolSize);
 
             if (parser.SectionHeaders != null)
             {
@@ -57,7 +63,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 {
                     if (parser.SectionHeaders[i].sh_type == (uint)SectionType.SHT_ARM_EXIDX)
                     {
-                        string exidxInfo = ParseExidxSection(parser, (Models.ELFSectionHeader)parser.SectionHeaders[i], sortedSymbols);
+                        string exidxInfo = ParseExidxSection(parser, (Models.ELFSectionHeader)parser.SectionHeaders[i], sortedSymbols, maxSymbolSize);
                         if (!string.IsNullOrEmpty(exidxInfo))
                         {
                             sb.AppendLine(exidxInfo);
@@ -74,7 +80,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             return sb.ToString();
         }
 
-        private static string ParseExidxSection(ELFParser parser, Models.ELFSectionHeader exidxSection, SymbolEntry[] sortedSymbols)
+        private static string ParseExidxSection(ELFParser parser, Models.ELFSectionHeader exidxSection, SymbolEntry[] sortedSymbols, ulong maxSymbolSize)
         {
             StringBuilder sb = new();
 
@@ -98,7 +104,7 @@ namespace PersonalTools.ELFAnalyzer.Core
 
                 // 获取包含该地址的符号名（跳过 $a/$t/$d 等映射符号），格式化为 "0x... <name>"
                 // prel31 为负时 absAddr 可能 <0，(ulong) 强转会得到巨大地址致符号匹配错乱，此时按 0 处理
-                string symbolDesc = DescribeAddress(parser, sortedSymbols, absAddr >= 0 ? (ulong)absAddr : 0UL);
+                string symbolDesc = DescribeAddress(parser, sortedSymbols, absAddr >= 0 ? (ulong)absAddr : 0UL, maxSymbolSize);
 
                 // 根据展开信息判断是索引还是标记
                 if (unwindInfo == 1) // 特殊值表示无法展开
@@ -111,7 +117,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 }
                 else // 指向 .ARM.extab 节
                 {
-                    AppendExtabEntry(parser, exidxSection, offset, unwindInfo, symbolDesc, isLittleEndian, sb, sortedSymbols);
+                    AppendExtabEntry(parser, exidxSection, offset, unwindInfo, symbolDesc, isLittleEndian, sb, sortedSymbols, maxSymbolSize);
                 }
 
                 sb.AppendLine(); // 添加空行分隔
@@ -138,7 +144,7 @@ namespace PersonalTools.ELFAnalyzer.Core
         }
 
         // 指向 .ARM.extab 的条目：通用模型(personality routine) 或 extab 内的 Compact 模型
-        private static void AppendExtabEntry(ELFParser parser, Models.ELFSectionHeader exidxSection, int offset, int unwindInfo, string symbolDesc, bool isLittleEndian, StringBuilder sb, SymbolEntry[] sortedSymbols)
+        private static void AppendExtabEntry(ELFParser parser, Models.ELFSectionHeader exidxSection, int offset, int unwindInfo, string symbolDesc, bool isLittleEndian, StringBuilder sb, SymbolEntry[] sortedSymbols, ulong maxSymbolSize)
         {
             // prel31 偏移相对该字地址
             int extabRel = SignExtendPrel31(unwindInfo);
@@ -159,7 +165,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                 int per = SignExtendPrel31(unwindInfo);
                 long personalityAddr = unchecked(extabVaddr + per);
                 // 与 absAddr 同款：负地址会让 (ulong) 强转得到巨大值致符号匹配错乱，按 0 处理
-                string perDesc = DescribeAddress(parser, sortedSymbols, personalityAddr >= 0 ? (ulong)personalityAddr : 0UL);
+                string perDesc = DescribeAddress(parser, sortedSymbols, personalityAddr >= 0 ? (ulong)personalityAddr : 0UL, maxSymbolSize);
                 sb.AppendLine(CultureInfo.InvariantCulture, $"  Personality routine: {perDesc}");
                 return;
             }
@@ -249,16 +255,16 @@ namespace PersonalTools.ELFAnalyzer.Core
         }
 
         // 地址 → "0x..." 或 "0x... <符号名>"（按包含该地址的命名符号解析）
-        private static string DescribeAddress(ELFParser parser, SymbolEntry[] sortedSymbols, ulong address)
+        private static string DescribeAddress(ELFParser parser, SymbolEntry[] sortedSymbols, ulong address, ulong maxSymbolSize)
         {
-            string name = FindContainingSymbolName(parser, sortedSymbols, address);
+            string name = FindContainingSymbolName(parser, sortedSymbols, address, maxSymbolSize);
             return string.IsNullOrEmpty(name) ? $"0x{address:x}" : $"0x{address:x} <{name}>";
         }
 
         // 查找包含/最接近某地址的命名符号（用于 personality routine 显示 <name+0xoff>）。
         // sortedSymbols 按 StValue 升序：二分定位到 StValue<=address 的最右符号后向左回退，
         // 取范围包含 address 且 StValue 最大的命名符号，复杂度 O(log N + 命中窗口) 而非全表 O(M)。
-        private static string FindContainingSymbolName(ELFParser parser, SymbolEntry[] sortedSymbols, ulong address)
+        private static string FindContainingSymbolName(ELFParser parser, SymbolEntry[] sortedSymbols, ulong address, ulong maxSymbolSize)
         {
             if (sortedSymbols.Length == 0)
             {
@@ -285,6 +291,13 @@ namespace PersonalTools.ELFAnalyzer.Core
 
             // 从 pos 向左扫描：StValue 递减，第一个范围包含 address 且名称有效(非 $ 映射符号)的即 bestStart 最大者。
             // 同一 StValue 可能有多个符号（不同节/类型），故命中后不立即停，遍历完整段相同 StValue 再决定。
+            // 未命中(地址落在所有符号区间之外)时的回扫双重上界，防 O(N×M) CPU 挂死：
+            //  1) 窗口上界：能包含 address 的定长符号必满足 address-StValue < StSize <= maxSymbolSize，
+            //     一旦 address-StValue >= maxSymbolSize，更左(StValue 更小)的符号更不可能包含，可停。
+            //  2) 硬步数上界：防畸形符号把 StSize 设成巨值撑大窗口时窗口失效；真实二进制里包含符号
+            //     几乎总在 pos 附近，故设固定步数兜底。二者取先到者。
+            const int MaxBackscanSteps = 4096;
+
             ulong bestStart = 0;
             string bestName = string.Empty;
             bool found = false;
@@ -293,6 +306,12 @@ namespace PersonalTools.ELFAnalyzer.Core
                 SymbolEntry entry = sortedSymbols[i];
                 // 已找到命中且当前 StValue 严格更小：不可能给出更接近的 bestStart，停止回退
                 if (found && entry.StValue < bestStart)
+                {
+                    break;
+                }
+
+                // 尚未命中且已超出窗口或硬步数上界：停止回扫，按未命中处理（返回原始地址而非挂死）
+                if (!found && (address - entry.StValue >= maxSymbolSize || pos - i >= MaxBackscanSteps))
                 {
                     break;
                 }
@@ -352,9 +371,15 @@ namespace PersonalTools.ELFAnalyzer.Core
                 return false; // 符号在目标地址之后
             }
 
-            if (symbol.StSize != 0 && address >= symbol.StValue + symbol.StSize)
+            if (symbol.StSize != 0)
             {
-                return false; // 超出符号范围
+                ulong end = unchecked(symbol.StValue + symbol.StSize);
+                // 防 ulong 回绕：仅当 StValue+StSize 未溢出(end>=StValue) 且 address 超出区间时才判"不包含"。
+                // 若回绕(end<StValue)，说明区间数值上延伸到地址空间顶端，address(已知>=StValue) 视为在范围内。
+                if (end >= symbol.StValue && address >= end)
+                {
+                    return false; // 超出符号范围
+                }
             }
 
             return true;

@@ -13,6 +13,9 @@ namespace PersonalTools.UserControls
     public partial class ELFAnalyzerControl : UserControl, IFileAnalyzerView
     {
 #pragma warning restore CA1515
+        // 自增加载令牌：async void 入口对同一视图极快连续加载时，据此丢弃过期结果，避免新旧数据乱序覆盖（对齐 PEAnalyzerControl）
+        private int loadToken;
+
         public ELFAnalyzerControl()
         {
             InitializeComponent();
@@ -126,14 +129,17 @@ namespace PersonalTools.UserControls
             ELFGotControl.SetGotData(data.Got, "GOT 表 (.got)");
             ELFGotTabItem.Visibility = data.Got.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
+            // 对可空字符串统一用 IsNullOrEmpty/空值安全判断，与各 Set 方法的 ?? 空值兜底一致，避免此处直接 .Length/.Contains 触发 NRE
             ELFNoteInfoControl.SetNoteInfo(data.NoteInfo);
-            ELFNoteInfoTabItem.Visibility = data.NoteInfo.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+            ELFNoteInfoTabItem.Visibility = !string.IsNullOrEmpty(data.NoteInfo) ? Visibility.Visible : Visibility.Collapsed;
 
             ELFAttributeInfoControl.SetAttributeInfo(data.AttributeInfo);
-            ELFAttributeInfoTabItem.Visibility = data.AttributeInfo.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+            ELFAttributeInfoTabItem.Visibility = !string.IsNullOrEmpty(data.AttributeInfo) ? Visibility.Visible : Visibility.Collapsed;
 
             ELFExidxInfoControl.SetExidxInfo(data.ExidxInfo);
-            ELFExidxInfoTabItem.Visibility = !data.ExidxInfo.Contains("There are no exception index entries", StringComparison.CurrentCulture) ? Visibility.Visible : Visibility.Collapsed;
+            ELFExidxInfoTabItem.Visibility = !string.IsNullOrEmpty(data.ExidxInfo)
+                && !data.ExidxInfo.Contains("There are no exception index entries", StringComparison.CurrentCulture)
+                ? Visibility.Visible : Visibility.Collapsed;
         }
 
         // IFileAnalyzerView：供宿主统一调用
@@ -142,6 +148,7 @@ namespace PersonalTools.UserControls
         // async void：UI 事件式入口。解析+格式化在后台线程，UI 线程只做控件赋值，避免畸形/大文件卡死界面
         public async void AnalyzeELFFile(string filePath)
         {
+            int token = ++loadToken; // 取本次加载令牌，await 后据此判断是否已被更新的加载取代
             try
             {
                 ElfDisplayData data = await Task.Run(() =>
@@ -150,6 +157,10 @@ namespace PersonalTools.UserControls
                     return ComputeDisplayData(analyzer);
                 }).ConfigureAwait(true);
 
+                if (token != loadToken)
+                {
+                    return; // 已有更新的加载在进行，丢弃本次过期结果，避免新旧文件视图混合
+                }
                 ApplyDisplayData(data);
             }
             catch (Exception ex) when (ex is UnauthorizedAccessException or ArgumentException

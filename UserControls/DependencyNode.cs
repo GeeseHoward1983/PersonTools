@@ -17,6 +17,7 @@ namespace PersonalTools.UserControls
         private readonly int depth;
         private readonly bool isCyclic;
         private readonly bool isPlaceholder;
+        private Task? loadTask; // 首次加载任务；并发/二次调用共享同一个，防竞态（仅 UI 线程访问，无需加锁）
 
         public string Name { get; }
         public string? FullPath { get; }
@@ -70,15 +71,23 @@ namespace PersonalTools.UserControls
                 isCyclic: false);
         }
 
-        /// <summary>首次展开或双击时调用：解析自身（若需要）并构建真实子节点。可重复调用（幂等）。</summary>
-        public async Task EnsureLoadedAsync()
+        /// <summary>首次展开或双击时调用：解析自身（若需要）并构建真实子节点。可重复/并发调用（幂等）。</summary>
+        public Task EnsureLoadedAsync()
         {
-            if (IsLoaded || isPlaceholder)
+            if (isPlaceholder)
             {
-                return;
+                return Task.CompletedTask;
             }
-            IsLoaded = true;
 
+            // 并发/二次调用返回同一个加载任务：双击折叠节点会同时触发 Expanded 与 MouseDoubleClick 两个处理器，
+            // 二者都调本方法。此前"先置 IsLoaded=true 再 await 后台解析"会让后触发者提前看到完成态却读到
+            // Info==null（导入/导出面板空白，需再双击一次）。改为共享同一 loadTask，后触发者 await 的是同一次真实加载。
+            // 事件均在 UI 线程触发，故 ??= 无需加锁。
+            return loadTask ??= LoadCoreAsync();
+        }
+
+        private async Task LoadCoreAsync()
+        {
             // 解析自身 PE 以取得其依赖与导入/导出。解析为 IO/CPU 密集，移到后台线程避免卡 UI；
             // await 默认回到 UI 线程后再修改 Children（ObservableCollection 绑定 TreeView，须在 UI 线程变更）。
             if (Info == null && FullPath != null)
@@ -90,6 +99,7 @@ namespace PersonalTools.UserControls
             Children.Clear(); // 移除占位节点
             if (Info == null)
             {
+                IsLoaded = true; // 解析失败也算"已加载"（无子节点），避免重复触发
                 return;
             }
 
@@ -112,6 +122,9 @@ namespace PersonalTools.UserControls
 
                 Children.Add(new DependencyNode(dep.Name, childPath, null, childAncestors, depth + 1, cyclic));
             }
+
+            // Children 构建完成后再置位：确保并发 await 者在任务完成时 Info 与 Children 均已就绪
+            IsLoaded = true;
         }
 
         // 后台线程解析 PE：吞掉 IO/权限/参数异常返回 null，由调用方按 Info==null 处理。

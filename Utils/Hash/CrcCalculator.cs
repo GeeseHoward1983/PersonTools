@@ -44,6 +44,11 @@ namespace PersonalTools.Utils.Hash
             uint mask = (uint)((1UL << algo.Width) - 1);
             uint topBit = (uint)(1UL << (algo.Width - 1));
 
+            // 本实现按 Width>=8 的字节对齐处理（下方 value << (Width-8)）：若 Width<8，移位计数为负，
+            // 经 C# 的 &0x1F 掩码会变成大正数、产生错误结果而非报错。当前算法表最小为 8 位，
+            // 此断言防御未来向表中加入 Width<8 的 CRC（如 CRC-5/7）时静默出错。
+            System.Diagnostics.Debug.Assert(algo.Width >= 8, "CrcCalculator 目前仅支持 Width>=8 的 CRC 算法");
+
             for (int i = 0; i < data.Length; i++)
             {
                 byte value = algo.ReverseInput switch

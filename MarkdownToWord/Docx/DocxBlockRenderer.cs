@@ -25,8 +25,10 @@ namespace PersonalTools.MarkdownToWord.Docx
         // internal：表格单元格也是递归入口（grid table 单元格可含嵌套表格），DocxTableRenderer 需引用同一上限作单一来源，勿复制字面量。
         internal const int MaxNestingDepth = 64;
 
-        // 匹配标题文本开头的编号前缀（如 "1 " / "1. " / "1.1 " / "1.1.1 "），含全角空格
-        [GeneratedRegex(@"^\s*\d+(?:\.\d+)*\.?[ \t　]+")]
+        // 匹配标题文本开头的「章节编号」前缀（如 "1. " / "1.1 " / "1.1.1 " / "1.1. "），含全角空格。
+        // 要求编号内至少含一个点号，从而只剥离明确的章节号，不误删以纯数字开头的合法标题
+        // （如 "2024 年度报告"、"3 个要点"、"1 Introduction" 这类无点号的前缀不再被当作编号剥掉）。
+        [GeneratedRegex(@"^\s*\d+\.(?:\d+\.?)*[ \t　]+")]
         private static partial Regex HeadingNumberPrefix();
 
         internal static void RenderBlock(Block block, OpenXmlElement container, DocxRenderContext ctx, int indentLevel)
@@ -56,6 +58,8 @@ namespace PersonalTools.MarkdownToWord.Docx
                 case FencedCodeBlock fenced:
                     RenderCode(fenced, container, ctx);
                     break;
+                // 注意：Markdig 的 MathBlock 继承自 FencedCodeBlock，故块级 $$...$$ 已由上面的
+                // FencedCodeBlock/CodeBlock 分支按等宽代码块渲染，无需(也不能)再单列 case。
                 case CodeBlock code:
                     RenderCode(code, container, ctx);
                     break;
@@ -242,13 +246,17 @@ namespace PersonalTools.MarkdownToWord.Docx
         }
 
         private static void RenderCode(CodeBlock code, OpenXmlElement container, DocxRenderContext ctx)
+            => RenderMonospaceLines(code.Lines, container, ctx);
+
+        // 以等宽+底纹段落逐行渲染一组文本行（代码块与块级数学公式共用）
+        private static void RenderMonospaceLines(StringLineGroup lines, OpenXmlElement container, DocxRenderContext ctx)
         {
             Paragraph paragraph = new(new ParagraphProperties(
                 new Shading { Val = ShadingPatternValues.Clear, Color = "auto", Fill = "F6F8FA" },
                 new SpacingBetweenLines { Before = "60", After = "60" }));
 
             DocxRunStyle style = DocxRunStyle.For(ctx.Settings.For(ContentCategory.Body)).AsCode();
-            int count = code.Lines.Count;
+            int count = lines.Count;
             for (int i = 0; i < count; i++)
             {
                 if (i > 0)
@@ -256,7 +264,7 @@ namespace PersonalTools.MarkdownToWord.Docx
                     paragraph.AppendChild(new Run(new Break()));
                 }
 
-                DocxInlineRenderer.AppendText(paragraph, code.Lines.Lines[i].Slice.ToString(), style);
+                DocxInlineRenderer.AppendText(paragraph, lines.Lines[i].Slice.ToString(), style);
             }
 
             container.AppendChild(paragraph);

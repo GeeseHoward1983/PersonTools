@@ -163,9 +163,11 @@ namespace PersonalTools.PEAnalyzer
                 _ => peInfo.CLRInfo.Architecture switch
                 {
                     "x86" => "32位",
+                    "ARM" => "32位",
                     "x64" => "64位",
                     "ARM64" => "64位",
                     "Any CPU" => "Any CPU",
+                    "Any CPU (32-bit preferred)" => "32位（首选）",
                     _ => "未知"
                 }
             };

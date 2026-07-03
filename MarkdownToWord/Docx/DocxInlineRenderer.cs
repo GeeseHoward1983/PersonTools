@@ -1,6 +1,8 @@
 using System.Globalization;
+using System.Text;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Wordprocessing;
+using Markdig.Extensions.Mathematics;
 using Markdig.Syntax.Inlines;
 
 namespace PersonalTools.MarkdownToWord.Docx
@@ -35,6 +37,14 @@ namespace PersonalTools.MarkdownToWord.Docx
                 case LiteralInline literal:
                     AppendText(parent, literal.Content.ToString(), style);
                     break;
+                case HtmlEntityInline htmlEntity:
+                    // HTML 实体(&copy;/&nbsp;/&#169; 等)解析为 HtmlEntityInline，之前落入 default 被静默丢弃 → 字符消失
+                    AppendText(parent, htmlEntity.Transcoded.ToString(), style);
+                    break;
+                case MathInline math:
+                    // 行内数学 $...$（UseMathematics 已启用）：以原始 $内容$ 文本兜底渲染，避免被 default 静默丢弃
+                    AppendText(parent, $"${math.Content.ToString()}$", style.AsCode());
+                    break;
                 case EmphasisInline emphasis:
                     RenderInlines(emphasis, parent, ResolveEmphasis(emphasis, style), ctx);
                     break;
@@ -68,12 +78,15 @@ namespace PersonalTools.MarkdownToWord.Docx
 
         private static DocxRunStyle ResolveEmphasis(EmphasisInline emphasis, DocxRunStyle style)
         {
-            if (emphasis.DelimiterChar is '~')
+            // Markdig EmphasisExtras：按定界符精确分派，避免把下标/上标/插入/高亮误当删除线/斜体/加粗
+            return emphasis.DelimiterChar switch
             {
-                return style.AsStrike();
-            }
-
-            return emphasis.DelimiterCount >= 2 ? style.AsBold() : style.AsItalic();
+                '~' => emphasis.DelimiterCount >= 2 ? style.AsStrike() : style.AsSubscript(), // ~~删除线~~ / ~下标~
+                '^' => style.AsSuperscript(),   // ^上标^
+                '+' => style.AsInserted(),      // ++插入++（以下划线表示）
+                '=' => style.AsHighlight(),     // ==高亮==
+                _ => emphasis.DelimiterCount >= 2 ? style.AsBold() : style.AsItalic(), // **粗** / *斜*
+            };
         }
 
         private static void RenderLink(LinkInline link, OpenXmlElement parent, DocxRunStyle style, DocxRenderContext ctx)
@@ -115,6 +128,13 @@ namespace PersonalTools.MarkdownToWord.Docx
                 return null;
             }
 
+            // 仅登记安全 scheme 的外部超链接；javascript:/file:/UNC 等一律降级为纯文字（调用方回退渲染文本），
+            // 避免不受信 Markdown 借 [x](javascript:…) / [x](file://\\host\share) 生成可点击的危险链接
+            if (uri.Scheme is not ("http" or "https" or "mailto"))
+            {
+                return null;
+            }
+
             try
             {
                 string id = ctx.MainPart.AddHyperlinkRelationship(uri, true).Id;
@@ -135,11 +155,52 @@ namespace PersonalTools.MarkdownToWord.Docx
             }
 
             Run run = new(BuildRunProperties(style),
-                new Text(text) { Space = SpaceProcessingModeValues.Preserve });
+                new Text(SanitizeXmlText(text)) { Space = SpaceProcessingModeValues.Preserve });
             parent.AppendChild(run);
         }
 
-        // 按 OOXML 架构顺序构造 run 属性：rFonts → b → i → strike → color → sz → u
+        /// <summary>
+        /// 剥离 XML 1.0 非法字符：仅保留 #x9/#xA/#xD、[#x20-#xD7FF]、[#xE000-#xFFFD]、[#x10000-#x10FFFF]。
+        /// 非法字符（如从终端粘贴的 ESC/换页等 C0 控制符、未配对代理项、U+FFFE/FFFF）会使写入 w:t 后的
+        /// .docx 无法打开，或在 Save 时抛异常中止整篇导出。无非法字符时原样返回（不额外分配）。
+        /// </summary>
+        private static string SanitizeXmlText(string text)
+        {
+            StringBuilder? sb = null; // 惰性分配：绝大多数文本无需清洗
+            for (int i = 0; i < text.Length; i++)
+            {
+                char c = text[i];
+
+                // 合法代理对(U+10000..U+10FFFF)：整体保留
+                if (char.IsHighSurrogate(c) && i + 1 < text.Length && char.IsLowSurrogate(text[i + 1]))
+                {
+                    sb?.Append(c);
+                    sb?.Append(text[i + 1]);
+                    i++;
+                    continue;
+                }
+
+                bool legal = c is '\t' or '\n' or '\r'
+                    || (c >= '\u0020' && c <= '\uD7FF')
+                    || (c >= '\uE000' && c <= '\uFFFD');
+
+                if (legal)
+                {
+                    sb?.Append(c);
+                }
+                else if (sb == null)
+                {
+                    // 首次遇到非法字符：把已扫描的合法前缀拷入 sb，其后逐字符决定保留/丢弃
+                    sb = new StringBuilder(text.Length);
+                    sb.Append(text, 0, i);
+                }
+                // 非法字符（含未配对代理项）直接丢弃
+            }
+
+            return sb?.ToString() ?? text;
+        }
+
+        // 按 OOXML 架构顺序构造 run 属性：rFonts → b → i → strike → color → sz/szCs → highlight → u → vertAlign
         private static RunProperties BuildRunProperties(DocxRunStyle style)
         {
             RunProperties rpr = new();
@@ -175,9 +236,22 @@ namespace PersonalTools.MarkdownToWord.Docx
             rpr.AppendChild(new FontSize { Val = sz });
             rpr.AppendChild(new FontSizeComplexScript { Val = sz });
 
-            if (style.Base.Underline || style.Hyperlink)
+            if (style.Highlight) // ==高亮==（w:highlight 须在 w:u 之前）
+            {
+                rpr.AppendChild(new Highlight { Val = HighlightColorValues.Yellow });
+            }
+
+            if (style.Base.Underline || style.Hyperlink || style.Inserted) // ++插入++ 以下划线表示
             {
                 rpr.AppendChild(new Underline { Val = UnderlineValues.Single });
+            }
+
+            if (style.Subscript || style.Superscript) // ~下标~ / ^上标^（w:vertAlign 须在 w:u 之后）
+            {
+                rpr.AppendChild(new VerticalTextAlignment
+                {
+                    Val = style.Superscript ? VerticalPositionValues.Superscript : VerticalPositionValues.Subscript
+                });
             }
 
             return rpr;

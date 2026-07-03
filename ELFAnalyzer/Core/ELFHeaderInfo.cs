@@ -36,6 +36,15 @@ namespace PersonalTools.ELFAnalyzer.Core
 
             isLittleEndian = header.EI_DATA == (byte)ELFData.LSB;
             is64Bit = header.EI_CLASS == (byte)ELFClass.BIT64;
+
+            // 魔数合法后按位宽校验完整头长度（ELF32=52、ELF64=64）：文件被截断到头长度之内时，
+            // 提前抛清晰的 InvalidDataException，而非在逐字段读取途中抛不清晰的 EndOfStreamException。
+            long requiredHeaderSize = is64Bit ? 64 : 52;
+            if (reader.BaseStream.Length < requiredHeaderSize)
+            {
+                throw new InvalidDataException("文件过短，ELF 头不完整");
+            }
+
             header.e_type = ELFParserUtils.ReadUInt16(reader, isLittleEndian);
             header.e_machine = ELFParserUtils.ReadUInt16(reader, isLittleEndian);
             header.e_version = ELFParserUtils.ReadUInt32(reader, isLittleEndian);

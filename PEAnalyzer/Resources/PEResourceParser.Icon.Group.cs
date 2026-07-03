@@ -77,7 +77,12 @@ namespace PersonalTools.PEAnalyzer.Resources
             iconDirEntries = new ICONDIRENTRY[count];
             for (int i = 0; i < count; i++)
             {
-                if (fs.Position + 16 > fs.Length)
+                // 组图标(RT_GROUP_ICON)的目录项是 14 字节的 GRPICONDIRENTRY，末字段为
+                // 2 字节 WORD nID（指向对应 RT_ICON 资源的 ID），而非 .ico 文件里 16 字节
+                // ICONDIRENTRY 的 4 字节 dwImageOffset。这里必须按 14 字节步长读取，否则从
+                // 第 2 项起每项都比真实位置多偏移 2 字节、级联错位，导致 nID 错误→找不到
+                // 对应图标数据（图标丢失）且宽高/位深显示为垃圾值。
+                if (fs.Position + 14 > fs.Length)
                 {
                     // 数据截断：保留已成功解析的前 i 个条目并按成功返回(降级)，
                     // 而非整组丢弃，使损坏图标资源仍能展示已读到的部分。
@@ -94,7 +99,8 @@ namespace PersonalTools.PEAnalyzer.Resources
                     Planes = reader.ReadUInt16(),
                     BitCount = reader.ReadUInt16(),
                     BytesInRes = reader.ReadUInt32(),
-                    ImageOffset = reader.ReadUInt32()
+                    // nID(WORD)：作为资源 ID 存入 ImageOffset，供 FindIconDataByResourceId 使用
+                    ImageOffset = reader.ReadUInt16()
                 };
             }
 

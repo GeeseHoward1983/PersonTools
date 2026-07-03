@@ -7,7 +7,7 @@ namespace PersonalTools.PEAnalyzer.Models
         public int Ordinal { get; set; }
         public uint RVA { get; set; }
 
-        // 添加序号显示属性，同时显示十进制和十六进制
-        public string OrdinalDisplay => $"{Ordinal} (0x{Ordinal:X8})";
+        // 序号显示属性：同时显示十进制和十六进制。PE 序号为 16 位，用 X4 补齐 4 位十六进制
+        public string OrdinalDisplay => $"{Ordinal} (0x{Ordinal:X4})";
     }
 }

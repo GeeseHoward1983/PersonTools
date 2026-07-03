@@ -255,8 +255,8 @@ namespace PersonalTools.UserControls
             }
         }
 
-        // 处理文件RSA加密
-        private void ProcessFileForRsaEncryption(string filePath)
+        // 处理文件RSA加密：读盘 + hex 编码移后台线程，UI 线程仅回填，避免近 50MB 文件生成 ~100MB 十六进制串卡界面
+        private async void ProcessFileForRsaEncryption(string filePath)
         {
             if (!FileDropHelper.IsWithinHexDisplayLimit(filePath))
             {
@@ -266,18 +266,14 @@ namespace PersonalTools.UserControls
 
             try
             {
-                byte[] fileBytes = FileDropHelper.ReadAllBytes(filePath);
+                string hex = await Task.Run(() => ConvertUtils.ToHexString(FileDropHelper.ReadAllBytes(filePath))).ConfigureAwait(true);
 
                 // 将文件内容显示在输入框中
-                RsaInput.Text = ConvertUtils.ToHexString(fileBytes);
+                RsaInput.Text = hex;
                 // 同时切换到Hex字符串模式
                 RsaInputHexRadio.IsChecked = true;
             }
-            catch (IOException ex)
-            {
-                MessageHelper.ShowError($"处理文件时发生错误: {ex.Message}");
-            }
-            catch (UnauthorizedAccessException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
                 MessageHelper.ShowError($"处理文件时发生错误: {ex.Message}");
             }
