@@ -87,7 +87,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 {
                     0x0001 => "X509",
                     0x0002 => "PKCS#7",
-                    0x0003 => "PKCS#1",
+                    0x0003 => "Reserved(0x0003)",
                     _ => "未知"
                 };
                 certs.Add($"类型: {certType}, 长度: {certHeader.dwLength} 字节, 修订版: 0x{certHeader.wRevision:X4}");

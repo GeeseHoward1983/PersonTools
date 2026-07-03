@@ -31,6 +31,12 @@ namespace PersonalTools.MarkdownToWord.Docx
             table.AppendChild(BuildTableGrid(mdTable));
 
             ContentStyleRow tableStyle = ctx.Settings.For(ContentCategory.Table);
+            int totalColumns = GetColumnCount(mdTable);
+            // 逐行重建网格几何：跟踪每个网格列上尚未结束的纵向合并(RowSpan)，为其在后续行补 vMerge=Continue 单元格；
+            // 单元格 ColumnSpan>1 出 gridSpan。Markdig 的行/列跨在续行是稀疏的（被跨越的列在续行缺席），故须按占用推进列号，
+            // 否则每个源单元格只出一个无 gridSpan 的 w:tc，合并单元格丢失、行列错位。
+            int[] rowSpanRemaining = new int[totalColumns];
+            int[] rowSpanWidth = new int[totalColumns];
             foreach (object rowObj in mdTable)
             {
                 if (rowObj is not MTableRow mdRow)
@@ -39,13 +45,49 @@ namespace PersonalTools.MarkdownToWord.Docx
                 }
 
                 DocxRunStyle cellStyle = mdRow.IsHeader ? DocxRunStyle.For(tableStyle).AsBold() : DocxRunStyle.For(tableStyle);
-                TableRow row = new();
+                List<MTableCell> mdCells = [];
                 foreach (object cellObj in mdRow)
                 {
-                    if (cellObj is MTableCell mdCell)
+                    if (cellObj is MTableCell cell)
                     {
-                        row.AppendChild(BuildCell(mdCell, cellStyle, mdRow.IsHeader, ctx, indentLevel));
+                        mdCells.Add(cell);
                     }
+                }
+
+                TableRow row = new();
+                int col = 0;
+                int cellIdx = 0;
+                while (col < totalColumns)
+                {
+                    if (rowSpanRemaining[col] > 0)
+                    {
+                        // 该列有来自上方的纵向合并延续：补一个 vMerge=Continue 单元格（含相同 gridSpan 宽度）
+                        int span = Math.Clamp(rowSpanWidth[col], 1, totalColumns - col);
+                        row.AppendChild(BuildContinuationCell(span, mdRow.IsHeader));
+                        rowSpanRemaining[col]--;
+                        col += span;
+                        continue;
+                    }
+
+                    if (cellIdx >= mdCells.Count)
+                    {
+                        // 源单元格用尽但网格还有列（稀疏行）：补空单元格填满该行，保持列对齐
+                        row.AppendChild(BuildEmptyCell(mdRow.IsHeader));
+                        col++;
+                        continue;
+                    }
+
+                    MTableCell mdCell = mdCells[cellIdx++];
+                    int columnSpan = Math.Clamp(mdCell.ColumnSpan, 1, totalColumns - col);
+                    int rowSpan = Math.Max(1, mdCell.RowSpan);
+                    row.AppendChild(BuildCell(mdCell, cellStyle, mdRow.IsHeader, ctx, indentLevel, columnSpan, rowSpan > 1));
+                    if (rowSpan > 1)
+                    {
+                        rowSpanRemaining[col] = rowSpan - 1;
+                        rowSpanWidth[col] = columnSpan;
+                    }
+
+                    col += columnSpan;
                 }
 
                 table.AppendChild(row);
@@ -71,11 +113,7 @@ namespace PersonalTools.MarkdownToWord.Docx
         // tblGrid（列定义）是 OOXML 表格 tblPr 之后、行之前的必需元素；按列数平分正文宽度
         private static TableGrid BuildTableGrid(MTable mdTable)
         {
-            int columns = mdTable.ColumnDefinitions.Count switch
-            {
-                <= 0 => CountColumns(mdTable),
-                _ => mdTable.ColumnDefinitions.Count,
-            };
+            int columns = GetColumnCount(mdTable);
 
             const int contentWidthTwips = 9026; // A4 正文宽度（页宽 - 左右边距）
             // 各列等分正文宽度，列宽之和恒 ≤ contentWidthTwips，避免超多列时溢出页面右边距。
@@ -91,6 +129,17 @@ namespace PersonalTools.MarkdownToWord.Docx
             }
 
             return grid;
+        }
+
+        // 网格总列数：grid table 以 ColumnDefinitions 为准（已含列跨布局），管道表回退按行内单元格数取最大值。
+        // 供 BuildTableGrid 的列定义与 Render 的合并单元格几何重建共用同一列数，避免 gridSpan/vMerge 与 tblGrid 不一致。
+        private static int GetColumnCount(MTable mdTable)
+        {
+            return mdTable.ColumnDefinitions.Count switch
+            {
+                <= 0 => CountColumns(mdTable),
+                _ => mdTable.ColumnDefinitions.Count,
+            };
         }
 
         private static int CountColumns(MTable mdTable)
@@ -122,11 +171,22 @@ namespace PersonalTools.MarkdownToWord.Docx
             };
         }
 
-        private static TableCell BuildCell(MTableCell mdCell, DocxRunStyle style, bool isHeader, DocxRenderContext ctx, int indentLevel)
+        private static TableCell BuildCell(MTableCell mdCell, DocxRunStyle style, bool isHeader, DocxRenderContext ctx, int indentLevel, int columnSpan, bool verticalMergeRestart)
         {
             TableCell cell = new();
 
+            // tcPr 子元素须按 OOXML 架构顺序：gridSpan → vMerge → shd → vAlign
             TableCellProperties props = new();
+            if (columnSpan > 1)
+            {
+                props.AppendChild(new GridSpan { Val = columnSpan });
+            }
+
+            if (verticalMergeRestart)
+            {
+                props.AppendChild(new VerticalMerge { Val = MergedCellValues.Restart });
+            }
+
             if (isHeader)
             {
                 props.AppendChild(new Shading { Val = ShadingPatternValues.Clear, Color = "auto", Fill = "F0F0F0" });
@@ -160,6 +220,38 @@ namespace PersonalTools.MarkdownToWord.Docx
             }
 
             return cell;
+        }
+
+        // 纵向合并延续单元格（vMerge=Continue）：内容由合并起始单元格显示，此处仅占位保持列对齐
+        private static TableCell BuildContinuationCell(int columnSpan, bool isHeader)
+        {
+            TableCellProperties props = new();
+            if (columnSpan > 1)
+            {
+                props.AppendChild(new GridSpan { Val = columnSpan });
+            }
+
+            props.AppendChild(new VerticalMerge { Val = MergedCellValues.Continue });
+            if (isHeader)
+            {
+                props.AppendChild(new Shading { Val = ShadingPatternValues.Clear, Color = "auto", Fill = "F0F0F0" });
+            }
+
+            props.AppendChild(new TableCellVerticalAlignment { Val = TableVerticalAlignmentValues.Center });
+            return new TableCell(props, new Paragraph());
+        }
+
+        // 稀疏行的填充空单元格：源单元格用尽但网格仍有列时补齐，保持整表列对齐
+        private static TableCell BuildEmptyCell(bool isHeader)
+        {
+            TableCellProperties props = new();
+            if (isHeader)
+            {
+                props.AppendChild(new Shading { Val = ShadingPatternValues.Clear, Color = "auto", Fill = "F0F0F0" });
+            }
+
+            props.AppendChild(new TableCellVerticalAlignment { Val = TableVerticalAlignmentValues.Center });
+            return new TableCell(props, new Paragraph());
         }
     }
 }

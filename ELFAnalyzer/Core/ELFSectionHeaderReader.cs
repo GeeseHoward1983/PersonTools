@@ -31,6 +31,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             (SectionAttributes.SHF_GROUP, 'G'),
             (SectionAttributes.SHF_TLS, 'T'),
             (SectionAttributes.SHF_COMPRESSED, 'C'),
+            (SectionAttributes.SHF_ARM_PURECODE, 'y'),
         ];
 
         public static string GetSectionFlags(ulong shFlags)

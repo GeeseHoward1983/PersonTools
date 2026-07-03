@@ -108,7 +108,18 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private static string GetBuildID(byte[] data, int descOffset, int descSize)
         {
-            return descSize >= 20 ? $"(NT_GNU_BUILD_ID (unique build ID bitstring)\n    Build ID: {ConvertUtils.ToHexString(data, descOffset, descSize)}" : "";
+            if (descSize < 20)
+            {
+                return "";
+            }
+
+            // descSize 受文件大小约束但畸形 note 仍可能很大：对 build-id hex 设显示上限，
+            // 与 FormatNoteDescriptionData 的 64KB 上限一致，避免为巨型 note 分配约 2×descSize 的字符串。
+            const int MaxBuildIdBytes = 64 * 1024;
+            int displayCount = Math.Min(descSize, MaxBuildIdBytes);
+            string hex = ConvertUtils.ToHexString(data, descOffset, displayCount);
+            string ellipsis = displayCount < descSize ? "..." : "";
+            return $"(NT_GNU_BUILD_ID (unique build ID bitstring)\n    Build ID: {hex}{ellipsis}";
         }
 
         private static string ProcessNoteEntry(ELFParser parser, uint type, string owner, byte[] data, int descOffset, int descSize)

@@ -2,11 +2,15 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Wordprocessing;
+using Markdig.Extensions.DefinitionLists;
+using Markdig.Extensions.Figures;
+using Markdig.Extensions.Footnotes;
 using Markdig.Helpers;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 using PersonalTools.MarkdownToWord.Models;
 using MTable = Markdig.Extensions.Tables.Table;
+using MdFootnote = Markdig.Extensions.Footnotes.Footnote; // 与 DocumentFormat.OpenXml.Wordprocessing.Footnote 区分
 
 namespace PersonalTools.MarkdownToWord.Docx
 {
@@ -68,6 +72,19 @@ namespace PersonalTools.MarkdownToWord.Docx
                     break;
                 case ParagraphBlock paragraph:
                     RenderParagraph(paragraph, container, ctx, indentLevel);
+                    break;
+                case DefinitionTerm term:
+                    // 定义列表术语行（LeafBlock）：之前落 default 使术语整行消失、只剩定义正文；渲染为加粗段落。
+                    RenderDefinitionTerm(term, container, ctx, indentLevel);
+                    break;
+                case FigureCaption caption:
+                    // 图（Figure 扩展）题注（LeafBlock）：之前落 default 使题注消失；渲染为居中斜体段落。
+                    RenderFigureCaption(caption, container, ctx);
+                    break;
+                case FootnoteGroup footnotes:
+                    // 脚注区（ContainerBlock）：须在 ContainerBlock 泛化分支前拦截，带编号成区渲染，
+                    // 否则脚注正文被当普通段落无编号地堆在文末。
+                    RenderFootnoteGroup(footnotes, container, ctx, indentLevel);
                     break;
                 case HtmlBlock:
                     break; // 跳过原始 HTML 块
@@ -164,6 +181,59 @@ namespace PersonalTools.MarkdownToWord.Docx
             if (embedded)
             {
                 container.AppendChild(DocxCaptionBuilder.BuildFigureCaption(DocxImageEmbedder.ExtractAltText(image), ctx));
+            }
+        }
+
+        // 定义列表术语：加粗段落（其定义正文仍由后续 ParagraphBlock 分支渲染）
+        private static void RenderDefinitionTerm(DefinitionTerm term, OpenXmlElement container, DocxRenderContext ctx, int indentLevel)
+        {
+            Paragraph paragraph = indentLevel > 0 ? NewIndentedParagraph(indentLevel) : NewBodyParagraph();
+            DocxRunStyle style = DocxRunStyle.For(ctx.Settings.For(ContentCategory.Body)).AsBold();
+            DocxInlineRenderer.RenderInlines(term.Inline, paragraph, style, ctx);
+            container.AppendChild(paragraph);
+        }
+
+        // 图（Figure 扩展）题注：居中斜体段落
+        private static void RenderFigureCaption(FigureCaption caption, OpenXmlElement container, DocxRenderContext ctx)
+        {
+            Paragraph paragraph = new(new ParagraphProperties(new Justification { Val = JustificationValues.Center }));
+            DocxRunStyle style = DocxRunStyle.For(ctx.Settings.For(ContentCategory.Body)).AsItalic();
+            DocxInlineRenderer.RenderInlines(caption.Inline, paragraph, style, ctx);
+            container.AppendChild(paragraph);
+        }
+
+        // 脚注区：与正文间插一条分隔线，每条脚注以「编号. 」前缀渲染，编号与行内 FootnoteLink 上标一致
+        private static void RenderFootnoteGroup(FootnoteGroup group, OpenXmlElement container, DocxRenderContext ctx, int indentLevel)
+        {
+            RenderThematicBreak(container);
+            DocxRunStyle style = DocxRunStyle.For(ctx.Settings.For(ContentCategory.Body));
+            foreach (Block child in group)
+            {
+                if (child is not MdFootnote footnote)
+                {
+                    continue;
+                }
+
+                bool first = true;
+                foreach (Block content in footnote)
+                {
+                    if (content is ParagraphBlock paragraph)
+                    {
+                        Paragraph wordParagraph = NewBodyParagraph();
+                        if (first)
+                        {
+                            DocxInlineRenderer.AppendText(wordParagraph, footnote.Order.ToString(CultureInfo.InvariantCulture) + ". ", style.AsBold());
+                            first = false;
+                        }
+
+                        DocxInlineRenderer.RenderInlines(paragraph.Inline, wordParagraph, style, ctx);
+                        container.AppendChild(wordParagraph);
+                    }
+                    else
+                    {
+                        RenderBlock(content, container, ctx, indentLevel + 1);
+                    }
+                }
             }
         }
 

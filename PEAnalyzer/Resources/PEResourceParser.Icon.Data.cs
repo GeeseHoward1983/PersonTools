@@ -216,8 +216,9 @@ namespace PersonalTools.PEAnalyzer.Resources
                 return true;
             }
 
-            // DIB 数据：以 BITMAPINFOHEADER 开始（biSize == 40）
-            return data.Length >= 16 && BitConverter.ToUInt32(data, 0) == 40;
+            // DIB 数据：以 BITMAPINFOHEADER 起始。与 ConvertDibToIco 的 biSize>=40 判定对齐（含 V4=108/V5=124），
+            // 否则 V4/V5 头位图会在此闸门被判非图标而丢弃，ConvertDibToIco 的 V4/V5 兼容分支成死代码。
+            return data.Length >= 16 && BitConverter.ToUInt32(data, 0) >= 40;
         }
 
         // ICO 文件头: 00 00 01 00（Reserved=0, Type=1=ICO）

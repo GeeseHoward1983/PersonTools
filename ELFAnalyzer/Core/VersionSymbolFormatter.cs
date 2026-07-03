@@ -143,7 +143,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             long sectionStart = (long)section.sh_offset;
 
             // 遍历骨架与 readelf 一致，不限项数；填表与格式化共用 WalkVerneed（见 ParseDependencies.cs）
-            int processed = VersionSymbolParser.WalkVerneed(parser, sectionStart, maxCount: -1, isLittleEndian,
+            int processed = VersionSymbolParser.WalkVerneed(parser, sectionStart, VersionSymbolParser.GetSectionEndOffset(parser, section), maxCount: -1, isLittleEndian,
                 onVerneed: (verneedOffset, vn_cnt) =>
                 {
                     uint vn_version = ELFParserUtils.ReadUInt16(parser.FileData, (int)verneedOffset, isLittleEndian);

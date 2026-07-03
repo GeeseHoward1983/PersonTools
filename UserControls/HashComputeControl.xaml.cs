@@ -20,6 +20,7 @@ namespace PersonalTools.UserControls
     public partial class HashComputeControl : UserControl
     {
         #pragma warning restore CA1515
+        private int hashDropToken; // 拖放重入令牌：快速连续拖入多个文件时，仅最后一次结果回填，丢弃过期
         // 6 种定长哈希算法（数据驱动渲染，绑定到 HashItemsControl）
         private readonly List<HashAlgorithmRow> hashRows =
         [
@@ -121,8 +122,8 @@ namespace PersonalTools.UserControls
             }
         }
 
-        // SHA3计算功能
-        private void CalculateSHA3_Click(object sender, RoutedEventArgs e)
+        // SHA3计算功能：UI 线程捕获输入与算法位数，计算移后台，避免大 hex 输入卡界面
+        private async void CalculateSHA3_Click(object sender, RoutedEventArgs e)
         {
             string input = SHA3InputTextBox.Text;
             if (string.IsNullOrEmpty(input))
@@ -131,21 +132,20 @@ namespace PersonalTools.UserControls
                 return;
             }
 
+            // 获取选中的算法选项（UI 访问须在 UI 线程）
+            if (SHA3AlgorithmComboBox.SelectedItem is not Sha3AlgorithmOption selectedOption)
+            {
+                MessageHelper.ShowInfo("请选择SHA3算法类型");
+                return;
+            }
+
+            bool isHex = SHA3HexInputRadio.IsChecked == true; // 仅 Hex 单选钮被选中时按十六进制解析，其余默认 UTF-8
+            int bits = selectedOption.Value;
             try
             {
-                // 仅 Hex 单选钮被选中时按十六进制解析，其余（含未选）默认 UTF-8
-                byte[] inputBytes = ConvertUtils.InputBytes(input, SHA3HexInputRadio.IsChecked == true);
-
-                // 获取选中的算法选项
-                if (SHA3AlgorithmComboBox.SelectedItem is not Sha3AlgorithmOption selectedOption)
-                {
-                    MessageHelper.ShowInfo("请选择SHA3算法类型");
-                    return;
-                }
-
-                // 使用真正的SHA3算法（静态调用，无需实例化）
-                byte[] hashBytes = Sha3.ComputeHash(inputBytes, selectedOption.Value);
-                SHA3ResultLabel.Content = ConvertUtils.ToHexString(hashBytes);
+                string result = await Task.Run(() =>
+                    ConvertUtils.ToHexString(Sha3.ComputeHash(ConvertUtils.InputBytes(input, isHex), bits))).ConfigureAwait(true);
+                SHA3ResultLabel.Content = result;
             }
             catch (Exception ex) when (ex is FormatException or ArgumentException or PlatformNotSupportedException)
             {
@@ -176,6 +176,7 @@ namespace PersonalTools.UserControls
         {
             // 大文件仍计算各哈希(直接对原始字节哈希)，但不把完整内容转 hex 填入 SHA3 输入框，避免巨串卡死 UI
             bool withinHexLimit = FileDropHelper.IsWithinHexDisplayLimit(filePath);
+            int token = ++hashDropToken;
             try
             {
                 (string[] hashes, string sha3Hex) = await Task.Run(() =>
@@ -190,6 +191,11 @@ namespace PersonalTools.UserControls
                     string hex = withinHexLimit ? ConvertUtils.ToHexString(fileBytes) : string.Empty;
                     return (results, hex);
                 }).ConfigureAwait(true);
+
+                if (token != hashDropToken)
+                {
+                    return; // 已有更晚的拖放在进行，丢弃本次过期结果，避免上方哈希与 SHA3 输入框字段错配
+                }
 
                 for (int i = 0; i < hashRows.Count; i++)
                 {

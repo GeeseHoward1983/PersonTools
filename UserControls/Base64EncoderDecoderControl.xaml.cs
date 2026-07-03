@@ -13,6 +13,7 @@ namespace PersonalTools.UserControls
     public partial class Base64EncoderDecoderControl : UserControl
     {
         #pragma warning restore CA1515
+        private int base64DropToken; // 拖放重入令牌：快速连续拖入多个文件时，仅最后一次结果回填，丢弃过期
         public Base64EncoderDecoderControl()
         {
             InitializeComponent();
@@ -131,6 +132,7 @@ namespace PersonalTools.UserControls
                 return;
             }
 
+            int token = ++base64DropToken;
             try
             {
                 (string hex, string base64) = await Task.Run(() =>
@@ -138,6 +140,11 @@ namespace PersonalTools.UserControls
                     byte[] fileBytes = FileDropHelper.ReadAllBytes(filePath);
                     return (ConvertUtils.ToHexString(fileBytes), Convert.ToBase64String(fileBytes));
                 }).ConfigureAwait(true);
+
+                if (token != base64DropToken)
+                {
+                    return; // 已有更晚的拖放在进行，丢弃本次过期结果，避免 hex/Base64 字段错配
+                }
 
                 // 输入框显示 hex，结果框显示 Base64，并切到 Hex 模式
                 Base64Input.Text = hex;

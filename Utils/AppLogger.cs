@@ -54,14 +54,20 @@ namespace PersonalTools.Utils
                             }
                         }
 
-                        if (File.Exists(path) && new FileInfo(path).Length > MaxLogBytes)
+                        if (mtx == null || acquired)
                         {
-                            string rolled = path + ".1";
-                            File.Delete(rolled);     // 删除上一代(不存在则无操作)
-                            File.Move(path, rolled); // 当前转为 .1，保留一代历史而非整删
-                        }
+                            // 仅在持有跨进程锁（或本机无锁）时才滚动+写盘。WaitOne 超时(acquired=false)时跳过本次写入，
+                            // 否则不持锁就 Delete/Move/Append 会触发 Mutex 本要防的 TOCTOU：多实例并发滚动时相互抢占，
+                            // 破坏“保留一代”不变量并抛 IOException 被下方 catch 静默吞掉。
+                            if (File.Exists(path) && new FileInfo(path).Length > MaxLogBytes)
+                            {
+                                string rolled = path + ".1";
+                                File.Delete(rolled);     // 删除上一代(不存在则无操作)
+                                File.Move(path, rolled); // 当前转为 .1，保留一代历史而非整删
+                            }
 
-                        File.AppendAllText(path, line);
+                            File.AppendAllText(path, line);
+                        }
                     }
                     finally
                     {

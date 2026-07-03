@@ -37,7 +37,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             for (int j = 0; j < entryCount; j++)
             {
                 ReadRelocationEntry(Parser, data, j, isRela, out ulong offset, out ulong info, out long addend);
-                SplitRelocInfo(Parser.Is64Bit, info, out uint sym, out uint type);
+                SplitRelocInfo(Parser, info, out uint sym, out uint type);
                 (string symbolName, string symbolValue) = ResolveRelocSymbol(Parser, symbols, sym, symTabType);
 
                 string typeName = ELFRelocation.GetRelocationTypeName(type, Parser.Header.e_machine);
@@ -153,18 +153,35 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
         }
 
         // 拆分 r_info 为符号索引与重定位类型（位数不同分割位不同）
-        private static void SplitRelocInfo(bool is64, ulong info, out uint sym, out uint type)
+        private static void SplitRelocInfo(ELFParser parser, ulong info, out uint sym, out uint type)
         {
-            if (is64)
-            {
-                sym = (uint)(info >> 32);
-                type = (uint)(info & 0xffffffff);
-            }
-            else
+            if (!parser.Is64Bit)
             {
                 sym = (uint)(info >> 8);
                 type = (uint)(info & 0xff);
+                return;
             }
+
+            // MIPS64(N64 ABI) 的 r_info 不是单一 64 位整数，而是结构体 { r_sym(32), r_ssym(8), r_type3(8), r_type2(8), r_type(8) }；
+            // 符号索引与主重定位类型的取法随字节序不同（info 已按文件字节序读入）。其余架构用标准 ELF64 拆分。
+            ushort machine = parser.Header.e_machine;
+            if (machine is ((ushort)EMachine.EM_MIPS) or ((ushort)EMachine.EM_MIPS_RS3_LE))
+            {
+                if (parser.Header.IsLittleEndian())
+                {
+                    sym = (uint)(info & 0xffffffff);
+                    type = (uint)((info >> 56) & 0xff);
+                }
+                else
+                {
+                    sym = (uint)(info >> 32);
+                    type = (uint)(info & 0xff);
+                }
+                return;
+            }
+
+            sym = (uint)(info >> 32);
+            type = (uint)(info & 0xffffffff);
         }
 
         // 解析符号名与符号值（越界返回默认零值）

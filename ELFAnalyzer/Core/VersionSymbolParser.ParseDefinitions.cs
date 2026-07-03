@@ -63,9 +63,14 @@ namespace PersonalTools.ELFAnalyzer.Core
             }
 
             ulong offset = section.sh_offset;
+            ulong sectionEnd = (ulong)GetSectionEndOffset(parser, section);
             int processed = 0;
 
-            while (processed < count && offset + 20 <= (ulong)parser.FileData.Length)
+            // 硬夹在 verdef 节 [sh_offset, sectionEnd) 内，并对条目数设全局上界，
+            // 防畸形 DT_VERDEFNUM 极大叠加小步进 vd_next 构成 O(count×strTab) 的 CPU 耗尽。
+            const int MaxVerDefEntries = 1_000_000;
+
+            while (processed < count && processed < MaxVerDefEntries && offset + 20 <= sectionEnd)
             {
                 ushort vd_ndx = ELFParserUtils.ReadUInt16(parser.FileData, (int)offset + 4, isLittleEndian);
                 // Verdef 结构与位宽无关：vd_aux(+12)、vd_next(+16) 均为 4 字节

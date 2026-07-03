@@ -28,6 +28,7 @@ namespace PersonalTools.UserControls
     public partial class AesEncryptionControl : UserControl
     {
         #pragma warning restore CA1515
+        private int aesDropToken; // 拖放重入令牌：快速连续拖入多个文件时，仅最后一次结果回填，丢弃过期
         public AesEncryptionControl()
         {
             InitializeComponent();
@@ -63,8 +64,8 @@ namespace PersonalTools.UserControls
             AesPaddingComboBox.SelectedIndex = 0; // 默认选择PKCS7
         }
 
-        // AES加密
-        private void AesEncrypt_Click(object sender, RoutedEventArgs e)
+        // AES加密：UI 线程捕获参数，仅把纯加密运算放后台，避免大输入(近100MB hex)在 UI 线程计算卡界面
+        private async void AesEncrypt_Click(object sender, RoutedEventArgs e)
         {
             try
             {
@@ -80,7 +81,9 @@ namespace PersonalTools.UserControls
                     return;
                 }
 
-                AesResult.Text = AesEncryptString(input, key, iv, mode);
+                PaddingMode padding = AesPaddingComboBox.SelectedItem is AesPaddingOption paddingOption ? paddingOption.Padding : PaddingMode.PKCS7;
+                bool inputIsHex = AesInputStringRadio.IsChecked != true;
+                AesResult.Text = await Task.Run(() => AesCryptoService.Encrypt(input, key, iv, mode, padding, inputIsHex)).ConfigureAwait(true);
             }
             catch (Exception ex) when (ex is CryptographicException or ArgumentException)
             {
@@ -92,15 +95,15 @@ namespace PersonalTools.UserControls
             }
         }
 
-        // AES解密
-        private void AesDecrypt_Click(object sender, RoutedEventArgs e)
+        // AES解密：同上，仅把纯解密运算放后台
+        private async void AesDecrypt_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 string input = AesResult.Text;
                 if (string.IsNullOrEmpty(input))
                 {
-                MessageHelper.ShowInfo("请输入要解密的文本");
+                    MessageHelper.ShowInfo("请输入要解密的文本");
                     return;
                 }
 
@@ -109,7 +112,9 @@ namespace PersonalTools.UserControls
                     return;
                 }
 
-                AesInput.Text = AesDecryptString(input, key, iv, mode);
+                PaddingMode padding = AesPaddingComboBox.SelectedItem is AesPaddingOption paddingOption ? paddingOption.Padding : PaddingMode.PKCS7;
+                bool inputIsHex = AesInputStringRadio.IsChecked != true;
+                AesInput.Text = await Task.Run(() => AesCryptoService.Decrypt(input, key, iv, mode, padding, inputIsHex)).ConfigureAwait(true);
             }
             catch (Exception ex) when (ex is CryptographicException or ArgumentException)
             {
@@ -175,26 +180,11 @@ namespace PersonalTools.UserControls
         }
 
         // AES清空
-        private void AesClear_Click(object sender, RoutedEventArgs e)
-        {
+        private void AesClear_Click(object sender, RoutedEventArgs e)        {
             AesInput.Clear();
             AesResult.Clear();
             AesKey.Clear();
             AesIV.Clear();
-        }
-
-        // AES加密字符串
-        private string AesEncryptString(string input, byte[] key, byte[]? iv, CipherMode mode)
-        {
-            PaddingMode padding = AesPaddingComboBox.SelectedItem is AesPaddingOption paddingOption ? paddingOption.Padding : PaddingMode.PKCS7;
-            return AesCryptoService.Encrypt(input, key, iv, mode, padding, AesInputStringRadio.IsChecked != true);
-        }
-
-        // AES解密字符串
-        private string AesDecryptString(string input, byte[] key, byte[]? iv, CipherMode mode)
-        {
-            PaddingMode padding = AesPaddingComboBox.SelectedItem is AesPaddingOption paddingOption ? paddingOption.Padding : PaddingMode.PKCS7;
-            return AesCryptoService.Decrypt(input, key, iv, mode, padding, AesInputStringRadio.IsChecked != true);
         }
 
         // 获取密钥字节数组
@@ -241,9 +231,14 @@ namespace PersonalTools.UserControls
                 return;
             }
 
+            int token = ++aesDropToken;
             try
             {
                 string hex = await Task.Run(() => ConvertUtils.ToHexString(FileDropHelper.ReadAllBytes(filePath))).ConfigureAwait(true);
+                if (token != aesDropToken)
+                {
+                    return; // 已有更晚的拖放在进行，丢弃本次过期结果，避免字段错配
+                }
 
                 // 将文件内容以 hex 显示在输入框，并切换到 Hex 模式
                 AesInput.Text = hex;

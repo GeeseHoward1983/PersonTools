@@ -16,6 +16,7 @@ namespace PersonalTools.UserControls
     public partial class RsaEncryptionControl : UserControl
     {
         #pragma warning restore CA1515
+        private int rsaDropToken; // 拖放重入令牌：快速连续拖入多个文件时，仅最后一次结果回填，丢弃过期
         public RsaEncryptionControl()
         {
             InitializeComponent();
@@ -168,8 +169,8 @@ namespace PersonalTools.UserControls
             }
         }
 
-        // RSA生成密钥对
-        private void RsaGenerateKeyPair_Click(object sender, RoutedEventArgs e)
+        // RSA生成密钥对：keygen（尤其 4096 位）耗时移后台，UI 线程仅回填，避免界面无响应
+        private async void RsaGenerateKeyPair_Click(object sender, RoutedEventArgs e)
         {
             try
             {
@@ -180,7 +181,8 @@ namespace PersonalTools.UserControls
                     return;
                 }
 
-                (string publicKey, string privateKey) = RsaCryptoService.GenerateKeyPair(selectedOption.KeySize);
+                int keySize = selectedOption.KeySize;
+                (string publicKey, string privateKey) = await Task.Run(() => RsaCryptoService.GenerateKeyPair(keySize)).ConfigureAwait(true);
                 RsaPublicKey.Text = publicKey;
                 RsaPrivateKey.Text = privateKey;
 
@@ -264,9 +266,14 @@ namespace PersonalTools.UserControls
                 return;
             }
 
+            int token = ++rsaDropToken;
             try
             {
                 string hex = await Task.Run(() => ConvertUtils.ToHexString(FileDropHelper.ReadAllBytes(filePath))).ConfigureAwait(true);
+                if (token != rsaDropToken)
+                {
+                    return; // 已有更晚的拖放在进行，丢弃本次过期结果
+                }
 
                 // 将文件内容显示在输入框中
                 RsaInput.Text = hex;

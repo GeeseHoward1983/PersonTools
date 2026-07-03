@@ -13,6 +13,7 @@ namespace PersonalTools.UserControls
     public partial class CrcComputeControl : UserControl
     {
         #pragma warning restore CA1515
+        private int crcDropToken; // 拖放重入令牌：快速连续拖入多个文件时，仅最后一次结果回填，丢弃过期
         public CrcComputeControl()
         {
             InitializeComponent();
@@ -27,8 +28,8 @@ namespace PersonalTools.UserControls
             CRCAlgorithmComboBox.SelectedIndex = 0;
         }
 
-        // CRC计算功能
-        private void CalculateCRC_Click(object sender, System.Windows.RoutedEventArgs e)
+        // CRC计算功能：UI 线程捕获算法与输入，计算移后台，避免大 hex 输入卡界面
+        private async void CalculateCRC_Click(object sender, System.Windows.RoutedEventArgs e)
         {
             if (CRCAlgorithmComboBox.SelectedItem == null)
             {
@@ -43,12 +44,12 @@ namespace PersonalTools.UserControls
                 return;
             }
 
+            CrcAlgorithm selectedAlgorithm = (CrcAlgorithm)CRCAlgorithmComboBox.SelectedItem;
+            bool isHex = CRCHexInputRadio.IsChecked == true;
             try
             {
-                CrcAlgorithm selectedAlgorithm = (CrcAlgorithm)CRCAlgorithmComboBox.SelectedItem;
-                byte[] inputBytes = ConvertUtils.InputBytes(input, CRCHexInputRadio.IsChecked == true);
-
-                uint crcResult = CrcCalculator.Compute(inputBytes, selectedAlgorithm);
+                uint crcResult = await Task.Run(() =>
+                    CrcCalculator.Compute(ConvertUtils.InputBytes(input, isHex), selectedAlgorithm)).ConfigureAwait(true);
 
                 // 根据算法宽度格式化输出
                 string formatString = selectedAlgorithm.Width switch
@@ -101,9 +102,14 @@ namespace PersonalTools.UserControls
                 return;
             }
 
+            int token = ++crcDropToken;
             try
             {
                 string hex = await Task.Run(() => ConvertUtils.ToHexString(FileDropHelper.ReadAllBytes(filePath))).ConfigureAwait(true);
+                if (token != crcDropToken)
+                {
+                    return; // 已有更晚的拖放在进行，丢弃本次过期结果
+                }
 
                 // 将文件内容（hex）显示在输入框中，并切换到 hex 输入模式
                 CRCInputTextBox.Text = hex;

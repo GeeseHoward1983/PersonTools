@@ -27,79 +27,90 @@ namespace PersonalTools.Utils.Hash
         {
             ArgumentNullException.ThrowIfNull(data);
 
-            // 防 paddedLength(int) 溢出：输入接近 int.MaxValue 时 data.Length+1+8+对齐 会回绕为负导致分配错误。
-            // 预留 72 字节(0x80 + 最长填充 + 8 字节长度)余量，超限明确拒绝而非产生错误结果/OverflowException
+            // 防长度计算溢出：输入接近 int.MaxValue 时 (long)Length*8 仍安全，但仍保留上限以对齐既有契约
             if (data.Length > int.MaxValue - 72)
             {
                 throw new ArgumentException("输入数据过大，无法计算 SHA-224", nameof(data));
             }
 
             // SHA-224 初始哈希值
-            uint h0 = 0xc1059ed8, h1 = 0x367cd507, h2 = 0x3070dd17, h3 = 0xf70e5939,
-                 h4 = 0xffc00b31, h5 = 0x68581511, h6 = 0x64f98fa7, h7 = 0xbefa4fa4;
-
-            // 预处理：追加 0x80，补 0 到长度 ≡ 56 (mod 64)，再追加 64 位大端比特长度
-            long bitLength = (long)data.Length * 8;
-            int paddedLength = data.Length + 1;
-            while (paddedLength % 64 != 56)
-            {
-                paddedLength++;
-            }
-            paddedLength += 8;
-
-            byte[] padded = new byte[paddedLength];
-            Array.Copy(data, padded, data.Length);
-            padded[data.Length] = 0x80;
-            BinaryPrimitives.WriteInt64BigEndian(padded.AsSpan(paddedLength - 8), bitLength);
+            Span<uint> h = stackalloc uint[8];
+            h[0] = 0xc1059ed8; h[1] = 0x367cd507; h[2] = 0x3070dd17; h[3] = 0xf70e5939;
+            h[4] = 0xffc00b31; h[5] = 0x68581511; h[6] = 0x64f98fa7; h[7] = 0xbefa4fa4;
 
             Span<uint> w = stackalloc uint[64];
-            for (int chunk = 0; chunk < paddedLength; chunk += 64)
+            ReadOnlySpan<byte> dataSpan = data;
+
+            // 直接按 64 字节块压缩输入，不再把整段输入复制进一份等长 padded 缓冲，
+            // 避免大文件(如 1GB)哈希时内存翻倍甚至 OutOfMemoryException。
+            int fullBlocks = data.Length / 64;
+            for (int b = 0; b < fullBlocks; b++)
             {
-                for (int i = 0; i < 16; i++)
-                {
-                    w[i] = BinaryPrimitives.ReadUInt32BigEndian(padded.AsSpan(chunk + (i * 4)));
-                }
-                for (int i = 16; i < 64; i++)
-                {
-                    uint s0 = RotR(w[i - 15], 7) ^ RotR(w[i - 15], 18) ^ (w[i - 15] >> 3);
-                    uint s1 = RotR(w[i - 2], 17) ^ RotR(w[i - 2], 19) ^ (w[i - 2] >> 10);
-                    w[i] = w[i - 16] + s0 + w[i - 7] + s1;
-                }
+                ProcessBlock(dataSpan.Slice(b * 64, 64), w, h);
+            }
 
-                uint a = h0, b = h1, c = h2, d = h3, e = h4, f = h5, g = h6, h = h7;
-                for (int i = 0; i < 64; i++)
-                {
-                    uint bigS1 = RotR(e, 6) ^ RotR(e, 11) ^ RotR(e, 25);
-                    uint ch = (e & f) ^ (~e & g);
-                    uint temp1 = h + bigS1 + ch + K[i] + w[i];
-                    uint bigS0 = RotR(a, 2) ^ RotR(a, 13) ^ RotR(a, 22);
-                    uint maj = (a & b) ^ (a & c) ^ (b & c);
-                    uint temp2 = bigS0 + maj;
-
-                    h = g;
-                    g = f;
-                    f = e;
-                    e = d + temp1;
-                    d = c;
-                    c = b;
-                    b = a;
-                    a = temp1 + temp2;
-                }
-
-                h0 += a; h1 += b; h2 += c; h3 += d;
-                h4 += e; h5 += f; h6 += g; h7 += h;
+            // 尾块：剩余字节 + 0x80 + 补零 + 64 位大端比特长度，仅需 64 或 128 字节小缓冲
+            int remainder = data.Length - (fullBlocks * 64);
+            long bitLength = (long)data.Length * 8;
+            Span<byte> tail = stackalloc byte[128];
+            tail.Clear();
+            dataSpan.Slice(fullBlocks * 64, remainder).CopyTo(tail);
+            tail[remainder] = 0x80;
+            int tailLen = remainder < 56 ? 64 : 128; // 剩余≥56 时长度字段放不下，须再占一个块
+            BinaryPrimitives.WriteInt64BigEndian(tail.Slice(tailLen - 8, 8), bitLength);
+            for (int b = 0; b * 64 < tailLen; b++)
+            {
+                ProcessBlock(tail.Slice(b * 64, 64), w, h);
             }
 
             // 输出前 7 个字（224 位），大端
             byte[] result = new byte[28];
-            BinaryPrimitives.WriteUInt32BigEndian(result.AsSpan(0), h0);
-            BinaryPrimitives.WriteUInt32BigEndian(result.AsSpan(4), h1);
-            BinaryPrimitives.WriteUInt32BigEndian(result.AsSpan(8), h2);
-            BinaryPrimitives.WriteUInt32BigEndian(result.AsSpan(12), h3);
-            BinaryPrimitives.WriteUInt32BigEndian(result.AsSpan(16), h4);
-            BinaryPrimitives.WriteUInt32BigEndian(result.AsSpan(20), h5);
-            BinaryPrimitives.WriteUInt32BigEndian(result.AsSpan(24), h6);
+            BinaryPrimitives.WriteUInt32BigEndian(result.AsSpan(0), h[0]);
+            BinaryPrimitives.WriteUInt32BigEndian(result.AsSpan(4), h[1]);
+            BinaryPrimitives.WriteUInt32BigEndian(result.AsSpan(8), h[2]);
+            BinaryPrimitives.WriteUInt32BigEndian(result.AsSpan(12), h[3]);
+            BinaryPrimitives.WriteUInt32BigEndian(result.AsSpan(16), h[4]);
+            BinaryPrimitives.WriteUInt32BigEndian(result.AsSpan(20), h[5]);
+            BinaryPrimitives.WriteUInt32BigEndian(result.AsSpan(24), h[6]);
             return result;
+        }
+
+        // 压缩单个 64 字节消息块，就地更新 8 字哈希状态 h
+        private static void ProcessBlock(ReadOnlySpan<byte> block, Span<uint> w, Span<uint> h)
+        {
+            for (int i = 0; i < 16; i++)
+            {
+                w[i] = BinaryPrimitives.ReadUInt32BigEndian(block.Slice(i * 4));
+            }
+            for (int i = 16; i < 64; i++)
+            {
+                uint s0 = RotR(w[i - 15], 7) ^ RotR(w[i - 15], 18) ^ (w[i - 15] >> 3);
+                uint s1 = RotR(w[i - 2], 17) ^ RotR(w[i - 2], 19) ^ (w[i - 2] >> 10);
+                w[i] = w[i - 16] + s0 + w[i - 7] + s1;
+            }
+
+            uint a = h[0], b = h[1], c = h[2], d = h[3], e = h[4], f = h[5], g = h[6], hh = h[7];
+            for (int i = 0; i < 64; i++)
+            {
+                uint bigS1 = RotR(e, 6) ^ RotR(e, 11) ^ RotR(e, 25);
+                uint ch = (e & f) ^ (~e & g);
+                uint temp1 = hh + bigS1 + ch + K[i] + w[i];
+                uint bigS0 = RotR(a, 2) ^ RotR(a, 13) ^ RotR(a, 22);
+                uint maj = (a & b) ^ (a & c) ^ (b & c);
+                uint temp2 = bigS0 + maj;
+
+                hh = g;
+                g = f;
+                f = e;
+                e = d + temp1;
+                d = c;
+                c = b;
+                b = a;
+                a = temp1 + temp2;
+            }
+
+            h[0] += a; h[1] += b; h[2] += c; h[3] += d;
+            h[4] += e; h[5] += f; h[6] += g; h[7] += hh;
         }
 
         private static uint RotR(uint x, int n)

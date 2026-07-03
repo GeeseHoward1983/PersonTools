@@ -72,7 +72,7 @@ namespace PersonalTools.UserControls
                     return;
                 }
                 DisplayHeaderInfo();
-                await DisplayDependenciesAsync().ConfigureAwait(true);
+                await DisplayDependenciesAsync(token).ConfigureAwait(true);
                 if (token != loadToken)
                 {
                     return; // 依赖解析（含 await）期间被新加载取代，停止后续步骤
@@ -136,7 +136,7 @@ namespace PersonalTools.UserControls
             IconsDataGrid.ItemsSource = iconViewModels;
         }
 
-        private async Task DisplayDependenciesAsync()
+        private async Task DisplayDependenciesAsync(int token)
         {
             if (currentPEInfo == null)
             {
@@ -147,6 +147,11 @@ namespace PersonalTools.UserControls
             // 根节点为已打开文件；预解析直接依赖并默认展开（根 PE 已解析，故仅做依赖路径解析）
             DependencyNode root = DependencyNode.CreateRoot(currentPEInfo);
             await root.EnsureLoadedAsync().ConfigureAwait(true);
+            if (token != loadToken)
+            {
+                return; // 依赖解析（含 await）期间被更新的加载取代，勿把过期依赖树写回 ItemsSource（否则依赖树与其余面板显示不同文件）
+            }
+
             root.IsExpanded = true;
             DependencyTree.ItemsSource = new[] { root };
         }

@@ -2,7 +2,10 @@ using System.Globalization;
 using System.Text;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Wordprocessing;
+using Markdig.Extensions.Abbreviations;
+using Markdig.Extensions.Footnotes;
 using Markdig.Extensions.Mathematics;
+using Markdig.Extensions.TaskLists;
 using Markdig.Syntax.Inlines;
 
 namespace PersonalTools.MarkdownToWord.Docx
@@ -50,6 +53,22 @@ namespace PersonalTools.MarkdownToWord.Docx
                     break;
                 case CodeInline code:
                     AppendText(parent, code.Content, style.AsCode());
+                    break;
+                case TaskList taskList:
+                    // 任务列表复选标记 - [x]/- [ ]：以 ☑/☐ 文本呈现勾选状态，之前落 default 丢失勾选
+                    AppendText(parent, taskList.Checked ? "☑ " : "☐ ", style);
+                    break;
+                case FootnoteLink footnoteLink:
+                    // 脚注引用标记 [^n]：以上标编号呈现（回链 IsBackLink 不渲染），之前落 default 使编号消失
+                    if (!footnoteLink.IsBackLink)
+                    {
+                        AppendText(parent, footnoteLink.Footnote.Order.ToString(CultureInfo.InvariantCulture), style.AsSuperscript());
+                    }
+
+                    break;
+                case AbbreviationInline abbreviation:
+                    // 缩写扩展替换后的词：输出其原始标签文本，之前落 default 使该词整体消失
+                    AppendText(parent, abbreviation.Abbreviation.Label, style);
                     break;
                 case LineBreakInline lineBreak:
                     if (lineBreak.IsHard)

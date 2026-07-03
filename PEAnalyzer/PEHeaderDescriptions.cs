@@ -189,6 +189,7 @@ namespace PersonalTools.PEAnalyzer
                 3 => " (Windows Console Application)",
                 5 => " (OS/2 Console Application)",
                 7 => " (POSIX Console Application)",
+                8 => " (Native Windows)",
                 9 => " (Windows CE GUI Application)",
                 10 => " (EFI Application)",
                 11 => " (EFI Boot Service Driver)",
