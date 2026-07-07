@@ -29,6 +29,7 @@ namespace PersonalTools.UserControls
         private string? baseDir;
         private string? currentMdPath;
         private bool previewReady;
+        private bool windowCloseHooked; // 是否已挂宿主窗口 Closed 事件（用于最终释放 WebView2）
 
         public MarkdownToWordControl()
         {
@@ -58,6 +59,13 @@ namespace PersonalTools.UserControls
             // 平衡订阅：先退订再订阅，避免 Loaded 多次触发导致 Tick 重复挂接
             previewTimer.Tick -= PreviewTimer_Tick;
             previewTimer.Tick += PreviewTimer_Tick;
+
+            // 只挂一次：随宿主窗口关闭时释放 WebView2（切 Tab 的 Unloaded 不能释放，否则切回无法复用预览）
+            if (!windowCloseHooked && Window.GetWindow(this) is Window hostWindow)
+            {
+                windowCloseHooked = true;
+                hostWindow.Closed += OnHostWindowClosed;
+            }
 
             if (previewReady)
             {
@@ -105,6 +113,18 @@ namespace PersonalTools.UserControls
             previewTimer.Tick -= PreviewTimer_Tick; // 退订，释放计时器对控件的引用
         }
 
+        // 宿主窗口关闭时释放 WebView2（其 msedgewebview2.exe 子进程与非托管资源），并退订自身避免悬挂引用
+        private void OnHostWindowClosed(object? sender, EventArgs e)
+        {
+            if (sender is Window window)
+            {
+                window.Closed -= OnHostWindowClosed;
+            }
+
+            previewTimer.Stop();
+            Preview.Dispose();
+        }
+
         private void Editor_TextChanged(object sender, TextChangedEventArgs e)
         {
             previewTimer.Stop();
@@ -130,10 +150,13 @@ namespace PersonalTools.UserControls
                 File.WriteAllText(previewFilePath, html, Encoding.UTF8);
                 Preview.CoreWebView2.Navigate(new Uri(previewFilePath).AbsoluteUri);
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or ArgumentException or UriFormatException)
             {
-                // 预览失败不影响导出，忽略
+                // 预览由防抖计时器触发且非关键：BuildPreviewHtml/Navigate/new Uri 可能抛 IO 之外的异常
+                // （如 CoreWebView2 未就绪的 InvalidOperationException、UriFormatException）。此处兜宽后记录并静默，
+                // 避免异常冒泡成未处理 Dispatcher 异常，在编辑时每次 tick 弹错误框打断输入。预览失败不影响导出。
                 System.Diagnostics.Debug.WriteLine($"刷新预览失败: {ex.Message}");
+                AppLogger.Log($"刷新预览失败: {ex.Message}");
             }
         }
 

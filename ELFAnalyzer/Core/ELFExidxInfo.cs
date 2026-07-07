@@ -54,20 +54,24 @@ namespace PersonalTools.ELFAnalyzer.Core
         {
             StringBuilder sb = new();
 
-            // 在解析所有 exidx 节之前构建一次有序符号索引，下游地址→符号名查找均走二分
+            // 先探测是否存在 ARM exidx 节：无则直接返回，避免对（可能极大的）全符号表白做一次 O(N log N) 排序
+            if (parser.SectionHeaders == null || !HasExidxSection(parser))
+            {
+                sb.AppendLine("There are no exception index entries in this file.");
+                return sb.ToString();
+            }
+
+            // 命中 exidx 节后再构建一次有序符号索引，下游地址→符号名查找均走二分
             SymbolEntry[] sortedSymbols = BuildSortedSymbolIndex(parser, out ulong maxSymbolSize);
 
-            if (parser.SectionHeaders != null)
+            for (int i = 0; i < parser.SectionHeaders.Count; i++)
             {
-                for (int i = 0; i < parser.SectionHeaders.Count; i++)
+                if (parser.SectionHeaders[i].sh_type == (uint)SectionType.SHT_ARM_EXIDX)
                 {
-                    if (parser.SectionHeaders[i].sh_type == (uint)SectionType.SHT_ARM_EXIDX)
+                    string exidxInfo = ParseExidxSection(parser, (Models.ELFSectionHeader)parser.SectionHeaders[i], sortedSymbols, maxSymbolSize);
+                    if (!string.IsNullOrEmpty(exidxInfo))
                     {
-                        string exidxInfo = ParseExidxSection(parser, (Models.ELFSectionHeader)parser.SectionHeaders[i], sortedSymbols, maxSymbolSize);
-                        if (!string.IsNullOrEmpty(exidxInfo))
-                        {
-                            sb.AppendLine(exidxInfo);
-                        }
+                        sb.AppendLine(exidxInfo);
                     }
                 }
             }
@@ -78,6 +82,23 @@ namespace PersonalTools.ELFAnalyzer.Core
             }
 
             return sb.ToString();
+        }
+
+        // 是否存在至少一个 ARM 异常索引节（SHT_ARM_EXIDX）
+        private static bool HasExidxSection(ELFParser parser)
+        {
+            if (parser.SectionHeaders == null)
+            {
+                return false;
+            }
+            for (int i = 0; i < parser.SectionHeaders.Count; i++)
+            {
+                if (parser.SectionHeaders[i].sh_type == (uint)SectionType.SHT_ARM_EXIDX)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private static string ParseExidxSection(ELFParser parser, Models.ELFSectionHeader exidxSection, SymbolEntry[] sortedSymbols, ulong maxSymbolSize)

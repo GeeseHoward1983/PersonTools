@@ -22,7 +22,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                 (byte)ELFData.MSB => "2's complement, big endian",
                 _ => "none" // EI_DATA=0(NONE) 或非法值：与 readelf 一致显示 none，不再一律标 big endian
             }})");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  版本:             {ELFHeaderDescriptions.GetReadableVersion(parser.Header)} ({parser.Header.EI_VERSION})");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  版本:             {ELFHeaderDescriptions.GetReadableVersion(parser.Header)}");
             sb.AppendLine(CultureInfo.InvariantCulture, $"  OS/ABI:           {ELFHeaderDescriptions.GetOSABIName(parser.Header)} ({parser.Header.EI_OSABI})");
             sb.AppendLine(CultureInfo.InvariantCulture, $"  ABI 版本:         {parser.Header.EI_ABIVERSION}");
             sb.AppendLine(CultureInfo.InvariantCulture, $"  类型:             {ELFHeaderDescriptions.GetELFTypeName(parser.Header)} ({ELFHeaderDescriptions.GetFileTypeDescription(parser.Header)})");

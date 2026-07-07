@@ -179,6 +179,13 @@ namespace PersonalTools.UserControls
                 AppLogger.Log($"依赖 PE 解析失败(畸形): {path} - {ex.Message}");
                 return null;
             }
+            catch (OverflowException ex)
+            {
+                // 与主加载器 PEAnalyzerControl.LoadPEFile 的 catch 集合对齐：畸形字段引起的溢出同样降级为 null，
+                // 不让此包装器漏掉主加载器已处理的异常类型逃逸到上层 async void 展开入口。
+                AppLogger.Log($"依赖 PE 解析失败(溢出): {path} - {ex.Message}");
+                return null;
+            }
         }
     }
 }

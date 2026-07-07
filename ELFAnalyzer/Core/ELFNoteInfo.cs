@@ -108,7 +108,9 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private static string GetBuildID(byte[] data, int descOffset, int descSize)
         {
-            if (descSize < 20)
+            // GNU build-id 长度不固定（md5=16 / sha1=20 / uuid 等），硬性要求 20 字节会静默丢弃合法的
+            // 16 字节 build-id。仅用一个极小下限做健壮性兜底，实际输出长度由 descSize 决定。
+            if (descSize < 4)
             {
                 return "";
             }
@@ -119,7 +121,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             int displayCount = Math.Min(descSize, MaxBuildIdBytes);
             string hex = ConvertUtils.ToHexString(data, descOffset, displayCount);
             string ellipsis = displayCount < descSize ? "..." : "";
-            return $"(NT_GNU_BUILD_ID (unique build ID bitstring)\n    Build ID: {hex}{ellipsis}";
+            return $"NT_GNU_BUILD_ID (unique build ID bitstring)\n    Build ID: {hex}{ellipsis}";
         }
 
         private static string ProcessNoteEntry(ELFParser parser, uint type, string owner, byte[] data, int descOffset, int descSize)

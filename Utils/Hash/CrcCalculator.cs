@@ -3,14 +3,16 @@ namespace PersonalTools.Utils.Hash
     /// <summary>CRC 算法参数。</summary>
     internal sealed class CrcAlgorithm
     {
-        public required string Name { get; set; }
-        public required string PolynomialFormula { get; set; }
-        public int Width { get; set; }
-        public uint Polynomial { get; set; }
-        public uint InitialValue { get; set; }
-        public uint FinalXor { get; set; }
-        public bool ReverseInput { get; set; }
-        public bool ReverseOutput { get; set; }
+        // 全部使用 init：Algorithms 是进程级共享的只读单例表，init 使对象构造后不可再被就地改写，
+        // 保护共享不变量（避免任意调用方 Algorithms[i].Polynomial = ... 破坏其他使用方且非线程安全）。
+        public required string Name { get; init; }
+        public required string PolynomialFormula { get; init; }
+        public int Width { get; init; }
+        public uint Polynomial { get; init; }
+        public uint InitialValue { get; init; }
+        public uint FinalXor { get; init; }
+        public bool ReverseInput { get; init; }
+        public bool ReverseOutput { get; init; }
     }
 
     /// <summary>

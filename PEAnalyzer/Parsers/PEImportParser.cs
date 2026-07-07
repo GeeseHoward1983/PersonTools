@@ -60,6 +60,12 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 while (fs.Position + PEConstants.ImportDescriptorSize <= fs.Length
                     && descriptorCount < PEConstants.MaxImportDescriptors)
                 {
+                    // 全局导入函数总数闸门：防止 descriptors × thunks 放大（多个描述符共享同一超大 thunk 表）耗尽内存/CPU
+                    if (peInfo.ImportFunctions.Count >= PEConstants.MaxTotalImports)
+                    {
+                        break;
+                    }
+
                     descriptorCount++;
                     IMAGE_IMPORT_DESCRIPTOR importDesc = new()
                     {
@@ -103,6 +109,15 @@ namespace PersonalTools.PEAnalyzer.Parsers
         {
             return d.OriginalFirstThunk == 0 && d.TimeDateStamp == 0 && d.ForwarderChain == 0 &&
                    d.Name == 0 && d.FirstThunk == 0;
+        }
+
+        // 延迟加载导入表的全零终止符（与标准导入表 IsTerminatorDescriptor 对称）
+        private static bool IsTerminatorDelayLoadDescriptor(IMAGE_DELAYLOAD_DESCRIPTOR d)
+        {
+            return d.Attributes == 0 && d.DllNameRVA == 0 && d.ModuleHandleRVA == 0 &&
+                   d.ImportAddressTableRVA == 0 && d.ImportNameTableRVA == 0 &&
+                   d.BoundImportAddressTableRVA == 0 && d.UnloadInformationTableRVA == 0 &&
+                   d.TimeDateStamp == 0;
         }
 
         /// <summary>
@@ -302,9 +317,23 @@ namespace PersonalTools.PEAnalyzer.Parsers
             while (descriptorCount < PEConstants.MaxImportDescriptors
                 && startOffset + ((long)descriptorCount + 1) * PEConstants.DelayLoadDescriptorSize <= fs.Length)
             {
+                // 全局导入函数总数闸门（含已解析的标准导入 + 本延迟加载表已累积项）：与标准导入表对称，
+                // 防止 descriptors × thunks 放大（多个描述符共享同一超大 thunk 表）耗尽内存/CPU。
+                if (peInfo.ImportFunctions.Count + delayLoadImportFunctions.Count >= PEConstants.MaxTotalImports)
+                {
+                    break;
+                }
+
                 fs.Position = startOffset + (long)descriptorCount * PEConstants.DelayLoadDescriptorSize;
                 IMAGE_DELAYLOAD_DESCRIPTOR delayLoadDesc = ReadDelayLoadDescriptor(reader);
                 descriptorCount++;
+
+                // 全零描述符即延迟加载导入表终止符，遇到即停（与标准导入表 IsTerminatorDescriptor 对称），
+                // 避免把真正终止符之后的尾随字节继续当描述符解析、注入幻影依赖或做无谓工作。
+                if (IsTerminatorDelayLoadDescriptor(delayLoadDesc))
+                {
+                    break;
+                }
 
                 // 解析 DLL 名称；Name RVA 解析失败仅说明这一项名称取不出（如指向 .bss/跨节），
                 // 描述符循环本身按 descriptorCount/DelayLoadDescriptorSize 步进且有 MaxImportDescriptors

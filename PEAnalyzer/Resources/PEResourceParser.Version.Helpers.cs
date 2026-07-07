@@ -17,7 +17,8 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <param name="reader">二进制读取器</param>
         /// <param name="peInfo">PE文件信息</param>
         /// <param name="size">数据大小</param>
-        internal static void ParseVersionInfoStructure(FileStream fs, BinaryReader reader, PEInfo peInfo)
+        /// <returns>true 表示成功解析出真实的 VS_FIXEDFILEINFO 版本（调用方据此阻止后续畸形兄弟叶子覆盖）。</returns>
+        internal static bool ParseVersionInfoStructure(FileStream fs, BinaryReader reader, PEInfo peInfo)
         {
             try
             {
@@ -26,48 +27,50 @@ namespace PersonalTools.PEAnalyzer.Resources
                 // 读取VS_VERSIONINFO头
                 if (!VersionNodeReader.TryReadNodeHeader(fs, reader, out ushort wLength, out ushort wValueLength, out _))
                 {
-                    return;
+                    return false;
                 }
 
                 if (wLength < 6 || startPosition + wLength > fs.Length)
                 {
-                    return;
+                    return false;
                 }
 
                 // 读取szKey (UNICODE字符串 "VS_VERSION_INFO") 并校验
                 string vsVersionInfoKey = VersionNodeReader.ReadKey(fs, reader, wLength);
                 if (!vsVersionInfoKey.Equals("VS_VERSION_INFO", StringComparison.OrdinalIgnoreCase))
                 {
-                    return;
+                    return false;
                 }
 
                 // VS_FIXEDFILEINFO 紧随其后（对齐到4字节边界），大小 52 字节
                 long alignedPosition = PEParserUtils.AlignTo4(fs.Position);
 
-                // wValueLength==0 表示没有 VS_FIXEDFILEINFO（合法），直接解析子项
+                // wValueLength==0 表示没有 VS_FIXEDFILEINFO（合法），直接解析子项；未取到固定版本，返回 false
                 if (wValueLength == 0)
                 {
                     ParseChildrenIfPresent(fs, reader, peInfo, alignedPosition, startPosition + wLength);
-                    return;
+                    return false;
                 }
 
                 if (wValueLength < 52 || alignedPosition + 52 > fs.Length)
                 {
                     peInfo.AdditionalInfo.FileVersion = $"版本信息数据不完整: wValueLength={wValueLength}, 需要>=52";
-                    return;
+                    return false;
                 }
 
                 fs.Position = alignedPosition;
                 VS_FIXEDFILEINFO fixedFileInfo = ReadFixedFileInfo(reader);
-                ApplyFixedFileVersions(peInfo, fixedFileInfo);
+                bool applied = ApplyFixedFileVersions(peInfo, fixedFileInfo);
 
                 // 子项（StringFileInfo / VarFileInfo）紧跟在 VS_FIXEDFILEINFO 之后
                 ParseChildrenIfPresent(fs, reader, peInfo, PEParserUtils.AlignTo4(alignedPosition + 52), startPosition + wLength);
+                return applied;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 PersonalTools.Utils.AppLogger.Log($"版本信息结构解析错误: {ex.Message}");
                 peInfo.AdditionalInfo.FileVersion = "版本信息不完整";
+                return false;
             }
         }
 
@@ -107,16 +110,17 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <summary>
         /// 校验签名并将 VS_FIXEDFILEINFO 中的文件/产品版本写入 PEInfo。
         /// </summary>
-        private static void ApplyFixedFileVersions(PEInfo peInfo, VS_FIXEDFILEINFO info)
+        private static bool ApplyFixedFileVersions(PEInfo peInfo, VS_FIXEDFILEINFO info)
         {
             if (info.dwSignature != 0xFEEF04BD) // VS_VERSIONINFO签名
             {
                 peInfo.AdditionalInfo.FileVersion = $"无效的版本信息签名: 0x{info.dwSignature:X8}";
-                return;
+                return false;
             }
 
             peInfo.AdditionalInfo.FileVersion = FormatVersion(info.dwFileVersionMS, info.dwFileVersionLS);
             peInfo.AdditionalInfo.ProductVersion = FormatVersion(info.dwProductVersionMS, info.dwProductVersionLS);
+            return true;
         }
 
         /// <summary>

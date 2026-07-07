@@ -60,6 +60,9 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <param name="resourceOffset">资源节偏移</param>
         private static void ParseResourceDirectoryForVersionInfo(FileStream fs, BinaryReader reader, PEInfo peInfo, long resourceOffset)
         {
+            // succeeded[0]：跨所有兄弟语言/名称叶子共享的"已成功解析出真实版本"标志。一旦某叶子解析成功，
+            // 后续畸形兄弟叶子不得用错误占位串覆盖已得的正确版本（多语言/多叶子 PE 或恶意构造均可触发）。
+            bool[] succeeded = [false];
             try
             {
                 if (resourceOffset < 0 || resourceOffset + ResourceDirectoryReader.DirectoryHeaderSize > fs.Length)
@@ -75,7 +78,7 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 // 查找 RT_VERSION 资源类型 (ID = 16)，命中首个后下钻并结束
                 ResourceDirectoryReader.ScanTypeEntries(fs, reader, resourceOffset, totalEntries, 16,
-                    nextLevelOffset => ParseVersionResource(fs, reader, peInfo, nextLevelOffset, resourceOffset),
+                    nextLevelOffset => ParseVersionResource(fs, reader, peInfo, nextLevelOffset, resourceOffset, succeeded),
                     stopAtFirst: true);
 
                 fs.Position = originalPosition;
@@ -83,14 +86,17 @@ namespace PersonalTools.PEAnalyzer.Resources
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 PersonalTools.Utils.AppLogger.Log($"资源目录解析错误: {ex.Message}");
-                peInfo.AdditionalInfo.FileVersion = "版本信息不完整";
+                if (!succeeded[0])
+                {
+                    peInfo.AdditionalInfo.FileVersion = "版本信息不完整";
+                }
             }
         }
 
         /// <summary>
         /// 解析版本资源（递归遍历目录，叶子节点交给数据项解析）。
         /// </summary>
-        private static void ParseVersionResource(FileStream fs, BinaryReader reader, PEInfo peInfo, long directoryOffset, long resourceBaseOffset)
+        private static void ParseVersionResource(FileStream fs, BinaryReader reader, PEInfo peInfo, long directoryOffset, long resourceBaseOffset, bool[] succeeded)
         {
             try
             {
@@ -102,23 +108,32 @@ namespace PersonalTools.PEAnalyzer.Resources
                 long originalPosition = fs.Position;
 
                 ResourceDirectoryReader.WalkEntries(fs, reader, directoryOffset, resourceBaseOffset,
-                    subdirectoryOffset => ParseVersionResource(fs, reader, peInfo, subdirectoryOffset, resourceBaseOffset),
-                    dataEntryOffset => ParseVersionDataEntry(fs, reader, peInfo, dataEntryOffset));
+                    subdirectoryOffset => ParseVersionResource(fs, reader, peInfo, subdirectoryOffset, resourceBaseOffset, succeeded),
+                    dataEntryOffset => ParseVersionDataEntry(fs, reader, peInfo, dataEntryOffset, succeeded));
 
                 fs.Position = originalPosition;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 PersonalTools.Utils.AppLogger.Log($"版本资源解析错误: {ex.Message}");
-                peInfo.AdditionalInfo.FileVersion = "版本信息不完整";
+                if (!succeeded[0])
+                {
+                    peInfo.AdditionalInfo.FileVersion = "版本信息不完整";
+                }
             }
         }
 
         /// <summary>
         /// 解析资源数据项（定位 VS_VERSIONINFO 并交给结构解析器）。
         /// </summary>
-        private static void ParseVersionDataEntry(FileStream fs, BinaryReader reader, PEInfo peInfo, long dataEntryOffset)
+        private static void ParseVersionDataEntry(FileStream fs, BinaryReader reader, PEInfo peInfo, long dataEntryOffset, bool[] succeeded)
         {
+            // 已成功解析出真实版本：跳过后续兄弟叶子，避免其错误占位串覆盖已得的正确版本
+            if (succeeded[0])
+            {
+                return;
+            }
+
             try
             {
                 if (dataEntryOffset < 0 || dataEntryOffset + 16 > fs.Length)
@@ -138,7 +153,11 @@ namespace PersonalTools.PEAnalyzer.Resources
                 if (ResourceDirectoryReader.IsReadableData(dataOffset, dataEntry.Size, fs))
                 {
                     fs.Position = dataOffset;
-                    PEResourceParserVersionHelpers.ParseVersionInfoStructure(fs, reader, peInfo);
+                    // 解析成功即置位（后续兄弟叶子将被上方短路跳过）；失败时其内部占位仅在尚无成功结果时有效
+                    if (PEResourceParserVersionHelpers.ParseVersionInfoStructure(fs, reader, peInfo))
+                    {
+                        succeeded[0] = true;
+                    }
                 }
                 else
                 {
@@ -150,7 +169,10 @@ namespace PersonalTools.PEAnalyzer.Resources
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 PersonalTools.Utils.AppLogger.Log($"数据项解析错误: {ex.Message}");
-                peInfo.AdditionalInfo.FileVersion = "版本信息不完整";
+                if (!succeeded[0])
+                {
+                    peInfo.AdditionalInfo.FileVersion = "版本信息不完整";
+                }
             }
         }
     }

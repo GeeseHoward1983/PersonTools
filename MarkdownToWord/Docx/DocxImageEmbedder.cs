@@ -88,7 +88,11 @@ namespace PersonalTools.MarkdownToWord.Docx
                 ctx.AddEmbeddedImageBytes(bytes.Length); // 计入本次导出总字节预算，供后续图片判断是否超总预算
                 return true;
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException)
+            // 单图失败一律降级为占位文字（fail-soft 契约）：除文件 IO/格式异常外，还需覆盖 AddImagePart/FeedData/
+            // GetIdOfPart 可能抛出的 OpenXmlPackageException 与 InvalidOperationException，否则一张异常图片会让
+            // 这些未过滤异常逃逸、葬送整篇（可能多页的）导出。
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException
+                or OpenXmlPackageException or InvalidOperationException)
             {
                 AppendPlaceholder(parent, image.Url, style);
                 return false;

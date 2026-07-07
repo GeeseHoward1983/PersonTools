@@ -95,10 +95,11 @@ namespace PersonalTools.Utils.Crypto
         public static (string PublicKey, string PrivateKey) GenerateKeyPair(int keySize)
         {
             // 服务层参数兜底：拒绝明显非法的密钥长度并给出清晰错误(平台对过小/非对齐值仅抛较隐晦异常)。
+            // 上限 16384：更大的 keySize 会让 RSA.Create(keySize) 在调用线程长时间阻塞甚至卡死 UI，且无实际用途。
             // 注：不强制 2048 下限，保留工具按需生成较短密钥用于测试/教学的能力。
-            if (keySize < 512 || keySize % 8 != 0)
+            if (keySize < 512 || keySize > 16384 || keySize % 8 != 0)
             {
-                throw new ArgumentException($"RSA 密钥长度非法: {keySize}，须为 ≥512 且 8 的倍数", nameof(keySize));
+                throw new ArgumentException($"RSA 密钥长度非法: {keySize}，须为 512~16384 且 8 的倍数", nameof(keySize));
             }
 
             using RSA rsa = RSA.Create(keySize);

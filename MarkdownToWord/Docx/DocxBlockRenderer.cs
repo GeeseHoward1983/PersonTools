@@ -214,16 +214,17 @@ namespace PersonalTools.MarkdownToWord.Docx
                     continue;
                 }
 
-                bool first = true;
+                string number = footnote.Order.ToString(CultureInfo.InvariantCulture) + ". ";
+                bool numberRendered = false;
                 foreach (Block content in footnote)
                 {
                     if (content is ParagraphBlock paragraph)
                     {
                         Paragraph wordParagraph = NewBodyParagraph();
-                        if (first)
+                        if (!numberRendered)
                         {
-                            DocxInlineRenderer.AppendText(wordParagraph, footnote.Order.ToString(CultureInfo.InvariantCulture) + ". ", style.AsBold());
-                            first = false;
+                            DocxInlineRenderer.AppendText(wordParagraph, number, style.AsBold());
+                            numberRendered = true;
                         }
 
                         DocxInlineRenderer.RenderInlines(paragraph.Inline, wordParagraph, style, ctx);
@@ -231,10 +232,32 @@ namespace PersonalTools.MarkdownToWord.Docx
                     }
                     else
                     {
+                        // 首个内容块不是段落（脚注以列表/代码块开头）：先单独输出编号成段，
+                        // 保证脚注编号在文末始终出现、与行内上标 [^n] 对得上，而非因首块类型而丢失编号。
+                        if (!numberRendered)
+                        {
+                            AppendFootnoteNumber(container, number, style);
+                            numberRendered = true;
+                        }
+
                         RenderBlock(content, container, ctx, indentLevel + 1);
                     }
                 }
+
+                // 脚注无任何内容块时仍输出编号，避免编号完全缺失
+                if (!numberRendered)
+                {
+                    AppendFootnoteNumber(container, number, style);
+                }
             }
+        }
+
+        // 将脚注编号作为独立正文段落输出（用于脚注首个内容块非段落或脚注为空的情形）
+        private static void AppendFootnoteNumber(OpenXmlElement container, string number, DocxRunStyle style)
+        {
+            Paragraph numberParagraph = NewBodyParagraph();
+            DocxInlineRenderer.AppendText(numberParagraph, number, style.AsBold());
+            container.AppendChild(numberParagraph);
         }
 
         private static void RenderList(ListBlock list, OpenXmlElement container, DocxRenderContext ctx, int indentLevel)

@@ -56,7 +56,8 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             return result;
         }
 
-        // 按名称查找 RELA/REL 重定位节，返回其索引（找不到或类型不符返回 -1）
+        // 按名称查找 RELA/REL 重定位节，返回其索引（找不到返回 -1）。
+        // 同名但类型非 REL/RELA 的节继续向后查找，不因命中第一个同名非重定位节就提前放弃真正的重定位节。
         private static int FindRelocationSection(ELFParser Parser, string sectionName, out string actualSectionName)
         {
             actualSectionName = string.Empty;
@@ -79,7 +80,8 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                     actualSectionName = currentSectionName;
                     return i;
                 }
-                return -1;
+                // 同名但 sh_type 不符：继续遍历，后面可能还有同名的真正 REL/RELA 节
+                continue;
             }
             return -1;
         }

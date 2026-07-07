@@ -125,12 +125,15 @@ namespace PersonalTools.PEAnalyzer.Resources
                 IMAGE_RESOURCE_DIRECTORY rootDirectory = ResourceDirectoryReader.ReadDirectory(reader);
                 int totalEntries = rootDirectory.NumberOfNamedEntries + rootDirectory.NumberOfIdEntries;
 
-                // 优先查找 RT_GROUP_ICON (ID=14)
-                bool foundGroupIcon = ResourceDirectoryReader.ScanTypeEntries(fs, reader, resourceOffset, totalEntries, 14,
+                // 优先查找 RT_GROUP_ICON (ID=14)。以"是否实际提取到图标"而非"是否命中 RT_GROUP_ICON 类型"
+                // 决定是否回退：存在 RT_GROUP_ICON 目录但其 nID 全部失配/数据不可读（未加入任何图标）时，
+                // 仍应回退到 RT_ICON 与命名资源，避免可直接解析的图标被漏掉。
+                int iconCountBeforeGroup = peInfo.Icons.Count;
+                ResourceDirectoryReader.ScanTypeEntries(fs, reader, resourceOffset, totalEntries, 14,
                     nextLevelOffset => PEResourceParserIconGroup.ParseGroupIconResource(fs, reader, peInfo, nextLevelOffset, resourceOffset));
 
-                // 未找到时回退到 RT_ICON (ID=3) 与命名资源
-                if (!foundGroupIcon)
+                // 组图标未实际产出任何图标时，回退到 RT_ICON (ID=3) 与命名资源
+                if (peInfo.Icons.Count == iconCountBeforeGroup)
                 {
                     ResourceDirectoryReader.ScanTypeEntries(fs, reader, resourceOffset, totalEntries, 3,
                         nextLevelOffset => PEResourceParserIconDirect.ParseDirectIconResource(fs, reader, peInfo, nextLevelOffset, resourceOffset));

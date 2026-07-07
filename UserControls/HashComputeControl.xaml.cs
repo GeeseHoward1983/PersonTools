@@ -214,9 +214,15 @@ namespace PersonalTools.UserControls
                     FileDropHint.Text = $"已加载文件: {Path.GetFileName(filePath)}（文件较大，已计算上方各哈希；为避免界面卡顿，未把内容填入 SHA3 输入框）";
                 }
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException or NotSupportedException)
             {
                 MessageHelper.ShowError($"处理文件时发生错误: {ex.Message}");
+            }
+            catch (OutOfMemoryException ex)
+            {
+                // 本方法为 Drop 处理器 fire-and-forget 调用的 async void：大文件哈希/十六进制串在受限机器上可能 OOM，
+                // 就地提示而非让异常冒泡到全局兜底弹通用错误框。
+                MessageHelper.ShowError($"文件过大，处理时内存不足: {ex.Message}");
             }
         }
     }

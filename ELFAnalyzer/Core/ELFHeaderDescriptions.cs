@@ -55,9 +55,16 @@ namespace PersonalTools.ELFAnalyzer.Core
             return s_osabiNames.TryGetValue(header.EI_OSABI, out string? name) ? name : "OS/ABI Unknown";
         }
 
+        // e_ident 的 EI_VERSION（ELF 版本，EV_CURRENT=1），与 readelf 头部第一处 "Version:" 一致。
+        // 注意不要与 32 位 e_version 混用——后者由调用方另行以 0x 形式单独展示。
         internal static string GetReadableVersion(ELFHeader header)
         {
-            return $"{header.e_version}";
+            return header.EI_VERSION switch
+            {
+                1 => $"{header.EI_VERSION} (current)",
+                0 => $"{header.EI_VERSION} (none)",
+                _ => $"{header.EI_VERSION}",
+            };
         }
 
         // e_machine 码 → 人类可读描述（数据表取代原 ~230 臂 switch；未命中回退到 GetArchitectureName）

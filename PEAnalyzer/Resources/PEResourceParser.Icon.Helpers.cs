@@ -69,7 +69,8 @@ namespace PersonalTools.PEAnalyzer.Resources
             return ResourceDirectoryReader.ReadAtOffset(fs, dataEntryOffset, 16, -1L, () =>
             {
                 IMAGE_RESOURCE_DATA_ENTRY dataEntry = ResourceDirectoryReader.ReadDataEntry(reader);
-                long dataOffset = PEParserUtils.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
+                // 传 Size 作为 requiredLength，确保整块图标数据落在同一节内（与版本资源路径一致）
+                long dataOffset = PEParserUtils.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders, dataEntry.Size);
                 return ResourceDirectoryReader.IsReadableData(dataOffset, dataEntry.Size, fs) ? dataOffset : -1L;
             });
         }

@@ -18,6 +18,9 @@ namespace PersonalTools
             // 全局未处理异常兜底：避免解析/控件抛出的异常导致应用静默崩溃
             DispatcherUnhandledException += App_DispatcherUnhandledException;
             AppDomain.CurrentDomain.UnhandledException += App_UnhandledException;
+            // fire-and-forget 的 Task 内部异常不会经 Dispatcher 回流，默认被静默吞没（.NET 5+ 不崩进程也无日志）；
+            // 订阅后至少留日志便于排查
+            TaskScheduler.UnobservedTaskException += App_UnobservedTaskException;
         }
 
         protected override void OnExit(ExitEventArgs e)
@@ -61,6 +64,13 @@ namespace PersonalTools
                 PersonalTools.Utils.AppLogger.Log($"错误提示弹窗失败: {ex.Message}");
             }
 #pragma warning restore CA1031
+        }
+
+        private static void App_UnobservedTaskException(object? sender, System.Threading.Tasks.UnobservedTaskExceptionEventArgs e)
+        {
+            // 未观察的 Task 异常：记录完整异常便于排查，并标记为已观察（保持 .NET 5+ 默认不因其终止进程的行为）
+            PersonalTools.Utils.AppLogger.Log($"[UnobservedTaskException] {e.Exception}");
+            e.SetObserved();
         }
 
         private static void App_UnhandledException(object sender, UnhandledExceptionEventArgs e)

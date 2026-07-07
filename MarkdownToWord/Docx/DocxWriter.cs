@@ -65,6 +65,13 @@ namespace PersonalTools.MarkdownToWord.Docx
                         DocxBlockRenderer.RenderBlock(block, body, ctx, 0);
                     }
 
+                    // 兜底：无封面/目录且 Markdown 为空时，正文无任何块级内容，Body 将仅含末尾 sectPr，
+                    // 部分严格 OOXML 消费方/旧版 Word 会判定文档需修复。补一个空段落，确保 Body 至少有一个块级子元素。
+                    if (!body.Elements<Paragraph>().Any() && !body.Elements<Table>().Any())
+                    {
+                        body.AppendChild(new Paragraph());
+                    }
+
                     // 正文末尾节：页码从 1 开始（封面/目录不计页数）
                     body.AppendChild(DocxSectionBuilder.BuildBodySection(mainPart));
                     mainPart.Document.Save();

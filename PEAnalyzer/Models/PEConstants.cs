@@ -44,6 +44,11 @@ namespace PersonalTools.PEAnalyzer.Models
         // 防止畸形 thunk 表（无 0 终止符）让 WalkThunkTable 一路读到 EOF、构造海量导入项卡死解析线程（DoS）。
         public const int MaxThunksPerModule = 65536;
 
+        // 导入函数总数硬上限（贯穿标准导入表 + 延迟加载导入表）：per-descriptor 的 MaxImportDescriptors 与
+        // per-module 的 MaxThunksPerModule 二者乘积高达数亿，仍可被"多个描述符共享同一超大 thunk 表"的畸形
+        // 小文件放大为数十 GB 分配 / CPU 挂死。此为全局总量闸门，远超真实 PE 的导入函数总数（通常数百~数千）。
+        public const int MaxTotalImports = 500_000;
+
         // 数据目录索引（IMAGE_DIRECTORY_ENTRY_*）
         public const int DirectoryExport = 0;
         public const int DirectoryImport = 1;

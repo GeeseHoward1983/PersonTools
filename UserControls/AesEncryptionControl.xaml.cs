@@ -244,9 +244,15 @@ namespace PersonalTools.UserControls
                 AesInput.Text = hex;
                 AesInputHexRadio.IsChecked = true;
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException or NotSupportedException)
             {
                 MessageHelper.ShowError($"处理文件时发生错误: {ex.Message}");
+            }
+            catch (OutOfMemoryException ex)
+            {
+                // 本方法为 Drop 处理器 fire-and-forget 调用的 async void：近 100MB 十六进制串在受限机器上可能 OOM，
+                // 就地提示而非让异常冒泡到全局兜底弹通用错误框。
+                MessageHelper.ShowError($"文件过大，转十六进制时内存不足: {ex.Message}");
             }
         }
 

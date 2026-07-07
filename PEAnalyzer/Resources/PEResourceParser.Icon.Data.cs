@@ -20,8 +20,9 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 IMAGE_RESOURCE_DATA_ENTRY dataEntry = ResourceDirectoryReader.ReadDataEntry(reader);
 
-                // OffsetToData 为 RVA
-                long dataOffset = PEParserUtils.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
+                // OffsetToData 为 RVA；传 Size 作为 requiredLength，确保整块数据落在同一节内（与版本资源路径一致），
+                // 避免 Size 跨节时把相邻节字节当作图标数据读取。
+                long dataOffset = PEParserUtils.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders, dataEntry.Size);
                 // 对单个图标资源数据施加与其余图标路径一致的 10MB 绝对上限，
                 // 防止畸形 PE 用逼近文件大小的 Size 触发约 2GB 的一次性分配。
                 const int MaxIconResourceBytes = 10 * 1024 * 1024;

@@ -151,9 +151,15 @@ namespace PersonalTools.UserControls
                 Base64Result.Text = base64;
                 Base64HexInputRadio.IsChecked = true;
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException or NotSupportedException)
             {
                 MessageHelper.ShowError($"处理文件时发生错误: {ex.Message}");
+            }
+            catch (OutOfMemoryException ex)
+            {
+                // 本方法为 Drop 处理器 fire-and-forget 调用的 async void：近 100MB 十六进制/Base64 串在受限机器上
+                // 可能 OOM，就地提示而非让异常冒泡到全局兜底弹通用错误框。
+                MessageHelper.ShowError($"文件过大，转换时内存不足: {ex.Message}");
             }
         }
     }

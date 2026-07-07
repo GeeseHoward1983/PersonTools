@@ -32,6 +32,26 @@ namespace PersonalTools.MarkdownToWord.Docx
         /// <summary>累加一次成功嵌入图片的字节数到本次导出的总预算计量。</summary>
         public void AddEmbeddedImageBytes(long bytes) => EmbeddedImageBytes += bytes;
 
+        // 目标 URI → 超链接关系 Id 的缓存，用于同一 URL 多处出现时复用同一 relationship
+        private readonly Dictionary<string, string> hyperlinkRelationshipIds = new(StringComparer.Ordinal);
+
+        /// <summary>
+        /// 按目标 URI 复用外部超链接关系 Id：同一 URL 多处出现时不重复登记 relationship，
+        /// 避免链接密集文档产生大量重复关系、.docx 体积膨胀。
+        /// </summary>
+        public string GetOrAddHyperlinkRelationship(Uri uri)
+        {
+            string key = uri.AbsoluteUri;
+            if (hyperlinkRelationshipIds.TryGetValue(key, out string? existing))
+            {
+                return existing;
+            }
+
+            string id = MainPart.AddHyperlinkRelationship(uri, true).Id;
+            hyperlinkRelationshipIds[key] = id;
+            return id;
+        }
+
         private uint drawingId;
         private int bookmarkId;
 

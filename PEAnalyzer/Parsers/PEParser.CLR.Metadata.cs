@@ -266,7 +266,10 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 // 跳过位于 TypeDef(2) 之前的 Module(0)、TypeRef(1) 表，定位到 TypeDef 表数据起始
                 long typeDefStart = ComputeTypeDefStart(tablesDataOffset, maskValid, rowCounts, moduleRowSize, typeRefRowSize);
 
-                uint typeDefCount = rowCounts[2];
+                // TypeDef 行数取自不可信元数据：虽有 rowStart+typeDefRowSize > tablesEnd 的越界终止兜底，
+                // 仍与导出表 MaxExportEntries 上限保持一致——收集的类型同样写入 peInfo.ExportFunctions，
+                // 对畸形巨值设同量级硬上限，防止构造海量 ExportFunctionInfo（防御深度）。
+                uint typeDefCount = Math.Min(rowCounts[2], (uint)PEConstants.MaxExportEntries);
                 for (uint i = 0; i < typeDefCount; i++)
                 {
                     long rowStart = typeDefStart + (long)i * typeDefRowSize;

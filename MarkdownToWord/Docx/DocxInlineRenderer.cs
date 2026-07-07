@@ -124,7 +124,11 @@ namespace PersonalTools.MarkdownToWord.Docx
             }
 
             RenderInlines(link, hyperlink, style.AsHyperlink(), ctx);
-            parent.AppendChild(hyperlink);
+            // 空文本链接（如 [](https://x)）不产生任何 run：不追加只含 r:id 的空 <w:hyperlink>，避免无意义元素
+            if (hyperlink.HasChildren)
+            {
+                parent.AppendChild(hyperlink);
+            }
         }
 
         private static void RenderAutolink(AutolinkInline autolink, OpenXmlElement parent, DocxRunStyle style, DocxRenderContext ctx)
@@ -156,7 +160,8 @@ namespace PersonalTools.MarkdownToWord.Docx
 
             try
             {
-                string id = ctx.MainPart.AddHyperlinkRelationship(uri, true).Id;
+                // 按 URL 复用关系 Id（同一目标多处出现不重复登记），避免链接密集文档体积膨胀
+                string id = ctx.GetOrAddHyperlinkRelationship(uri);
                 return new Hyperlink { Id = id };
             }
             catch (UriFormatException)

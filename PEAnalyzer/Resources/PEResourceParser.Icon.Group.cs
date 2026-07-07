@@ -32,7 +32,9 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 // OffsetToData 为 RVA，需转换为文件偏移
                 long dataOffset = PEParserUtils.RvaToOffset(dataEntry.OffsetToData, peInfo.SectionHeaders);
-                if (ResourceDirectoryReader.IsReadableData(dataOffset, dataEntry.Size, fs) && dataOffset + 6 <= fs.Length)
+                // 组图标数据至少需含 6 字节 ICONDIR 头：先校验资源自身声明的 Size>=6，
+                // 避免 Size 为 1~5 时越出本资源边界（虽仍在文件内）读取 ICONDIR。
+                if (dataEntry.Size >= 6 && ResourceDirectoryReader.IsReadableData(dataOffset, dataEntry.Size, fs) && dataOffset + 6 <= fs.Length)
                 {
                     fs.Position = dataOffset;
                     ParseIconDirectory(fs, reader, peInfo, resourceBaseOffset);
