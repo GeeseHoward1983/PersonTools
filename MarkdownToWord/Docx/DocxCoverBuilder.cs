@@ -30,7 +30,10 @@ namespace PersonalTools.MarkdownToWord.Docx
             }
 
             DocxBlockRenderer.StripLeadingNumber(h1.Inline);
-            Paragraph title = new(new ParagraphProperties(new Justification { Val = JustificationValues.Center }));
+            // 显式重置首行缩进，避免正文首行缩进>0 时封面标题右移失中（ind 须在 jc 前）
+            Paragraph title = new(new ParagraphProperties(
+                new Indentation { FirstLine = "0", FirstLineChars = 0 },
+                new Justification { Val = JustificationValues.Center }));
             DocxInlineRenderer.RenderInlines(h1.Inline, title, DocxRunStyle.For(CoverStyle), ctx);
             container.AppendChild(title);
         }

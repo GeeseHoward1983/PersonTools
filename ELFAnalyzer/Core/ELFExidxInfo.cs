@@ -426,6 +426,14 @@ namespace PersonalTools.ELFAnalyzer.Core
                 // 检查是否还有更多指令
                 byte cmd = instruction[offset];
 
+                // 0xB2 (vsp = vsp + 0x204 + (uleb128 << 2)) 的操作数是变长 ULEB128（EHABI §10.2），
+                // 须在定长单/双字节分派前拦截并按实际消耗推进，否则续位字节会被误当后续指令解码
+                if (cmd == 0xB2 && offset + 1 < instructionLength)
+                {
+                    offset += ProcessVspLargeIncrement(instruction, offset, instructionLength, sb);
+                    continue;
+                }
+
                 // 检查是否为有效的单字节指令
                 // 如果不是有效的单字节指令，尝试作为双字节指令处理
                 if (IsValidSingleByteInstruction(cmd) || offset + 2 > instructionLength)
@@ -544,6 +552,28 @@ namespace PersonalTools.ELFAnalyzer.Core
             AppendPopRegs(sb, regs);
         }
 
+        // EHABI 0xB2 uleb128... : vsp = vsp + 0x204 + (uleb128 << 2)。操作数按完整 ULEB128 解码
+        // （最多 5 字节、35 位，移位后仍在 long 范围内），返回本指令实际消耗的总字节数（1 + 操作数字节数）。
+        private static int ProcessVspLargeIncrement(byte[] instruction, int offset, int instructionLength, StringBuilder sb)
+        {
+            sb.Append(CultureInfo.InvariantCulture, $"  0x{instruction[offset]:x2}");
+            ulong uleb = 0;
+            int count = 0;
+            bool more = true;
+            while (more && count < 5 && offset + 1 + count < instructionLength)
+            {
+                byte operand = instruction[offset + 1 + count];
+                sb.Append(CultureInfo.InvariantCulture, $" 0x{operand:x2}");
+                uleb |= (ulong)(operand & 0x7F) << (7 * count);
+                more = (operand & 0x80) != 0;
+                count++;
+            }
+
+            long vsp = 0x204 + (long)(uleb << 2);
+            sb.AppendLine(CultureInfo.InvariantCulture, $" vsp = vsp + {vsp}");
+            return 1 + count;
+        }
+
         // 寄存器列表非空时追加 "pop {...}"（双字节指令解码中重复使用）
         private static void AppendPopRegs(StringBuilder sb, List<string> regs)
         {
@@ -573,12 +603,8 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 AppendMaskedRegs(sb, cmd & 0x0F, 4, "r", 0);
             }
-            else if (cmd is >= 0xB200 and <= 0xB2FF)
-            {
-                int uleb128 = cmd & 0xFF;
-                int vsp = 0x204 + (uleb128 << 2);
-                sb.AppendLine(CultureInfo.InvariantCulture, $" vsp = vsp + {vsp}");
-            }
+            // 注：0xB2（vsp 大增量）操作数为变长 ULEB128，已在 ParseUnwindInstructions 主循环中
+            // 由 ProcessVspLargeIncrement 拦截处理，不会到达本定长双字节分派
             else if (cmd is (>= 0xB300 and <= 0xB3FF) or (>= 0xC900 and <= 0xC9FF) or (>= 0xC800 and <= 0xC8FF)) // pop VFP D 范围
             {
                 int idx = cmd is >= 0xC800 and <= 0xC8FF ? 16 : 0;

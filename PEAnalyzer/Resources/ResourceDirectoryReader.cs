@@ -32,6 +32,49 @@ namespace PersonalTools.PEAnalyzer.Resources
         [ThreadStatic] private static HashSet<long>? _walkVisited;
         [ThreadStatic] private static int _walkEntries;
         [ThreadStatic] private static int _walkDepth;
+        [ThreadStatic] private static int _scanScopeDepth;
+
+        /// <summary>
+        /// 扫描会话作用域：让 _walkVisited/_walkEntries 预算贯穿整个解析入口（如整次图标解析），
+        /// 而非随每次顶层 WalkEntries 结束即清零。否则对每个匹配根条目各发起一次顶层遍历的调用方
+        /// （ScanTypeEntries/ScanNamedEntries 回调、FindIconDataByResourceId 根目录重扫）会使预算失效，
+        /// 畸形 PE 可放大出数十亿次目录读取（CPU/IO 型 DoS）。用 using 保证退出时复位。
+        /// </summary>
+        internal readonly struct ScanScope : IDisposable
+        {
+            public void Dispose()
+            {
+                _scanScopeDepth--;
+                if (_scanScopeDepth <= 0 && _walkDepth == 0)
+                {
+                    _scanScopeDepth = 0;
+                    _walkVisited = null;
+                    _walkEntries = 0;
+                }
+            }
+        }
+
+        /// <summary>开启一个扫描会话（可嵌套）；期间预算跨多次顶层遍历累计，Dispose 归零后复位。</summary>
+        public static ScanScope BeginScan()
+        {
+            _scanScopeDepth++;
+            return default;
+        }
+
+        /// <summary>
+        /// 消耗一个条目预算；预算耗尽返回 false（调用方应停止继续枚举条目）。
+        /// WalkEntries/ScanTypeEntries/ScanNamedEntries 及图标辅助模块的手写条目循环共用同一预算。
+        /// </summary>
+        public static bool TryConsumeEntry()
+        {
+            if (_walkEntries >= MaxEntriesPerWalk)
+            {
+                return false;
+            }
+
+            _walkEntries++;
+            return true;
+        }
 
         /// <summary>
         /// 从当前位置读取一个 IMAGE_RESOURCE_DIRECTORY（16 字节）。
@@ -123,12 +166,11 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 for (int i = 0; i < totalEntries; i++)
                 {
-                    if (_walkEntries >= MaxEntriesPerWalk)
+                    if (!TryConsumeEntry())
                     {
                         break; // 整轮条目预算耗尽，停止处理，防畸形树回调放大
                     }
 
-                    _walkEntries++;
                     if (!TryReadEntry(fs, reader, directoryOffset, i, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry))
                     {
                         break;
@@ -147,9 +189,10 @@ namespace PersonalTools.PEAnalyzer.Resources
             finally
             {
                 _walkDepth--;
-                if (_walkDepth == 0)
+                if (_walkDepth == 0 && _scanScopeDepth == 0)
                 {
-                    _walkVisited = null; // 顶层遍历结束，释放集合；下一轮顶层遍历重新计数
+                    // 顶层遍历结束且无外层扫描会话时释放并复位；处于 ScanScope 内则预算跨遍历累计
+                    _walkVisited = null;
                     _walkEntries = 0;
                 }
             }
@@ -164,7 +207,7 @@ namespace PersonalTools.PEAnalyzer.Resources
             bool found = false;
             for (int i = 0; i < totalEntries; i++)
             {
-                if (!TryReadEntry(fs, reader, resourceOffset, i, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry))
+                if (!TryConsumeEntry() || !TryReadEntry(fs, reader, resourceOffset, i, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry))
                 {
                     break;
                 }
@@ -203,7 +246,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             for (int i = 0; i < namedEntries; i++)
             {
-                if (!TryReadEntry(fs, reader, resourceOffset, i, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry))
+                if (!TryConsumeEntry() || !TryReadEntry(fs, reader, resourceOffset, i, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry))
                 {
                     break;
                 }

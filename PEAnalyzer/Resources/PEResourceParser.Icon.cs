@@ -18,6 +18,9 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <param name="peInfo">PE文件信息</param>
         internal static void ParseIconInfo(FileStream fs, BinaryReader reader, PEInfo peInfo)
         {
+            // 扫描会话：目录/条目预算贯穿整次图标解析（组图标、直接图标、命名资源与根目录重扫共用），
+            // 防畸形 PE 借"每个根条目一次顶层遍历"重置预算实现回调放大
+            using ResourceDirectoryReader.ScanScope scope = ResourceDirectoryReader.BeginScan();
             try
             {
                 // 图标信息在资源目录中，数据目录索引为#2 (IMAGE_DIRECTORY_ENTRY_RESOURCE)

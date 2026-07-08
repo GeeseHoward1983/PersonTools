@@ -28,6 +28,8 @@ namespace PersonalTools.MarkdownToWord.Docx
                 titlePr.AppendChild(new PageBreakBefore());
             }
 
+            // 显式重置首行缩进，避免正文首行缩进>0 时目录标题右移失中（ind 须在 jc 前）
+            titlePr.AppendChild(new Indentation { FirstLine = "0", FirstLineChars = 0 });
             titlePr.AppendChild(new Justification { Val = JustificationValues.Center });
             Paragraph title = new(titlePr);
             DocxInlineRenderer.AppendText(title, "目录", DocxRunStyle.For(TocTitleStyle));

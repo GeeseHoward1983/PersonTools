@@ -178,6 +178,7 @@ namespace PersonalTools.MarkdownToWord.Docx
             // KeepNext：让图片段与紧随其下的图题注保持同页，避免图在页底时被与题注拆到两页
             Paragraph imageParagraph = new(new ParagraphProperties(
                 new KeepNext(),
+                new Indentation { FirstLine = "0", FirstLineChars = 0 }, // 重置首行缩进防居中图片右移
                 new Justification { Val = JustificationValues.Center }));
             bool embedded = DocxImageEmbedder.AppendInlineImage(imageParagraph, image, bodyStyle, ctx);
             container.AppendChild(imageParagraph);
@@ -200,7 +201,9 @@ namespace PersonalTools.MarkdownToWord.Docx
         // 图（Figure 扩展）题注：居中斜体段落
         private static void RenderFigureCaption(FigureCaption caption, OpenXmlElement container, DocxRenderContext ctx)
         {
-            Paragraph paragraph = new(new ParagraphProperties(new Justification { Val = JustificationValues.Center }));
+            Paragraph paragraph = new(new ParagraphProperties(
+                new Indentation { FirstLine = "0", FirstLineChars = 0 }, // 重置首行缩进防居中题注右移
+                new Justification { Val = JustificationValues.Center }));
             DocxRunStyle style = DocxRunStyle.For(ctx.Settings.For(ContentCategory.Body)).AsItalic();
             DocxInlineRenderer.RenderInlines(caption.Inline, paragraph, style, ctx);
             container.AppendChild(paragraph);

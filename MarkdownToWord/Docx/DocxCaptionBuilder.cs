@@ -23,8 +23,10 @@ namespace PersonalTools.MarkdownToWord.Docx
             ContentStyleRow body = ctx.Settings.For(ContentCategory.Body);
             DocxRunStyle style = DocxRunStyle.For(body);
 
+            // 显式重置首行缩进：题注继承 Normal 样式，正文首行缩进>0 时会使居中题注整体右移失中（ind 须在 jc 前）
             Paragraph paragraph = new(new ParagraphProperties(
                 new KeepNext(),
+                new Indentation { FirstLine = "0", FirstLineChars = 0 },
                 new Justification { Val = justification }));
 
             DocxInlineRenderer.AppendText(paragraph, label + " ", style);

@@ -48,7 +48,9 @@ namespace PersonalTools.MarkdownToWord.Docx
         {
             FooterPart footerPart = mainPart.AddNewPart<FooterPart>();
 
-            Paragraph paragraph = new(new ParagraphProperties(new Justification { Val = JustificationValues.Center }));
+            Paragraph paragraph = new(new ParagraphProperties(
+                new Indentation { FirstLine = "0", FirstLineChars = 0 }, // 重置首行缩进防页脚页码右移失中
+                new Justification { Val = JustificationValues.Center }));
             paragraph.AppendChild(new Run(new FieldChar { FieldCharType = FieldCharValues.Begin }));
             paragraph.AppendChild(new Run(new FieldCode(" PAGE ") { Space = SpaceProcessingModeValues.Preserve }));
             paragraph.AppendChild(new Run(new FieldChar { FieldCharType = FieldCharValues.Separate }));

@@ -23,7 +23,9 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 for (int i = 0; i < totalEntries; i++)
                 {
-                    if (!ResourceDirectoryReader.TryReadEntry(fs, reader, directoryOffset, i, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry))
+                    // 手写条目循环与 WalkEntries/ScanTypeEntries 共用同一扫描会话预算，防根目录重扫放大
+                    if (!ResourceDirectoryReader.TryConsumeEntry() ||
+                        !ResourceDirectoryReader.TryReadEntry(fs, reader, directoryOffset, i, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry))
                     {
                         break;
                     }
@@ -101,7 +103,9 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 for (int i = 0; i < totalEntries; i++)
                 {
-                    if (!ResourceDirectoryReader.TryReadEntry(fs, reader, resourceOffset, i, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry))
+                    // 每个组图标条目都会重扫资源根目录，必须消耗同一扫描会话预算，否则畸形 PE 可借此放大
+                    if (!ResourceDirectoryReader.TryConsumeEntry() ||
+                        !ResourceDirectoryReader.TryReadEntry(fs, reader, resourceOffset, i, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry))
                     {
                         break;
                     }

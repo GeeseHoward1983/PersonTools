@@ -108,7 +108,7 @@ namespace PersonalTools.ConstString
             { 102, "網絡因重置而斷開連接" }, /* ENETRESET */
             { 103, "軟件導致連接中止" }, /* ECONNABORTED */
             { 104, "連接被對等方重置" }, /* ECONNRESET */
-            { 105, "沒有可用的緩沖區空間" }, /* ENOBUFS */
+            { 105, "沒有可用的緩衝區空間" }, /* ENOBUFS */
             { 106, "傳輸端點已連接" }, /* EISCONN */
             { 107, "傳輸端點未連接" }, /* ENOTCONN */
             { 108, "傳輸端點關閉後無法發送" }, /* ESHUTDOWN */
@@ -149,12 +149,12 @@ namespace PersonalTools.ConstString
             { 522, "更新同步不匹配" }, /* ENOTSYNC */
             { 523, "Cookie已過期" }, /* EBADCOOKIE */
             { 524, "操作不被支持" }, /* ENOTSUPP */
-            { 525, "緩沖區或請求太小" }, /* ETOOSMALL */
+            { 525, "緩衝區或請求太小" }, /* ETOOSMALL */
             { 526, "發生不可翻譯的錯誤" }, /* ESERVERFAULT */
             { 527, "服務器不支持的類型" }, /* EBADTYPE */
             { 528, "請求已啟動，但在超時前無法完成" }, /* EJUKEBOX */
             { 529, "iocb已排隊，將收到完成事件" }, /* EIOCBQUEUED */
-            { 530, "與召回狀態沖突" }, /* ERECALLCONFLICT */
+            { 530, "與召回狀態衝突" }, /* ERECALLCONFLICT */
             { 531, "NFS文件鎖回收被拒絕" }, /* ENOGRACE */
         };
     }
