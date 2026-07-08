@@ -198,10 +198,12 @@ namespace PersonalTools.ELFAnalyzer.Core
             ParseUnwindInstructions(bInstruction, bInstruction.Length, sb);
         }
 
-        // Compact 模型：由 unwindInfo 及（compactIndex==1 时）后续 extab 字节装配出解码用指令序列
+        // Compact 模型：由 unwindInfo 及（compactIndex 为 1/2 时）后续 extab 字节装配出解码用指令序列。
+        // EHABI：pr0(索引0) 短帧，3 条指令内联于低 24 位；pr1/pr2(索引1/2) 长帧编码相同，
+        // bits16-23 为额外字数、低 16 位为前 2 字节指令；索引 ≥3 为保留值，无法解码。
         private static byte[] BuildCompactInstructions(ELFParser parser, int unwindInfo, int compactIndex, long extabFileOff)
         {
-            if (compactIndex != 1)
+            if (compactIndex == 0)
             {
                 return
                 [
@@ -209,6 +211,11 @@ namespace PersonalTools.ELFAnalyzer.Core
                     (byte)(unwindInfo >> 8 & 0xFF),
                     (byte)(unwindInfo & 0xFF),
                 ];
+            }
+
+            if (compactIndex is not (1 or 2))
+            {
+                return [];
             }
 
             int remainDWords = (unwindInfo >> 16) & 0xFF;

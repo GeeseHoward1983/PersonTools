@@ -35,6 +35,10 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             return result;
         }
 
+        // 段×节映射的全局工作量预算：畸形 ELF 段/节各可达 65535，双重循环为 O(n²)≈43 亿次，
+        // 且命中节名无界累积进 StringBuilder；正常文件(数十段×数万节)远低于此值
+        private const long MaxMappingChecks = 2_000_000;
+
         internal static string GetSectionToSegmentMappingInfo(ELFParser Parser)
         {
             StringBuilder sb = new();
@@ -43,19 +47,25 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
 
             if (Parser.ProgramHeaders != null)
             {
+                long budget = MaxMappingChecks;
                 for (int i = 0; i < Parser.ProgramHeaders.Count; i++)
                 {
                     ELFProgramHeader ph = Parser.ProgramHeaders[i];
                     sb.Append(CultureInfo.InvariantCulture, $"   {i:D2}     ");
-                    List<string> sections = GetSectionsInSegment(Parser, ph);
+                    List<string> sections = GetSectionsInSegment(Parser, ph, ref budget);
                     sb.AppendLine(ConvertUtils.EnumerableToString(" ", sections));
+                    if (budget <= 0)
+                    {
+                        sb.AppendLine("  ...(映射计算量超出上限，其余段已省略)");
+                        break;
+                    }
                 }
             }
 
             return sb.ToString();
         }
 
-        private static List<string> GetSectionsInSegment(ELFParser _parser, ELFProgramHeader ph)
+        private static List<string> GetSectionsInSegment(ELFParser _parser, ELFProgramHeader ph, ref long budget)
         {
             List<string> sections = [];
             if (_parser.SectionHeaders == null)
@@ -75,6 +85,11 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             }
             for (int i = 0; i < _parser.SectionHeaders.Count; i++)
             {
+                if (--budget < 0)
+                {
+                    break; // 全局预算耗尽，调用方负责追加截断标注
+                }
+
                 Models.ELFSectionHeader sh = _parser.SectionHeaders[i];
                 if (sh.sh_size == 0)
                 {

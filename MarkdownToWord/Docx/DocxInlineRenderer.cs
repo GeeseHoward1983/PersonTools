@@ -22,18 +22,25 @@ namespace PersonalTools.MarkdownToWord.Docx
         /// <summary>渲染容器内联的所有子节点到 <paramref name="parent"/>（Paragraph 或 Hyperlink）。</summary>
         public static void RenderInlines(ContainerInline? container, OpenXmlElement parent, DocxRunStyle style, DocxRenderContext ctx)
         {
-            if (container == null)
+            RenderInlines(container, parent, style, ctx, 0);
+        }
+
+        // 与块级 MaxNestingDepth 同款守卫：深层嵌套行内标记（如交替 */_ 数千层）形成深内联树，
+        // Emphasis/Link/Container 分支的相互递归若无深度上限会触发不可捕获的 StackOverflow；超限丢弃更深内容
+        private static void RenderInlines(ContainerInline? container, OpenXmlElement parent, DocxRunStyle style, DocxRenderContext ctx, int depth)
+        {
+            if (container == null || depth > DocxBlockRenderer.MaxNestingDepth)
             {
                 return;
             }
 
             foreach (Inline inline in container)
             {
-                RenderInline(inline, parent, style, ctx);
+                RenderInline(inline, parent, style, ctx, depth);
             }
         }
 
-        private static void RenderInline(Inline inline, OpenXmlElement parent, DocxRunStyle style, DocxRenderContext ctx)
+        private static void RenderInline(Inline inline, OpenXmlElement parent, DocxRunStyle style, DocxRenderContext ctx, int depth)
         {
             switch (inline)
             {
@@ -49,7 +56,7 @@ namespace PersonalTools.MarkdownToWord.Docx
                     AppendText(parent, $"${math.Content.ToString()}$", style.AsCode());
                     break;
                 case EmphasisInline emphasis:
-                    RenderInlines(emphasis, parent, ResolveEmphasis(emphasis, style), ctx);
+                    RenderInlines(emphasis, parent, ResolveEmphasis(emphasis, style), ctx, depth + 1);
                     break;
                 case CodeInline code:
                     AppendText(parent, code.Content, style.AsCode());
@@ -82,13 +89,13 @@ namespace PersonalTools.MarkdownToWord.Docx
 
                     break;
                 case LinkInline link:
-                    RenderLink(link, parent, style, ctx);
+                    RenderLink(link, parent, style, ctx, depth);
                     break;
                 case AutolinkInline autolink:
                     RenderAutolink(autolink, parent, style, ctx);
                     break;
                 case ContainerInline container:
-                    RenderInlines(container, parent, style, ctx); // 其它容器型内联兜底递归
+                    RenderInlines(container, parent, style, ctx, depth + 1); // 其它容器型内联兜底递归
                     break;
                 default:
                     break;
@@ -108,7 +115,7 @@ namespace PersonalTools.MarkdownToWord.Docx
             };
         }
 
-        private static void RenderLink(LinkInline link, OpenXmlElement parent, DocxRunStyle style, DocxRenderContext ctx)
+        private static void RenderLink(LinkInline link, OpenXmlElement parent, DocxRunStyle style, DocxRenderContext ctx, int depth)
         {
             if (link.IsImage)
             {
@@ -119,11 +126,11 @@ namespace PersonalTools.MarkdownToWord.Docx
             Hyperlink? hyperlink = TryCreateHyperlink(link.Url, ctx);
             if (hyperlink == null)
             {
-                RenderInlines(link, parent, style, ctx); // 相对/锚点链接：仅渲染文字
+                RenderInlines(link, parent, style, ctx, depth + 1); // 相对/锚点链接：仅渲染文字
                 return;
             }
 
-            RenderInlines(link, hyperlink, style.AsHyperlink(), ctx);
+            RenderInlines(link, hyperlink, style.AsHyperlink(), ctx, depth + 1);
             // 空文本链接（如 [](https://x)）不产生任何 run：不追加只含 r:id 的空 <w:hyperlink>，避免无意义元素
             if (hyperlink.HasChildren)
             {

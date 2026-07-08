@@ -253,11 +253,12 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private static void AppendAEABIStringAttr(string name, byte[] data, ref int offset, int endOffset, StringBuilder sb)
         {
-            // 限制最大读取长度为子节剩余字节(endOffset-offset)，避免子节末缺 NUL 终止符时串读到相邻子节数据
-            int maxLength = endOffset > offset ? endOffset - offset : 0;
-            string value = ELFParserUtils.ExtractStringFromBytes(data, offset, maxLength);
+            // 先量取 C 串字节长度（止于内部 NUL 或子节末）再有界提取：3 参重载只裁尾部 NUL、不停于内部 NUL，
+            // 若直接以子节剩余字节提取，字符串后续的属性字节会被串入值中显示乱码
+            int byteLength = ELFParserUtils.MeasureCStringByteLength(data, offset, endOffset);
+            string value = ELFParserUtils.ExtractStringFromBytes(data, offset, byteLength);
             // 按原始 UTF-8 字节跨度推进，而非 value.Length(UTF-16 字符数)，否则含多字节字符时偏移错位
-            offset += ELFParserUtils.MeasureCStringByteLength(data, offset, endOffset) + 1; // 含 null 终止符
+            offset += byteLength + 1; // 含 null 终止符
             sb.AppendLine(CultureInfo.InvariantCulture, $"  {name}: \"{value}\"");
         }
 

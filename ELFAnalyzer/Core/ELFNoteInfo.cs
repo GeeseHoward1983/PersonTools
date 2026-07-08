@@ -98,12 +98,25 @@ namespace PersonalTools.ELFAnalyzer.Core
                 return "";
             }
 
+            // NT_GNU_ABI_TAG desc 为 4 个字：word0 是 OS 描述符(0=Linux 等)，word1-3 才是最低 ABI 版本，
+            // 与 readelf 输出 "OS: Linux, ABI: 2.6.32" 对齐；不能把 OS 并入版本号
             bool isLittleEndian = parser.Header.IsLittleEndian();
-            uint v0 = ELFParserUtils.ReadUInt32(data, descOffset, isLittleEndian);
+            uint os = ELFParserUtils.ReadUInt32(data, descOffset, isLittleEndian);
             uint v1 = ELFParserUtils.ReadUInt32(data, descOffset + 4, isLittleEndian);
             uint v2 = ELFParserUtils.ReadUInt32(data, descOffset + 8, isLittleEndian);
             uint v3 = ELFParserUtils.ReadUInt32(data, descOffset + 12, isLittleEndian);
-            return $"(ABI version: {v0}.{v1}.{v2}.{v3})";
+            string osName = os switch
+            {
+                0 => "Linux",
+                1 => "Hurd",
+                2 => "Solaris",
+                3 => "FreeBSD",
+                4 => "NetBSD",
+                5 => "Syllable",
+                6 => "NaCl",
+                _ => $"Unknown ({os})",
+            };
+            return $"(OS: {osName}, ABI: {v1}.{v2}.{v3})";
         }
 
         private static string GetBuildID(byte[] data, int descOffset, int descSize)

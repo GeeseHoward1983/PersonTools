@@ -73,6 +73,9 @@ namespace PersonalTools.ELFAnalyzer.Core
             // 防畸形 DT_VERNEEDNUM / vn_cnt(≤65535) / 小步进 vn_next、vna_next 构成 O(N×M) CPU/内存耗尽
             // （与 exidx 未命中回扫的双上界修复同款）。
             const int MaxTotalVernaux = 1_000_000;
+            // 外层 verneed 项数硬上界（与 ParseVerDefEntries 的 MaxVerDefEntries 同款）：
+            // maxCount<=0（格式化路径）且 vn_cnt=0 时 MaxTotalVernaux 不生效，畸形 vn_next=1 可小步进迭代至节尾
+            const int MaxVerneedEntries = 1_000_000;
 
             if (sectionEnd > parser.FileData.Length)
             {
@@ -83,7 +86,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             int processed = 0;
             int totalAux = 0;
 
-            while ((maxCount <= 0 || processed < maxCount) && offset + 16 <= sectionEnd)
+            while ((maxCount <= 0 || processed < maxCount) && processed < MaxVerneedEntries && offset + 16 <= sectionEnd)
             {
                 ushort vn_cnt = ELFParserUtils.ReadUInt16(parser.FileData, (int)offset + 2, isLittleEndian);
                 uint vn_aux = ELFParserUtils.ReadUInt32(parser.FileData, (int)offset + 8, isLittleEndian);

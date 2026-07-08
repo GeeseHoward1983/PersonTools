@@ -103,12 +103,19 @@ namespace PersonalTools.MarkdownToWord.Docx
         public static string ExtractAltText(LinkInline image)
         {
             StringBuilder sb = new();
-            AppendLiterals(image, sb);
+            AppendLiterals(image, sb, 0);
             return sb.ToString().Trim();
         }
 
-        private static void AppendLiterals(ContainerInline container, StringBuilder sb)
+        // 与 DocxInlineRenderer 同款深度守卫：alt 文本中深层嵌套行内标记同样会形成深内联树，
+        // 无守卫递归展开可触发不可捕获的 StackOverflow；超限丢弃更深内容
+        private static void AppendLiterals(ContainerInline container, StringBuilder sb, int depth)
         {
+            if (depth > DocxBlockRenderer.MaxNestingDepth)
+            {
+                return;
+            }
+
             foreach (Inline inline in container)
             {
                 if (inline is LiteralInline literal)
@@ -121,7 +128,7 @@ namespace PersonalTools.MarkdownToWord.Docx
                 }
                 else if (inline is ContainerInline child)
                 {
-                    AppendLiterals(child, sb);
+                    AppendLiterals(child, sb, depth + 1);
                 }
             }
         }

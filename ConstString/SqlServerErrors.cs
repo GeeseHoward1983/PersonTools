@@ -132,7 +132,7 @@ namespace PersonalTools.ConstString
             { 18452, "无法使用 Windows 身份验证" },
             { 23294, "对象正被另一进程使用" },
             { 26024, "启动服务失败" },
-            { 99999, "SQL Server error - unknown error" }
+            { 99999, "SQL Server 错误 - 未知错误" }
         };
 
         // SQL Server 错误码 - 繁体中文
@@ -190,14 +190,14 @@ namespace PersonalTools.ConstString
             { 10060, "連線逾時" },
             { 10061, "目標計算機積極拒絕連線" },
             { 11001, "找不到主機名" },
-            { 11011, "複製錶沒有主鍵" },
+            { 11011, "複製表沒有主鍵" },
             { 14001, "應用程式依賴的DLL缺失" },
             { 15601, "無法啟動服務" },
             { 17187, "SQL Server尚未配置為接受遠程連接" },
             { 18452, "無法使用 Windows 身份驗證" },
             { 23294, "物件正被另一進程使用" },
             { 26024, "啟動服務失敗" },
-            { 99999, "SQL Server error - unknown error" }
+            { 99999, "SQL Server 錯誤 - 未知錯誤" }
         };
 
         internal static Dictionary<long, string> SqlServerErrorsMap => GlobalState.CurrentLanguageType switch

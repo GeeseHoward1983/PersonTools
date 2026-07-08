@@ -21,9 +21,16 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <summary>单次顶层遍历允许访问的目录节点总数上限（正常 PE 仅 类型×名称×语言 的数十级别）。</summary>
         private const int MaxDirectoriesPerWalk = 4096;
 
-        // 整轮顶层遍历中已访问的目录偏移集合与当前递归深度，用于防止畸形/循环资源树导致的无限递归与 StackOverflow。
+        /// <summary>
+        /// 单次顶层遍历允许处理的目录条目总数上限：目录数上限(4096)不限单目录条目数（可达 131070），
+        /// 否则畸形多目录树可触发约 5 亿次 onDataEntry/onSubdirectory 回调（图标路径每次还伴随 IO），构成 CPU/IO 放大。
+        /// </summary>
+        private const int MaxEntriesPerWalk = 65536;
+
+        // 整轮顶层遍历中已访问的目录偏移集合、已处理条目总数与当前递归深度，用于防止畸形/循环资源树导致的无限递归与回调放大。
         // 所有递归都经由 WalkEntries 分派回调，故在此单点防护即可覆盖全部调用方。
         [ThreadStatic] private static HashSet<long>? _walkVisited;
+        [ThreadStatic] private static int _walkEntries;
         [ThreadStatic] private static int _walkDepth;
 
         /// <summary>
@@ -116,6 +123,12 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 for (int i = 0; i < totalEntries; i++)
                 {
+                    if (_walkEntries >= MaxEntriesPerWalk)
+                    {
+                        break; // 整轮条目预算耗尽，停止处理，防畸形树回调放大
+                    }
+
+                    _walkEntries++;
                     if (!TryReadEntry(fs, reader, directoryOffset, i, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry))
                     {
                         break;
@@ -137,6 +150,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 if (_walkDepth == 0)
                 {
                     _walkVisited = null; // 顶层遍历结束，释放集合；下一轮顶层遍历重新计数
+                    _walkEntries = 0;
                 }
             }
         }
