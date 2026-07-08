@@ -28,6 +28,12 @@ namespace PersonalTools.PEAnalyzer.Resources
                         break;
                     }
 
+                    // 命名条目(高位=1)的低16位是名称偏移而非ID，先跳过以免偏移值恰等于目标ID时误匹配
+                    if ((entry.NameOrId & 0x80000000) != 0)
+                    {
+                        continue;
+                    }
+
                     if ((entry.NameOrId & 0xFFFF) != (resourceId & 0xFFFF))
                     {
                         continue;
@@ -98,6 +104,12 @@ namespace PersonalTools.PEAnalyzer.Resources
                     if (!ResourceDirectoryReader.TryReadEntry(fs, reader, resourceOffset, i, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry))
                     {
                         break;
+                    }
+
+                    // 命名条目(高位=1)的低16位是名称偏移而非类型ID，先跳过以免误判为 RT_ICON
+                    if ((entry.NameOrId & 0x80000000) != 0)
+                    {
+                        continue;
                     }
 
                     if ((entry.NameOrId & 0xFFFF) != RT_ICON_TYPE)

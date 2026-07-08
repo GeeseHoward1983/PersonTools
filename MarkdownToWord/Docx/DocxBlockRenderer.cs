@@ -91,9 +91,11 @@ namespace PersonalTools.MarkdownToWord.Docx
                 case HtmlBlock:
                     break; // 跳过原始 HTML 块
                 case ContainerBlock nested:
+                    // 泛化容器同样是递归入口，深度必须 +1 纳入 MaxNestingDepth 守卫，
+                    // 否则深层嵌套的自定义容器可绕过守卫递归爆栈
                     foreach (Block child in nested)
                     {
-                        RenderBlock(child, container, ctx, indentLevel);
+                        RenderBlock(child, container, ctx, indentLevel + 1);
                     }
 
                     break;

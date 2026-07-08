@@ -37,8 +37,10 @@ namespace PersonalTools.PEAnalyzer
                 bitmap.BeginInit();
                 bitmap.StreamSource = stream;
                 bitmap.CacheOption = BitmapCacheOption.OnLoad; // 确保加载完成后可释放流
-                // 解码像素上限：限制解码后位图宽度(高度按比例)，防止"声明小、实际巨幅"的图标解码爆内存
+                // 解码像素上限：宽高两轴同时封顶。只设宽度时高度按源图真实比例缩放，
+                // "窄而超高"的内嵌 PNG 仍可解出 GB 级位图，故两轴都必须显式限制
                 bitmap.DecodePixelWidth = Math.Min(icon.Width, MaxDecodePixels);
+                bitmap.DecodePixelHeight = Math.Min(icon.Height, MaxDecodePixels);
                 bitmap.EndInit();
                 bitmap.Freeze();
 

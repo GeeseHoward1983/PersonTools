@@ -307,10 +307,11 @@ namespace PersonalTools.ELFAnalyzer.Core
                 0x30000000 => "mips4",
                 0x40000000 => "mips5",
                 0x50000000 => "mips32",
-                0x60000000 => "mips32r2",// MIPS32r2
-                0x70000000 => "mips32r2",// MIPS32r2 with o32 ABI
-                0x80000000 => "mips64",
-                0x90000000 => "mips64r2",
+                0x60000000 => "mips64",   // E_MIPS_ARCH_64
+                0x70000000 => "mips32r2", // E_MIPS_ARCH_32R2
+                0x80000000 => "mips64r2", // E_MIPS_ARCH_64R2
+                0x90000000 => "mips32r6", // E_MIPS_ARCH_32R6
+                0xA0000000 => "mips64r6", // E_MIPS_ARCH_64R6
                 _ => "unknown",
             };
         }
@@ -331,15 +332,29 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private static readonly (uint Mask, string Label)[] s_mipsFlagBits =
         [
-            (0x00000001u, "noreorder"),
-            (0x00000002u, "pic"),
-            (0x00000004u, "cpic"),
-            (0x00001000u, "o32"),
-            (0x00002000u, "o64"),
-            (0x00004000u, "n32"),
-            (0x00000010u, "nan2008"),
-            (0x00000020u, "nan2001"),
+            (0x00000001u, "noreorder"),   // EF_MIPS_NOREORDER
+            (0x00000002u, "pic"),         // EF_MIPS_PIC
+            (0x00000004u, "cpic"),        // EF_MIPS_CPIC
+            (0x00000008u, "xgot"),        // EF_MIPS_XGOT
+            (0x00000010u, "ucode"),       // EF_MIPS_UCODE
+            (0x00000020u, "abi2"),        // EF_MIPS_ABI2 (n32)
+            (0x00000100u, "32bitmode"),   // EF_MIPS_32BITMODE
+            (0x00000200u, "fp64"),        // EF_MIPS_FP64
+            (0x00000400u, "nan2008"),     // EF_MIPS_NAN2008
         ];
+
+        // ABI 是 0xF000 掩码下的字段值（非位标志），须整体比对
+        private static string? GetMIPSAbiName(uint flags)
+        {
+            return (flags & 0x0000F000) switch
+            {
+                0x00001000 => "o32",    // E_MIPS_ABI_O32
+                0x00002000 => "o64",    // E_MIPS_ABI_O64
+                0x00003000 => "eabi32", // E_MIPS_ABI_EABI32
+                0x00004000 => "eabi64", // E_MIPS_ABI_EABI64
+                _ => null,
+            };
+        }
 
         private static readonly (uint Mask, string Label)[] s_ppcFlagBits =
         [
@@ -356,8 +371,14 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private static List<string> GetMIPSFormattedELFFlags(uint flags)
         {
-            // 平铺标志位走数据表；架构版本（高 4 位）单独追加在末尾
+            // 平铺标志位走数据表；ABI 字段（0xF000 掩码）与架构版本（高 4 位）单独追加在末尾
             List<string> descriptions = FormatFlagBits(flags, s_mipsFlagBits);
+            string? abi = GetMIPSAbiName(flags);
+            if (abi != null)
+            {
+                descriptions.Add(abi);
+            }
+
             descriptions.Add(GetMIPSArchitectureName(flags));
             return descriptions;
         }
@@ -403,7 +424,13 @@ namespace PersonalTools.ELFAnalyzer.Core
                 descriptions.Add("BE8");
             }
 
+            // EF_ARM_LE8=0x00400000；interworking 是旧 ABI 位 EF_ARM_INTERWORK=0x04
             if ((flags & 0x00400000) != 0)
+            {
+                descriptions.Add("LE8");
+            }
+
+            if ((flags & 0x00000004) != 0)
             {
                 descriptions.Add("interworking enabled");
             }

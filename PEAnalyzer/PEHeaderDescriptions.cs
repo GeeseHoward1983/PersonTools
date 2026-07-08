@@ -13,7 +13,7 @@ namespace PersonalTools.PEAnalyzer
             [0x0162] = "MIPS R3000",
             [0x0166] = "MIPS R4000",
             [0x0168] = "MIPS R10000",
-            [0x0169] = "MIPS WCI v2",
+            [0x0169] = "MIPS WCE v2", // IMAGE_FILE_MACHINE_WCEMIPSV2 (Windows CE)
             [0x0184] = "Alpha AXP",
             [0x01A2] = "SH3",
             [0x01A3] = "SH3 DSP",

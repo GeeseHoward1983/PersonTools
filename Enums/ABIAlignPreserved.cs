@@ -17,9 +17,10 @@ namespace PersonalTools.Enums
         Eight_byte_except_leaf_SP = 1,
 
         /// <summary>
-        /// 4字节对齐保留
+        /// 8字节对齐保留，且SP（栈指针）任意时刻均保持8字节对齐
+        /// 对应readelf输出的"8-byte"
         /// </summary>
-        Four_byte = 2,
+        Eight_byte = 2,
 
         /// <summary>
         /// 未定义或未知的对齐保留要求

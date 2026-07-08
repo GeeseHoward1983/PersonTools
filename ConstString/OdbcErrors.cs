@@ -18,7 +18,7 @@ namespace PersonalTools.ConstString
             { "01S02", "Option value changed" },
             { "01S03", "No rows updated or deleted" },
             { "01S04", "More than one row updated or deleted" },
-            { "01S05", "Function sequence error" },
+            { "01S05", "Cancel treated as FreeStmt/Close" },
             { "01S06", "Attempt to fetch before result set returned first row" },
             { "07001", "Wrong number of parameters" },
             { "07006", "Restricted data type violation" },
@@ -101,7 +101,7 @@ namespace PersonalTools.ConstString
             { "S1110", "Invalid driver completion" },
             { "S1111", "Invalid bookmark value" },
             { "S1C00", "Driver not capable" },
-            { "S1DE0", "Operation completed successfully with no data" },
+            { "S1DE0", "No data at execution values pending" },
             { "S1T00", "Timeout expired" }
         };
 

@@ -133,7 +133,9 @@ namespace PersonalTools.MarkdownToWord.Docx
 
         private static void RenderAutolink(AutolinkInline autolink, OpenXmlElement parent, DocxRunStyle style, DocxRenderContext ctx)
         {
-            Hyperlink? hyperlink = TryCreateHyperlink(autolink.Url, ctx);
+            // 邮箱自动链接 <a@b.com> 的 Url 不含 scheme，须补 mailto: 才能构造绝对 Uri；显示文本仍用原文
+            string target = autolink.IsEmail ? "mailto:" + autolink.Url : autolink.Url;
+            Hyperlink? hyperlink = TryCreateHyperlink(target, ctx);
             if (hyperlink == null)
             {
                 AppendText(parent, autolink.Url, style);

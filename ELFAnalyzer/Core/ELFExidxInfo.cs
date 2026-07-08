@@ -480,7 +480,8 @@ namespace PersonalTools.ELFAnalyzer.Core
             else if ((cmd & 0xF0) == 0x90) // 0x9n: vsp = r[nnnn]（掩码须为 0xF0，仅匹配 0x90-0x9F）
             {
                 int imm = cmd & 0x0F;
-                if (imm is 0xC or 0xF)
+                // EHABI 规定 1001nnnn 中 nnnn=13(sp)/15(pc) 为保留值（r12 合法）
+                if (imm is 0xD or 0xF)
                 {
                     sb.AppendLine("  reserved");
                 }

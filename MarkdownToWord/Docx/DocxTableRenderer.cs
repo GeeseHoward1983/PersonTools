@@ -5,6 +5,7 @@ using Markdig.Syntax;
 using PersonalTools.MarkdownToWord.Models;
 using MTable = Markdig.Extensions.Tables.Table;
 using MTableCell = Markdig.Extensions.Tables.TableCell;
+using MTableColumnAlign = Markdig.Extensions.Tables.TableColumnAlign;
 using MTableRow = Markdig.Extensions.Tables.TableRow;
 
 namespace PersonalTools.MarkdownToWord.Docx
@@ -80,7 +81,9 @@ namespace PersonalTools.MarkdownToWord.Docx
                     MTableCell mdCell = mdCells[cellIdx++];
                     int columnSpan = Math.Clamp(mdCell.ColumnSpan, 1, totalColumns - col);
                     int rowSpan = Math.Max(1, mdCell.RowSpan);
-                    row.AppendChild(BuildCell(mdCell, cellStyle, mdRow.IsHeader, ctx, indentLevel, columnSpan, rowSpan > 1));
+                    // GFM 列对齐（:--:/--:）按单元格起始网格列取列定义
+                    MTableColumnAlign? alignment = col < mdTable.ColumnDefinitions.Count ? mdTable.ColumnDefinitions[col].Alignment : null;
+                    row.AppendChild(BuildCell(mdCell, cellStyle, mdRow.IsHeader, ctx, indentLevel, columnSpan, rowSpan > 1, alignment));
                     if (rowSpan > 1)
                     {
                         rowSpanRemaining[col] = rowSpan - 1;
@@ -171,7 +174,7 @@ namespace PersonalTools.MarkdownToWord.Docx
             };
         }
 
-        private static TableCell BuildCell(MTableCell mdCell, DocxRunStyle style, bool isHeader, DocxRenderContext ctx, int indentLevel, int columnSpan, bool verticalMergeRestart)
+        private static TableCell BuildCell(MTableCell mdCell, DocxRunStyle style, bool isHeader, DocxRenderContext ctx, int indentLevel, int columnSpan, bool verticalMergeRestart, MTableColumnAlign? alignment)
         {
             TableCell cell = new();
 
@@ -199,9 +202,20 @@ namespace PersonalTools.MarkdownToWord.Docx
             {
                 if (block is ParagraphBlock paragraph)
                 {
-                    Paragraph cellParagraph = new(new ParagraphProperties(
+                    ParagraphProperties pPr = new(
                         new SpacingBetweenLines { After = "0" },
-                        new Indentation { FirstLine = "0", FirstLineChars = 0, Left = "0", LeftChars = 0 }));
+                        new Indentation { FirstLine = "0", FirstLineChars = 0, Left = "0", LeftChars = 0 });
+                    // GFM 列对齐：Center/Right 写入段落 jc（pPr 架构序中 jc 位于 spacing/ind 之后）；Left 为默认不写
+                    if (alignment == MTableColumnAlign.Center)
+                    {
+                        pPr.AppendChild(new Justification { Val = JustificationValues.Center });
+                    }
+                    else if (alignment == MTableColumnAlign.Right)
+                    {
+                        pPr.AppendChild(new Justification { Val = JustificationValues.Right });
+                    }
+
+                    Paragraph cellParagraph = new(pPr);
                     DocxInlineRenderer.RenderInlines(paragraph.Inline, cellParagraph, style, ctx);
                     cell.AppendChild(cellParagraph);
                 }

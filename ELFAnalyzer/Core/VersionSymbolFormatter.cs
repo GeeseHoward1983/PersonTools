@@ -87,14 +87,14 @@ namespace PersonalTools.ELFAnalyzer.Core
                 return "";
             }
 
-            // 获取.gnu.version_d节的信息
-            Models.ELFSectionHeader? verdefSection = parser.SectionHeaders?.Find(sh => sh.sh_type == (uint)SectionType.SHT_GNU_verdef);
-            if (verdefSection == null)
+            // 获取.gnu.version_d节的信息（ELFSectionHeader 为 struct，List.Find 未命中返回全零默认值而非 null，须用 FindIndex 判命中）
+            int verdefIndex = parser.SectionHeaders?.FindIndex(sh => sh.sh_type == (uint)SectionType.SHT_GNU_verdef) ?? -1;
+            if (verdefIndex < 0)
             {
                 return "";
             }
 
-            Models.ELFSectionHeader vd = verdefSection.Value;
+            Models.ELFSectionHeader vd = parser.SectionHeaders![verdefIndex];
             StringBuilder sb = new();
             sb.AppendLine(CultureInfo.InvariantCulture, $"Version definition section '.gnu.version_d' contains {vd.sh_info} entries:");
 
