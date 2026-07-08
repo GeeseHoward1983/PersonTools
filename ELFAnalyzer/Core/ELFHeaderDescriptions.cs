@@ -224,7 +224,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             [(ushort)EMachine.EM_RL78] = "Renesas RL78 family",
             [(ushort)EMachine.EM_VIDEOCORE5] = "Broadcom VideoCore V processor",
             [(ushort)EMachine.EM_78KOR] = "Renesas 78KOR family",
-            [(ushort)EMachine.EM_56800EF] = "Freescale 56800EF Digital Signal Controller (with embedded Flash)",
+            [(ushort)EMachine.EM_56800EX] = "Freescale 56800EX Digital Signal Controller (DSC)",
             [(ushort)EMachine.EM_BA1] = "Beyond BA1 CPU architecture",
             [(ushort)EMachine.EM_BA2] = "Beyond BA2 CPU architecture",
             [(ushort)EMachine.EM_XCORE] = "XMOS xCORE processor family",

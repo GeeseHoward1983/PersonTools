@@ -156,7 +156,7 @@ namespace PersonalTools.Enums
         EM_RL78 = 197,    // Renesas RL78 family
         EM_VIDEOCORE5 = 198, // Broadcom VideoCore V processor
         EM_78KOR = 199,   // Renesas 78KOR family
-        EM_56800EF = 200, // Freescale 56800EF Digital Signal Controller (with embedded Flash)
+        EM_56800EX = 200, // Freescale 56800EX Digital Signal Controller (DSC)
         EM_BA1 = 201,     // Beyond BA1 CPU architecture
         EM_BA2 = 202,     // Beyond BA2 CPU architecture
         EM_XCORE = 203,   // XMOS xCORE processor family

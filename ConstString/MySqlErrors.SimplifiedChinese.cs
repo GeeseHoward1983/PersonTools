@@ -608,7 +608,7 @@ namespace PersonalTools.ConstString
             { 1411, "ER_WRONG_VALUE_FOR_TYPE: 不正确的%s值: '%-.128s'用于函数%s"},
             { 1412, "ER_TABLE_DEF_CHANGED: 表定义已更改，请重试事务"},
             { 1413, "ER_SP_DUP_HANDLER: 重复的处理程序在相同块中声明"},
-            { 1414, "ER_SP_NOT_VAR_ARG: 不允许OUT或INOUT参数用于%s %s"},
+            { 1414, "ER_SP_NOT_VAR_ARG: OUT或INOUT参数%d(例程%s)不是变量或BEFORE触发器中的NEW伪变量"},
             { 1415, "ER_SP_NO_RETSET: 不允许从%s返回结果集"},
             { 1416, "ER_CANT_CREATE_GEOMETRY_OBJECT: 无法从发送给GEOMETRY字段的数据中获取几何对象"},
             { 1417, "ER_FAILED_ROUTINE_BREAK_BINLOG: 例程失败，并且二进制日志记录已启用; 如果存储的函数/触发器使用非确定性操作，则可能不安全"},
