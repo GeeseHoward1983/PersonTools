@@ -114,8 +114,11 @@ namespace PersonalTools.ELFAnalyzer.Core
                 entryIndex++;
             }
 
-            // 检查是否超出范围（参考 readelf："Version definition past end of section"）
-            if (parser.VersionDefinitions.Count > VersionSymbolParser.CalculateVerDefEntryCount(vd))
+            // 检查是否超出范围（参考 readelf："Version definition past end of section"）。
+            // verdef 条目为变长结构，正常链接器把 sh_entsize 置 0，此时按 entsize 估算的容量恒为 0、
+            // 比较无意义且会对正常带版本定义的 .so 恒误报，故仅在 entsize 有效时执行该启发式比较
+            int estimatedCapacity = VersionSymbolParser.CalculateVerDefEntryCount(vd);
+            if (estimatedCapacity > 0 && parser.VersionDefinitions.Count > estimatedCapacity)
             {
                 sb.AppendLine("  Version definition past end of section");
             }

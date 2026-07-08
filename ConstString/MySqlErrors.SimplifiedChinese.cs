@@ -349,7 +349,7 @@ namespace PersonalTools.ConstString
             { 1152, "ER_ABORTING_CONNECTION: 中止连接%ld到数据库: '%-.192s'用户: '%-.48s'(%s)"},
             { 1153, "ER_NET_PACKET_TOO_LARGE: 获得大于'max_allowed_packet'字节的数据包"},
             { 1154, "ER_NET_READ_ERROR_FROM_PIPE: 从连接管道读取错误"},
-            { 1155, "ER_NET_FCNTL_ERROR: 从网络获取fctnl错误"},
+            { 1155, "ER_NET_FCNTL_ERROR: fcntl()返回错误"},
             { 1156, "ER_NET_PACKETS_OUT_OF_ORDER: 从网络获得无序的数据包"},
             { 1157, "ER_NET_UNCOMPRESS_ERROR: 无法解压缩通信数据包"},
             { 1158, "ER_NET_READ_ERROR: 读取通信数据包时出错"},

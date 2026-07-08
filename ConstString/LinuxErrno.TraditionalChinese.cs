@@ -17,13 +17,13 @@ namespace PersonalTools.ConstString
             { 9, "錯誤的文件描述符" }, /* EBADF */
             { 10, "沒有子進程" }, /* ECHILD */
             { 11, "再試一次" }, /* EAGAIN or EWOULDBLOCK */
-            { 12, "內存不足" }, /* ENOMEM */
+            { 12, "記憶體不足" }, /* ENOMEM */
             { 13, "權限被拒絕" }, /* EACCES */
             { 14, "錯誤地址" }, /* EFAULT */
             { 15, "需要塊設備" }, /* ENOTBLK */
             { 16, "設備或資源忙" }, /* EBUSY */
             { 17, "文件已存在" }, /* EEXIST */
-            { 18, "跨設備鏈接" }, /* EXDEV */
+            { 18, "跨設備連結" }, /* EXDEV */
             { 19, "沒有這個設備" }, /* ENODEV */
             { 20, "不是目錄" }, /* ENOTDIR */
             { 21, "是一個目錄" }, /* EISDIR */
@@ -36,7 +36,7 @@ namespace PersonalTools.ConstString
             { 28, "設備上沒有剩餘空間" }, /* ENOSPC */
             { 29, "非法查找" }, /* ESPIPE */
             { 30, "只讀文件系統" }, /* EROFS */
-            { 31, "鏈接數過多" }, /* EMLINK */
+            { 31, "連結數過多" }, /* EMLINK */
             { 32, "管道已斷開" }, /* EPIPE */
             { 33, "數學參數超出定義域" }, /* EDOM */
             { 34, "數學結果無法表示" }, /* ERANGE */
@@ -45,14 +45,14 @@ namespace PersonalTools.ConstString
             { 37, "沒有可用的記錄鎖" }, /* ENOLCK */
             { 38, "無效的系統調用號" }, /* ENOSYS */
             { 39, "目錄非空" }, /* ENOTEMPTY */
-            { 40, "遇到過多符號鏈接" }, /* ELOOP */
+            { 40, "遇到過多符號連結" }, /* ELOOP */
             { 42, "沒有所需類型的消息" }, /* ENOMSG */
             { 43, "標識符已移除" }, /* EIDRM */
             { 44, "通道號超出範圍" }, /* ECHRNG */
             { 45, "第二級未同步" }, /* EL2NSYNC */
             { 46, "第三級已停止" }, /* EL3HLT */
             { 47, "第三級已重置" }, /* EL3RST */
-            { 48, "鏈接號超出範圍" }, /* ELNRNG */
+            { 48, "連結號超出範圍" }, /* ELNRNG */
             { 49, "協議驅動未連接" }, /* EUNATCH */
             { 50, "沒有可用的CSI結構" }, /* ENOCSI */
             { 51, "第二級已停止" }, /* EL2HLT */
@@ -67,10 +67,10 @@ namespace PersonalTools.ConstString
             { 61, "沒有可用數據" }, /* ENODATA */
             { 62, "計時器已過期" }, /* ETIME */
             { 63, "流資源不足" }, /* ENOSR */
-            { 64, "計算機不在網絡上" }, /* ENONET */
-            { 65, "軟件包未安裝" }, /* ENOPKG */
+            { 64, "電腦不在網路上" }, /* ENONET */
+            { 65, "軟體包未安裝" }, /* ENOPKG */
             { 66, "對象是遠程的" }, /* EREMOTE */
-            { 67, "鏈接已被切斷" }, /* ENOLINK */
+            { 67, "連結已被切斷" }, /* ENOLINK */
             { 68, "廣告錯誤" }, /* EADV */
             { 69, "Srmount錯誤" }, /* ESRMNT */
             { 70, "發送時通信錯誤" }, /* ECOMM */
@@ -79,15 +79,15 @@ namespace PersonalTools.ConstString
             { 73, "RFS特定錯誤" }, /* EDOTDOT */
             { 74, "不是數據消息" }, /* EBADMSG */
             { 75, "值對於定義的數據類型太大" }, /* EOVERFLOW */
-            { 76, "名稱在網絡上不唯一" }, /* ENOTUNIQ */
+            { 76, "名稱在網路上不唯一" }, /* ENOTUNIQ */
             { 77, "文件描述符狀態錯誤" }, /* EBADFD */
             { 78, "遠程地址已更改" }, /* EREMCHG */
             { 79, "無法訪問所需的共享庫" }, /* ELIBACC */
             { 80, "訪問損壞的共享庫" }, /* ELIBBAD */
             { 81, "a.out中的.lib節損壞" }, /* ELIBSCN */
-            { 82, "嘗試鏈接過多共享庫" }, /* ELIBMAX */
+            { 82, "嘗試連結過多共享庫" }, /* ELIBMAX */
             { 83, "無法直接執行共享庫" }, /* ELIBEXEC */
-            { 84, "非法字節序列" }, /* EILSEQ */
+            { 84, "非法位元組序列" }, /* EILSEQ */
             { 85, "應重啟被中斷的系統調用" }, /* ERESTART */
             { 86, "流管道錯誤" }, /* ESTRPIPE */
             { 87, "用戶過多" }, /* EUSERS */
@@ -103,10 +103,10 @@ namespace PersonalTools.ConstString
             { 97, "協議不支持地址族" }, /* EAFNOSUPPORT */
             { 98, "地址已在使用" }, /* EADDRINUSE */
             { 99, "無法分配請求的地址" }, /* EADDRNOTAVAIL */
-            { 100, "網絡已關閉" }, /* ENETDOWN */
-            { 101, "網絡不可達" }, /* ENETUNREACH */
-            { 102, "網絡因重置而斷開連接" }, /* ENETRESET */
-            { 103, "軟件導致連接中止" }, /* ECONNABORTED */
+            { 100, "網路已關閉" }, /* ENETDOWN */
+            { 101, "網路不可達" }, /* ENETUNREACH */
+            { 102, "網路因重置而斷開連接" }, /* ENETRESET */
+            { 103, "軟體導致連接中止" }, /* ECONNABORTED */
             { 104, "連接被對等方重置" }, /* ECONNRESET */
             { 105, "沒有可用的緩衝區空間" }, /* ENOBUFS */
             { 106, "傳輸端點已連接" }, /* EISCONN */
@@ -136,7 +136,7 @@ namespace PersonalTools.ConstString
             { 130, "所有者已死亡" }, /* EOWNERDEAD */
             { 131, "狀態不可恢復" }, /* ENOTRECOVERABLE */
             { 132, "由於RF-kill導致操作不可能" }, /* ERFKILL */
-            { 133, "內存頁有硬件錯誤" }, /* EHWPOISON */
+            { 133, "記憶體頁有硬體錯誤" }, /* EHWPOISON */
             { 512, "應重啟系統調用" }, /* ERESTARTSYS */
             { 513, "重啟系統調用（不允許中斷）" }, /* ERESTARTNOINTR */
             { 514, "如果沒有處理程序則重啟.." }, /* ERESTARTNOHAND */

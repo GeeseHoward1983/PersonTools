@@ -18,6 +18,9 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <param name="peInfo">PE文件信息</param>
         internal static void ParseVersionInfo(FileStream fs, BinaryReader reader, PEInfo peInfo)
         {
+            // 扫描会话：与图标解析同款。否则无 RT_VERSION 命中时 ScanTypeEntries 已消耗的条目预算
+            // 不会被任何顶层 WalkEntries 复位，泄漏进随后的图标解析导致图标被跳过
+            using ResourceDirectoryReader.ScanScope scope = ResourceDirectoryReader.BeginScan();
             try
             {
                 // 版本信息通常在资源节中，数据目录索引为#2 (IMAGE_DIRECTORY_ENTRY_RESOURCE)

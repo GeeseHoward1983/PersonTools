@@ -57,6 +57,14 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <summary>开启一个扫描会话（可嵌套）；期间预算跨多次顶层遍历累计，Dispose 归零后复位。</summary>
         public static ScanScope BeginScan()
         {
+            if (_scanScopeDepth == 0 && _walkDepth == 0)
+            {
+                // 进入最外层会话时防御性重置：若此前有未包会话的裸 ScanTypeEntries/ScanNamedEntries
+                // 消耗过预算（无顶层 WalkEntries 可复位），不让残留计数泄漏进本次会话
+                _walkVisited = null;
+                _walkEntries = 0;
+            }
+
             _scanScopeDepth++;
             return default;
         }

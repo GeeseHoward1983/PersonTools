@@ -283,14 +283,13 @@ namespace PersonalTools.MarkdownToWord.Docx
                     continue;
                 }
 
-                // 尊重源数据的实际序号：优先用 Markdig 解析出的逐项 Order（覆盖非连续起始/跳号），
-                // Order 非正（未设置）时回退到按 fallback 递增。
+                // CommonMark：仅首项序号决定起始（OrderedStart），后续各项的源字面序号一律忽略、顺序递增；
+                // 若逐项采用源 Order，"1./1./1." 会导出成 "1. 1. 1."，且与预览 <ol> 渲染(1.2.3.)不一致
                 string marker;
                 if (list.IsOrdered)
                 {
-                    long number = item.Order > 0 ? item.Order : fallback;
-                    marker = number.ToString(CultureInfo.InvariantCulture) + ". ";
-                    fallback = number + 1;
+                    marker = fallback.ToString(CultureInfo.InvariantCulture) + ". ";
+                    fallback++;
                 }
                 else
                 {

@@ -83,7 +83,7 @@ namespace PersonalTools.ConstString
             { "S1091", "Descriptor type out of range" },
             { "S1092", "Option type out of range" },
             { "S1093", "Invalid parameter number" },
-            { "S1094", "Invalid precision value" },
+            { "S1094", "Invalid scale value" },
             { "S1095", "Function type out of range" },
             { "S1096", "Info type out of range" },
             { "S1097", "Column type out of range" },

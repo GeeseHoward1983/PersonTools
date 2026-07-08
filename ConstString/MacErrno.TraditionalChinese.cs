@@ -17,13 +17,13 @@ namespace PersonalTools.ConstString
             { 9, "錯誤的文件描述符" }, /* EBADF */
             { 10, "沒有子進程" }, /* ECHILD */
             { 11, "已避免資源死鎖" }, /* EDEADLK */
-            { 12, "無法分配內存" }, /* ENOMEM */
+            { 12, "無法分配記憶體" }, /* ENOMEM */
             { 13, "權限被拒絕" }, /* EACCES */
             { 14, "錯誤地址" }, /* EFAULT */
             { 15, "需要塊設備" }, /* ENOTBLK */
             { 16, "資源忙" }, /* EBUSY */
             { 17, "文件已存在" }, /* EEXIST */
-            { 18, "跨設備鏈接" }, /* EXDEV */
+            { 18, "跨設備連結" }, /* EXDEV */
             { 19, "設備不支持該操作" }, /* ENODEV */
             { 20, "不是目錄" }, /* ENOTDIR */
             { 21, "是一個目錄" }, /* EISDIR */
@@ -36,7 +36,7 @@ namespace PersonalTools.ConstString
             { 28, "設備上沒有剩餘空間" }, /* ENOSPC */
             { 29, "非法查找" }, /* ESPIPE */
             { 30, "只讀文件系統" }, /* EROFS */
-            { 31, "鏈接數過多" }, /* EMLINK */
+            { 31, "連結數過多" }, /* EMLINK */
             { 32, "管道已斷開" }, /* EPIPE */
             { 33, "數學參數超出定義域" }, /* EDOM */
             { 34, "結果太大" }, /* ERANGE */
@@ -55,10 +55,10 @@ namespace PersonalTools.ConstString
             { 47, "協議族不支持該地址族" }, /* EAFNOSUPPORT */
             { 48, "地址已在使用" }, /* EADDRINUSE */
             { 49, "無法分配請求的地址" }, /* EADDRNOTAVAIL */
-            { 50, "網絡已關閉" }, /* ENETDOWN */
-            { 51, "網絡不可達" }, /* ENETUNREACH */
-            { 52, "網絡因重置而斷開連接" }, /* ENETRESET */
-            { 53, "軟件導致連接中止" }, /* ECONNABORTED */
+            { 50, "網路已關閉" }, /* ENETDOWN */
+            { 51, "網路不可達" }, /* ENETUNREACH */
+            { 52, "網路因重置而斷開連接" }, /* ENETRESET */
+            { 53, "軟體導致連接中止" }, /* ECONNABORTED */
             { 54, "連接被對等方重置" }, /* ECONNRESET */
             { 55, "沒有可用的緩衝區空間" }, /* ENOBUFS */
             { 56, "套接字已連接" }, /* EISCONN */
@@ -67,7 +67,7 @@ namespace PersonalTools.ConstString
             { 59, "引用過多：無法拼接" }, /* ETOOMANYREFS */
             { 60, "操作超時" }, /* ETIMEDOUT */
             { 61, "連接被拒絕" }, /* ECONNREFUSED */
-            { 62, "符號鏈接層級過多" }, /* ELOOP */
+            { 62, "符號連結層級過多" }, /* ELOOP */
             { 63, "文件名過長" }, /* ENAMETOOLONG */
             { 64, "主機已關閉" }, /* EHOSTDOWN */
             { 65, "沒有到主機的路由" }, /* EHOSTUNREACH */
@@ -97,7 +97,7 @@ namespace PersonalTools.ConstString
             { 89, "操作已取消" }, /* ECANCELED */
             { 90, "標識符已移除" }, /* EIDRM */
             { 91, "沒有所需類型的消息" }, /* ENOMSG */
-            { 92, "非法字節序列" }, /* EILSEQ */
+            { 92, "非法位元組序列" }, /* EILSEQ */
             { 93, "未找到屬性" }, /* ENOATTR */
             { 94, "錯誤的消息" }, /* EBADMSG */
             { 95, "EMULTIHOP（保留）" }, /* EMULTIHOP */
