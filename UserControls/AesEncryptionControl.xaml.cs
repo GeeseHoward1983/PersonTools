@@ -52,7 +52,7 @@ namespace PersonalTools.UserControls
 #pragma warning disable CA5358
             AesModeComboBox.Items.Add(new AesModeOption { Name = "ECB (不推荐：无IV、相同明文块产生相同密文)", Mode = CipherMode.ECB });
             AesModeComboBox.Items.Add(new AesModeOption { Name = "CFB", Mode = CipherMode.CFB });
-            AesModeComboBox.Items.Add(new AesModeOption { Name = "OFB", Mode = CipherMode.OFB });
+            // 不提供 OFB：.NET 内置 Aes 全平台不支持 OFB，选中后 CreateEncryptor/CreateDecryptor 必抛异常
 #pragma warning restore CA5358
             AesModeComboBox.SelectedIndex = 0; // 默认选择CBC
 
@@ -155,9 +155,9 @@ namespace PersonalTools.UserControls
             }
             mode = modeOption.Mode;
 
-            // 对于CBC/CFB/OFB等模式，需要IV向量
+            // 对于CBC/CFB等模式，需要IV向量
 #pragma warning disable CA5358
-            if (mode is CipherMode.CBC or CipherMode.CFB or CipherMode.OFB)
+            if (mode is CipherMode.CBC or CipherMode.CFB)
 #pragma warning restore CA5358
             {
                 string ivInput = AesIV.Text;

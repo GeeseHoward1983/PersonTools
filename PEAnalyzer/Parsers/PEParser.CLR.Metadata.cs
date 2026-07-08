@@ -43,8 +43,8 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 reader.ReadUInt32(); // Reserved
                 uint length = reader.ReadUInt32();
 
-                // 检查签名是否正确 (BSJB = 0x42534A42)
-                if (signature != 0x42534A42)
+                // 检查签名是否正确（"BSJB" 字节序列 42 53 4A 42 按小端 ReadUInt32 读出为 0x424A5342）
+                if (signature != 0x424A5342)
                 {
                     return;
                 }

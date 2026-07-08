@@ -10,6 +10,37 @@ namespace PersonalTools.PEAnalyzer.Resources
     /// </summary>
     internal static class PEResourceParserIconData
     {
+        // 每个 PE 文件可收集图标的全局上限：单个图标虽已限 10MB，但畸形文件可用海量条目、
+        // 或组内多条 GRPICONDIRENTRY 重复指向同一大 RT_ICON，累计放大出数 GB 分配。
+        // 对总条目数与累计字节数双重设限（覆盖 shell32 级图标大户仍有余量）。
+        private const int MaxIconsPerFile = 4096;
+        private const long MaxTotalIconBytes = 256L * 1024 * 1024;
+
+        /// <summary>
+        /// 受全局上限约束地登记一个图标；达到上限返回 false，调用方应停止继续收集。
+        /// </summary>
+        public static bool TryAddIcon(PEInfo peInfo, IconInfo icon)
+        {
+            if (peInfo.Icons.Count >= MaxIconsPerFile)
+            {
+                return false;
+            }
+
+            long totalBytes = icon.Data.LongLength;
+            foreach (IconInfo existing in peInfo.Icons)
+            {
+                totalBytes += existing.Data.LongLength;
+            }
+
+            if (totalBytes > MaxTotalIconBytes)
+            {
+                return false;
+            }
+
+            peInfo.Icons.Add(icon);
+            return true;
+        }
+
         /// <summary>
         /// 读取一个资源数据项（IMAGE_RESOURCE_DATA_ENTRY），若其内容像图标数据则处理之。
         /// 供直接图标与命名图标解析器共用（消除两处重复逻辑）。
@@ -79,7 +110,7 @@ namespace PersonalTools.PEAnalyzer.Resources
             // 目录头不完整时退回保守行为：仅登记整段数据、宽高位深保持 0，不抛异常。
             if (iconData.Length < IconDirHeaderSize)
             {
-                peInfo.Icons.Add(new IconInfo { Size = iconData.Length, Data = iconData });
+                _ = TryAddIcon(peInfo, new IconInfo { Size = iconData.Length, Data = iconData });
                 return;
             }
 
@@ -103,21 +134,25 @@ namespace PersonalTools.PEAnalyzer.Resources
                 byte heightByte = iconData[entryOffset + 1];
                 ushort bitCount = BitConverter.ToUInt16(iconData, entryOffset + 6);
 
-                peInfo.Icons.Add(new IconInfo
+                if (!TryAddIcon(peInfo, new IconInfo
                 {
                     Width = widthByte == 0 ? 256 : widthByte,
                     Height = heightByte == 0 ? 256 : heightByte,
                     BitsPerPixel = bitCount,
                     Size = iconData.Length, // 完整 ICO 各条目共享同一份文件字节，故大小记整段长度
                     Data = iconData
-                });
+                }))
+                {
+                    break; // 已达全局图标上限，停止收集
+                }
+
                 anyAdded = true;
             }
 
             // 无任何有效条目（Count=0 或首项即越界）时保留旧的保守降级：登记整段、宽高位深为 0。
             if (!anyAdded)
             {
-                peInfo.Icons.Add(new IconInfo { Size = iconData.Length, Data = iconData });
+                _ = TryAddIcon(peInfo, new IconInfo { Size = iconData.Length, Data = iconData });
             }
         }
 
@@ -132,8 +167,15 @@ namespace PersonalTools.PEAnalyzer.Resources
             try
             {
                 // 接受 BITMAPINFOHEADER(40) 及向后兼容的 V4(108)/V5(124) 头：
-                // 三者 width(+4)/height(+8)/bitCount(+14) 字段偏移一致，biSize>=40 即可正确读取，避免静默丢弃 V4/V5 图标
-                if (dibData.Length < 40 || BitConverter.ToUInt32(dibData, 0) < 40)
+                // 三者 width(+4)/height(+8)/bitCount(+14) 字段偏移一致。biSize 必须恰为 40/108/124 且不超数据长度——
+                // 仅判 >=40 会把 PNG/JPEG 等以大值开头的数据（如 PNG 首 DWORD 0x474E5089）当作位图头读出垃圾宽高/位深。
+                if (dibData.Length < 40)
+                {
+                    return;
+                }
+
+                uint biSize = BitConverter.ToUInt32(dibData, 0);
+                if (biSize is not (40 or 108 or 124) || biSize > dibData.Length)
                 {
                     return;
                 }
@@ -155,7 +197,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     return;
                 }
 
-                peInfo.Icons.Add(new IconInfo
+                _ = TryAddIcon(peInfo, new IconInfo
                 {
                     Width = width,
                     Height = height,
@@ -217,9 +259,16 @@ namespace PersonalTools.PEAnalyzer.Resources
                 return true;
             }
 
-            // DIB 数据：以 BITMAPINFOHEADER 起始。与 ConvertDibToIco 的 biSize>=40 判定对齐（含 V4=108/V5=124），
-            // 否则 V4/V5 头位图会在此闸门被判非图标而丢弃，ConvertDibToIco 的 V4/V5 兼容分支成死代码。
-            return data.Length >= 16 && BitConverter.ToUInt32(data, 0) >= 40;
+            // DIB 数据：以 BITMAPINFOHEADER/V4/V5 头起始，与 ConvertDibToIco 的判定对齐：
+            // biSize 必须恰为 40/108/124 且不超数据长度——仅判 >=40 会把 PNG/JPEG 等
+            // 以大值开头的数据（如 PNG 首 DWORD 0x474E5089）误判为位图。
+            if (data.Length < 40)
+            {
+                return false;
+            }
+
+            uint biSize = BitConverter.ToUInt32(data, 0);
+            return biSize is 40 or 108 or 124 && biSize <= data.Length;
         }
 
         // ICO 文件头: 00 00 01 00（Reserved=0, Type=1=ICO）

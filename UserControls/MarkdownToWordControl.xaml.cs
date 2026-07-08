@@ -88,8 +88,12 @@ namespace PersonalTools.UserControls
                 previewReady = true;
                 RefreshPreview();
             }
-            catch (Exception ex) when (ex is WebView2RuntimeNotFoundException or InvalidOperationException or IOException)
+            catch (Exception ex) when (ex is WebView2RuntimeNotFoundException or InvalidOperationException or IOException
+                or UnauthorizedAccessException or ObjectDisposedException)
             {
+                // UnauthorizedAccessException：用户数据目录不可写（E_ACCESSDENIED 的托管映射）；
+                // ObjectDisposedException：await 期间宿主窗口关闭、Preview 已 Dispose 的竞态。
+                // 两者都应就地降级提示，而非逃出 async void 走全局兜底的通用错误框。
                 MessageHelper.ShowWarning($"预览初始化失败（需要 WebView2 运行时）：{ex.Message}");
             }
         }
@@ -238,17 +242,31 @@ namespace PersonalTools.UserControls
             }
         }
 
-        private void LoadMarkdownFile(string path)
+        private async void LoadMarkdownFile(string path)
         {
             try
             {
-                Editor.Text = File.ReadAllText(path);
+                // 与其它拖放处理器一致：读前先做大小预检，拒绝超大文件（拖放无扩展名过滤，可能拖入任意大文件）
+                if (!FileDropHelper.IsWithinHexDisplayLimit(path))
+                {
+                    MessageHelper.ShowWarning($"文件较大（超过 {FileDropHelper.HexDisplayWarnBytes / (1024 * 1024)} MB），载入编辑器会导致界面长时间无响应，已取消。");
+                    return;
+                }
+
+                // 读盘放后台线程，避免大文件/慢磁盘在 UI 线程同步整读冻结界面
+                string text = await Task.Run(() => File.ReadAllText(path)).ConfigureAwait(true);
+                if (!IsLoaded)
+                {
+                    return; // await 期间控件已卸载：放弃后续 UI 更新
+                }
+
+                Editor.Text = text;
                 string fullPath = Path.GetFullPath(path);
                 currentMdPath = fullPath;
                 baseDir = Path.GetDirectoryName(fullPath);
                 RefreshPreview();
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or OutOfMemoryException)
             {
                 MessageHelper.ShowError($"打开文件失败: {ex.Message}");
             }

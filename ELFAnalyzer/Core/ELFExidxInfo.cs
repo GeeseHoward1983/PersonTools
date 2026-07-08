@@ -582,7 +582,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 int ssss = (cmd >> 4) & 0x0F;
                 int cccc = cmd & 0x0F;
-                AppendRegRange(sb, "wR", ssss, ssss + cccc);
+                AppendRegRange(sb, "wR", ssss, cccc);
             }
             else if (cmd is >= 0xC701 and <= 0xC70F) // pop wCGR 位掩码
             {

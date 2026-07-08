@@ -11,18 +11,21 @@ namespace PersonalTools.PEAnalyzer.Resources
     internal static class PEResourceParserIconNamed
     {
         /// <summary>
-        /// 解析资源目录以查找命名图标资源。
+        /// 在指定目录中查找命名图标资源。
         /// </summary>
-        public static void ParseResourceDirectoryForNamedIcons(FileStream fs, BinaryReader reader, PEInfo peInfo, long resourceOffset)
+        /// <param name="directoryOffset">待扫描目录的文件偏移（可为资源根目录或其子目录）。</param>
+        /// <param name="resourceBaseOffset">资源根基址：目录项中的子目录偏移与名称串偏移均相对资源根解析，
+        /// 不得用当前子目录偏移代替，否则类型层偏移会被重复叠加导致基址算错。</param>
+        public static void ParseResourceDirectoryForNamedIcons(FileStream fs, BinaryReader reader, PEInfo peInfo, long directoryOffset, long resourceBaseOffset)
         {
-            ResourceDirectoryReader.RunAtOffset(fs, resourceOffset, ResourceDirectoryReader.DirectoryHeaderSize, "解析资源目录以查找命名图标错误", () =>
+            ResourceDirectoryReader.RunAtOffset(fs, directoryOffset, ResourceDirectoryReader.DirectoryHeaderSize, "解析资源目录以查找命名图标错误", () =>
             {
                 IMAGE_RESOURCE_DIRECTORY rootDirectory = ResourceDirectoryReader.ReadDirectory(reader);
 
                 // 命名条目位于目录前部，仅遍历这部分
                 for (int i = 0; i < rootDirectory.NumberOfNamedEntries; i++)
                 {
-                    if (!ResourceDirectoryReader.TryReadEntry(fs, reader, resourceOffset, i, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry))
+                    if (!ResourceDirectoryReader.TryReadEntry(fs, reader, directoryOffset, i, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry))
                     {
                         break;
                     }
@@ -32,10 +35,10 @@ namespace PersonalTools.PEAnalyzer.Resources
                         continue;
                     }
 
-                    long nextLevelOffset = resourceOffset + (entry.OffsetToData & 0x7FFFFFFF);
+                    long nextLevelOffset = resourceBaseOffset + (entry.OffsetToData & 0x7FFFFFFF);
                     if (nextLevelOffset >= 0 && nextLevelOffset + ResourceDirectoryReader.DirectoryHeaderSize <= fs.Length)
                     {
-                        ParseNamedResourceDirectory(fs, reader, peInfo, nextLevelOffset, resourceOffset, entry.NameOrId & 0x7FFFFFFF);
+                        ParseNamedResourceDirectory(fs, reader, peInfo, nextLevelOffset, resourceBaseOffset, entry.NameOrId & 0x7FFFFFFF);
                     }
                 }
             });

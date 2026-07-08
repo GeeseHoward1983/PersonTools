@@ -46,7 +46,7 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
                 {
                     result.Add(new ELFDynamicSectionInfo
                     {
-                        Tag = $"0x{entry.d_tag:x16}",
+                        Tag = Parser.Is64Bit ? $"0x{entry.d_tag:x16}" : $"0x{entry.d_tag:x8}",
                         Type = ELFDynamicInfo.GetDynamicTagDescription((ulong)entry.d_tag),
                         Value = GetDynamicSectionInfoValue(Parser, entry)
                     });

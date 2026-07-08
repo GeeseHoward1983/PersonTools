@@ -50,7 +50,7 @@ namespace PersonalTools.Utils.Crypto
             // 需要 IV 的模式必须显式提供 IV：否则 Aes.Create() 会用随机 IV 加密却无法回传，
             // 导致密文不可解密。此处强制校验，不静默兜底（UI 层虽已校验，服务层亦需自洽）
 #pragma warning disable CA5358 // 模式由调用方选择，此处仅做 IV/反馈校验，不引入新的弱模式
-            if (iv == null && mode is CipherMode.CBC or CipherMode.CFB or CipherMode.OFB)
+            if (iv == null && mode is CipherMode.CBC or CipherMode.CFB)
             {
                 throw new ArgumentException($"加密模式 {mode} 必须提供 IV 向量", nameof(iv));
             }
@@ -62,28 +62,48 @@ namespace PersonalTools.Utils.Crypto
             }
 
             Aes aesAlg = Aes.Create();
-            aesAlg.KeySize = key.Length * 8; // 根据密钥长度设置 KeySize
-            aesAlg.Key = key;
-            if (iv != null)
+            try
             {
-                // AES 块大小固定 128 位，IV 必须恰为 16 字节。提前显式校验，兑现"服务层亦自洽"的契约，
-                // 否则 aesAlg.IV = iv 仅在长度不符时才抛 CryptographicException，错误信息不直观。
-                if (iv.Length != 16)
+                aesAlg.KeySize = key.Length * 8; // 根据密钥长度设置 KeySize
+                aesAlg.Key = key;
+                if (iv != null)
                 {
-                    throw new ArgumentException($"AES IV 长度必须为 16 字节，实际 {iv.Length}", nameof(iv));
+                    // AES 块大小固定 128 位，IV 必须恰为 16 字节。提前显式校验，兑现"服务层亦自洽"的契约，
+                    // 否则 aesAlg.IV = iv 仅在长度不符时才抛 CryptographicException，错误信息不直观。
+                    if (iv.Length != 16)
+                    {
+                        throw new ArgumentException($"AES IV 长度必须为 16 字节，实际 {iv.Length}", nameof(iv));
+                    }
+                    aesAlg.IV = iv;
                 }
-                aesAlg.IV = iv;
-            }
-            aesAlg.Mode = mode;
-            aesAlg.Padding = padding;
-            // CFB/OFB 显式设为 128 位反馈，与业界主流 CFB-128/OFB-128 一致
-            // （.NET 默认 CFB8/OFB8，每次仅反馈 8 位，会与 OpenSSL 等外部密文不兼容）
-            if (mode is CipherMode.CFB or CipherMode.OFB)
-            {
-                aesAlg.FeedbackSize = 128;
-            }
+
+                // .NET 内置 Aes 仅支持 CBC/ECB/CFB：其余模式（OFB/CTS 等）在 Mode setter 赋值时即抛
+                // 含义不明的 CryptographicException，此处翻译为带清晰指引的 ArgumentException。
+                // 借 setter 自身的白名单校验拒绝不支持模式，无需引用不支持的枚举成员。
+                try
+                {
+                    aesAlg.Mode = mode;
+                }
+                catch (CryptographicException ex)
+                {
+                    throw new ArgumentException($".NET 内置 AES 不支持加密模式 {mode}，请改用 CBC/CFB/ECB", nameof(mode), ex);
+                }
+
+                aesAlg.Padding = padding;
+                // CFB 显式设为 128 位反馈，与业界主流 CFB-128 一致
+                // （.NET 默认 CFB8，每次仅反馈 8 位，会与 OpenSSL 等外部密文不兼容）
+                if (mode == CipherMode.CFB)
+                {
+                    aesAlg.FeedbackSize = 128;
+                }
 #pragma warning restore CA5358
-            return aesAlg;
+                return aesAlg;
+            }
+            catch
+            {
+                aesAlg.Dispose(); // 配置中途失败（含上方 IV 长度校验）不能把已建实例泄漏出去
+                throw;
+            }
         }
     }
 }

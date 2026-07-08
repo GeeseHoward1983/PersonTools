@@ -32,7 +32,9 @@ namespace PersonalTools.MarkdownToWord.Docx
         // 匹配标题文本开头的「章节编号」前缀（如 "1. " / "1.1 " / "1.1.1 " / "1.1. "），含全角空格。
         // 要求编号内至少含一个点号，从而只剥离明确的章节号，不误删以纯数字开头的合法标题
         // （如 "2024 年度报告"、"3 个要点"、"1 Introduction" 这类无点号的前缀不再被当作编号剥掉）。
-        [GeneratedRegex(@"^\s*\d+\.(?:\d+\.?)*[ \t　]+")]
+        // 写法须无回溯歧义：旧写法 (?:\d+\.?)* 中 \.? 可不消费字符，纯数字长串整体失配时会灾难性回溯（ReDoS）；
+        // 现每段由字面点号锚定（\d+\. 开头、(?:\d+\.)* 续段、\d* 收尾），语言不变但匹配路径唯一。
+        [GeneratedRegex(@"^\s*\d+\.(?:\d+\.)*\d*[ \t　]+")]
         private static partial Regex HeadingNumberPrefix();
 
         internal static void RenderBlock(Block block, OpenXmlElement container, DocxRenderContext ctx, int indentLevel)

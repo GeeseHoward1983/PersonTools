@@ -35,7 +35,7 @@ namespace PersonalTools.Enums
         DT_FLAGS = 30,                  // Flags for the object being loaded
         DT_PREINIT_ARRAY = 32,          // Array with addresses of preinit fct（ELF 标准值即 32，与 DT_ENCODING 边界同值；仅声明此项使 GetName(32) 确定性解析为 DT_PREINIT_ARRAY，与 readelf 一致）
         DT_PREINIT_ARRAYSZ = 33,        // Size in bytes of DT_PREINIT_ARRAY
-        DT_NUM = 34,                    // Number used
+        DT_SYMTAB_SHNDX = 34,           // Address of SYMTAB_SHNDX section（ELF 标准值 34；glibc 的 DT_NUM=34 只是计数常量而非真实 tag，不收录以保证 GetName(34) 确定性）
         DT_LOOS = 0x6000000D,           // Start of OS-specific
         DT_HIOS = 0x6ffff000,           // End of OS-specific
         DT_LOPROC = 0x70000000,         // Start of processor-specific
@@ -74,9 +74,6 @@ namespace PersonalTools.Enums
         DT_POSFLAG_1 = 0x6ffffdfd,      // Flags for DT_ entries, effecting
         DT_SYMINSZ = 0x6ffffdfe,        // Size of syminfo table (in bytes)
         DT_SYMINENT = 0x6ffffdff,       // Entry size of syminfo
-
-        // Additional tags
-        DT_SYMTAB_SHNDX = 0x6ffffff5,    // Address of SYMTAB_SHNDX section
 
         DT_MIPS_RLD_VERSION = 0x70000001,
         DT_MIPS_TIME_STAMP = 0x70000002,

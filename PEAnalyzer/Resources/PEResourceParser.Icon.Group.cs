@@ -114,9 +114,9 @@ namespace PersonalTools.PEAnalyzer.Resources
             foreach (ICONDIRENTRY entry in iconDirEntries)
             {
                 IconInfo? icon = TryBuildIcon(fs, reader, peInfo, entry, resourceBaseOffset);
-                if (icon != null)
+                if (icon != null && !PEResourceParserIconData.TryAddIcon(peInfo, icon))
                 {
-                    peInfo.Icons.Add(icon);
+                    break; // 已达全局图标上限，停止收集本组剩余条目
                 }
             }
         }

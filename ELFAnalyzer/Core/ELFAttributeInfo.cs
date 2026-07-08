@@ -604,8 +604,10 @@ namespace PersonalTools.ELFAnalyzer.Core
                 {
                     case 5: // Tag_RISCV_arch（字符串）
                     {
-                        string value = ELFParserUtils.ExtractStringFromBytes(data, offset);
-                        offset += ELFParserUtils.MeasureCStringByteLength(data, offset, limit) + 1;
+                        // 按子节 limit 限长读取：字符串缺 NUL 时不得串读相邻子节字节（与其它子节的有界读取一致）
+                        int valueLength = ELFParserUtils.MeasureCStringByteLength(data, offset, limit);
+                        string value = ELFParserUtils.ExtractStringFromBytes(data, offset, valueLength);
+                        offset += valueLength + 1;
                         sb.AppendLine(CultureInfo.InvariantCulture, $"  Tag_RISCV_arch: \"{value}\"");
                         break;
                     }

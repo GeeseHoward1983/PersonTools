@@ -257,6 +257,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 return;
             }
 
+            long savePos = fs.Position;
             try
             {
                 // 检查是否有足够空间读取 hint 和名称（至少需要 2 字节的 hint）
@@ -266,18 +267,21 @@ namespace PersonalTools.PEAnalyzer.Parsers
                     return;
                 }
 
-                long savePos = fs.Position;
                 fs.Position = nameOffset;
                 // 读取Hint字段（2字节）后读取函数名称
                 ushort hint = reader.ReadUInt16();
                 string functionName = PEParserUtils.ReadNullTerminatedString(reader);
-                fs.Position = savePos;
 
                 SetImportFunc(importFunc, !string.IsNullOrEmpty(functionName) ? functionName : "EMPTY_NAME", hint, false);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 SetImportFunc(importFunc, $"READ_ERROR: {ex.Message}", 0, false);
+            }
+            finally
+            {
+                // 调用方 WalkThunkTable 依赖流位置连续读取后续 thunk：异常路径也必须恢复
+                fs.Position = savePos;
             }
         }
 

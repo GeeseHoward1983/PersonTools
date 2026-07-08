@@ -122,7 +122,7 @@ namespace PersonalTools.ConstString
             { 24, "打開的文件過多" },               // EMFILE: 打開的文件過多
             { 25, "對設備不適當的ioctl" },          // ENOTTY: 對設備不適當的ioctl
             { 27, "文件過大" },                     // EFBIG: 文件過大
-            { 28, "設備上沒有剩余空間" },           // ENOSPC: 設備上沒有剩余空間
+            { 28, "設備上沒有剩餘空間" },           // ENOSPC: 設備上沒有剩餘空間
             { 29, "非法seek" },                     // ESPIPE: 非法seek
             { 30, "只讀文件系統" },                 // EROFS: 只讀文件系統
             { 31, "鏈接過多" },                     // EMLINK: 鏈接過多

@@ -73,7 +73,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// <param name="fs">文件流</param>
         /// <param name="reader">二进制读取器</param>
         /// <param name="heapOffset">#Strings 堆的文件偏移</param>
-        /// <param name="heapSize">#Strings 堆声明大小（0 表示未知，仅退化为文件边界校验）</param>
+        /// <param name="heapSize">#Strings 堆声明大小（0 属畸形声明——合法堆至少含 index 0 的空串——一律拒绝读取）</param>
         /// <param name="index">堆内索引</param>
         /// <returns>字符串</returns>
         private static string ReadStringFromHeap(FileStream fs, BinaryReader reader, long heapOffset, uint heapSize, uint index)
@@ -86,14 +86,15 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 }
 
                 // 索引必须落在堆声明大小内：否则畸形的超大 index 虽仍在文件内，
-                // 会越过 #Strings 堆读到相邻流字节，被当作伪造的类型名注入导出列表
-                if (heapSize != 0 && index >= heapSize)
+                // 会越过 #Strings 堆读到相邻流字节，被当作伪造的类型名注入导出列表；
+                // heapSize==0 时该条件恒真，等价于整体拒绝畸形的零大小堆
+                if (index >= heapSize)
                 {
                     return string.Empty;
                 }
 
                 long targetPosition = heapOffset + index;
-                long heapEnd = heapSize != 0 ? Math.Min(heapOffset + heapSize, fs.Length) : fs.Length;
+                long heapEnd = Math.Min(heapOffset + heapSize, fs.Length);
                 if (targetPosition < 0 || targetPosition >= heapEnd)
                 {
                     return string.Empty;

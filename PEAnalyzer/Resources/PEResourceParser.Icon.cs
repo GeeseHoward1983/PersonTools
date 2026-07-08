@@ -92,8 +92,8 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 if (resourceOffset != -1 && resourceOffset < fs.Length)
                 {
-                    // 尝试查找命名资源（WPF程序通常将图标存储为命名资源）
-                    PEResourceParserIconNamed.ParseResourceDirectoryForNamedIcons(fs, reader, peInfo, resourceOffset);
+                    // 尝试查找命名资源（WPF程序通常将图标存储为命名资源）；根目录扫描时目录偏移即资源根基址
+                    PEResourceParserIconNamed.ParseResourceDirectoryForNamedIcons(fs, reader, peInfo, resourceOffset, resourceOffset);
                 }
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
@@ -138,8 +138,10 @@ namespace PersonalTools.PEAnalyzer.Resources
                     ResourceDirectoryReader.ScanTypeEntries(fs, reader, resourceOffset, totalEntries, 3,
                         nextLevelOffset => PEResourceParserIconDirect.ParseDirectIconResource(fs, reader, peInfo, nextLevelOffset, resourceOffset));
 
+                    // nextLevelOffset 是命名类型条目的子目录偏移；资源根基址必须单独传 resourceOffset，
+                    // 否则子目录偏移与名称串偏移会在子目录基础上重复叠加类型层偏移
                     ResourceDirectoryReader.ScanNamedEntries(fs, reader, resourceOffset, rootDirectory.NumberOfNamedEntries,
-                        nextLevelOffset => PEResourceParserIconNamed.ParseResourceDirectoryForNamedIcons(fs, reader, peInfo, nextLevelOffset));
+                        nextLevelOffset => PEResourceParserIconNamed.ParseResourceDirectoryForNamedIcons(fs, reader, peInfo, nextLevelOffset, resourceOffset));
                 }
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)

@@ -135,7 +135,7 @@ namespace PersonalTools.ELFAnalyzer.Core
                     1 => $"{description} {GetABIVersion(parser, data, descOffset, descSize)}".TrimEnd(),
                     2 => $"{description}",
                     3 => $"{GetBuildID(data, descOffset, descSize)}",
-                    4 => $"{description} (gold version)\n    Version: gold {ELFParserUtils.ExtractStringFromBytes(data, descOffset)}",
+                    4 => $"{description} (gold version)\n    Version: gold {ELFParserUtils.ExtractStringFromBytes(data, descOffset, descSize)}",
                     5 => $"{description}",
                     _ => $"{description}"
                 },

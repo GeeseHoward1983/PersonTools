@@ -38,9 +38,9 @@ namespace PersonalTools.Enums
         SHT_LOUSER = 0x80000000,         // Start of application-specific
         SHT_HIUSER = 0xffffffff,          // End of application-specific
         SHT_ARM_EXIDX = 0x70000001,      // ARM exception index table section
+        SHT_ARM_PREEMPTMAP = 0x70000002, // ARM preemption map section
         SHT_ARM_ATTRIBUTES = 0x70000003, // ARM attributes section
-        SHT_ARM_PREEMPTMAP = 0x70000004, // ARM preemption map section
-        SHT_ARM_DEBUGOVERLAY = 0x70000005,// ARM debug overlay section
-        SHT_ARM_OVERLAYSECTION = 0x70000006 // ARM overlay section（注：SHF_ARM_PURECODE 是 section flag，已迁至 SectionAttributes）
+        SHT_ARM_DEBUGOVERLAY = 0x70000004,// ARM debug overlay section
+        SHT_ARM_OVERLAYSECTION = 0x70000005 // ARM overlay section（注：SHF_ARM_PURECODE 是 section flag，已迁至 SectionAttributes）
     }
 }

@@ -18,9 +18,12 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <summary>资源目录树最大递归深度（正常 PE 仅 3 层：类型/名称/语言）。</summary>
         private const int MaxDirectoryDepth = 32;
 
-        // 当前遍历路径上的目录偏移集合与深度，用于防止畸形/循环资源树导致的无限递归与 StackOverflow。
+        /// <summary>单次顶层遍历允许访问的目录节点总数上限（正常 PE 仅 类型×名称×语言 的数十级别）。</summary>
+        private const int MaxDirectoriesPerWalk = 4096;
+
+        // 整轮顶层遍历中已访问的目录偏移集合与当前递归深度，用于防止畸形/循环资源树导致的无限递归与 StackOverflow。
         // 所有递归都经由 WalkEntries 分派回调，故在此单点防护即可覆盖全部调用方。
-        [ThreadStatic] private static HashSet<long>? _walkPath;
+        [ThreadStatic] private static HashSet<long>? _walkVisited;
         [ThreadStatic] private static int _walkDepth;
 
         /// <summary>
@@ -95,9 +98,11 @@ namespace PersonalTools.PEAnalyzer.Resources
                 return;
             }
 
-            // 循环/深度防护：超过最大深度，或该目录偏移已在当前递归路径上（成环）则直接返回。
-            _walkPath ??= [];
-            if (_walkDepth >= MaxDirectoryDepth || !_walkPath.Add(directoryOffset))
+            // 循环/规模防护：整轮遍历内每个目录偏移只访问一次，并限制节点总数与递归深度。
+            // 仅按"当前递归路径"去重会放行多条兄弟项指向同一子目录的"梯形"DAG，
+            // 使遍历次数按 分支数^深度 指数膨胀（CPU 型 DoS）；重复访问同一目录只会产出重复结果，整轮去重不丢失信息。
+            _walkVisited ??= [];
+            if (_walkDepth >= MaxDirectoryDepth || _walkVisited.Count >= MaxDirectoriesPerWalk || !_walkVisited.Add(directoryOffset))
             {
                 return;
             }
@@ -131,11 +136,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 _walkDepth--;
                 if (_walkDepth == 0)
                 {
-                    _walkPath = null; // 顶层遍历结束，释放路径集合
-                }
-                else
-                {
-                    _walkPath.Remove(directoryOffset); // 离开该层，允许兄弟分支合法地再次访问相同偏移(DAG)
+                    _walkVisited = null; // 顶层遍历结束，释放集合；下一轮顶层遍历重新计数
                 }
             }
         }
