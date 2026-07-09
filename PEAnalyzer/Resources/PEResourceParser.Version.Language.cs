@@ -1246,9 +1246,11 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <returns>可读的翻译信息</returns>
         internal static string GetReadableTranslationInfo(uint languageId, uint codePage)
         {
+            // GetLanguageName/GetCodePageName 各自负责附带 ID：命中项追加、未命中回退串本已含 ID，
+            // 故此处不再重复追加，否则未知语言/代码页会出现两次 ID（如"未知语言 (0x0000) (0x0000)"）
             string languageName = GetLanguageName(languageId);
             string codePageName = GetCodePageName(codePage);
-            return $"{languageName} (0x{languageId:X4}), {codePageName} ({codePage})";
+            return $"{languageName}, {codePageName}";
         }
 
         /// <summary>根据当前语言类型选择语言名称数组。</summary>
@@ -1280,7 +1282,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             string[] languageNames = SelectLanguageNames();
             return LanguageIdToIndex.TryGetValue(languageId, out int index) && index < languageNames.Length
-                ? languageNames[index]
+                ? string.Format(CultureInfo.InvariantCulture, "{0} (0x{1:X4})", languageNames[index], languageId)
                 : string.Format(CultureInfo.InvariantCulture, languageNames[^1], languageId);
         }
 
@@ -1291,7 +1293,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             string[] codePageNames = SelectCodePageNames();
             return CodePageToIndex.TryGetValue(codePage, out int index) && index < codePageNames.Length
-                ? codePageNames[index]
+                ? string.Format(CultureInfo.InvariantCulture, "{0} ({1})", codePageNames[index], codePage)
                 : string.Format(CultureInfo.InvariantCulture, codePageNames[^1], codePage);
         }
     }
