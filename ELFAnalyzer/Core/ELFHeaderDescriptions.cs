@@ -254,7 +254,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             [(ushort)EMachine.EM_CEVA] = "CEVA Processor Architecture Family",
             [(ushort)EMachine.EM_CEVA_X2] = "CEVA X2 Processor Family",
             [(ushort)EMachine.EM_BPF] = "Linux BPF - in-kernel virtual machine",
-            [(ushort)EMachine.EM_GRAPHCORE_GCN] = "Graphcore GCN architecture",
+            [(ushort)EMachine.EM_GRAPHCORE_IPU] = "Graphcore Intelligent Processing Unit",
             [(ushort)EMachine.EM_NFP] = "Netronome Flow Processor",
             [(ushort)EMachine.EM_VE] = "NEC SX-Aurora Vector Engine",
             [(ushort)EMachine.EM_LOONGARCH] = "LoongArch",
@@ -442,9 +442,14 @@ namespace PersonalTools.ELFAnalyzer.Core
             return FormatFlagBits(flags, s_ppcFlagBits);
         }
 
-        private static List<string> GetSPARCFormattedELFFlags(uint flags)
+        private static List<string> GetSPARCFormattedELFFlags(uint flags, bool isV9)
         {
             List<string> descriptions = FormatFlagBits(flags, s_sparcFlagBits);
+            if (!isV9)
+            {
+                return descriptions; // 非 V9：内存模型无意义，仅返回命中的位标志
+            }
+
             // SPARCV9 内存模型是低 2 位的掩码字段(EF_SPARCV9_MM=0x3)，非位标志，须整体比对
             string memoryModel = (flags & 0x3) switch
             {
@@ -470,7 +475,10 @@ namespace PersonalTools.ELFAnalyzer.Core
                       (ushort)EMachine.EM_MIPS => GetMIPSFormattedELFFlags(header.e_flags),
                       (ushort)EMachine.EM_ARM => GetARMSFormattedELFFlags(header.e_flags),
                       (ushort)EMachine.EM_PPC or (ushort)EMachine.EM_PPC64 => GetPPCFormattedELFFlags(header.e_flags),
-                      (ushort)EMachine.EM_SPARC or (ushort)EMachine.EM_SPARC32PLUS or (ushort)EMachine.EM_SPARCV9 => GetSPARCFormattedELFFlags(header.e_flags),
+                      // 内存模型(EF_SPARCV9_MM)仅 V9 有意义：V9 传 isV9=true 附加 tso/pso/rmo；
+                      // EM_SPARC/SPARC32PLUS 传 false，避免 32 位 SPARC(flags 常为 0)被误加伪 "tso"
+                      (ushort)EMachine.EM_SPARCV9 => GetSPARCFormattedELFFlags(header.e_flags, isV9: true),
+                      (ushort)EMachine.EM_SPARC or (ushort)EMachine.EM_SPARC32PLUS => GetSPARCFormattedELFFlags(header.e_flags, isV9: false),
                       _ => [$"0x{header.e_flags:X8}"],
                   }
                 );

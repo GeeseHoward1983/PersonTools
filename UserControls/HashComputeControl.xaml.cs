@@ -211,6 +211,10 @@ namespace PersonalTools.UserControls
                 }
                 else
                 {
+                    // 大文件未把内容填入 SHA3 输入框：必须清空上一个文件残留的 hex 并复位结果，
+                    // 否则用户点“计算 SHA3”会对旧文件内容求摘要，与上方各哈希（已是新文件）不一致
+                    SHA3InputTextBox.Clear();
+                    SHA3ResultLabel.Content = "等待计算...";
                     FileDropHint.Text = $"已加载文件: {Path.GetFileName(filePath)}（文件较大，已计算上方各哈希；为避免界面卡顿，未把内容填入 SHA3 输入框）";
                 }
             }

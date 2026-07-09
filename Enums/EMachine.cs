@@ -186,7 +186,7 @@ namespace PersonalTools.Enums
         EM_CEVA = 245,    // CEVA Processor Architecture Family
         EM_CEVA_X2 = 246, // CEVA X2 Processor Family
         EM_BPF = 247,     // Linux BPF - in-kernel virtual machine
-        EM_GRAPHCORE_GCN = 248, // Graphcore GCN architecture
+        EM_GRAPHCORE_IPU = 248, // Graphcore Intelligent Processing Unit（官方登记 IPU；"GCN" 系 AMD 架构术语，Graphcore 无 GCN）
         EM_NFP = 250,     // Netronome Flow Processor（官方登记 250，此前误标为 RISC-V 32-bit）
         EM_VE = 251,      // NEC SX-Aurora Vector Engine（官方登记 251，此前误标为 RISC-V 64-bit）
         EM_LOONGARCH = 258 // LoongArch（官方 gABI Assigned Machine Values 登记的最高值区间到此为止）
