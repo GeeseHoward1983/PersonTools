@@ -15,7 +15,7 @@
                 <DataGridTextColumn Header="地址" Binding="{Binding Address}" Width="*"/>
                 <DataGridTextColumn Header="偏移" Binding="{Binding Offset}" Width="*"/>
                 <DataGridTextColumn Header="大小" Binding="{Binding Size}" Width="*"/>
-                <DataGridTextColumn Header="整体大小" Binding="{Binding EntSize}" Width="*"/>
+                <DataGridTextColumn Header="条目大小" Binding="{Binding EntSize}" Width="*"/>
                 <DataGridTextColumn Header="标志" Binding="{Binding Flags}" Width="*"/>
                 <DataGridTextColumn Header="链接" Binding="{Binding Link}" Width="60"/>
                 <DataGridTextColumn Header="信息" Binding="{Binding Info}" Width="60"/>
