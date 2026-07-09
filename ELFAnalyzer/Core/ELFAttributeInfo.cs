@@ -339,6 +339,12 @@ namespace PersonalTools.ELFAnalyzer.Core
             {
                 int val = ReadAEABIUleb128(data, ref offset, endOffset);
                 text = val >= 0 && val < s_aeabiCpuArch.Length ? s_aeabiCpuArch[val] : $"??? ({val})";
+                // Tag_also_compatible_with 的值为 NTBS：内层 (Tag_CPU_arch, arch) 编码后有结尾 NUL，须跳过，
+                // 否则该子节内后续 AEABI 属性整体错位（与下方 innerTag==0 / else 分支一致处理 NUL）
+                if (offset < endOffset && data[offset] == 0)
+                {
+                    offset++;
+                }
             }
             else if (innerTag == 0)
             {

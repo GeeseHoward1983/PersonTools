@@ -66,7 +66,9 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 // 子项（StringFileInfo / VarFileInfo）紧跟在 VS_FIXEDFILEINFO 之后
                 ParseChildrenIfPresent(fs, reader, peInfo, PEParserUtils.AlignTo4(alignedPosition + 52), startPosition + wLength);
-                return applied;
+                // 即使 FIXEDFILEINFO 签名无效(applied=false)，只要子项已从 StringTable 取得有效版本，
+                // 也应置位覆盖保护，短路后续畸形兄弟叶子（与 wValueLength==0 分支返回 FileVersionResolved 一致）
+                return applied || peInfo.AdditionalInfo.FileVersionResolved;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
