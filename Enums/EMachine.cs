@@ -189,10 +189,6 @@ namespace PersonalTools.Enums
         EM_GRAPHCORE_GCN = 248, // Graphcore GCN architecture
         EM_NFP = 250,     // Netronome Flow Processor（官方登记 250，此前误标为 RISC-V 32-bit）
         EM_VE = 251,      // NEC SX-Aurora Vector Engine（官方登记 251，此前误标为 RISC-V 64-bit）
-        EM_LOONGARCH = 258, // LoongArch
-        EM_COGEY = 303,   // Codeplay Software Ltd. COGEY
-        EM_COFFEE = 304,  // Codeplay Software Ltd. COFFEE
-        EM_CISCO_IOS = 305, // Cisco IOS
-        EM_CISCO_IOS64 = 306 // Cisco IOS 64-bit
+        EM_LOONGARCH = 258 // LoongArch（官方 gABI Assigned Machine Values 登记的最高值区间到此为止）
     }
 }

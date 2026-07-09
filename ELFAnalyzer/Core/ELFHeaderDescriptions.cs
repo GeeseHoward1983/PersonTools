@@ -258,10 +258,6 @@ namespace PersonalTools.ELFAnalyzer.Core
             [(ushort)EMachine.EM_NFP] = "Netronome Flow Processor",
             [(ushort)EMachine.EM_VE] = "NEC SX-Aurora Vector Engine",
             [(ushort)EMachine.EM_LOONGARCH] = "LoongArch",
-            [(ushort)EMachine.EM_COGEY] = "Codeplay Software Ltd. COGEY",
-            [(ushort)EMachine.EM_COFFEE] = "Codeplay Software Ltd. COFFEE",
-            [(ushort)EMachine.EM_CISCO_IOS] = "Cisco IOS",
-            [(ushort)EMachine.EM_CISCO_IOS64] = "Cisco IOS 64-bit",
         };
 
         internal static string GetMachineDescription(ELFHeader header)
@@ -362,11 +358,14 @@ namespace PersonalTools.ELFAnalyzer.Core
             (0x00000002u, "ppc_elfv2_abi"),
         ];
 
+        // SPARC e_flags 位标志（EF_SPARC_*，与 binutils readelf 输出对齐）
         private static readonly (uint Mask, string Label)[] s_sparcFlagBits =
         [
-            (0x00000001u, "sparc_ext"),
-            (0x00000002u, "sparc_32bit"),
-            (0x00000004u, "sparc_64bit"),
+            (0x00000100u, "v8+"),           // EF_SPARC_32PLUS
+            (0x00000200u, "ultrasparcI"),   // EF_SPARC_SUN_US1
+            (0x00000400u, "halr1"),         // EF_SPARC_HAL_R1
+            (0x00000800u, "ultrasparcIII"), // EF_SPARC_SUN_US3
+            (0x00800000u, "ledata"),        // EF_SPARC_LEDATA
         ];
 
         private static List<string> GetMIPSFormattedELFFlags(uint flags)
@@ -445,7 +444,21 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         private static List<string> GetSPARCFormattedELFFlags(uint flags)
         {
-            return FormatFlagBits(flags, s_sparcFlagBits);
+            List<string> descriptions = FormatFlagBits(flags, s_sparcFlagBits);
+            // SPARCV9 内存模型是低 2 位的掩码字段(EF_SPARCV9_MM=0x3)，非位标志，须整体比对
+            string memoryModel = (flags & 0x3) switch
+            {
+                0x0 => "tso",
+                0x1 => "pso",
+                0x2 => "rmo",
+                _ => "",
+            };
+            if (memoryModel.Length > 0)
+            {
+                descriptions.Add(memoryModel);
+            }
+
+            return descriptions;
         }
 
         internal static string GetFormattedELFFlags(ELFHeader header)

@@ -338,8 +338,10 @@ namespace PersonalTools.ELFAnalyzer.Core
                     break;
                 }
 
-                // 尚未命中且已超出窗口或硬步数上界：停止回扫，按未命中处理（返回原始地址而非挂死）
-                if (!found && (address - entry.StValue >= maxSymbolSize || pos - i >= MaxBackscanSteps))
+                // 尚未命中且已超出窗口或硬步数上界：停止回扫，按未命中处理（返回原始地址而非挂死）。
+                // maxSymbolSize==0（全部符号零大小，IsAddressInSymbol 对其按无界处理）时窗口剪枝无意义
+                // 且会首次迭代即 break 丢失全部符号注解，此时仅靠硬步数上界兜底
+                if (!found && ((maxSymbolSize > 0 && address - entry.StValue >= maxSymbolSize) || pos - i >= MaxBackscanSteps))
                 {
                     break;
                 }

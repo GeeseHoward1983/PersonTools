@@ -95,7 +95,7 @@ namespace PersonalTools.ConstString
             { 87, "共用程式庫版本不匹配" }, /* ESHLIBVERS */
             { 88, "格式錯誤的Mach-o檔案" }, /* EBADMACHO */
             { 89, "操作已取消" }, /* ECANCELED */
-            { 90, "標識符已移除" }, /* EIDRM */
+            { 90, "識別碼已移除" }, /* EIDRM */
             { 91, "沒有所需類型的訊息" }, /* ENOMSG */
             { 92, "非法位元組序列" }, /* EILSEQ */
             { 93, "未找到屬性" }, /* ENOATTR */

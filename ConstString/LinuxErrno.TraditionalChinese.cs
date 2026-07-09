@@ -47,7 +47,7 @@ namespace PersonalTools.ConstString
             { 39, "目錄非空" }, /* ENOTEMPTY */
             { 40, "遇到過多符號連結" }, /* ELOOP */
             { 42, "沒有所需類型的訊息" }, /* ENOMSG */
-            { 43, "標識符已移除" }, /* EIDRM */
+            { 43, "識別碼已移除" }, /* EIDRM */
             { 44, "通道號超出範圍" }, /* ECHRNG */
             { 45, "第二級未同步" }, /* EL2NSYNC */
             { 46, "第三級已停止" }, /* EL3HLT */

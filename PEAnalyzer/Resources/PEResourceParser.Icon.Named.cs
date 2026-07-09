@@ -22,10 +22,11 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 IMAGE_RESOURCE_DIRECTORY rootDirectory = ResourceDirectoryReader.ReadDirectory(reader);
 
-                // 命名条目位于目录前部，仅遍历这部分
+                // 命名条目位于目录前部，仅遍历这部分；手写条目循环同样消耗扫描会话预算，防畸形多根条目放大
                 for (int i = 0; i < rootDirectory.NumberOfNamedEntries; i++)
                 {
-                    if (!ResourceDirectoryReader.TryReadEntry(fs, reader, directoryOffset, i, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry))
+                    if (!ResourceDirectoryReader.TryConsumeEntry() ||
+                        !ResourceDirectoryReader.TryReadEntry(fs, reader, directoryOffset, i, out IMAGE_RESOURCE_DIRECTORY_ENTRY entry))
                     {
                         break;
                     }

@@ -200,8 +200,10 @@ namespace PersonalTools.MarkdownToWord.Docx
                 }
                 path = realPath;
             }
-            catch (ArgumentException)
+            catch (Exception ex) when (ex is ArgumentException or IOException or NotSupportedException or UnauthorizedAccessException or System.Security.SecurityException)
             {
+                // 超长 URL 使 GetFullPath 抛 PathTooLongException(IOException 子类)、异形路径抛 NotSupportedException 等：
+                // 一律按"无法解析本地图片"降级为占位，不能让异常逃逸中断整篇导出
                 return false;
             }
 
