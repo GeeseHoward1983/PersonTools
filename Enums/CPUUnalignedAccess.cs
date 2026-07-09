@@ -8,7 +8,7 @@ namespace PersonalTools.Enums
     internal enum CPUUnalignedAccess : byte
     {
         None = 0,
-        v6 = 1,
-        v7 = 2
+        v6 = 1
+        // ARM ABI Tag_CPU_unaligned_access 仅定义 0(None)/1(v6)，无 v7
     }
 }

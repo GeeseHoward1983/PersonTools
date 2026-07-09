@@ -513,14 +513,12 @@ namespace PersonalTools.ELFAnalyzer.Core
             }
             else if (cmd == 0xB4)
             {
-                sb.AppendLine("  pop");
+                // EHABI PACBTI 扩展：从栈弹出返回地址认证码到伪寄存器 RA_AUTH_CODE（与 readelf/LLVM 一致）
+                sb.AppendLine("  pop {ra_auth_code}");
             }
-            else if (cmd == 0xB5)
+            else if (cmd is 0xB5 or 0xB6 or 0xB7 or (>= 0xCA and <= 0xCF) or (>= 0xD8 and <= 0xFF))
             {
-                sb.AppendLine("  pop vsp");
-            }
-            else if (cmd is 0xB6 or 0xB7 or (>= 0xCA and <= 0xCF) or (>= 0xD8 and <= 0xFF))
-            {
+                // 0xB5 属 EHABI Spare 段(0xB4-0xB7 中除 0xB4 外)，此前误输出 "pop vsp" 杜撰语义
                 sb.AppendLine("  Spare");
             }
             else if (cmd is (>= 0xB8 and <= 0xBF) or (>= 0xD0 and <= 0xD7)) // pop VFP D8-DN

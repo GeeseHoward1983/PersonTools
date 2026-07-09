@@ -13,8 +13,7 @@ namespace PersonalTools.Enums
         PT_LOOS = 0x60000000,  // OS-specific
         PT_HIOS = 0x6FFFFFFF,  // OS-specific
         PT_LOPROC = 0x70000000,// Processor-specific
-        PT_EXIDX = 0x70000001,
-        PT_EXTAB = 0x70000002,
+        PT_EXIDX = 0x70000001,        // PT_ARM_EXIDX：AArch32 异常索引表（ARCHEXT=0x70000000 与 PT_LOPROC 同值）
         PT_HIPROC = 0x7FFFFFFF,// Processor-specific
         PT_GNU_EH_FRAME = 0x6474E550, // GCC .eh_frame_hdr segment
         PT_GNU_STACK = 0x6474E551,    // Indicates stack executability
