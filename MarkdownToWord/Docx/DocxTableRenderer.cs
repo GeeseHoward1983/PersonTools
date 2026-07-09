@@ -16,6 +16,10 @@ namespace PersonalTools.MarkdownToWord.Docx
     /// </summary>
     internal static class DocxTableRenderer
     {
+        // 整表单元格总数上限：防畸形管道表(分隔行声明极多列 × 多稀疏行)生成 O(列×行) 单元格致 OOM。
+        // Render 的单元格预算与 BuildTableGrid 的列数上限共用此值，两处须一致夹取。
+        private const int MaxTableCells = 200_000;
+
         public static void Render(MTable mdTable, OpenXmlElement container, DocxRenderContext ctx, int indentLevel)
         {
             // 表格是递归入口：单元格可含块级内容乃至嵌套 grid table。深度由调用链沿 indentLevel 传入，
@@ -33,9 +37,7 @@ namespace PersonalTools.MarkdownToWord.Docx
 
             ContentStyleRow tableStyle = ctx.Settings.For(ContentCategory.Table);
             int totalColumns = GetColumnCount(mdTable);
-            // 防畸形管道表 O(列×行) 单元格爆炸：分隔行可声明极多列、配合多个稀疏行会生成数十亿单元格致 OOM。
-            // 先把列数夹到总预算内（防 new int[] 单次分配过大），再在生成时对整表单元格总数计预算。
-            const int MaxTableCells = 200_000;
+            // 先把列数夹到总预算内（防 new int[] 单次分配过大），再在生成时对整表单元格总数计预算
             if (totalColumns > MaxTableCells)
             {
                 totalColumns = MaxTableCells;
@@ -135,6 +137,11 @@ namespace PersonalTools.MarkdownToWord.Docx
         private static TableGrid BuildTableGrid(MTable mdTable)
         {
             int columns = GetColumnCount(mdTable);
+            // 与 Render 一致夹取列数：畸形分隔行可声明极多列，若此处不夹会生成超多 GridColumn 致内存/输出爆炸
+            if (columns > MaxTableCells)
+            {
+                columns = MaxTableCells;
+            }
 
             const int contentWidthTwips = 9026; // A4 正文宽度（页宽 - 左右边距）
             // 各列等分正文宽度，列宽之和恒 ≤ contentWidthTwips，避免超多列时溢出页面右边距。
