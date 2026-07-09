@@ -1059,7 +1059,6 @@ namespace PersonalTools.PEAnalyzer.Resources
             { 0x048F, 107 },
             { 0x0491, 108 },
             { 0x0493, 109 },
-            { 0x0800, 110 },
             { 0x0801, 111 },
             { 0x0804, 112 },
             { 0x0807, 113 },

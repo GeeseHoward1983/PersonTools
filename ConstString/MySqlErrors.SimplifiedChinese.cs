@@ -619,7 +619,7 @@ namespace PersonalTools.ConstString
             { 1422, "ER_COMMIT_NOT_ALLOWED_IN_SF_OR_TRG: 在存储函数或触发器中不允许显式或隐式提交。"},
             { 1423, "ER_NO_DEFAULT_FOR_VIEW_FIELD: 视图'%-.192s'.'%-.192s'的基础表没有默认值"},
             { 1424, "ER_SP_NO_RECURSION: 不允许递归存储函数。"},
-            { 1425, "ER_TOO_BIG_SCALE: 为列'%-.192s'指定了太大的比例%d。最大为%d。"},
+            { 1425, "ER_TOO_BIG_SCALE: 为列'%-.192s'指定了太大的小数位数%d。最大为%lu。"},
             { 1426, "ER_TOO_BIG_PRECISION: 为列'%-.192s'指定了太大的精度%d。最大为%d。"},
             { 1427, "ER_M_BIGGER_THAN_D: 对于float(M,D)、double(M,D)或decimal(M,D)，M必须>= D(列'%-.192s')。"},
             { 1428, "ER_WRONG_LOCK_OF_SYSTEM_TABLE: 不能将系统表的写锁定与其他表或锁类型组合使用"},
