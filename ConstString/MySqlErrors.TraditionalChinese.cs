@@ -328,7 +328,7 @@ namespace PersonalTools.ConstString
             { 1131, "ER_PASSWORD_ANONYMOUS_USER: 您正在使用MySQL作為匿名使用者，不允許匿名使用者更改密碼"},
             { 1132, "ER_PASSWORD_NOT_ALLOWED: 您必須有更新mysql資料庫中表的權限才能更改密碼"},
             { 1133, "ER_PASSWORD_NO_MATCH: 無法在使用者表中找到任何匹配的行"},
-            { 1134, "ER_UPDATE_INFO: 符合的列: %ld 已變更: %ld 警告: %ld"},
+            { 1134, "ER_UPDATE_INFO: 符合的行: %ld 已變更: %ld 警告: %ld"},
             { 1135, "ER_CANT_CREATE_THREAD: 無法建立新執行緒 (錯誤號 %d); 如果您並非記憶體不足，可查閱手冊以了解可能的作業系統相關錯誤"},
             { 1136, "ER_WRONG_VALUE_COUNT_ON_ROW: 列計數與第%ld行的值計數不匹配"},
             { 1137, "ER_CANT_REOPEN_TABLE: 無法重新開啟表'%-.192s'"},

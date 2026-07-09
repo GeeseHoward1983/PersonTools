@@ -214,6 +214,18 @@ namespace PersonalTools.PEAnalyzer.Parsers
                     }
                 }
 
+                // HeapSizes bit6(0x40)=ExtraData：置位时行数数组之后紧跟一个额外的 4 字节字段(ECMA-335)，
+                // 须跳过，否则 tablesDataOffset 提前 4 字节、TypeDef 及后续表偏移全部错位
+                if ((heapSizes & 0x40) != 0)
+                {
+                    if (fs.Position + 4 > fs.Length)
+                    {
+                        return;
+                    }
+
+                    fs.Position += 4;
+                }
+
                 // 行数数组之后即为表数据起始位置
                 long tablesDataOffset = fs.Position;
 

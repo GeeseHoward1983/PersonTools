@@ -339,7 +339,7 @@ namespace PersonalTools.ConstString
             { 1142, "ER_TABLEACCESS_DENIED_ERROR: 用户'%-.48s'@'%-.64s'对表'%-.192s'的%s命令被拒绝"},
             { 1143, "ER_COLUMNACCESS_DENIED_ERROR: 用户'%-.48s'@'%-.64s'对表'%-.192s'的列'%-.192s'的%s命令被拒绝"},
             { 1144, "ER_ILLEGAL_GRANT_FOR_TABLE: 非法的GRANT/REVOKE命令; 请查阅手册了解可以使用哪些权限"},
-            { 1145, "ER_GRANT_WRONG_HOST_OR_USER: GRANT主机或用户参数错误"},
+            { 1145, "ER_GRANT_WRONG_HOST_OR_USER: GRANT主机或用户参数过长"},
             { 1146, "ER_NO_SUCH_TABLE: 表'%-.192s'.'%-.192s'不存在"},
             { 1147, "ER_NONEXISTING_TABLE_GRANT: 用户'%-.48s'(主机'%-.64s')对表'%-.192s'没有这样的权限定义"},
             { 1148, "ER_NOT_ALLOWED_COMMAND: 此MySQL版本不允许使用的命令"},
