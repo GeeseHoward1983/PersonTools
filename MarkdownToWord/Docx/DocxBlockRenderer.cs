@@ -352,7 +352,9 @@ namespace PersonalTools.MarkdownToWord.Docx
         {
             Paragraph paragraph = new(new ParagraphProperties(
                 new Shading { Val = ShadingPatternValues.Clear, Color = "auto", Fill = "F6F8FA" },
-                new SpacingBetweenLines { Before = "60", After = "60" }));
+                new SpacingBetweenLines { Before = "60", After = "60" },
+                // 显式重置首行缩进：代码/等宽块继承 Normal 样式，正文设首行缩进>0 时首行会被右移、与块内后续行错位
+                new Indentation { FirstLine = "0", FirstLineChars = 0 }));
 
             DocxRunStyle style = DocxRunStyle.For(ctx.Settings.For(ContentCategory.Body)).AsCode();
             int count = lines.Count;
