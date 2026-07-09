@@ -33,6 +33,15 @@ namespace PersonalTools.MarkdownToWord.Docx
 
             ContentStyleRow tableStyle = ctx.Settings.For(ContentCategory.Table);
             int totalColumns = GetColumnCount(mdTable);
+            // 防畸形管道表 O(列×行) 单元格爆炸：分隔行可声明极多列、配合多个稀疏行会生成数十亿单元格致 OOM。
+            // 先把列数夹到总预算内（防 new int[] 单次分配过大），再在生成时对整表单元格总数计预算。
+            const int MaxTableCells = 200_000;
+            if (totalColumns > MaxTableCells)
+            {
+                totalColumns = MaxTableCells;
+            }
+
+            long cellBudget = MaxTableCells;
             // 逐行重建网格几何：跟踪每个网格列上尚未结束的纵向合并(RowSpan)，为其在后续行补 vMerge=Continue 单元格；
             // 单元格 ColumnSpan>1 出 gridSpan。Markdig 的行/列跨在续行是稀疏的（被跨越的列在续行缺席），故须按占用推进列号，
             // 否则每个源单元格只出一个无 gridSpan 的 w:tc，合并单元格丢失、行列错位。
@@ -60,6 +69,11 @@ namespace PersonalTools.MarkdownToWord.Docx
                 int cellIdx = 0;
                 while (col < totalColumns)
                 {
+                    if (--cellBudget < 0)
+                    {
+                        break; // 整表单元格预算耗尽，停止渲染（畸形表防护，正常表远低于上限）
+                    }
+
                     if (rowSpanRemaining[col] > 0)
                     {
                         // 该列有来自上方的纵向合并延续：补一个 vMerge=Continue 单元格（含相同 gridSpan 宽度）
@@ -94,6 +108,10 @@ namespace PersonalTools.MarkdownToWord.Docx
                 }
 
                 table.AppendChild(row);
+                if (cellBudget < 0)
+                {
+                    break; // 预算耗尽：不再渲染后续行
+                }
             }
 
             container.AppendChild(table);

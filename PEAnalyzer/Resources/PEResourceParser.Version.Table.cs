@@ -18,7 +18,7 @@ namespace PersonalTools.PEAnalyzer.Resources
             {
                 ["CompanyName"] = (info, v) => info.CompanyName = v,
                 ["FileDescription"] = (info, v) => info.FileDescription = v,
-                ["FileVersion"] = (info, v) => info.FileVersion = v,
+                ["FileVersion"] = (info, v) => { info.FileVersion = v; info.FileVersionResolved = true; },
                 ["ProductName"] = (info, v) => info.ProductName = v,
                 ["ProductVersion"] = (info, v) => info.ProductVersion = v,
                 ["LegalCopyright"] = (info, v) => info.LegalCopyright = v,

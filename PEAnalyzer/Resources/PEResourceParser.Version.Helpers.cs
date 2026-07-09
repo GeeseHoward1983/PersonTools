@@ -45,11 +45,13 @@ namespace PersonalTools.PEAnalyzer.Resources
                 // VS_FIXEDFILEINFO 紧随其后（对齐到4字节边界），大小 52 字节
                 long alignedPosition = PEParserUtils.AlignTo4(fs.Position);
 
-                // wValueLength==0 表示没有 VS_FIXEDFILEINFO（合法），直接解析子项；未取到固定版本，返回 false
+                // wValueLength==0 表示没有 VS_FIXEDFILEINFO（合法），直接解析子项。
+                // 若子项从 StringTable 成功取得 FileVersion，则返回 true 以置位覆盖保护(succeeded)，
+                // 短路后续畸形兄弟叶子；否则返回 false 允许后续叶子继续尝试
                 if (wValueLength == 0)
                 {
                     ParseChildrenIfPresent(fs, reader, peInfo, alignedPosition, startPosition + wLength);
-                    return false;
+                    return peInfo.AdditionalInfo.FileVersionResolved;
                 }
 
                 if (wValueLength < 52 || alignedPosition + 52 > fs.Length)

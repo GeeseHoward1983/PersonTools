@@ -92,6 +92,13 @@ namespace PersonalTools.PEAnalyzer
 
         public static string GetCompilerVersionDescription(byte majorVersion, byte minorVersion, bool isNetAssembly = false)
         {
+            // .NET 程序集的 MajorLinkerVersion(常见 6/8/11/14 等)并不代表 MSVC 编译器版本，
+            // 必须在按 MSVC 版本号分派前拦截，否则 linker 版本落在 6-15 的 .NET 程序集会被误标为 Visual C++
+            if (isNetAssembly)
+            {
+                return $"Microsoft .NET Compiler [{majorVersion}.{minorVersion}]";
+            }
+
             return $"{majorVersion switch
             {
                 6 => "Microsoft Visual C++ 6.0",
@@ -106,7 +113,6 @@ namespace PersonalTools.PEAnalyzer
                     : "Microsoft Visual C++ 2015/2017/2019",
                 15 => "Microsoft Visual C++ (未知版本)",
                 _ =>
-                    isNetAssembly ? "Microsoft .NET Compiler" :
                     majorVersion > 15 ? "Microsoft Visual C++ (较新版本)" : "Microsoft Visual C++ (未知版本)"
             }} [{majorVersion}.{minorVersion}]";
         }
