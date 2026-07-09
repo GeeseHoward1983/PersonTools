@@ -332,8 +332,10 @@ namespace PersonalTools.ELFAnalyzer.Core
             for (int i = pos; i >= 0; i--)
             {
                 SymbolEntry entry = sortedSymbols[i];
-                // 已找到命中且当前 StValue 严格更小：不可能给出更接近的 bestStart，停止回退
-                if (found && entry.StValue < bestStart)
+                // 已找到命中且当前 StValue 严格更小：不可能给出更接近的 bestStart，停止回退。
+                // 另加硬步数上界：畸形 ELF 可让大量符号共享同一 StValue(如全为 0)，此时 StValue<bestStart 恒不成立，
+                // 命中后会把整段相同 StValue 全遍历；配合数百万 exidx 条目构成 O(N×M) CPU 耗尽，故超步数也停。
+                if (found && (entry.StValue < bestStart || pos - i >= MaxBackscanSteps))
                 {
                     break;
                 }
