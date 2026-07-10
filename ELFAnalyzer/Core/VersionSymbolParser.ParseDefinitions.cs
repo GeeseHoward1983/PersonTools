@@ -51,7 +51,16 @@ namespace PersonalTools.ELFAnalyzer.Core
 
         internal static int CalculateVerDefEntryCount(Models.ELFSectionHeader section)
         {
-            return section.sh_entsize == 0 ? 0 : (int)(section.sh_size / section.sh_entsize);
+            if (section.sh_entsize == 0)
+            {
+                return 0;
+            }
+
+            // sh_size/sh_entsize 来自不可信节头；夹到 [0, int.MaxValue] 而非直接 (int) 截断，
+            // 否则商 >int.MaxValue 时截成负值：解析路径静默跳过整节，格式化路径的
+            // past-end 启发式失效。与上方 verdefNum/verneedNum 的夹紧约定一致。
+            ulong entries = section.sh_size / section.sh_entsize;
+            return entries > int.MaxValue ? int.MaxValue : (int)entries;
         }
 
         private static void ParseVerDefEntries(ELFParser parser, Models.ELFSectionHeader section, int count)

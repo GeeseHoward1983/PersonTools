@@ -8,6 +8,7 @@ namespace PersonalTools.Enums
         EM_386 = 3,       // Intel 80386
         EM_68K = 4,       // Motorola 68000
         EM_88K = 5,       // Motorola 88000
+        EM_486 = 6,       // Intel 80486 (gABI 保留值；readelf 仍按 Intel 80486 显示)
         EM_860 = 7,       // Intel 80860
         EM_MIPS = 8,      // MIPS I Architecture
         EM_S370 = 9,      // IBM System/370 Processor

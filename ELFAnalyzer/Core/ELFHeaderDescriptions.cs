@@ -76,6 +76,7 @@ namespace PersonalTools.ELFAnalyzer.Core
             [(ushort)EMachine.EM_386] = "Intel 80386",
             [(ushort)EMachine.EM_68K] = "Motorola 68000",
             [(ushort)EMachine.EM_88K] = "Motorola 88000",
+            [(ushort)EMachine.EM_486] = "Intel 80486",
             [(ushort)EMachine.EM_860] = "Intel 80860",
             [(ushort)EMachine.EM_MIPS] = "MIPS I Architecture",
             [(ushort)EMachine.EM_S370] = "IBM System/370 Processor",
