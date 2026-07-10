@@ -116,7 +116,11 @@ namespace PersonalTools.UserControls
             ELFDynamicSectionTabItem.Visibility = data.DynamicSection.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
             ELFVersionSymbolInfoControl.SetVersionSymbolInfo(data.VersionSymbolInfo);
+
+            // 与其余数据型 Tab 一致：无版本依赖内容（如静态链接 ELF 无 .gnu.version_r，格式化器返回空串）时
+            // 折叠该 Tab，避免恒可见的空白页签；版本符号 Tab 的格式化器恒输出解释性文本（含"未找到"），无需切换
             ELFVersionDependencyInfoControl.SetVersionDependencyInfo(data.VersionDependencyInfo);
+            ELFVersionDependencyInfoTabItem.Visibility = !string.IsNullOrEmpty(data.VersionDependencyInfo) ? Visibility.Visible : Visibility.Collapsed;
 
             ELFRelocationControl.SetRelaDynData(data.RelaDyn);
             ELFRelaDynTabItem.Visibility = data.RelaDyn.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
