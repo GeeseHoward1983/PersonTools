@@ -313,6 +313,17 @@ namespace PersonalTools.MarkdownToWord.Docx
             DocxRunStyle style = DocxRunStyle.For(ctx.Settings.For(ContentCategory.Body));
             foreach (Block child in item)
             {
+                // 首块非段落（列表项直接以代码块/引用/嵌套列表开头，合法 CommonMark）时，
+                // 先单独输出仅含标记的段落：否则标记要么整项丢失（项内无段落子块），
+                // 要么错挂到后面第一个段落上（与子块实际顺序颠倒）
+                if (first && child is not ParagraphBlock)
+                {
+                    Paragraph markerParagraph = NewIndentedParagraph(indentLevel);
+                    DocxInlineRenderer.AppendText(markerParagraph, marker, style);
+                    container.AppendChild(markerParagraph);
+                    first = false;
+                }
+
                 if (child is ParagraphBlock paragraph)
                 {
                     Paragraph wordParagraph = NewIndentedParagraph(indentLevel);
