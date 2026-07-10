@@ -42,7 +42,11 @@ namespace PersonalTools.ELFAnalyzer.Core
             sb.AppendLine("  Owner             Data size            Description");
 
             bool isLittleEndian = parser.Header.IsLittleEndian();
-            ulong endOffset = Math.Min(offset + size, (ulong)parser.FileData.Length); // 夹紧到文件实际长度
+            // 夹紧到文件实际长度。offset/size 为不可信节头原始值，offset+size 可能 ulong 回绕，
+            // 使 Math.Min 夹紧失效（endOffset 变为极小值、整段 note 被静默跳过而非解析文件内可读部分）；
+            // 用减法式判断防回绕，与 GetSectionEndOffset/IsRangeWithin 的处理同款。
+            ulong fileLength = (ulong)parser.FileData.Length;
+            ulong endOffset = size > fileLength || offset > fileLength - size ? fileLength : offset + size;
 
             while (offset + 12 <= endOffset) // 至少能读完 namesz/descsz/type 三个字段
             {
