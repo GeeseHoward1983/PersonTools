@@ -102,8 +102,14 @@ namespace PersonalTools.MarkdownToWord.Docx
         /// <summary>取图片的替代文字（alt），用于图题注。</summary>
         public static string ExtractAltText(LinkInline image)
         {
+            return ExtractInlineText(image);
+        }
+
+        /// <summary>提取任意行内容器的纯文本（递归收集字面量，带深度守卫），供图片 alt 与 Figure 题注共用。</summary>
+        public static string ExtractInlineText(ContainerInline container)
+        {
             StringBuilder sb = new();
-            AppendLiterals(image, sb, 0);
+            AppendLiterals(container, sb, 0);
             return sb.ToString().Trim();
         }
 

@@ -88,6 +88,12 @@ namespace PersonalTools.MarkdownToWord.Docx
                     // 否则脚注正文被当普通段落无编号地堆在文末。
                     RenderFootnoteGroup(footnotes, container, ctx, indentLevel);
                     break;
+                case Figure figure:
+                    // 图（Figure ^^^ 扩展）容器：须在 ContainerBlock 泛化分支前拦截。
+                    // 否则容器内图片段以 alt 文字生成带 SEQ 编号的题注、FigureCaption 又单独渲染为
+                    // 无编号斜体段——真实题注拿不到编号且题注出现两次。
+                    RenderFigureContainer(figure, container, ctx, indentLevel);
+                    break;
                 case HtmlBlock:
                     break; // 跳过原始 HTML 块
                 case ContainerBlock nested:
@@ -189,8 +195,50 @@ namespace PersonalTools.MarkdownToWord.Docx
 
             if (embedded)
             {
-                container.AppendChild(DocxCaptionBuilder.BuildFigureCaption(DocxImageEmbedder.ExtractAltText(image), ctx));
+                // Figure(^^^) 容器内：真实题注（FigureCaption 文本）优先于 alt 作为 SEQ 题注文字；
+                // 消费后置空，防止容器末尾的回退路径把同一题注再渲染一次
+                string captionText = ctx.PendingFigureCaption ?? DocxImageEmbedder.ExtractAltText(image);
+                ctx.PendingFigureCaption = null;
+                container.AppendChild(DocxCaptionBuilder.BuildFigureCaption(captionText, ctx));
             }
+        }
+
+        // Figure(^^^) 容器：把 FigureCaption 的文本经 ctx.PendingFigureCaption 交给容器内首个
+        // 成功嵌入的图片作 SEQ 编号题注（优先于 alt），FigureCaption 不再单独渲染；
+        // 容器内没有成功嵌入的图片时（如包着表格/代码或图片嵌入失败），题注回退为原有的
+        // 无编号居中斜体渲染，保证不丢失。
+        private static void RenderFigureContainer(Figure figure, OpenXmlElement container, DocxRenderContext ctx, int indentLevel)
+        {
+            FigureCaption? firstCaption = null;
+            foreach (Block child in figure)
+            {
+                if (child is FigureCaption caption)
+                {
+                    firstCaption = caption;
+                    break;
+                }
+            }
+
+            string? savedPending = ctx.PendingFigureCaption;
+            string? captionText = firstCaption?.Inline == null ? null : DocxImageEmbedder.ExtractInlineText(firstCaption.Inline);
+            ctx.PendingFigureCaption = string.IsNullOrWhiteSpace(captionText) ? null : captionText;
+
+            foreach (Block child in figure)
+            {
+                if (child is FigureCaption)
+                {
+                    continue; // 题注不单独渲染：并入图片 SEQ 题注，或在下方回退渲染
+                }
+
+                RenderBlock(child, container, ctx, indentLevel + 1);
+            }
+
+            if (ctx.PendingFigureCaption != null && firstCaption != null)
+            {
+                RenderFigureCaption(firstCaption, container, ctx); // 未被图片消费：回退无编号题注
+            }
+
+            ctx.PendingFigureCaption = savedPending;
         }
 
         // 定义列表术语：加粗段落（其定义正文仍由后续 ParagraphBlock 分支渲染）

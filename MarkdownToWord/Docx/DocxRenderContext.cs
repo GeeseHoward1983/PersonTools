@@ -24,6 +24,12 @@ namespace PersonalTools.MarkdownToWord.Docx
         public bool FirstChapterRendered { get; set; }
 
         /// <summary>
+        /// Figure(^^^) 容器提取的真实题注文字：容器内首个成功嵌入的图片用它（而非 alt）生成 SEQ 编号题注，
+        /// 消费后置空；容器渲染结束仍未消费时回退为无编号题注渲染。见 DocxBlockRenderer.RenderFigureContainer。
+        /// </summary>
+        public string? PendingFigureCaption { get; set; }
+
+        /// <summary>
         /// 本次导出已成功嵌入图片的累计字节数。单图有 50MB 上限，但多图叠加无总预算时仍可能
         /// 撑爆内存/产出超大文档；嵌入器据此对单次导出施加总字节预算，超限后续图片降级为占位文字。
         /// </summary>
