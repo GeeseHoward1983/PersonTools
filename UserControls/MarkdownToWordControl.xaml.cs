@@ -279,7 +279,30 @@ namespace PersonalTools.UserControls
 
         // ---- 导出 docx ----
 
+        // 导出重入防护：Export_Click 的 await 窗口（OOXML 写盘 + Word COM 域更新，可达数十秒）内
+        // 按钮仍可点击，二次导出会与首次并发写同一 docx（对话框预填同名）、多开隐藏 Word 实例。
+        // 与纯计算型按钮不同，导出有外部副作用，须整段互斥。
+        private bool exportInProgress;
+
         private async void Export_Click(object sender, RoutedEventArgs e)
+        {
+            if (exportInProgress)
+            {
+                return; // 已有导出在进行：忽略重复点击
+            }
+
+            exportInProgress = true;
+            try
+            {
+                await ExportAsync().ConfigureAwait(true);
+            }
+            finally
+            {
+                exportInProgress = false;
+            }
+        }
+
+        private async Task ExportAsync()
         {
             SaveFileDialog dialog = new()
             {
