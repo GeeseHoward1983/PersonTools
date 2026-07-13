@@ -147,22 +147,15 @@ namespace PersonalTools.Enums
         R_ARM_THM_BF12,
         R_ARM_THM_BF18,
         R_ARM_IRELATIVE = 160,
-        R_ARM_PRIVATE_16,
-        R_ARM_PRIVATE_17,
-        R_ARM_PRIVATE_18,
-        R_ARM_PRIVATE_19,
-        R_ARM_PRIVATE_20,
-        R_ARM_PRIVATE_21,
-        R_ARM_PRIVATE_22,
-        R_ARM_PRIVATE_23,
-        R_ARM_PRIVATE_24,
-        R_ARM_PRIVATE_25,
-        R_ARM_PRIVATE_26,
-        R_ARM_PRIVATE_27,
-        R_ARM_PRIVATE_28,
-        R_ARM_PRIVATE_29,
-        R_ARM_PRIVATE_30,
-        R_ARM_PRIVATE_31,
+        // 161-167 为 AAELF32 的 FDPIC 重定位（与 glibc/binutils 一致）；私有编号空间仅 112-127
+        // （R_ARM_PRIVATE_0..15，上方已声明），不存在 PRIVATE_16..31；168-248 未分配，不收录
+        R_ARM_GOTFUNCDESC = 161,      /* FDPIC: GOT entry for function descriptor. */
+        R_ARM_GOTOFFFUNCDESC = 162,   /* FDPIC: GOT-relative offset of function descriptor. */
+        R_ARM_FUNCDESC = 163,         /* FDPIC: function descriptor. */
+        R_ARM_FUNCDESC_VALUE = 164,   /* FDPIC: function descriptor value. */
+        R_ARM_TLS_GD32_FDPIC = 165,   /* FDPIC: TLS general dynamic. */
+        R_ARM_TLS_LDM32_FDPIC = 166,  /* FDPIC: TLS local dynamic. */
+        R_ARM_TLS_IE32_FDPIC = 167,   /* FDPIC: TLS initial exec. */
         R_ARM_RXPC25 = 249,
         R_ARM_RSBREL32 = 250,
         R_ARM_THM_RPC22 = 251,
