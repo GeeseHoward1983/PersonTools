@@ -129,6 +129,15 @@ namespace PersonalTools.MarkdownToWord
                 Marshal.FinalReleaseComObject(app);
                 app = null;
             }
+
+            // 释放点号链产生的中间 RCW（app.Documents / doc.Fields / doc.TablesOfContents(.Item) 等）：
+            // 它们未被显式引用，若留给日后 GC，本 STA 线程结束后终结器无法向已死单元封送释放调用，
+            // 隐藏的 WINWORD.EXE 会长期残留（Office 自动化 KB317109 经典问题）。
+            // 趁 STA 线程尚存强制两轮完整回收（第一轮回收 RCW 并入终结队列，等待后第二轮收尾）。
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
         }
     }
 }
