@@ -67,6 +67,9 @@ namespace PersonalTools.UserControls
                 // 含不可见控制字符、或不是合法 UTF-8 序列时转 Hex 显示，避免乱码或被 U+FFFD 静默替换；否则按 UTF-8 文本显示
                 bool useHex = ContainsInvisibleCharacters(bytes) || !IsValidUtf8(bytes);
                 Base64Input.Text = ConvertUtils.OutputString(bytes, useHex);
+                // 与拖放处理器一致：按实际显示形态同步输入模式单选。否则解码出的 Hex 串在
+                // 下次点击编码时会被当作 UTF-8 文本重编码，静默得到错误的 Base64（无法往返）
+                (useHex ? Base64HexInputRadio : Base64StringInputRadio).IsChecked = true;
             }
             catch (Exception ex) when (ex is FormatException or ArgumentException or ObjectDisposedException)
             {
