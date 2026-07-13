@@ -190,10 +190,16 @@ namespace PersonalTools.UserControls
         {
             if (DependencyTree.SelectedItem is DependencyNode node)
             {
+                int token = loadToken; // I6：记下当前加载令牌，await 期间加载了新文件则丢弃过期显示
                 try
                 {
                     // 确保该依赖已解析（后台线程解析），然后把导入/导出列表切换为它自身的数据
                     await node.EnsureLoadedAsync().ConfigureAwait(true);
+                    if (token != loadToken)
+                    {
+                        return; // 已切换到新文件：勿把旧文件依赖节点的导入/导出写入表格（新旧混合）
+                    }
+
                     ShowFunctions(node.Info);
                 }
                 catch (InvalidDataException ex)
