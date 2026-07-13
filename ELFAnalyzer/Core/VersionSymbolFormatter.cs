@@ -41,7 +41,12 @@ namespace PersonalTools.ELFAnalyzer.Core
                 // 每行显示4个版本符号
                 for (int i = 0; i < parser.VersionSymbols.Length; i++)
                 {
-                    sb.Append(CultureInfo.InvariantCulture, $" {i:x3}:");
+                    // 行首索引标签每行（4 个符号）仅打印一次，与 readelf 一致；
+                    // 此前每个符号都带 " NNN:" 前缀，一行会出现 4 个索引标签
+                    if ((i & 0x3) == 0)
+                    {
+                        sb.Append(CultureInfo.InvariantCulture, $" {i:x3}:");
+                    }
                     ushort versionIndex = (ushort)(parser.VersionSymbols[i] & 0x7fff);
                     string versionInfo = GetVersionInfoByIndex(parser, versionIndex);
                     sb.Append(CultureInfo.InvariantCulture, $" {versionIndex:D3} ({versionInfo})");
