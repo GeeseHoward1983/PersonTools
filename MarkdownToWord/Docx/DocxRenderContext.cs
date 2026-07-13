@@ -30,6 +30,12 @@ namespace PersonalTools.MarkdownToWord.Docx
         public string? PendingFigureCaption { get; set; }
 
         /// <summary>
+        /// 本次导出是否生成了封面（文档首块为一级标题时由 DocxWriter 抽出）。决定标题级别映射：
+        /// 有封面时正文标题整体上移一级（H2=章 → Heading1），无封面时按原级映射。
+        /// </summary>
+        public bool HasCover { get; set; }
+
+        /// <summary>
         /// 本次导出已成功嵌入图片的累计字节数。单图有 50MB 上限，但多图叠加无总预算时仍可能
         /// 撑爆内存/产出超大文档；嵌入器据此对单次导出施加总字节预算，超限后续图片降级为占位文字。
         /// </summary>

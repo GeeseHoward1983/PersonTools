@@ -43,6 +43,8 @@ namespace PersonalTools.MarkdownToWord.Docx
                     // 会让它从原位置消失、出现在文首，与正文渲染时的标题判定不一致。
                     List<Block> blocks = [.. ast];
                     bool hasCover = blocks.Count > 0 && blocks[0] is HeadingBlock { Level: 1 };
+                    // 告知标题渲染映射策略：有封面时正文标题上移一级（H2=章），无封面时按原级映射
+                    ctx.HasCover = hasCover;
                     if (hasCover)
                     {
                         DocxCoverBuilder.RenderCover((HeadingBlock)blocks[0], body, ctx);

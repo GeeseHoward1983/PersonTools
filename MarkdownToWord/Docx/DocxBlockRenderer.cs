@@ -114,8 +114,9 @@ namespace PersonalTools.MarkdownToWord.Docx
         {
             // 封面仅由 DocxWriter 对「文档首块即一级标题」的情形生成(并已从块列表移除)；此处不再把正文中
             // 任何一级标题当封面——否则文档不以 H1 开头时，正文中部的首个 H1 会被抽成整页伪封面、从原位置消失。
-            // 走到这里的一级标题(含文首非 H1 时的后续 H1)统一降级为 Word 一级标题(wordLevel=1)。
-            int wordLevel = Math.Max(1, heading.Level - 1);
+            // 有封面：正文标题按「H2=章」整体上移一级（正文残余 H1 统一降为 1 级）；
+            // 无封面：按原级映射——若仍一律减 1，H1 与 H2 会同落 Heading1，层级塌陷且双双触发章分页。
+            int wordLevel = ctx.HasCover ? Math.Max(1, heading.Level - 1) : heading.Level;
             bool styled = wordLevel is >= 1 and <= 4;
 
             // 去掉 Markdown 标题文本里的编号前缀，改由 Word 多级编号自动生成（需求 3）。
