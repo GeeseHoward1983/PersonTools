@@ -112,8 +112,12 @@ namespace PersonalTools.MarkdownToWord.Docx
             int wordLevel = Math.Max(1, heading.Level - 1);
             bool styled = wordLevel is >= 1 and <= 4;
 
-            // 去掉 Markdown 标题文本里的编号前缀，改由 Word 多级编号自动生成（需求 3）
-            StripLeadingNumber(heading.Inline);
+            // 去掉 Markdown 标题文本里的编号前缀，改由 Word 多级编号自动生成（需求 3）。
+            // 仅对套 Heading 样式的 1-4 级生效：超 4 级降级为加粗正文、无自动编号，剥离会使编号彻底丢失
+            if (styled)
+            {
+                StripLeadingNumber(heading.Inline);
+            }
 
             ParagraphProperties pPr = new(
                 new ParagraphStyleId { Val = styled ? OoxmlIds.HeadingStyleId(wordLevel) : OoxmlIds.NormalStyleId });

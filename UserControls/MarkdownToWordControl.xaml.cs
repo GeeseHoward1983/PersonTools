@@ -242,6 +242,10 @@ namespace PersonalTools.UserControls
             }
         }
 
+        // 重入令牌：与其余五个拖放处理器（aes/hash/crc/rsa/base64DropToken）同款。
+        // 连续拖入/打开时，先启动的慢读盘若后完成，会把编辑器覆盖回旧文件；令牌不符即丢弃过期结果
+        private int mdLoadToken;
+
         private async void LoadMarkdownFile(string path)
         {
             try
@@ -253,11 +257,12 @@ namespace PersonalTools.UserControls
                     return;
                 }
 
+                int token = ++mdLoadToken;
                 // 读盘放后台线程，避免大文件/慢磁盘在 UI 线程同步整读冻结界面
                 string text = await Task.Run(() => File.ReadAllText(path)).ConfigureAwait(true);
-                if (!IsLoaded)
+                if (!IsLoaded || token != mdLoadToken)
                 {
-                    return; // await 期间控件已卸载：放弃后续 UI 更新
+                    return; // await 期间控件已卸载或已有更新的加载：放弃过期结果
                 }
 
                 Editor.Text = text;
