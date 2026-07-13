@@ -34,6 +34,13 @@ namespace PersonalTools.PEAnalyzer.Resources
         [ThreadStatic] private static int _walkDepth;
         [ThreadStatic] private static int _scanScopeDepth;
 
+        // 整个扫描会话累计"已读取的资源数据字节"预算：条目数上限(MaxEntriesPerWalk)只挡回调次数，
+        // 但每个数据项仍可读至多 10MB，畸形 PE 用海量条目重复指向同一大区域，可在条目上限内
+        // 放大出数百 GB 的一次性 ReadBytes 分配/IO(CPU/IO 型 DoS)。故对累计读取字节再设硬上界。
+        // 512MB 远高于 shell32 级图标大户的资源总量，正常文件不受影响。
+        private const long MaxScanReadBytes = 512L * 1024 * 1024;
+        [ThreadStatic] private static long _scanReadBytes;
+
         /// <summary>
         /// 扫描会话作用域：让 _walkVisited/_walkEntries 预算贯穿整个解析入口（如整次图标解析），
         /// 而非随每次顶层 WalkEntries 结束即清零。否则对每个匹配根条目各发起一次顶层遍历的调用方
@@ -50,6 +57,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     _scanScopeDepth = 0;
                     _walkVisited = null;
                     _walkEntries = 0;
+                    _scanReadBytes = 0;
                 }
             }
         }
@@ -63,6 +71,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 // 消耗过预算（无顶层 WalkEntries 可复位），不让残留计数泄漏进本次会话
                 _walkVisited = null;
                 _walkEntries = 0;
+                _scanReadBytes = 0;
             }
 
             _scanScopeDepth++;
@@ -81,6 +90,21 @@ namespace PersonalTools.PEAnalyzer.Resources
             }
 
             _walkEntries++;
+            return true;
+        }
+
+        /// <summary>
+        /// 消耗 <paramref name="bytes"/> 的"资源数据读取"预算；本次读取会使会话累计超上限时返回 false
+        /// （调用方应跳过该次 ReadBytes）。用于遏制"条目数在限但每项读大块数据"的累计 IO/内存放大。
+        /// </summary>
+        public static bool TryConsumeReadBudget(long bytes)
+        {
+            if (bytes < 0 || _scanReadBytes + bytes > MaxScanReadBytes)
+            {
+                return false;
+            }
+
+            _scanReadBytes += bytes;
             return true;
         }
 
@@ -202,6 +226,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     // 顶层遍历结束且无外层扫描会话时释放并复位；处于 ScanScope 内则预算跨遍历累计
                     _walkVisited = null;
                     _walkEntries = 0;
+                    _scanReadBytes = 0;
                 }
             }
         }

@@ -57,7 +57,10 @@ namespace PersonalTools.PEAnalyzer.Resources
                 // 对单个图标资源数据施加与其余图标路径一致的 10MB 绝对上限，
                 // 防止畸形 PE 用逼近文件大小的 Size 触发约 2GB 的一次性分配。
                 const int MaxIconResourceBytes = 10 * 1024 * 1024;
-                if (ResourceDirectoryReader.IsReadableData(dataOffset, dataEntry.Size, fs) && dataEntry.Size <= MaxIconResourceBytes)
+                // 除单项 10MB 上限外，再消耗扫描会话的累计读取预算：条目数虽受限，但畸形 PE 用大量
+                // 条目重复指向同一大区域仍可放大出数百 GB 的 ReadBytes；预算耗尽即跳过后续读取。
+                if (ResourceDirectoryReader.IsReadableData(dataOffset, dataEntry.Size, fs) && dataEntry.Size <= MaxIconResourceBytes
+                    && ResourceDirectoryReader.TryConsumeReadBudget(dataEntry.Size))
                 {
                     fs.Position = dataOffset;
                     byte[] resourceData = reader.ReadBytes((int)dataEntry.Size);
