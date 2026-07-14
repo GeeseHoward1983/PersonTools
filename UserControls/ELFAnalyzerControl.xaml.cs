@@ -171,6 +171,11 @@ namespace PersonalTools.UserControls
                 or IndexOutOfRangeException or EndOfStreamException or IOException
                 or OverflowException or DivideByZeroException or InvalidDataException or FormatException)
             {
+                if (token != loadToken)
+                {
+                    return; // 被更新的加载取代的旧加载抛异常：勿对已切换的当前文件弹误导性错误框（与成功路径同款丢弃）
+                }
+
                 MessageHelper.ShowError($"分析ELF文件时出错: {ex.Message}");
             }
         }

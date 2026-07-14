@@ -86,6 +86,11 @@ namespace PersonalTools.UserControls
             {
                 // I4：PEParser.ParsePEFile 对畸形/非 PE 文件抛 InvalidDataException；越界字段还可能抛
                 // OverflowException/ArgumentOutOfRangeException。一并捕获并给出精准提示，符合“畸形输入即提示不冒泡”契约。
+                if (token != loadToken)
+                {
+                    return; // 被更新的加载取代的旧加载抛异常：勿对已切换的当前文件弹误导性错误框（与成功路径 I6 同款丢弃）
+                }
+
                 MessageHelper.ShowError($"加载文件时出错: {ex.Message}");
             }
         }
