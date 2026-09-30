@@ -150,7 +150,7 @@ namespace PersonalTools.UserControls
 
             try
             {
-                string html = MarkdownService.BuildPreviewHtml(Editor.Text, baseDir);
+                string html = MarkdownService.BuildPreviewHtml(Editor.Text, Editor.Text.Contains("<a", StringComparison.Ordinal) ? null : baseDir);
                 File.WriteAllText(previewFilePath, html, Encoding.UTF8);
                 Preview.CoreWebView2.Navigate(new Uri(previewFilePath).AbsoluteUri);
             }

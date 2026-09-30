@@ -33,7 +33,10 @@ namespace PersonalTools.MarkdownToWord
         /// </summary>
         public static string BuildPreviewHtml(string markdown, string? baseDir)
         {
-            string body = Markdown.ToHtml(markdown ?? string.Empty, PreviewPipeline);
+            string body = Markdown.ToHtml(markdown ?? string.Empty, PreviewPipeline)
+                .Replace("&lt;", "<", StringComparison.Ordinal)
+                .Replace("&quot;", "\"", StringComparison.Ordinal)
+                .Replace("&gt;", ">", StringComparison.Ordinal);
             string baseTag = BuildBaseTag(baseDir);
 
             return PreviewTemplate
