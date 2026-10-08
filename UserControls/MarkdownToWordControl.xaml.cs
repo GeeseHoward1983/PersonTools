@@ -58,8 +58,14 @@ namespace PersonalTools.UserControls
         private async void OnLoaded(object sender, RoutedEventArgs e)
         {
             // 设计器环境下 EnsureCoreWebView2Async 会正常返回但不创建 CoreWebView2，
-            // 继续执行会空引用，直接短路，避免 MainWindow 预览失败
-            if (DesignerProperties.GetIsInDesignMode(this)) return;
+            // 继续执行会空引用，直接短路，避免 MainWindow 预览失败。
+            // .NET (Core) 的进程外设计器运行在 DesignToolsServer 进程且 GetIsInDesignMode 不可靠，
+            // 故用进程名兜底检测。
+            if (DesignerProperties.GetIsInDesignMode(this)
+                || AppDomain.CurrentDomain.FriendlyName.Contains("DesignToolsServer", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
 
             // 平衡订阅：先退订再订阅，避免 Loaded 多次触发导致 Tick 重复挂接
             previewTimer.Tick -= PreviewTimer_Tick;
@@ -82,7 +88,9 @@ namespace PersonalTools.UserControls
             try
             {
                 await Preview.EnsureCoreWebView2Async().ConfigureAwait(true);
-                if (!IsLoaded)
+                // 设计器中 EnsureCoreWebView2Async 会正常完成但并不真正创建 CoreWebView2，
+                // 此时 CoreWebView2 为 null，继续访问会空引用导致预览失败
+                if (!IsLoaded || Preview.CoreWebView2 is null)
                 {
                     return; // await 期间控件已卸载：放弃后续 CoreWebView2 访问，避免空引用
                 }
