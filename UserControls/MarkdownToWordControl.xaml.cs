@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.IO;
 using System.Text;
 using System.Windows;
@@ -56,6 +57,10 @@ namespace PersonalTools.UserControls
 
         private async void OnLoaded(object sender, RoutedEventArgs e)
         {
+            // 设计器环境下 EnsureCoreWebView2Async 会正常返回但不创建 CoreWebView2，
+            // 继续执行会空引用，直接短路，避免 MainWindow 预览失败
+            if (DesignerProperties.GetIsInDesignMode(this)) return;
+
             // 平衡订阅：先退订再订阅，避免 Loaded 多次触发导致 Tick 重复挂接
             previewTimer.Tick -= PreviewTimer_Tick;
             previewTimer.Tick += PreviewTimer_Tick;
