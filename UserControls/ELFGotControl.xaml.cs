@@ -13,10 +13,14 @@ namespace PersonalTools.UserControls
             InitializeComponent();
         }
 
-        internal void SetGotData(List<ELFGotInfo> gotTable, string header)
+        internal void SetGotData(List<ELFGotInfo> gotTable)
+        {
+            ELFGotDataGrid.ItemsSource = gotTable;
+        }
+
+        internal void SetGotDataName(string header)
         {
             GotGroupBox.Header = header;
-            ELFGotDataGrid.ItemsSource = gotTable;
         }
     }
 }

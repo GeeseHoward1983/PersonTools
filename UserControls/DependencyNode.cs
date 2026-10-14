@@ -31,14 +31,44 @@ namespace PersonalTools.UserControls
         public bool IsLoaded { get; private set; }
         public bool IsExpanded { get; set; }
 
-        public string Display => isPlaceholder ? Name
-            : isCyclic ? $"{Name} (循环依赖)"
-            : FullPath == null ? $"{Name} (未找到)"
-            : parseFailed ? $"{Name} (解析失败)"
-            : Name;
+        //public string Display => isPlaceholder ? Name
+        //    : isCyclic ? $"{Name} (循环依赖)"
+        //    : FullPath == null ? $"{Name} (未找到)"
+        //    : parseFailed ? $"{Name} (解析失败)"
+        //    : Name;
+        public string Display => isPlaceholder switch
+        {
+            true => Name,
+            false => isCyclic switch
+            {
+                true => $"{Name} (循环依赖)",
+                false => FullPath switch
+                {
+                    null => $"{Name} (未找到)",
+                    _ => parseFailed switch
+                    {
+                        true => $"{Name} (解析失败)",
+                        false => Name
+                    }
+                }
+            }
+        };
 
         // 能否展开：可解析、未成环、未超深度。决定是否预置占位子节点以显示“+”
-        private bool CanExpand => !isCyclic && !isPlaceholder && FullPath != null && depth < MaxDepth;
+        //private bool CanExpand => !isCyclic && !isPlaceholder && FullPath != null && depth < MaxDepth;
+        private bool CanExpand => isCyclic switch
+        {
+            true => false,
+            false => isPlaceholder switch
+            {
+                true => false,
+                false => FullPath switch
+                {
+                    null => false,
+                    _ => depth < MaxDepth
+                }
+            }
+        };
 
         private DependencyNode(string name, string? fullPath, PEInfo? info, HashSet<string> ancestors, int depth, bool isCyclic, bool isPlaceholder = false)
         {
@@ -75,8 +105,16 @@ namespace PersonalTools.UserControls
             }
 
             return new DependencyNode(
-                hasPath ? Path.GetFileName(full) : "(未知)",
-                hasPath ? full : null,
+                hasPath switch
+                {
+                    true => Path.GetFileName(full),
+                    false => "(未知)"
+                },
+                hasPath switch
+                {
+                    true => full,
+                    _ => null
+                },
                 info,
                 anc,
                 0,
@@ -107,11 +145,15 @@ namespace PersonalTools.UserControls
         {
             // 解析自身 PE 以取得其依赖与导入/导出。解析为 IO/CPU 密集，移到后台线程避免卡 UI；
             // await 默认回到 UI 线程后再修改 Children（ObservableCollection 绑定 TreeView，须在 UI 线程变更）。
-            if (Info == null && FullPath != null)
+            Info = Info switch
             {
-                string path = FullPath;
-                Info = await Task.Run(() => TryParsePE(path)).ConfigureAwait(true);
-            }
+                null => FullPath switch
+                {
+                    null => null,
+                    _ => await Task.Run(() => TryParsePE(FullPath)).ConfigureAwait(true);
+                },
+                _ => Info
+            };
 
             Children.Clear(); // 移除占位节点
             if (Info == null)
@@ -128,15 +170,29 @@ namespace PersonalTools.UserControls
             }
 
             // 按本 PE 的位数对依赖做位数优先解析（32位优先 SysWOW64，64位优先 System32）
-            bool? targetIs64Bit = PEParserUtils.Is64Bit(Info.OptionalHeader) ? true
-                : PEParserUtils.Is32Bit(Info.OptionalHeader) ? false
-                : null;
+            bool? targetIs64Bit = PEParserUtils.Is64Bit(Info.OptionalHeader) switch
+            {
+                true => true,
+                false => PEParserUtils.Is32Bit(Info.OptionalHeader) switch
+                {
+                    true => false,
+                    false => null,
+                },
+            };
 
-            string? baseDir = FullPath != null ? Path.GetDirectoryName(FullPath) : null;
+            string? baseDir = FullPath switch
+            {
+                null => null,
+                _ => Path.GetDirectoryName(FullPath)
+            };
             foreach (DependencyInfo dep in Info.Dependencies)
             {
                 string? childPath = DependencyResolver.Resolve(dep.Name, baseDir, targetIs64Bit);
-                bool cyclic = childPath != null && ancestors.Contains(childPath);
+                bool cyclic = childPath switch
+                {
+                    null => false, // 未找到路径的依赖不算环
+                    _ => ancestors.Contains(childPath)
+                };
 
                 HashSet<string> childAncestors = new(ancestors, StringComparer.OrdinalIgnoreCase);
                 if (childPath != null)
@@ -158,32 +214,17 @@ namespace PersonalTools.UserControls
             {
                 return PEParser.ParsePEFile(path);
             }
-            catch (IOException ex)
+            catch (Exception ex) when(ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidDataException or OverflowException)
             {
-                AppLogger.Log($"依赖 PE 解析失败(IO): {path} - {ex.Message}");
-                return null;
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                AppLogger.Log($"依赖 PE 解析失败(权限): {path} - {ex.Message}");
-                return null;
-            }
-            catch (ArgumentException ex)
-            {
-                AppLogger.Log($"依赖 PE 解析失败(参数): {path} - {ex.Message}");
-                return null;
-            }
-            catch (InvalidDataException ex)
-            {
-                // 畸形/非 PE 依赖 DLL：ParsePEFile 抛 InvalidDataException，优雅降级为“无子节点”返回 null
-                AppLogger.Log($"依赖 PE 解析失败(畸形): {path} - {ex.Message}");
-                return null;
-            }
-            catch (OverflowException ex)
-            {
-                // 与主加载器 PEAnalyzerControl.LoadPEFile 的 catch 集合对齐：畸形字段引起的溢出同样降级为 null，
-                // 不让此包装器漏掉主加载器已处理的异常类型逃逸到上层 async void 展开入口。
-                AppLogger.Log($"依赖 PE 解析失败(溢出): {path} - {ex.Message}");
+                AppLogger.Log(ex switch
+                {
+                    IOException => $"依赖 PE 解析失败(IO): {path} - {ex.Message}",
+                    UnauthorizedAccessException => $"依赖 PE 解析失败(权限): {path} - {ex.Message}",
+                    ArgumentException => $"依赖 PE 解析失败(参数): {path} - {ex.Message}",
+                    InvalidDataException => $"依赖 PE 解析失败(畸形): {path} - {ex.Message}",
+                    OverflowException => $"依赖 PE 解析失败(溢出): {path} - {ex.Message}",
+                    _ => $"依赖 PE 解析失败: {path} - {ex.Message}"
+                });
                 return null;
             }
         }

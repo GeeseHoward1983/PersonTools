@@ -128,9 +128,11 @@ namespace PersonalTools.UserControls
             ELFPltRelocationControl.SetRelaPltData(data.RelaPlt);
             ELFRelaPltTabItem.Visibility = data.RelaPlt.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
-            ELFGotPltControl.SetGotData(data.GotPlt, "GOT.PLT 表 (.got.plt)");
+            ELFGotPltControl.SetGotData(data.GotPlt);
+            ELFGotPltControl.SetGotDataName("GOT.PLT 表 (.got.plt)");
             ELFGotPltTabItem.Visibility = data.GotPlt.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-            ELFGotControl.SetGotData(data.Got, "GOT 表 (.got)");
+            ELFGotControl.SetGotData(data.Got);
+            ELFGotControl.SetGotDataName("GOT 表 (.got)");
             ELFGotTabItem.Visibility = data.Got.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
             // 对可空字符串统一用 IsNullOrEmpty/空值安全判断，与各 Set 方法的 ?? 空值兜底一致，避免此处直接 .Length/.Contains 触发 NRE

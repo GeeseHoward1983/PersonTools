@@ -1,6 +1,5 @@
 using System.IO;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace PersonalTools.Utils.Crypto
 {
@@ -10,100 +9,111 @@ namespace PersonalTools.Utils.Crypto
     /// </summary>
     internal static class AesCryptoService
     {
+        private static readonly Aes aesAlg = Aes.Create();
         public static string Encrypt(string input, byte[] key, byte[]? iv, CipherMode mode, PaddingMode padding, bool hexMode)
         {
-            using Aes aesAlg = CreateAes(key, iv, mode, padding);
+            InitAes(key, iv, mode, padding);
 
             byte[] inputBytes = ConvertUtils.InputBytes(input, hexMode);
 #pragma warning disable CA5401
-            using ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
-#pragma warning restore CA5401
             using MemoryStream msEncrypt = new();
-            using (CryptoStream csEncrypt = new(msEncrypt, encryptor, CryptoStreamMode.Write))
+            using (CryptoStream csEncrypt = new(msEncrypt, aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV), CryptoStreamMode.Write))
             {
                 csEncrypt.Write(inputBytes, 0, inputBytes.Length);
             } // 释放 CryptoStream 即触发 FlushFinalBlock，写出最终块(含 PKCS7 填充)后再取字节，避免丢尾块
 
-            byte[] encryptedBytes = msEncrypt.ToArray();
-            return ConvertUtils.ToHexString(encryptedBytes);
+            return ConvertUtils.ToHexString(msEncrypt.ToArray());
         }
 
         public static string Decrypt(string input, byte[] key, byte[]? iv, CipherMode mode, PaddingMode padding, bool hexMode)
         {
-            byte[] encryptedBytes = ConvertUtils.HexStringToByteArray(input);
+            InitAes(key, iv, mode, padding);
 
-            using Aes aesAlg = CreateAes(key, iv, mode, padding);
-            using ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
-
-            using MemoryStream msDecrypt = new(encryptedBytes);
-            using CryptoStream csDecrypt = new(msDecrypt, decryptor, CryptoStreamMode.Read);
+            using MemoryStream msDecrypt = new(ConvertUtils.HexStringToByteArray(input));
+            using CryptoStream csDecrypt = new(msDecrypt, aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV), CryptoStreamMode.Read);
             using MemoryStream resultStream = new();
             csDecrypt.CopyTo(resultStream);
-            byte[] decryptedBytes = resultStream.ToArray();
 
             // 按明文表示方式输出：字符串模式 → UTF-8 文本；Hex 模式 → 十六进制，避免二进制数据丢失
-            return ConvertUtils.OutputString(decryptedBytes, hexMode);
+            return ConvertUtils.OutputString(resultStream.ToArray(), hexMode);
         }
 
-        private static Aes CreateAes(byte[] key, byte[]? iv, CipherMode mode, PaddingMode padding)
+#pragma warning disable CA5358 // 模式由调用方选择，此处仅做 IV/反馈校验，不引入新的弱模式
+        private static void CheckIV(byte[]? iv, CipherMode mode)
         {
             // 需要 IV 的模式必须显式提供 IV：否则 Aes.Create() 会用随机 IV 加密却无法回传，
             // 导致密文不可解密。此处强制校验，不静默兜底（UI 层虽已校验，服务层亦需自洽）
-#pragma warning disable CA5358 // 模式由调用方选择，此处仅做 IV/反馈校验，不引入新的弱模式
-            if (iv == null && mode is CipherMode.CBC or CipherMode.CFB)
+            bool _ = iv switch
             {
-                throw new ArgumentException($"加密模式 {mode} 必须提供 IV 向量", nameof(iv));
-            }
-
-            // 服务层自洽：显式校验密钥长度(与下方 IV 校验对称)，否则 KeySize setter 仅抛较不直观的 CryptographicException
-            if (key.Length is not (16 or 24 or 32))
+                null => CheckMode(mode),
+                _ => iv.Length switch
+                {
+                    16 => true,
+                    _ => throw new ArgumentException($"IV 向量长度必须为 16 字节，实际 {iv.Length}", nameof(iv)),
+                }
+            };
+            SetIV(iv);
+            SetMode(mode);
+        }
+        private static bool CheckMode(CipherMode mode)
+        {
+            // 需要 IV 的模式必须显式提供 IV：否则 Aes.Create() 会用随机 IV 加密却无法回传，
+            // 导致密文不可解密。此处强制校验，不静默兜底（UI 层虽已校验，服务层亦需自洽）
+            return mode switch
             {
-                throw new ArgumentException($"AES 密钥长度必须为 16/24/32 字节，实际 {key.Length}", nameof(key));
-            }
+                CipherMode.CBC or CipherMode.CFB => true,
+                _ => throw new ArgumentException($"加密模式 {mode} 必须提供 IV 向量"),
+            };
+        }
 
-            Aes aesAlg = Aes.Create();
-            try
+        private static void SetKey(byte[] key)
+        {
+            aesAlg.SetKey(key);
+        }
+
+        private static void SetIV(byte[]? iv)
+        {
+            aesAlg.IV = iv switch
             {
-                aesAlg.KeySize = key.Length * 8; // 根据密钥长度设置 KeySize
-                aesAlg.Key = key;
-                if (iv != null)
-                {
-                    // AES 块大小固定 128 位，IV 必须恰为 16 字节。提前显式校验，兑现"服务层亦自洽"的契约，
-                    // 否则 aesAlg.IV = iv 仅在长度不符时才抛 CryptographicException，错误信息不直观。
-                    if (iv.Length != 16)
-                    {
-                        throw new ArgumentException($"AES IV 长度必须为 16 字节，实际 {iv.Length}", nameof(iv));
-                    }
-                    aesAlg.IV = iv;
-                }
+                null => aesAlg.IV,
+                _ => iv,
+            };
+        }
 
-                // .NET 内置 Aes 仅支持 CBC/ECB/CFB：其余模式（OFB/CTS 等）在 Mode setter 赋值时即抛
-                // 含义不明的 CryptographicException，此处翻译为带清晰指引的 ArgumentException。
-                // 借 setter 自身的白名单校验拒绝不支持模式，无需引用不支持的枚举成员。
-                try
-                {
-                    aesAlg.Mode = mode;
-                }
-                catch (CryptographicException ex)
-                {
-                    throw new ArgumentException($".NET 内置 AES 不支持加密模式 {mode}，请改用 CBC/CFB/ECB", nameof(mode), ex);
-                }
+        private static void SetPadding(PaddingMode padding)
+        {
+            aesAlg.Padding = padding;
+        }
 
-                aesAlg.Padding = padding;
-                // CFB 显式设为 128 位反馈，与业界主流 CFB-128 一致
-                // （.NET 默认 CFB8，每次仅反馈 8 位，会与 OpenSSL 等外部密文不兼容）
-                if (mode == CipherMode.CFB)
-                {
-                    aesAlg.FeedbackSize = 128;
-                }
-#pragma warning restore CA5358
-                return aesAlg;
-            }
-            catch
+        private static void SetFeedbackSize(CipherMode mode)
+        {
+            // CFB 显式设为 128 位反馈，与业界主流 CFB-128 一致
+            // （.NET 默认 CFB8，每次仅反馈 8 位，会与 OpenSSL 等外部密文不兼容）
+            aesAlg.FeedbackSize = mode switch
             {
-                aesAlg.Dispose(); // 配置中途失败（含上方 IV 长度校验）不能把已建实例泄漏出去
-                throw;
-            }
+                CipherMode.CFB => 128,
+                _ => aesAlg.BlockSize, // 其他模式反馈大小无意义，保持默认即可
+            };
+        }
+
+        private static void SetMode(CipherMode mode) 
+        {
+            //try
+            //{
+            aesAlg.Mode = mode;
+            //}
+            //catch (CryptographicException ex)
+            //{
+            //    throw new ArgumentException($".NET 内置 AES 不支持加密模式 {mode}，请改用 CBC/CFB/ECB", nameof(mode), ex);
+            //}
+        }
+
+        private static void InitAes(byte[] key, byte[]? iv, CipherMode mode, PaddingMode padding)
+        {
+            CheckIV(iv, mode);
+            SetKey(key);
+            SetPadding(padding);
+            SetFeedbackSize(mode);
         }
     }
 }

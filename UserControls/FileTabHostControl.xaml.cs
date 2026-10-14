@@ -51,7 +51,11 @@ namespace PersonalTools.UserControls
 
         private void Host_PreviewDragOver(object sender, DragEventArgs e)
         {
-            e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
+            e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) switch
+            {
+                true => DragDropEffects.Copy,
+                _ => DragDropEffects.None
+            };
             e.Handled = true;
         }
 
