@@ -1,7 +1,11 @@
+using DocumentFormat.OpenXml.Drawing.Charts;
+using DocumentFormat.OpenXml.ExtendedProperties;
 using PersonalTools.PEAnalyzer.Models;
 using PersonalTools.PEAnalyzer.Resources;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Windows;
 
 namespace PersonalTools.PEAnalyzer.Parsers
 {
@@ -56,9 +60,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
                                 AddressOfNameOrdinals = reader.ReadUInt32()
                             };
 
-                            List<uint> functionAddresses = ReadUInt32ListAtRva(fs, reader, peInfo.SectionHeaders, exportDir.AddressOfFunctions, exportDir.NumberOfFunctions);
-                            List<uint> functionNameRVAs = ReadUInt32ListAtRva(fs, reader, peInfo.SectionHeaders, exportDir.AddressOfNames, exportDir.NumberOfNames);
-                            List<ushort> nameOrdinals = ReadUInt16ListAtRva(fs, reader, peInfo.SectionHeaders, exportDir.AddressOfNameOrdinals, exportDir.NumberOfNames);
+                            List<uint> functionAddresses = ReadUIntListAtRva<uint>(fs, reader, peInfo.SectionHeaders, exportDir.AddressOfFunctions, exportDir.NumberOfFunctions);
+                            List<uint> functionNameRVAs = ReadUIntListAtRva<uint>(fs, reader, peInfo.SectionHeaders, exportDir.AddressOfNames, exportDir.NumberOfNames);
+                            List<ushort> nameOrdinals = ReadUIntListAtRva<ushort>(fs, reader, peInfo.SectionHeaders, exportDir.AddressOfNameOrdinals, exportDir.NumberOfNames);
                             Dictionary<int, string> functionNames = BuildExportFunctionNameMap(fs, reader, peInfo.SectionHeaders, functionNameRVAs, nameOrdinals);
 
                             for (int i = 0; i < functionAddresses.Count; i++)
@@ -85,7 +89,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 // 忽略导出表解析错误
-                PersonalTools.Utils.AppLogger.Log($"导出表解析错误: {ex.Message}");
+                Utils.AppLogger.Log($"导出表解析错误: {ex.Message}");
             }
         }
 
@@ -101,70 +105,75 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 RVA = functionRVA
             };
 
-            exportFunc.Name = functionNames.TryGetValue(i, out string? value) ? value : $"Ordinal_{exportFunc.Ordinal}";
-
-            // 转发导出：函数 RVA 落在导出目录范围内时指向 "DLL.Function" 字符串而非代码
-            if (functionRVA != 0 && functionRVA >= exportRVA && functionRVA < (long)exportRVA + exportSize)
+            exportFunc.Name = functionRVA switch
             {
-                string forwarder = ReadForwarderString(fs, reader, sections, functionRVA);
-                if (!string.IsNullOrEmpty(forwarder))
+                >0 or < 0 => (functionRVA >= exportRVA) switch
                 {
-                    exportFunc.Name = $"{exportFunc.Name} (forwarded -> {forwarder})";
+                   true => (functionRVA < exportRVA + exportSize) switch
+                   {
+                       true => string.IsNullOrEmpty(ReadForwarderString(fs, reader, sections, functionRVA)) switch
+                       {
+                           true => $"{exportFunc.Name} (forwarded -> {ReadForwarderString(fs, reader, sections, functionRVA)})",
+                           _ => functionNames.TryGetValue(i, out string? value) switch
+                           {
+                               true => value,
+                               _ => $"Ordinal_{exportFunc.Ordinal}",
+                           },
+                       },
+                       _ => functionNames.TryGetValue(i, out string? value) switch
+                       {
+                           true => value,
+                           _ => $"Ordinal_{exportFunc.Ordinal}",
+                       }
+                   },
+                    _ => ReadForwarderString(fs, reader, sections, functionRVA)
+                },
+                _ => functionNames.TryGetValue(i, out string? value) switch
+                {
+                    true => value,
+                    _ => $"Ordinal_{exportFunc.Ordinal}",
                 }
-            }
+            };
 
             return exportFunc;
         }
 
-        private static List<uint> ReadUInt32ListAtRva(FileStream fs, BinaryReader reader, List<IMAGE_SECTION_HEADER> sections, uint rva, uint count)
+        static T ReaderUInt<T>(BinaryReader reader)
         {
-            if (rva == 0 || count == 0)
+            return Marshal.SizeOf<T>() switch
             {
-                return [];
-            }
-
-            // 安全：count 取自不可信导出目录，先夹到 PE 序号上限(64K)，避免畸形巨值触发海量空对象构造/界面卡死。
-            int clampedCount = (int)Math.Min(count, (uint)PEConstants.MaxExportEntries);
-
-            // 用 requiredLength = clampedCount*4 让整段必须落在同一节内，否则 RvaToOffset 返回 -1：
-            // 既防越界，也避免内层循环以 fs.Length 为界跨节读到 EOF（旧实现的 DoS/误读向量）。
-            // 用 uint 运算 (clampedCount*4u) 而非 int*int 再转 uint：不依赖 MaxExportEntries 上限，
-            // 即使未来上调上限也不会因 int 乘法溢出得到错误的 requiredLength。
-            long offset = PEParserUtils.RvaToOffset(rva, sections, (uint)clampedCount * 4u);
-            return PEParserUtils.ReadAtOffset(fs, offset, new List<uint>(), () =>
-            {
-                List<uint> result = new(clampedCount);
-                for (int i = 0; i < clampedCount; i++)
-                {
-                    result.Add(reader.ReadUInt32());
-                }
-
-                return result;
-            });
+                2 => (T)(object)reader.ReadUInt16(),
+                4 => (T)(object)reader.ReadUInt32(),
+                _ => throw new NotSupportedException($"Unsupported type size: {Marshal.SizeOf<T>()}")
+            };
         }
 
-        private static List<ushort> ReadUInt16ListAtRva(FileStream fs, BinaryReader reader, List<IMAGE_SECTION_HEADER> sections, uint rva, uint count)
+
+        static List<T> ReadFunc<T>(BinaryReader reader, int clampedCount)
         {
-            if (rva == 0 || count == 0)
+            List<T> result = new(clampedCount);
+            for (uint i = 0; i < clampedCount; i++)
             {
-                return [];
+                result.Add(ReaderUInt<T>(reader));
             }
 
-            int clampedCount = (int)Math.Min(count, (uint)PEConstants.MaxExportEntries);
+            return result;
+        }
 
-            // 同 ReadUInt32ListAtRva：整段(每项 2 字节)须落在同一节内，否则返回 -1 降级为空表。
-            // 用 uint 运算 (clampedCount*2u) 不依赖 MaxExportEntries 上限，避免改上限后 int 乘法回归溢出。
-            long offset = PEParserUtils.RvaToOffset(rva, sections, (uint)clampedCount * 2u);
-            return PEParserUtils.ReadAtOffset(fs, offset, new List<ushort>(), () =>
+        private static List<T> ReadUIntListAtRva<T>(FileStream fs, BinaryReader reader, List<IMAGE_SECTION_HEADER> sections, uint rva, uint count)
+        {
+            return rva switch
             {
-                List<ushort> result = new(clampedCount);
-                for (int i = 0; i < clampedCount; i++)
+                0 => [],
+                _ => count switch
                 {
-                    result.Add(reader.ReadUInt16());
+                    0 => [],
+                    _ => PEParserUtils.ReadAtOffset(fs, PEParserUtils.RvaToOffset(rva, sections, Math.Min(count, PEConstants.MaxExportEntries) * (uint)Marshal.SizeOf<T>()), [], () =>
+                    {
+                        return ReadFunc<T>(reader, (int)Math.Min(count, PEConstants.MaxExportEntries));
+                    })
                 }
-
-                return result;
-            });
+            };
         }
 
         private static string ReadForwarderString(FileStream fs, BinaryReader reader, List<IMAGE_SECTION_HEADER> sections, uint rva)
