@@ -37,11 +37,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 }
 
                 // 读取元数据头
-                uint signature = reader.ReadUInt32();
-                reader.ReadUInt16(); // MajorVersion
-                reader.ReadUInt16(); // MinorVersion
-                reader.ReadUInt32(); // Reserved
-                uint length = reader.ReadUInt32();
+                (uint signature, uint _, uint _, uint _, uint length)  = (reader.ReadUInt32(), reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt32(), reader.ReadUInt32());
 
                 // 检查签名是否正确（"BSJB" 字节序列 42 53 4A 42 按小端 ReadUInt32 读出为 0x424A5342）
                 if (signature != 0x424A5342)
@@ -51,16 +47,8 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
                 // 跳过版本字符串：length 应按 4 字节对齐，显式对齐后再定位，避免畸形非对齐 length 导致 Flags/Streams 错位。
                 // 全程用 long 运算：4GB+ 文件 (fs.Length-versionStart) 截 uint 会丢高位；(length+3) 用 long 也不会回绕。
-                long versionStart = fs.Position;
-                long remaining = fs.Length - versionStart;
-                long alignedLength = Math.Min(length, remaining);
-                alignedLength = (alignedLength + 3L) & ~3L; // 向上 4 字节对齐
-                if (alignedLength > remaining)
-                {
-                    alignedLength = remaining;
-                }
-
-                fs.Position = versionStart + alignedLength;
+                (long versionStart, long remaining, long alignedLength) = (fs.Position, fs.Length - fs.Position, (Math.Min(length, fs.Length - fs.Position) + 3L) & ~3L);
+                (alignedLength, fs.Position) = (alignedLength > remaining ? remaining : alignedLength, versionStart + alignedLength);
 
                 // 读取 Flags(2) 与 Streams(2)
                 if (fs.Position + 4 > fs.Length)
@@ -68,8 +56,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
                     return;
                 }
 
-                reader.ReadUInt16(); // Flags
-                ushort streams = reader.ReadUInt16();
+                (ushort _, ushort streams) = (reader.ReadUInt16(), reader.ReadUInt16());
 
                 // 先收集所有流的位置（#Strings 流可能位于 #~ 表流之后，必须先读全）
                 (long tablesStreamOffset, uint tablesStreamSize, long stringHeapOffset, uint stringHeapSize) =
@@ -84,7 +71,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                PersonalTools.Utils.AppLogger.Log($"元数据解析错误: {ex.Message}");
+                Utils.AppLogger.Log($"元数据解析错误: {ex.Message}");
             }
         }
 
@@ -242,7 +229,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                PersonalTools.Utils.AppLogger.Log($"元数据表解析错误: {ex.Message}");
+                Utils.AppLogger.Log($"元数据表解析错误: {ex.Message}");
             }
         }
 
@@ -297,7 +284,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                PersonalTools.Utils.AppLogger.Log($"TypeDef表解析错误: {ex.Message}");
+                Utils.AppLogger.Log($"TypeDef表解析错误: {ex.Message}");
             }
         }
 

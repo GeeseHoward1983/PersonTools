@@ -150,7 +150,7 @@ namespace PersonalTools.UserControls
                 null => FullPath switch
                 {
                     null => null,
-                    _ => await Task.Run(() => TryParsePE(FullPath)).ConfigureAwait(true);
+                    _ => await Task.Run(() => TryParsePE(FullPath)).ConfigureAwait(true)
                 },
                 _ => Info
             };
