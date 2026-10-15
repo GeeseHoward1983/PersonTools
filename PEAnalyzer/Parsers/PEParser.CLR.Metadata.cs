@@ -162,30 +162,28 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// <param name="stringHeapOffset">#Strings 堆的文件偏移</param>
         private static void ParseMetadataTables(FileStream fs, BinaryReader reader, PEInfo peInfo, long tablesOffset, uint size, long stringHeapOffset, uint stringHeapSize)
         {
+            bool checkResult = (fs.Length - tablesOffset) switch
+            {
+                < 0 => false,
+                _ => (fs.Length - tablesOffset - size) switch
+                {
+                    < 0 => false,
+                    _ => size switch
+                    {
+                        < 24 => false,
+                        _ => true
+                    }
+                }
+            };
+
+            if(!checkResult)
+            {
+                return;
+            }
+
             try
             {
-                if (tablesOffset >= fs.Length || tablesOffset + size > fs.Length || size < 24)
-                {
-                    return;
-                }
-
-                long originalPosition = fs.Position;
-                fs.Position = tablesOffset;
-
-                // 读取表头（24 字节）
-                if (fs.Position + 24 > fs.Length)
-                {
-                    return;
-                }
-
-                reader.ReadUInt32();              // Reserved
-                reader.ReadByte();                // MajorVersion
-                reader.ReadByte();                // MinorVersion
-                byte heapSizes = reader.ReadByte();
-                reader.ReadByte();                // Reserved
-                ulong maskValid = reader.ReadUInt64();
-                reader.ReadUInt64();              // MaskSorted
-
+                (long originalPosition, fs.Position, uint _, byte _, byte _, byte heapSizes, byte _, ulong maskValid, ulong _) = (fs.Position, tablesOffset, reader.ReadUInt32(), reader.ReadByte(), reader.ReadByte(), reader.ReadByte(), reader.ReadByte(), reader.ReadUInt64(), reader.ReadUInt64());
                 // 读取每个有效表的行数
                 uint[] rowCounts = new uint[64];
                 for (int i = 0; i < 64; i++)
@@ -214,9 +212,8 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 }
 
                 // 行数数组之后即为表数据起始位置
-                long tablesDataOffset = fs.Position;
+                (long tablesDataOffset, int TypeDefTableIndex) = (fs.Position, 2);
 
-                const int TypeDefTableIndex = 2;
                 if (IsTablePresent(maskValid, TypeDefTableIndex))
                 {
                     // 表数据上界用表流声明大小(tablesOffset+size)，而非整个文件长度，
@@ -250,36 +247,13 @@ namespace PersonalTools.PEAnalyzer.Parsers
         {
             try
             {
-                int stringIndexSize = HeapIndexSize(heapSizes, 0);
-                int guidIndexSize = HeapIndexSize(heapSizes, 1);
-                int resolutionScopeSize = CodedIndexSize(2, rowCounts, ResolutionScopeTables);
-                int typeDefOrRefSize = CodedIndexSize(2, rowCounts, TypeDefOrRefTables);
-                int fieldIndexSize = SimpleIndexSize(rowCounts, FieldTableIndex);
-                int methodIndexSize = SimpleIndexSize(rowCounts, MethodDefTableIndex);
-
-                // 各相关表的行大小（ECMA-335 II.22）
-                long moduleRowSize = 2L + stringIndexSize + (3L * guidIndexSize);
-                long typeRefRowSize = (long)resolutionScopeSize + (2L * stringIndexSize);
-                long typeDefRowSize = 4L + (2L * stringIndexSize) + typeDefOrRefSize + fieldIndexSize + methodIndexSize;
-
-                // 跳过位于 TypeDef(2) 之前的 Module(0)、TypeRef(1) 表，定位到 TypeDef 表数据起始
-                long typeDefStart = ComputeTypeDefStart(tablesDataOffset, maskValid, rowCounts, moduleRowSize, typeRefRowSize);
-
-                // TypeDef 行数取自不可信元数据：虽有 rowStart+typeDefRowSize > tablesEnd 的越界终止兜底，
-                // 仍与导出表 MaxExportEntries 上限保持一致——收集的类型同样写入 peInfo.ExportFunctions，
-                // 对畸形巨值设同量级硬上限，防止构造海量 ExportFunctionInfo（防御深度）。
-                uint typeDefCount = Math.Min(rowCounts[2], (uint)PEConstants.MaxExportEntries);
-                for (uint i = 0; i < typeDefCount; i++)
+                (int stringIndexSize, int guidIndexSize, int resolutionScopeSize, int typeDefOrRefSize, int fieldIndexSize, int methodIndexSize) = (HeapIndexSize(heapSizes, 0), HeapIndexSize(heapSizes, 1), CodedIndexSize(2, rowCounts, ResolutionScopeTables), CodedIndexSize(2, rowCounts, TypeDefOrRefTables), SimpleIndexSize(rowCounts, FieldTableIndex), SimpleIndexSize(rowCounts, MethodDefTableIndex));
+                (long moduleRowSize, long typeRefRowSize, long typeDefRowSize) = (2L + stringIndexSize + (3L * guidIndexSize), (long)resolutionScopeSize + (2L * stringIndexSize), 4L + (2L * stringIndexSize) + typeDefOrRefSize + fieldIndexSize + methodIndexSize);
+                (long typeDefStart, uint typeDefCount) = (ComputeTypeDefStart(tablesDataOffset, maskValid, rowCounts, moduleRowSize, typeRefRowSize), Math.Min(rowCounts[2], (uint)PEConstants.MaxExportEntries));
+                for (long i = 0, rowStart = typeDefStart + i * typeDefRowSize; i < typeDefCount && rowStart >= 0 && rowStart + typeDefRowSize <= tablesEnd; i++, rowStart += typeDefStart + i * typeDefRowSize)
                 {
-                    long rowStart = typeDefStart + (long)i * typeDefRowSize;
-                    // 上界用表流声明结束位置 tablesEnd（≤ fs.Length），而非整个文件，避免越表读伪造类型
-                    if (rowStart < 0 || rowStart + typeDefRowSize > tablesEnd)
-                    {
-                        break;
-                    }
-
                     fs.Position = rowStart;
-                    TryCollectTypeDefRow(fs, reader, peInfo, stringHeapOffset, stringHeapSize, stringIndexSize, i);
+                    TryCollectTypeDefRow(fs, reader, peInfo, stringHeapOffset, stringHeapSize, stringIndexSize, (uint)i);
                 }
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
