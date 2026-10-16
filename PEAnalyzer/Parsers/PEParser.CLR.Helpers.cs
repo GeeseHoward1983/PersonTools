@@ -23,7 +23,11 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// </summary>
         private static int HeapIndexSize(byte heapSizes, int heapBit)
         {
-            return (heapSizes & (1 << heapBit)) == 0 ? 2 : 4;
+            return (heapSizes & (1 << heapBit)) switch
+            {
+                0 => 2,
+                _ => 4
+            };
         }
 
         /// <summary>
@@ -31,7 +35,11 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// </summary>
         private static int SimpleIndexSize(uint[] rowCounts, int tableIndex)
         {
-            return rowCounts[tableIndex] < 0x10000 ? 2 : 4;
+            return rowCounts[tableIndex] switch
+            {
+                < 0x10000 => 2,
+                _ => 4
+            };
         }
 
         /// <summary>
@@ -42,13 +50,15 @@ namespace PersonalTools.PEAnalyzer.Parsers
             uint maxRowCount = 0;
             foreach (int table in familyTables)
             {
-                if (table >= 0 && table < rowCounts.Length)
+                maxRowCount = table switch
                 {
-                    maxRowCount = Math.Max(maxRowCount, rowCounts[table]);
-                }
+                    >= 0 when table < rowCounts.Length => Math.Max(maxRowCount, rowCounts[table]),
+                    _ => maxRowCount
+                };
             }
 
             return maxRowCount < (1u << (16 - tagBits)) ? 2 : 4;
+
         }
 
         /// <summary>
@@ -56,7 +66,11 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// </summary>
         private static uint ReadHeapIndex(BinaryReader reader, int indexSize)
         {
-            return indexSize == 2 ? reader.ReadUInt16() : reader.ReadUInt32();
+            return indexSize switch
+            {
+                2 => reader.ReadUInt16(),
+                _ => reader.ReadUInt32()
+            };
         }
 
         /// <summary>
@@ -78,53 +92,44 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// <returns>字符串</returns>
         private static string ReadStringFromHeap(FileStream fs, BinaryReader reader, long heapOffset, uint heapSize, uint index)
         {
-            try
+            return heapOffset switch
             {
-                if (heapOffset < 0 || index == 0)
+                < 0 => string.Empty,
+                _ => index switch
                 {
-                    return string.Empty;
+                    0 => string.Empty,
+                    _ when index < heapSize => ReadStringFromHeap2(fs, reader, heapOffset, heapSize, index),
+                    _ => string.Empty
                 }
+            };
+        }
 
-                // 索引必须落在堆声明大小内：否则畸形的超大 index 虽仍在文件内，
-                // 会越过 #Strings 堆读到相邻流字节，被当作伪造的类型名注入导出列表；
-                // heapSize==0 时该条件恒真，等价于整体拒绝畸形的零大小堆
-                if (index >= heapSize)
-                {
-                    return string.Empty;
-                }
-
-                long targetPosition = heapOffset + index;
-                long heapEnd = Math.Min(heapOffset + heapSize, fs.Length);
-                if (targetPosition < 0 || targetPosition >= heapEnd)
-                {
-                    return string.Empty;
-                }
-
-                long originalPosition = fs.Position;
-                fs.Position = targetPosition;
-
-                // #Strings 堆为 UTF-8 编码，按 null 结尾读取并限制最大长度；同时不越过堆结束边界
-                const int MaxLength = 1024;
-                List<byte> bytes = [];
-                while (fs.Position < heapEnd && bytes.Count < MaxLength)
-                {
-                    byte b = reader.ReadByte();
-                    if (b == 0)
-                    {
-                        break;
-                    }
-
-                    bytes.Add(b);
-                }
-
-                fs.Position = originalPosition;
-                return Encoding.UTF8.GetString([.. bytes]);
-            }
-            catch (Exception ex) when (ex is EndOfStreamException or IOException or ObjectDisposedException or ArgumentOutOfRangeException)
+        private static string ReadStringFromHeap2(FileStream fs, BinaryReader reader, long heapOffset, uint heapSize, uint index)
+        {
+            (long targetPosition, long heapEnd) = (heapOffset + index, Math.Min(heapOffset + heapSize, fs.Length));
+            return targetPosition switch
             {
-                // 读取失败返回空串，让上层 IsNullOrEmpty 跳过该行，避免向类型列表注入伪造的 Unknown_Type_N 数据
-                return string.Empty;
+                < 0 => string.Empty,
+                _ when targetPosition < heapEnd => ReadStringFromHeapCore(fs, reader, targetPosition, heapEnd),
+                _ => string.Empty
+            };
+        }
+
+        private static string ReadStringFromHeapCore(FileStream fs, BinaryReader reader, long targetPosition, long heapEnd)
+        {
+            long originalPosition = fs.Position;
+            fs.Position = targetPosition;
+
+            // #Strings 堆为 UTF-8 编码，按 null 结尾读取并限制最大长度；同时不越过堆结束边界
+            List<byte> bytes = [];
+            byte b;
+            while (fs.Position < heapEnd && bytes.Count < 1024 && (b = reader.ReadByte()) != 0)
+            {
+                bytes.Add(b);
             }
+
+            fs.Position = originalPosition;
+            return Encoding.UTF8.GetString([.. bytes]);
         }
     }
 }

@@ -39,7 +39,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
                 // CLR头解析错误不中断程序执行
-                PersonalTools.Utils.AppLogger.Log($"CLR运行时头解析错误: {ex.Message}");
+                Utils.AppLogger.Log($"CLR运行时头解析错误: {ex.Message}");
             }
         }
 
@@ -75,7 +75,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 }
 
                 // 保存CLR信息到PEInfo
-                peInfo.CLRInfo = BuildClrInfo(clrHeader, peInfo.NtHeaders.FileHeader.Machine);
+                BuildClrInfo(clrHeader, peInfo);
 
                 // 解析元数据以获取导出类信息
                 if (clrHeader.MetaData.VirtualAddress != 0)
@@ -87,7 +87,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                PersonalTools.Utils.AppLogger.Log($"CLR头解析错误: {ex.Message}");
+                Utils.AppLogger.Log($"CLR头解析错误: {ex.Message}");
             }
         }
 
@@ -140,9 +140,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
         }
 
         // 将 IMAGE_COR20_HEADER 与 PE 机器类型映射为展示用 CLRInfo（标志位按 ECMA-335 / COR 头解释）
-        private static CLRInfo BuildClrInfo(IMAGE_COR20_HEADER clrHeader, ushort machine)
+        private static void BuildClrInfo(IMAGE_COR20_HEADER clrHeader, PEInfo peInfo)
         {
-            return new CLRInfo
+            peInfo.CLRInfo = new CLRInfo
             {
                 MajorRuntimeVersion = clrHeader.MajorRuntimeVersion,
                 MinorRuntimeVersion = clrHeader.MinorRuntimeVersion,
@@ -155,7 +155,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 Is32BitRequired = (clrHeader.Flags & 0x00000002) != 0,
                 Is32BitPreferred = (clrHeader.Flags & 0x00020000) != 0, // COMIMAGE_FLAGS_32BITPREFERRED
                 IsStrongNameSigned = (clrHeader.Flags & 0x00000008) != 0,
-                PEMachineType = machine // 保存PE头中的Machine字段
+                PEMachineType = peInfo.NtHeaders.FileHeader.Machine // 保存PE头中的Machine字段
             };
         }
     }
