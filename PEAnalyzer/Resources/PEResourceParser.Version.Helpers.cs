@@ -72,7 +72,7 @@ namespace PersonalTools.PEAnalyzer.Resources
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
-                PersonalTools.Utils.AppLogger.Log($"版本信息结构解析错误: {ex.Message}");
+                Utils.AppLogger.Log($"版本信息结构解析错误: {ex.Message}");
                 peInfo.AdditionalInfo.FileVersion = "版本信息不完整";
                 return false;
             }
