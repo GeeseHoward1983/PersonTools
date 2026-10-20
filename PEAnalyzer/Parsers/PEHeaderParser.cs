@@ -68,6 +68,27 @@ namespace PersonalTools.PEAnalyzer.Parsers
             return ntHeaders;
         }
 
+        private static IMAGE_OPTIONAL_HEADER CreateNomarlOptionalHeader(BinaryReader reader)
+        {
+                return new()
+                {
+                    // 读取通用部分
+                    Magic = reader.ReadUInt16(),
+                    MajorLinkerVersion = reader.ReadByte(),
+                    MinorLinkerVersion = reader.ReadByte(),
+                    SizeOfCode = reader.ReadUInt32(),
+                    SizeOfInitializedData = reader.ReadUInt32(),
+                    SizeOfUninitializedData = reader.ReadUInt32(),
+                    AddressOfEntryPoint = reader.ReadUInt32(),
+                    BaseOfCode = reader.ReadUInt32()
+                };
+        }
+
+        private static void CreateNomarlOptionalHeader2(ref IMAGE_OPTIONAL_HEADER optionalHeader, BinaryReader reader)
+        {
+            (optionalHeader.SectionAlignment, optionalHeader.FileAlignment, optionalHeader.MajorOperatingSystemVersion, optionalHeader.MinorOperatingSystemVersion, optionalHeader.MajorImageVersion, optionalHeader.MinorImageVersion, optionalHeader.MajorSubsystemVersion, optionalHeader.MinorSubsystemVersion, optionalHeader.Win32VersionValue, optionalHeader.SizeOfImage, optionalHeader.SizeOfHeaders, optionalHeader.CheckSum, optionalHeader.Subsystem, optionalHeader.DllCharacteristics) = (reader.ReadUInt32(), reader.ReadUInt32(), reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt32(), reader.ReadUInt32(), reader.ReadUInt32(), reader.ReadUInt32(), reader.ReadUInt16(), reader.ReadUInt16()); // 保留字段，暂不使用
+        }
+
         /// <summary>
         /// 解析可选头
         /// </summary>
@@ -76,56 +97,50 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// <returns>可选头结构</returns>
         internal static IMAGE_OPTIONAL_HEADER ParseOptionalHeader(BinaryReader reader, ushort sizeOfOptionalHeader)
         {
-            long optionalHeaderStart = reader.BaseStream.Position;
+            return ParseOptionalHeaderCore(reader, sizeOfOptionalHeader, reader.BaseStream.Position);
+        }
 
-            IMAGE_OPTIONAL_HEADER optionalHeader = new()
-            {
-                // 读取通用部分
-                Magic = reader.ReadUInt16(),
-                MajorLinkerVersion = reader.ReadByte(),
-                MinorLinkerVersion = reader.ReadByte(),
-                SizeOfCode = reader.ReadUInt32(),
-                SizeOfInitializedData = reader.ReadUInt32(),
-                SizeOfUninitializedData = reader.ReadUInt32(),
-                AddressOfEntryPoint = reader.ReadUInt32(),
-                BaseOfCode = reader.ReadUInt32()
-            };
+        private static IMAGE_OPTIONAL_HEADER ParseOptionalHeaderCore(BinaryReader reader, ushort sizeOfOptionalHeader, long optionalHeaderStart)
+        {
+            IMAGE_OPTIONAL_HEADER optionalHeader = CreateNomarlOptionalHeader(reader);
 
-            // 校验魔数并判定位数（PE32 / PE32+），二者的差异随后集中在专用读取方法中处理
-            bool is64Bit = ValidateOptionalHeaderMagic(optionalHeader.Magic, sizeOfOptionalHeader);
-
-            ReadImageBaseFields(reader, ref optionalHeader, is64Bit);
-
-            optionalHeader.SectionAlignment = reader.ReadUInt32();
-            optionalHeader.FileAlignment = reader.ReadUInt32();
-            optionalHeader.MajorOperatingSystemVersion = reader.ReadUInt16();
-            optionalHeader.MinorOperatingSystemVersion = reader.ReadUInt16();
-            optionalHeader.MajorImageVersion = reader.ReadUInt16();
-            optionalHeader.MinorImageVersion = reader.ReadUInt16();
-            optionalHeader.MajorSubsystemVersion = reader.ReadUInt16();
-            optionalHeader.MinorSubsystemVersion = reader.ReadUInt16();
-            optionalHeader.Win32VersionValue = reader.ReadUInt32();
-            optionalHeader.SizeOfImage = reader.ReadUInt32();
-            optionalHeader.SizeOfHeaders = reader.ReadUInt32();
-            optionalHeader.CheckSum = reader.ReadUInt32();
-            optionalHeader.Subsystem = reader.ReadUInt16();
-            optionalHeader.DllCharacteristics = reader.ReadUInt16();
-
-            ReadStackHeapFields(reader, ref optionalHeader, is64Bit);
-
-            optionalHeader.LoaderFlags = reader.ReadUInt32();
-            optionalHeader.NumberOfRvaAndSizes = reader.ReadUInt32();
-
-            // 数据目录是可选头的一部分，必须落在 [optionalHeaderStart, optionalHeaderStart+SizeOfOptionalHeader) 内。
-            // 传入该边界，避免畸形 PE（SizeOfOptionalHeader 声明为无目录的基准值却把 NumberOfRvaAndSizes 报为 16）
-            // 把紧随其后的节表字节当作目录项误读。
-            optionalHeader.DataDirectory = ReadDataDirectories(reader, optionalHeader.NumberOfRvaAndSizes, optionalHeaderStart + sizeOfOptionalHeader);
-
-            // 直接定位到可选头之后（即节表起始处），不再依赖对 96/112 基准与目录数量的算术推断，
-            // 对异常的 SizeOfOptionalHeader 更健壮（调用方已校验该范围在文件内）。
-            reader.BaseStream.Position = optionalHeaderStart + sizeOfOptionalHeader;
+            ParseOptionalHeaderCore2(optionalHeader, reader, sizeOfOptionalHeader, optionalHeaderStart);
 
             return optionalHeader;
+        }
+
+        private static void ParseOptionalHeaderCore2(IMAGE_OPTIONAL_HEADER optionalHeader, BinaryReader reader, ushort sizeOfOptionalHeader, long optionalHeaderStart)
+        {
+            ParseOptionalHeaderCore3(optionalHeader, reader, sizeOfOptionalHeader, optionalHeaderStart, ValidateOptionalHeaderMagic(optionalHeader.Magic, sizeOfOptionalHeader));
+        }
+
+        private static void ParseOptionalHeaderCore3(IMAGE_OPTIONAL_HEADER optionalHeader, BinaryReader reader, ushort sizeOfOptionalHeader, long optionalHeaderStart, bool is64Bit)
+        {
+            ReadImageBaseFields(reader, ref optionalHeader, is64Bit);
+            ParseOptionalHeaderCore4(optionalHeader, reader, sizeOfOptionalHeader, optionalHeaderStart, is64Bit);
+        }
+
+        private static void ParseOptionalHeaderCore4(IMAGE_OPTIONAL_HEADER optionalHeader, BinaryReader reader, ushort sizeOfOptionalHeader, long optionalHeaderStart, bool is64Bit)
+        {
+            CreateNomarlOptionalHeader2(ref optionalHeader, reader);
+            ParseOptionalHeaderCore5(optionalHeader, reader, sizeOfOptionalHeader, optionalHeaderStart, is64Bit);
+        }
+
+        private static void ParseOptionalHeaderCore5(IMAGE_OPTIONAL_HEADER optionalHeader, BinaryReader reader, ushort sizeOfOptionalHeader, long optionalHeaderStart, bool is64Bit)
+        {
+            ReadStackHeapFields(reader, ref optionalHeader, is64Bit);
+
+            ParseOptionalHeaderCore6(optionalHeader, reader, sizeOfOptionalHeader, optionalHeaderStart);
+        }
+
+        private static void ParseOptionalHeaderCore6(IMAGE_OPTIONAL_HEADER optionalHeader, BinaryReader reader, ushort sizeOfOptionalHeader, long optionalHeaderStart)
+        {
+            (optionalHeader.LoaderFlags, optionalHeader.NumberOfRvaAndSizes, optionalHeader.DataDirectory) = (reader.ReadUInt32(), reader.ReadUInt32(), ReadDataDirectories(reader, reader.ReadUInt32(), optionalHeaderStart + sizeOfOptionalHeader));
+        }
+
+        private static bool CheckSizeOfOptionalHeader(ushort sizeOfOptionalHeader)
+        {
+            return sizeOfOptionalHeader > PEConstants.Pe32OptionalHeaderBaseSize;
         }
 
         /// <summary>
@@ -133,27 +148,20 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// </summary>
         private static bool ValidateOptionalHeaderMagic(ushort magic, ushort sizeOfOptionalHeader)
         {
-            if (magic == PEConstants.Pe32Magic)
+            return magic switch
             {
-                if (sizeOfOptionalHeader < PEConstants.Pe32OptionalHeaderBaseSize)
+                PEConstants.Pe32Magic => CheckSizeOfOptionalHeader(sizeOfOptionalHeader) switch
                 {
-                    throw new InvalidDataException("文件不是有效的PE文件: PE32 可选头过短。");
-                }
-
-                return false;
-            }
-
-            if (magic == PEConstants.Pe32PlusMagic)
-            {
-                if (sizeOfOptionalHeader < PEConstants.Pe32PlusOptionalHeaderBaseSize)
+                    true => false,
+                    _ => throw new InvalidDataException("文件不是有效的PE文件: PE32 可选头过短。"),
+                },
+                PEConstants.Pe32PlusMagic => CheckSizeOfOptionalHeader(sizeOfOptionalHeader) switch
                 {
-                    throw new InvalidDataException("文件不是有效的PE文件: PE32+ 可选头过短。");
-                }
-
-                return true;
-            }
-
-            throw new InvalidDataException($"文件不是有效的PE文件: Unsupported optional header magic 0x{magic:X4}.");
+                    true => true,
+                    _ => throw new InvalidDataException("文件不是有效的PE文件: PE32+ 可选头过短。"),
+                },
+                _ => throw new InvalidDataException($"文件不是有效的PE文件: Unsupported optional header magic 0x{magic:X4}.")
+            };
         }
 
         /// <summary>
@@ -161,16 +169,8 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// </summary>
         private static void ReadImageBaseFields(BinaryReader reader, ref IMAGE_OPTIONAL_HEADER optionalHeader, bool is64Bit)
         {
-            if (is64Bit)
-            {
-                optionalHeader.BaseOfData = 0; // PE32+ 没有 BaseOfData 字段
-                optionalHeader.ImageBase = reader.ReadUInt64();
-            }
-            else
-            {
-                optionalHeader.BaseOfData = reader.ReadUInt32();
-                optionalHeader.ImageBase = reader.ReadUInt32();
-            }
+            optionalHeader.BaseOfData = is64Bit ? 0 : optionalHeader.BaseOfData; // PE32+ 没有 BaseOfData 字段
+            optionalHeader.ImageBase = reader.ReadUInt64();
         }
 
         /// <summary>
@@ -178,20 +178,13 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// </summary>
         private static void ReadStackHeapFields(BinaryReader reader, ref IMAGE_OPTIONAL_HEADER optionalHeader, bool is64Bit)
         {
-            if (is64Bit)
-            {
-                optionalHeader.SizeOfStackReserve = reader.ReadUInt64();
-                optionalHeader.SizeOfStackCommit = reader.ReadUInt64();
-                optionalHeader.SizeOfHeapReserve = reader.ReadUInt64();
-                optionalHeader.SizeOfHeapCommit = reader.ReadUInt64();
-            }
-            else
-            {
-                optionalHeader.SizeOfStackReserve = reader.ReadUInt32();
-                optionalHeader.SizeOfStackCommit = reader.ReadUInt32();
-                optionalHeader.SizeOfHeapReserve = reader.ReadUInt32();
-                optionalHeader.SizeOfHeapCommit = reader.ReadUInt32();
-            }
+            //optionalHeader.SizeOfStackReserve = is64Bit ? reader.ReadUInt64() : reader.ReadUInt32();
+            //optionalHeader.SizeOfStackCommit = is64Bit ? reader.ReadUInt64() : reader.ReadUInt32();
+            //optionalHeader.SizeOfHeapReserve = is64Bit ? reader.ReadUInt64() : reader.ReadUInt32();
+            //optionalHeader.SizeOfHeapCommit = is64Bit ? reader.ReadUInt64() : reader.ReadUInt32();
+            (optionalHeader.SizeOfStackReserve, optionalHeader.SizeOfStackCommit, optionalHeader.SizeOfHeapReserve, optionalHeader.SizeOfHeapCommit) = is64Bit
+                ? (reader.ReadUInt64(), reader.ReadUInt64(), reader.ReadUInt64(), reader.ReadUInt64())
+                : (reader.ReadUInt32(), reader.ReadUInt32(), reader.ReadUInt32(), reader.ReadUInt32());
         }
 
         /// <summary>
