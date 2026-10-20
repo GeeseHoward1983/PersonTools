@@ -1,4 +1,5 @@
 using PersonalTools.PEAnalyzer.Models;
+using System.Data;
 using System.IO;
 
 namespace PersonalTools.PEAnalyzer.Parsers
@@ -187,42 +188,46 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 : (reader.ReadUInt32(), reader.ReadUInt32(), reader.ReadUInt32(), reader.ReadUInt32());
         }
 
+        private static int GetDataDirCount(BinaryReader reader, uint numberOfRvaAndSizes, long optionalHeaderEnd)
+        {
+            return GetDataDirCount2((int)Math.Min(numberOfRvaAndSizes, PEConstants.MaxDataDirectories), (optionalHeaderEnd - reader.BaseStream.Position) / 8, (reader.BaseStream.Length - reader.BaseStream.Position) / 8);
+        }
+
+        private static int GetDataDirCount2(int dataDirCount, long maxByOptionalHeader, long available)
+        {
+            return GetDataDirCount3(maxByOptionalHeader < dataDirCount ? (int)Math.Max(0, maxByOptionalHeader) : dataDirCount, available);
+        }
+
+        private static int GetDataDirCount3(int dataDirCount, long available)
+        {
+            return available < dataDirCount ? (int)Math.Min(dataDirCount, available) : dataDirCount;
+        }
+
+        private static IMAGE_DATA_DIRECTORY[] SetDataDir(IMAGE_DATA_DIRECTORY[] dataDirectory, uint virtualAddress, uint size)
+        {
+            for (int i = 0; i < dataDirectory.Length; i++)
+            {
+                dataDirectory[i] = SetDataDir(virtualAddress, size);
+            }
+            return dataDirectory;
+        }
+
+        private static IMAGE_DATA_DIRECTORY SetDataDir(uint virtualAddress, uint size)
+        {
+            return new IMAGE_DATA_DIRECTORY
+            {
+                VirtualAddress = virtualAddress,
+                Size = size
+            };
+        }
+
+
         /// <summary>
         /// 读取数据目录数组（每项 8 字节，最多 16 项；项布局与位数无关）。
         /// </summary>
         private static IMAGE_DATA_DIRECTORY[] ReadDataDirectories(BinaryReader reader, uint numberOfRvaAndSizes, long optionalHeaderEnd)
-        {
-            int dataDirCount = (int)Math.Min(numberOfRvaAndSizes, PEConstants.MaxDataDirectories);
-            // 目录项必须位于可选头范围内：按 SizeOfOptionalHeader 声明的可选头结尾再夹一次，
-            // 阻止畸形文件把节表字节当作目录项（每项 8 字节）。
-            long maxByOptionalHeader = (optionalHeaderEnd - reader.BaseStream.Position) / 8;
-            if (maxByOptionalHeader < dataDirCount)
-            {
-                dataDirCount = (int)Math.Max(0, maxByOptionalHeader);
-            }
-
-            // 限制为文件实际可读的数量，避免被截断的文件触发未捕获的 EndOfStreamException
-            long available = (reader.BaseStream.Length - reader.BaseStream.Position) / 8;
-            if (available < dataDirCount)
-            {
-                // 文件截断致可读目录项少于应有数量：解析行为不变（仍按可读数量返回短数组），
-                // 但记录日志，便于排查"数组长度与 Presenter 显示的 NumberOfRvaAndSizes 不一致"的现象。
-                PersonalTools.Utils.AppLogger.Log(
-                    $"数据目录被截断：应有 {dataDirCount} 项(NumberOfRvaAndSizes={numberOfRvaAndSizes})，文件仅可读 {Math.Max(0, available)} 项。");
-                dataDirCount = (int)Math.Max(0, available);
-            }
-
-            IMAGE_DATA_DIRECTORY[] dataDirectory = new IMAGE_DATA_DIRECTORY[dataDirCount];
-            for (int i = 0; i < dataDirCount; i++)
-            {
-                dataDirectory[i] = new IMAGE_DATA_DIRECTORY
-                {
-                    VirtualAddress = reader.ReadUInt32(),
-                    Size = reader.ReadUInt32()
-                };
-            }
-
-            return dataDirectory;
+        {          
+            return SetDataDir(new IMAGE_DATA_DIRECTORY[GetDataDirCount(reader, numberOfRvaAndSizes, optionalHeaderEnd)], reader.ReadUInt32(), reader.ReadUInt32());
         }
 
         /// <summary>
