@@ -22,85 +22,97 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 peInfo.ImportFunctions.AddRange(ParseDelayLoadImportTable(fs, reader, peInfo));
         }
 
+
+        private static bool ParseStandardImportTableCheck(long fslength, int DataDirectoryLength, uint VirtualAddress, long importOffset)
+        {
+            return (DataDirectoryLength <= PEConstants.DirectoryImport) switch
+            {
+                true => false,
+                _ => VirtualAddress switch
+                {
+                    0 => false,
+                    _ => importOffset switch
+                    {
+                        -1 => false,
+                        _ => importOffset < fslength
+                    }
+                }
+            };
+        }
+
+        private static IMAGE_IMPORT_DESCRIPTOR GetImportDesc(BinaryReader reader)
+        {
+            return new()
+            {
+                OriginalFirstThunk = reader.ReadUInt32(),
+                TimeDateStamp = reader.ReadUInt32(),
+                ForwarderChain = reader.ReadUInt32(),
+                Name = reader.ReadUInt32(),
+                FirstThunk = reader.ReadUInt32()
+            };
+        }
         /// <summary>
         /// 解析标准导入表（IMAGE_DIRECTORY_ENTRY_IMPORT）。
         /// </summary>
         private static void ParseStandardImportTable(FileStream fs, BinaryReader reader, PEInfo peInfo)
         {
-            if (peInfo.OptionalHeader.DataDirectory.Length <= PEConstants.DirectoryImport ||
-                peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryImport].VirtualAddress == 0)
+            if (ParseStandardImportTableCheck(fs.Length, peInfo.OptionalHeader.DataDirectory.Length, peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryImport].VirtualAddress, PEParserUtils.RvaToOffset(peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryImport].VirtualAddress, peInfo.SectionHeaders)))
             {
-                return;
-            }
-
-            uint importRVA = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryImport].VirtualAddress;
-            long importOffset = PEParserUtils.RvaToOffset(importRVA, peInfo.SectionHeaders);
-            if (importOffset == -1 || importOffset >= fs.Length)
-            {
-                return;
-            }
-
-            long originalPosition = fs.Position;
-            try
-            {
-                fs.Position = importOffset;
-
-                // 循环读取导入描述符直到遇到全零的描述符。
-                // 硬上限防御：满构造的大文件可让循环跑 fs.Length/20 次、每次再读字符串/解析函数，
-                // 故对描述符数量设上限（远超真实 PE 的依赖 DLL 数），避免 UI 线程长时间卡死。
-                int descriptorCount = 0;
-                while (fs.Position + PEConstants.ImportDescriptorSize <= fs.Length
-                    && descriptorCount < PEConstants.MaxImportDescriptors)
+                long originalPosition = fs.Position;
+                try
                 {
-                    // 全局导入函数总数闸门：防止 descriptors × thunks 放大（多个描述符共享同一超大 thunk 表）耗尽内存/CPU
-                    if (peInfo.ImportFunctions.Count >= PEConstants.MaxTotalImports)
-                    {
-                        break;
-                    }
+                    fs.Position = PEParserUtils.RvaToOffset(peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryImport].VirtualAddress, peInfo.SectionHeaders);
 
-                    descriptorCount++;
-                    IMAGE_IMPORT_DESCRIPTOR importDesc = new()
+                    for (int descriptorCount = 0; fs.Position + PEConstants.ImportDescriptorSize <= fs.Length
+                        && descriptorCount < PEConstants.MaxImportDescriptors; descriptorCount++)
                     {
-                        OriginalFirstThunk = reader.ReadUInt32(),
-                        TimeDateStamp = reader.ReadUInt32(),
-                        ForwarderChain = reader.ReadUInt32(),
-                        Name = reader.ReadUInt32(),
-                        FirstThunk = reader.ReadUInt32()
-                    };
+                        IMAGE_IMPORT_DESCRIPTOR importDesc = GetImportDesc(reader);
+                        if (IsTerminatorDescriptor(importDesc))
+                        {
+                            break;
+                        }
 
-                    if (IsTerminatorDescriptor(importDesc))
-                    {
-                        break;
-                    }
+                        (long nameOffset, string dllName) = ReadStringAtRva(fs, reader, peInfo, importDesc.Name);
+                        if (nameOffset == -1)
+                        {
+                            continue;
+                        }
 
-                    // 全零终止符已在上方 IsTerminatorDescriptor 判过，到此描述符必非表尾。
-                    // 其 Name RVA 指向 .bss/跨节时 RvaToOffset 返回 -1，仅说明这一项名称取不出，
-                    // 不代表表已结束；用 continue 跳过本项继续扫描后续合法 DLL（循环有 MaxImportDescriptors
-                    // 上限保护，不会无限循环），避免误当表尾 break 漏掉其后所有依赖。
-                    (long nameOffset, string dllName) = ReadStringAtRva(fs, reader, peInfo, importDesc.Name);
-                    if (nameOffset == -1)
-                    {
-                        continue;
-                    }
-
-                    if (!string.IsNullOrEmpty(dllName))
-                    {
                         AddDependencyIfMissing(peInfo, dllName);
-                    }
 
-                    ParseImportFunctions(fs, reader, peInfo, importDesc, dllName);
+                        ParseImportFunctions(fs, reader, peInfo, importDesc, dllName);
+                    }
                 }
-            }
-            finally
-            {
-                fs.Position = originalPosition;
+                finally
+                {
+                    fs.Position = originalPosition;
+                }
             }
         }
 
         private static bool IsTerminatorDescriptor(IMAGE_IMPORT_DESCRIPTOR d)
         {
-            return d.OriginalFirstThunk == 0 && d.TimeDateStamp == 0 && d.ForwarderChain == 0 &&
-                   d.Name == 0 && d.FirstThunk == 0;
+            return d.OriginalFirstThunk switch
+            {
+                0 => d.TimeDateStamp switch
+                {
+                    0 => d.ForwarderChain switch
+                    {
+                        0 => d.Name switch
+                        {
+                            0 => d.FirstThunk switch
+                            {
+                                0 => true,
+                                _ => false
+                            },
+                            _ => false
+                        },
+                        _ => false
+                    },
+                    _ => false
+                },
+                _ => false
+            };
         }
 
         // 延迟加载导入表的全零终止符（与标准导入表 IsTerminatorDescriptor 对称）
@@ -207,19 +219,24 @@ namespace PersonalTools.PEAnalyzer.Parsers
             return functions;
         }
 
+        private static bool GetSafeName(string dllName, ref string safeName)
+        {
+            safeName = string.IsNullOrEmpty(dllName) switch
+            {
+                true => string.Empty,
+                _ => Utils.PathSafety.IsBareFileName(dllName) switch
+                {
+                    true => dllName,
+                    _ => Path.GetFileName(dllName)
+                }
+            };
+            return string.IsNullOrEmpty(safeName);
+        }
+
         private static void AddDependencyIfMissing(PEInfo peInfo, string dllName)
         {
-            // 纵深防御：DLL 名取自不可信导入表。已是裸文件名则原样记录；含路径成分时仅保留文件名部分，
-            // 避免伪造名传播到 DependencyResolver 的路径拼接（与 DependencyResolver 的 IsBareFileName 入口校验形成双重防护）。
-            string safeName = PersonalTools.Utils.PathSafety.IsBareFileName(dllName)
-                ? dllName
-                : Path.GetFileName(dllName);
-            if (string.IsNullOrEmpty(safeName))
-            {
-                return;
-            }
-
-            if (!peInfo.Dependencies.Exists(dep => dep.Name.Equals(safeName, StringComparison.OrdinalIgnoreCase)))
+            string safeName = string.Empty;
+            if (!GetSafeName(dllName, ref safeName) && !peInfo.Dependencies.Exists(dep => dep.Name.Equals(safeName, StringComparison.OrdinalIgnoreCase)))
             {
                 peInfo.Dependencies.Add(new DependencyInfo { Name = safeName });
             }
@@ -227,9 +244,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
         private static void SetImportFunc(ImportFunctionInfo importFunc, string functionNm, int ordinal, bool isOrdinalImport)
         {
-            importFunc.FunctionName = functionNm;
-            importFunc.Ordinal = ordinal;
-            importFunc.IsOrdinalImport = isOrdinalImport;
+            (importFunc.FunctionName, importFunc.Ordinal, importFunc.IsOrdinalImport) = (functionNm, ordinal, isOrdinalImport);
         }
 
         private static void ImportByName(List<IMAGE_SECTION_HEADER> sections, ulong thunkRva, FileStream fs, BinaryReader reader, ImportFunctionInfo importFunc)
