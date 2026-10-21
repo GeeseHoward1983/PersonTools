@@ -17,17 +17,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// <param name="peInfo">PE文件信息</param>
         internal static void ParseImportTable(FileStream fs, BinaryReader reader, PEInfo peInfo)
         {
-            try
-            {
                 ParseStandardImportTable(fs, reader, peInfo);
-
                 // 解析延迟加载导入表并合并到主列表
                 peInfo.ImportFunctions.AddRange(ParseDelayLoadImportTable(fs, reader, peInfo));
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
-            {
-                PersonalTools.Utils.AppLogger.Log($"导入表解析错误: {ex.Message}");
-            }
         }
 
         /// <summary>
