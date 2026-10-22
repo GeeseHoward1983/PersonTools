@@ -249,41 +249,38 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
         private static void ImportByName(List<IMAGE_SECTION_HEADER> sections, ulong thunkRva, FileStream fs, BinaryReader reader, ImportFunctionInfo importFunc)
         {
-            // RVA 为 32 位概念；name import 的 thunk 高 32 位本应为 0，非零说明畸形数据，避免 (uint) 截断后碰巧落入有效节读出错误名称
-            if (thunkRva > uint.MaxValue)
+            (importFunc.FunctionName, importFunc.Ordinal, importFunc.IsOrdinalImport) = (thunkRva > uint.MaxValue) switch
             {
-                SetImportFunc(importFunc, $"INVALID_RVA_{thunkRva:X}", 0, false);
-                return;
-            }
+                true => ($"INVALID_RVA_{thunkRva:X}", 0, false),
+                _ => ImportByName2(PEParserUtils.RvaToOffset((uint)thunkRva, sections, 2), thunkRva, fs, reader)
+            };
+        }
 
+        private static (string, int, bool) ImportByName2(long nameOffset, ulong thunkRva, FileStream fs, BinaryReader reader)
+        {
+            return nameOffset switch
+            {
+                -1 => ($"INVALID_RVA_{thunkRva:X8}", 0, false),
+                _ => (nameOffset >= fs.Length) switch
+                {
+                    true => ($"INVALID_RVA_{thunkRva:X8}", 0, false),
+                    _ => ImportByName3(nameOffset, fs, reader)
+                }
+            };
+        }
+
+        private static (string, int, bool) ImportByName3(long nameOffset, FileStream fs, BinaryReader reader)
+        {
             // requiredLength=2 至少覆盖 Hint 字段，保证 hint 与函数名起始落在同一节内，减少跨节误读
-            long nameOffset = PEParserUtils.RvaToOffset((uint)thunkRva, sections, 2);
-            if (nameOffset == -1 || nameOffset >= fs.Length)
-            {
-                SetImportFunc(importFunc, $"INVALID_RVA_{thunkRva:X8}", 0, false);
-                return;
-            }
-
             long savePos = fs.Position;
             try
             {
                 // 检查是否有足够空间读取 hint 和名称（至少需要 2 字节的 hint）
-                if (fs.Length - nameOffset <= 2)
-                {
-                    SetImportFunc(importFunc, "NAME_TOO_SHORT", 0, false);
-                    return;
-                }
-
-                fs.Position = nameOffset;
-                // 读取Hint字段（2字节）后读取函数名称
-                ushort hint = reader.ReadUInt16();
-                string functionName = PEParserUtils.ReadNullTerminatedString(reader);
-
-                SetImportFunc(importFunc, !string.IsNullOrEmpty(functionName) ? functionName : "EMPTY_NAME", hint, false);
+                return ImportByName3Core(nameOffset, fs, reader);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
-                SetImportFunc(importFunc, $"READ_ERROR: {ex.Message}", 0, false);
+                return ($"READ_ERROR: {ex.Message}", 0, false);
             }
             finally
             {
@@ -291,6 +288,33 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 fs.Position = savePos;
             }
         }
+
+        private static (string, int, bool) ImportByName3Core(long nameOffset, FileStream fs, BinaryReader reader)
+        {
+                // 检查是否有足够空间读取 hint 和名称（至少需要 2 字节的 hint）
+                return (fs.Length - nameOffset) switch
+                {
+                    <= 2 => ("NAME_TOO_SHORT", 0, false),
+                    _ => ImportByName4(nameOffset, fs, reader)
+                };
+        }
+
+        private static (string, int, bool) ImportByName4(long nameOffset, FileStream fs, BinaryReader reader)
+        {
+            fs.Position = nameOffset;
+            return ImportByName5(reader.ReadUInt16(), PEParserUtils.ReadNullTerminatedString(reader));
+        }
+
+        private static (string, int, bool) ImportByName5(ushort hint, string functionName)
+        {
+            return (string.IsNullOrEmpty(functionName) switch
+            {
+                false => functionName,
+                _ => "EMPTY_NAME"
+            }, hint, false);
+        }
+
+
 
         /// <summary>
         /// 解析延迟加载导入表（IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT）。
