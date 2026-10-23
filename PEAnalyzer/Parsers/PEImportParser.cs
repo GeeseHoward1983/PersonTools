@@ -131,14 +131,26 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// </summary>
         private static (long offset, string value) ReadStringAtRva(FileStream fs, BinaryReader reader, PEInfo peInfo, uint rva)
         {
-            long offset = PEParserUtils.RvaToOffset(rva, peInfo.SectionHeaders);
-            if (offset == -1 || offset >= fs.Length)
-            {
-                return (-1, string.Empty);
-            }
+            return ReadStringAtRvaCore(PEParserUtils.RvaToOffset(rva, peInfo.SectionHeaders), fs, reader);
+        }
 
-            string value = PEParserUtils.ReadAtOffset(fs, offset, string.Empty, () => PEParserUtils.ReadNullTerminatedString(reader));
-            return (offset, value);
+        private static (long offset, string value) ReadStringAtRvaCore(long offset, FileStream fs, BinaryReader reader)
+        {
+            return ReadStringAtRvaCore2(offset, fs.Length, PEParserUtils.ReadAtOffset(fs, offset, string.Empty, () => PEParserUtils.ReadNullTerminatedString(reader)));
+        }
+
+        private static (long offset, string value) ReadStringAtRvaCore2(long offset, long fsLength, string value)
+        {
+            return CheckStartOffset(offset, fsLength) switch
+            {
+                true => (offset, value),
+                _ => (-1, string.Empty)
+            };
+        }
+
+        private static uint GetRVA(IMAGE_IMPORT_DESCRIPTOR importDesc)
+        {
+            return importDesc.OriginalFirstThunk != 0 ? importDesc.OriginalFirstThunk : importDesc.FirstThunk;
         }
 
         /// <summary>
@@ -153,23 +165,23 @@ namespace PersonalTools.PEAnalyzer.Parsers
         {
             try
             {
-                // 优先使用 OriginalFirstThunk（ILT），否则回退到 FirstThunk（IAT）
-                uint thunkRVA = importDesc.OriginalFirstThunk != 0 ? importDesc.OriginalFirstThunk : importDesc.FirstThunk;
-                long thunkOffset = PEParserUtils.RvaToOffset(thunkRVA, peInfo.SectionHeaders);
-                if (thunkOffset == -1 || thunkOffset >= fs.Length)
-                {
-                    return;
-                }
-
-                bool is64Bit = PEParserUtils.Is64Bit(peInfo.OptionalHeader);
-                peInfo.ImportFunctions.AddRange(PEParserUtils.ReadAtOffset(fs, thunkOffset, new List<ImportFunctionInfo>(),
-                    () => WalkThunkTable(fs, reader, peInfo, thunkOffset, is64Bit, dllName, isDelayLoaded: false)));
+                ParseImportFunctionsCore(PEParserUtils.RvaToOffset(GetRVA(importDesc), peInfo.SectionHeaders), fs, reader, peInfo, dllName);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
-                PersonalTools.Utils.AppLogger.Log($"导入函数解析错误: {ex.Message}");
+                Utils.AppLogger.Log($"导入函数解析错误: {ex.Message}");
             }
         }
+
+        private static void ParseImportFunctionsCore(long thunkOffset, FileStream fs, BinaryReader reader, PEInfo peInfo, string dllName)
+        {
+                if (CheckStartOffset(thunkOffset, fs.Length))
+                {
+                    peInfo.ImportFunctions.AddRange(PEParserUtils.ReadAtOffset(fs, thunkOffset, [],
+                        () => WalkThunkTable(fs, reader, peInfo, thunkOffset, PEParserUtils.Is64Bit(peInfo.OptionalHeader), dllName, false)));
+                }
+        }
+
 
         /// <summary>
         /// 统一的 thunk 表遍历器：顺序读取每个 thunk（32 位 4 字节 / 64 位 8 字节），
@@ -293,12 +305,12 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
         private static (string, int, bool) ImportByName3Core(long nameOffset, FileStream fs, BinaryReader reader)
         {
-                // 检查是否有足够空间读取 hint 和名称（至少需要 2 字节的 hint）
-                return (fs.Length - nameOffset) switch
-                {
-                    <= 2 => ("NAME_TOO_SHORT", 0, false),
-                    _ => ImportByName4(nameOffset, fs, reader)
-                };
+            // 检查是否有足够空间读取 hint 和名称（至少需要 2 字节的 hint）
+            return (fs.Length - nameOffset) switch
+            {
+                <= 2 => ("NAME_TOO_SHORT", 0, false),
+                _ => ImportByName4(nameOffset, fs, reader)
+            };
         }
 
         private static (string, int, bool) ImportByName4(long nameOffset, FileStream fs, BinaryReader reader)
@@ -317,7 +329,14 @@ namespace PersonalTools.PEAnalyzer.Parsers
         }
 
 
-
+        private static bool CheckStartOffset(long startOffset, long fsLength)
+        {
+            return startOffset switch
+            {
+                -1 => false,
+                _ => startOffset >= fsLength
+            };
+        }
         /// <summary>
         /// 解析延迟加载导入表（IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT）。
         /// </summary>
@@ -327,46 +346,39 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// <returns>延迟加载的导入函数列表</returns>
         private static List<ImportFunctionInfo> ParseDelayLoadImportTable(FileStream fs, BinaryReader reader, PEInfo peInfo)
         {
+            return (peInfo.OptionalHeader.DataDirectory.Length <= PEConstants.DirectoryDelayImport) switch
+            {
+                true => [],
+                _ => peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryDelayImport].VirtualAddress switch
+                {
+                    0 => [],
+                    _ => CheckStartOffset(PEParserUtils.RvaToOffset(peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryDelayImport].VirtualAddress, peInfo.SectionHeaders), fs.Length) switch
+                    {
+                        true => ParseDelayLoadImportTableCore(fs, reader, peInfo, PEParserUtils.RvaToOffset(peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryDelayImport].VirtualAddress, peInfo.SectionHeaders)),
+                        _ => []
+                    }
+                }
+            };
+        }
+
+        private static bool CheckPosition(int descriptorCount, long startOffset, long fsLength)
+        {
+            return descriptorCount < PEConstants.MaxImportDescriptors
+                && startOffset + ((long)descriptorCount + 1) * PEConstants.DelayLoadDescriptorSize <= fsLength;
+        }
+
+        private static List<ImportFunctionInfo> ParseDelayLoadImportTableCore(FileStream fs, BinaryReader reader, PEInfo peInfo, long startOffset)
+        {
             List<ImportFunctionInfo> delayLoadImportFunctions = [];
 
-            if (peInfo.OptionalHeader.DataDirectory.Length <= PEConstants.DirectoryDelayImport)
-            {
-                return delayLoadImportFunctions;
-            }
-
-            uint delayLoadImportRVA = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryDelayImport].VirtualAddress;
-            if (delayLoadImportRVA == 0)
-            {
-                return delayLoadImportFunctions;
-            }
-
-            long startOffset = PEParserUtils.RvaToOffset(delayLoadImportRVA, peInfo.SectionHeaders);
-            if (startOffset == -1 || startOffset >= fs.Length)
-            {
-                return delayLoadImportFunctions;
-            }
-
-            bool is64Bit = PEParserUtils.Is64Bit(peInfo.OptionalHeader);
-            int descriptorCount = 0;
 
             // 硬上限防御：与标准导入表的 MaxImportDescriptors 对称。畸形大文件可让每个描述符的 DllNameRVA
             // 都解析为有效名称，使本循环跑到 fs.Length/32 次并对每个再遍历 thunk 表，膨胀导入项卡死解析线程。
-            while (descriptorCount < PEConstants.MaxImportDescriptors
-                && startOffset + ((long)descriptorCount + 1) * PEConstants.DelayLoadDescriptorSize <= fs.Length)
+            for (int descriptorCount = 0; CheckPosition(descriptorCount, startOffset, fs.Length); descriptorCount++)
             {
-                // 全局导入函数总数闸门（含已解析的标准导入 + 本延迟加载表已累积项）：与标准导入表对称，
-                // 防止 descriptors × thunks 放大（多个描述符共享同一超大 thunk 表）耗尽内存/CPU。
-                if (peInfo.ImportFunctions.Count + delayLoadImportFunctions.Count >= PEConstants.MaxTotalImports)
-                {
-                    break;
-                }
-
                 fs.Position = startOffset + (long)descriptorCount * PEConstants.DelayLoadDescriptorSize;
                 IMAGE_DELAYLOAD_DESCRIPTOR delayLoadDesc = ReadDelayLoadDescriptor(reader);
-                descriptorCount++;
 
-                // 全零描述符即延迟加载导入表终止符，遇到即停（与标准导入表 IsTerminatorDescriptor 对称），
-                // 避免把真正终止符之后的尾随字节继续当描述符解析、注入幻影依赖或做无谓工作。
                 if (IsTerminatorDelayLoadDescriptor(delayLoadDesc))
                 {
                     break;
@@ -391,29 +403,33 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
                 // 使用 ImportNameTableRVA 解析延迟加载导入函数
                 delayLoadImportFunctions.AddRange(
-                    ParseDelayLoadFunctions(fs, reader, peInfo, delayLoadDesc.ImportNameTableRVA, is64Bit, dllName));
+                    ParseDelayLoadFunctions(fs, reader, peInfo, delayLoadDesc.ImportNameTableRVA, dllName));
             }
 
             return delayLoadImportFunctions;
         }
 
+
         /// <summary>
         /// 解析单个延迟加载描述符的导入名表（ImportNameTableRVA），返回其导入函数列表。
         /// </summary>
-        private static List<ImportFunctionInfo> ParseDelayLoadFunctions(FileStream fs, BinaryReader reader, PEInfo peInfo, uint importNameTableRVA, bool is64Bit, string dllName)
+        private static List<ImportFunctionInfo> ParseDelayLoadFunctions(FileStream fs, BinaryReader reader, PEInfo peInfo, uint importNameTableRVA, string dllName)
         {
-            if (importNameTableRVA == 0)
+            return importNameTableRVA switch
             {
-                return [];
-            }
+                0 => [],
+                _ => ParseDelayLoadFunctions2(fs, reader, peInfo, dllName, PEParserUtils.RvaToOffset(importNameTableRVA, peInfo.SectionHeaders))
+            };
+        }
 
-            long nameTableOffset = PEParserUtils.RvaToOffset(importNameTableRVA, peInfo.SectionHeaders);
-            if (nameTableOffset == -1 || nameTableOffset >= fs.Length)
+        private static List<ImportFunctionInfo> ParseDelayLoadFunctions2(FileStream fs, BinaryReader reader, PEInfo peInfo, string dllName, long nameTableOffset)
+        {
+            return nameTableOffset switch
             {
-                return [];
-            }
-
-            return WalkThunkTable(fs, reader, peInfo, nameTableOffset, is64Bit, dllName, isDelayLoaded: true);
+                -1 => [],
+                _ when nameTableOffset >= fs.Length => [],
+                _ => WalkThunkTable(fs, reader, peInfo, nameTableOffset, PEParserUtils.Is64Bit(peInfo.OptionalHeader), dllName, isDelayLoaded: true)
+            };
         }
 
         private static IMAGE_DELAYLOAD_DESCRIPTOR ReadDelayLoadDescriptor(BinaryReader reader)

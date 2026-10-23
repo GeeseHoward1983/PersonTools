@@ -180,12 +180,11 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// </summary>
         internal static string ReadUnicodeStringWithMaxBytes(BinaryReader reader, int maxBytes)
         {
-            if (maxBytes <= 0)
+            return maxBytes switch
             {
-                return string.Empty;
-            }
-
-            return ReadUnicodeStringWithMaxLength(reader, maxBytes / 2);
+                <= 0 => string.Empty,
+                _ => ReadUnicodeStringWithMaxLength(reader, maxBytes / 2)
+            };
         }
     }
 }
