@@ -1,5 +1,6 @@
 using PersonalTools.PEAnalyzer.Models;
 using System.IO;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace PersonalTools.PEAnalyzer.Parsers
 {
@@ -219,9 +220,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
             return functions;
         }
 
-        private static bool GetSafeName(string dllName, ref string safeName)
+        private static string GetSafeName(string dllName)
         {
-            safeName = string.IsNullOrEmpty(dllName) switch
+            return string.IsNullOrEmpty(dllName) switch
             {
                 true => string.Empty,
                 _ => Utils.PathSafety.IsBareFileName(dllName) switch
@@ -230,21 +231,25 @@ namespace PersonalTools.PEAnalyzer.Parsers
                     _ => Path.GetFileName(dllName)
                 }
             };
-            return string.IsNullOrEmpty(safeName);
         }
 
-        private static void AddDependencyIfMissing(PEInfo peInfo, string dllName)
+        private static bool CheckSafeName(PEInfo peInfo, string safeName)
         {
-            string safeName = string.Empty;
-            if (!GetSafeName(dllName, ref safeName) && !peInfo.Dependencies.Exists(dep => dep.Name.Equals(safeName, StringComparison.OrdinalIgnoreCase)))
+            return !string.IsNullOrEmpty(safeName) && !peInfo.Dependencies.Exists(dep => dep.Name.Equals(safeName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static void AddDependencyIfMissingCore(PEInfo peInfo, string safeName)
+        {
+            if (CheckSafeName(peInfo, safeName))
             {
                 peInfo.Dependencies.Add(new DependencyInfo { Name = safeName });
             }
         }
 
-        private static void SetImportFunc(ImportFunctionInfo importFunc, string functionNm, int ordinal, bool isOrdinalImport)
+
+        private static void AddDependencyIfMissing(PEInfo peInfo, string dllName)
         {
-            (importFunc.FunctionName, importFunc.Ordinal, importFunc.IsOrdinalImport) = (functionNm, ordinal, isOrdinalImport);
+            AddDependencyIfMissingCore(peInfo, GetSafeName(dllName));
         }
 
         private static void ImportByName(List<IMAGE_SECTION_HEADER> sections, ulong thunkRva, FileStream fs, BinaryReader reader, ImportFunctionInfo importFunc)
@@ -271,11 +276,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
         private static (string, int, bool) ImportByName3(long nameOffset, FileStream fs, BinaryReader reader)
         {
-            // requiredLength=2 至少覆盖 Hint 字段，保证 hint 与函数名起始落在同一节内，减少跨节误读
             long savePos = fs.Position;
             try
             {
-                // 检查是否有足够空间读取 hint 和名称（至少需要 2 字节的 hint）
                 return ImportByName3Core(nameOffset, fs, reader);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
@@ -284,7 +287,6 @@ namespace PersonalTools.PEAnalyzer.Parsers
             }
             finally
             {
-                // 调用方 WalkThunkTable 依赖流位置连续读取后续 thunk：异常路径也必须恢复
                 fs.Position = savePos;
             }
         }
