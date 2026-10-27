@@ -59,37 +59,41 @@ namespace PersonalTools.PEAnalyzer.Parsers
         {
             if (ParseStandardImportTableCheck(fs.Length, peInfo.OptionalHeader.DataDirectory.Length, peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryImport].VirtualAddress, PEParserUtils.RvaToOffset(peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryImport].VirtualAddress, peInfo.SectionHeaders)))
             {
-                long originalPosition = fs.Position;
-                try
-                {
-                    fs.Position = PEParserUtils.RvaToOffset(peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryImport].VirtualAddress, peInfo.SectionHeaders);
-
-                    for (int descriptorCount = 0; fs.Position + PEConstants.ImportDescriptorSize <= fs.Length
-                        && descriptorCount < PEConstants.MaxImportDescriptors; descriptorCount++)
-                    {
-                        IMAGE_IMPORT_DESCRIPTOR importDesc = GetImportDesc(reader);
-                        if (IsTerminatorDescriptor(importDesc))
-                        {
-                            break;
-                        }
-
-                        (long nameOffset, string dllName) = ReadStringAtRva(fs, reader, peInfo, importDesc.Name);
-                        if (nameOffset == -1)
-                        {
-                            continue;
-                        }
-
-                        AddDependencyIfMissing(peInfo, dllName);
-
-                        ParseImportFunctions(fs, reader, peInfo, importDesc, dllName);
-                    }
-                }
-                finally
-                {
-                    fs.Position = originalPosition;
-                }
+                ParseStandardImportTable2(fs, reader, peInfo);
             }
         }
+
+        private static void ParseStandardImportTable2(FileStream fs, BinaryReader reader, PEInfo peInfo)
+        {
+            long originalPosition = fs.Position;
+            try
+            {
+                fs.Position = PEParserUtils.RvaToOffset(peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryImport].VirtualAddress, peInfo.SectionHeaders);
+                ParseStandardImportTable3(fs, reader, peInfo);
+            }
+            finally
+            {
+                fs.Position = originalPosition;
+            }
+        }
+
+        private static void ParseStandardImportTable3(FileStream fs, BinaryReader reader, PEInfo peInfo)
+        {
+            IMAGE_IMPORT_DESCRIPTOR importDesc;
+            for (int descriptorCount = 0; fs.Position + PEConstants.ImportDescriptorSize <= fs.Length
+                && descriptorCount < PEConstants.MaxImportDescriptors && (!IsTerminatorDescriptor(importDesc = GetImportDesc(reader))); descriptorCount++)
+            {
+                ParseStandardImportTable3(fs, reader, peInfo, importDesc, ReadStringAtRva(fs, reader, peInfo, importDesc.Name));
+            }
+        }
+
+        private static void ParseStandardImportTable3(FileStream fs, BinaryReader reader, PEInfo peInfo, IMAGE_IMPORT_DESCRIPTOR importDesc, string dllName)
+        {
+            AddDependencyIfMissing(peInfo, dllName);
+            ParseImportFunctions(fs, reader, peInfo, importDesc, dllName);
+        }
+
+
 
         private static bool IsTerminatorDescriptor(IMAGE_IMPORT_DESCRIPTOR d)
         {
@@ -129,22 +133,22 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// 将 RVA 解析为文件偏移并读取以 null 结尾的字符串（内部保存并恢复文件位置）。
         /// 偏移无效时返回 (-1, string.Empty)。
         /// </summary>
-        private static (long offset, string value) ReadStringAtRva(FileStream fs, BinaryReader reader, PEInfo peInfo, uint rva)
+        private static string ReadStringAtRva(FileStream fs, BinaryReader reader, PEInfo peInfo, uint rva)
         {
             return ReadStringAtRvaCore(PEParserUtils.RvaToOffset(rva, peInfo.SectionHeaders), fs, reader);
         }
 
-        private static (long offset, string value) ReadStringAtRvaCore(long offset, FileStream fs, BinaryReader reader)
+        private static string ReadStringAtRvaCore(long offset, FileStream fs, BinaryReader reader)
         {
             return ReadStringAtRvaCore2(offset, fs.Length, PEParserUtils.ReadAtOffset(fs, offset, string.Empty, () => PEParserUtils.ReadNullTerminatedString(reader)));
         }
 
-        private static (long offset, string value) ReadStringAtRvaCore2(long offset, long fsLength, string value)
+        private static string ReadStringAtRvaCore2(long offset, long fsLength, string value)
         {
             return CheckStartOffset(offset, fsLength) switch
             {
-                true => (offset, value),
-                _ => (-1, string.Empty)
+                true => (value),
+                _ => (string.Empty)
             };
         }
 
@@ -384,20 +388,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
                     break;
                 }
 
-                // 解析 DLL 名称；Name RVA 解析失败仅说明这一项名称取不出（如指向 .bss/跨节），
-                // 描述符循环本身按 descriptorCount/DelayLoadDescriptorSize 步进且有 MaxImportDescriptors
-                // 上限，不依赖名称作表尾，故用 continue 跳过本项继续扫描后续合法 DLL（与标准导入表一致），
-                // 避免误当表尾 break 漏掉其后所有延迟加载依赖。名称为空也跳过该描述符。
-                (long nameOffset, string dllName) = ReadStringAtRva(fs, reader, peInfo, delayLoadDesc.DllNameRVA);
-                if (nameOffset == -1)
-                {
-                    continue;
-                }
-
-                if (string.IsNullOrEmpty(dllName))
-                {
-                    continue;
-                }
+                string dllName = ReadStringAtRva(fs, reader, peInfo, delayLoadDesc.DllNameRVA);
 
                 AddDependencyIfMissing(peInfo, dllName);
 

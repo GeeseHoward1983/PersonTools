@@ -237,7 +237,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
             return SetDataDir(new IMAGE_DATA_DIRECTORY[GetDataDirCount(reader, numberOfRvaAndSizes, optionalHeaderEnd)], reader.ReadUInt32(), reader.ReadUInt32());
         }
 
-        private static IMAGE_SECTION_HEADER newIMAGE_SECTION_HEADER(BinaryReader reader)
+        private static IMAGE_SECTION_HEADER NewIMAGE_SECTION_HEADER(BinaryReader reader)
         {
             return new IMAGE_SECTION_HEADER
             {
@@ -258,7 +258,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
         {
             for (int i = 0; i < numberOfSections; i++)
             {
-                sections.Add(newIMAGE_SECTION_HEADER(reader));
+                sections.Add(NewIMAGE_SECTION_HEADER(reader));
             }
         }
         private static List<IMAGE_SECTION_HEADER> SetSectionHeaders(List<IMAGE_SECTION_HEADER> sections, BinaryReader reader, ushort numberOfSections)
@@ -275,7 +275,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// <returns>节头列表</returns>
         internal static List<IMAGE_SECTION_HEADER> ParseSectionHeaders(BinaryReader reader, ushort numberOfSections)
         {
-            return SetSectionHeaders(new List<IMAGE_SECTION_HEADER>(), reader, numberOfSections);
+            return SetSectionHeaders([], reader, numberOfSections);
         }
     }
 }
