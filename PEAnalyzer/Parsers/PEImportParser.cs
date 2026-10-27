@@ -365,40 +365,39 @@ namespace PersonalTools.PEAnalyzer.Parsers
             };
         }
 
-        private static bool CheckPosition(int descriptorCount, long startOffset, long fsLength)
+        private static bool CheckPositionCore(long fsPosition, long fsLength)
         {
-            return descriptorCount < PEConstants.MaxImportDescriptors
-                && startOffset + ((long)descriptorCount + 1) * PEConstants.DelayLoadDescriptorSize <= fsLength;
+            return fsPosition + PEConstants.DelayLoadDescriptorSize <= fsLength;
         }
 
         private static List<ImportFunctionInfo> ParseDelayLoadImportTableCore(FileStream fs, BinaryReader reader, PEInfo peInfo, long startOffset)
         {
-            List<ImportFunctionInfo> delayLoadImportFunctions = [];
+            return ParseDelayLoadImportTableCore2(fs, reader, peInfo, startOffset, []);
+        }
 
+        private static bool CheckPosition(long fsPosition, long fsLength, ref IMAGE_DELAYLOAD_DESCRIPTOR delayLoadDesc, BinaryReader reader)
+        {
+            return !CheckPositionCore(fsPosition, fsLength) && !IsTerminatorDelayLoadDescriptor(ReadDelayLoadDescriptor(reader, delayLoadDesc));
+        }
 
-            // 硬上限防御：与标准导入表的 MaxImportDescriptors 对称。畸形大文件可让每个描述符的 DllNameRVA
-            // 都解析为有效名称，使本循环跑到 fs.Length/32 次并对每个再遍历 thunk 表，膨胀导入项卡死解析线程。
-            for (int descriptorCount = 0; CheckPosition(descriptorCount, startOffset, fs.Length); descriptorCount++)
+        private static List<ImportFunctionInfo> ParseDelayLoadImportTableCore2(FileStream fs, BinaryReader reader, PEInfo peInfo, long startOffset, List<ImportFunctionInfo> delayLoadImportFunctions)
+        {
+            IMAGE_DELAYLOAD_DESCRIPTOR delayLoadDesc = new();
+            for (fs.Position = startOffset; CheckPosition(fs.Position, fs.Length, ref delayLoadDesc, reader);)
             {
-                fs.Position = startOffset + (long)descriptorCount * PEConstants.DelayLoadDescriptorSize;
-                IMAGE_DELAYLOAD_DESCRIPTOR delayLoadDesc = ReadDelayLoadDescriptor(reader);
-
-                if (IsTerminatorDelayLoadDescriptor(delayLoadDesc))
-                {
-                    break;
-                }
-
-                string dllName = ReadStringAtRva(fs, reader, peInfo, delayLoadDesc.DllNameRVA);
-
-                AddDependencyIfMissing(peInfo, dllName);
-
-                // 使用 ImportNameTableRVA 解析延迟加载导入函数
-                delayLoadImportFunctions.AddRange(
-                    ParseDelayLoadFunctions(fs, reader, peInfo, delayLoadDesc.ImportNameTableRVA, dllName));
+                ParseDelayLoadImportTableCore3(ReadStringAtRva(fs, reader, peInfo, delayLoadDesc.DllNameRVA), fs, reader, peInfo, delayLoadDesc, delayLoadImportFunctions);
             }
 
             return delayLoadImportFunctions;
         }
+
+        private static void ParseDelayLoadImportTableCore3(string dllName, FileStream fs, BinaryReader reader, PEInfo peInfo, IMAGE_DELAYLOAD_DESCRIPTOR delayLoadDesc, List<ImportFunctionInfo> delayLoadImportFunctions)
+        {
+            AddDependencyIfMissing(peInfo, dllName);
+            delayLoadImportFunctions.AddRange(
+                ParseDelayLoadFunctions(fs, reader, peInfo, delayLoadDesc.ImportNameTableRVA, dllName));
+        }
+
 
 
         /// <summary>
@@ -423,19 +422,11 @@ namespace PersonalTools.PEAnalyzer.Parsers
             };
         }
 
-        private static IMAGE_DELAYLOAD_DESCRIPTOR ReadDelayLoadDescriptor(BinaryReader reader)
+        private static IMAGE_DELAYLOAD_DESCRIPTOR ReadDelayLoadDescriptor(BinaryReader reader, IMAGE_DELAYLOAD_DESCRIPTOR delayLoadDesc)
         {
-            return new IMAGE_DELAYLOAD_DESCRIPTOR
-            {
-                Attributes = reader.ReadUInt32(),
-                DllNameRVA = reader.ReadUInt32(),
-                ModuleHandleRVA = reader.ReadUInt32(),
-                ImportAddressTableRVA = reader.ReadUInt32(),
-                ImportNameTableRVA = reader.ReadUInt32(),
-                BoundImportAddressTableRVA = reader.ReadUInt32(),
-                UnloadInformationTableRVA = reader.ReadUInt32(),
-                TimeDateStamp = reader.ReadUInt32()
-            };
+            (delayLoadDesc.Attributes, delayLoadDesc.DllNameRVA, delayLoadDesc.ModuleHandleRVA, delayLoadDesc.ImportNameTableRVA, delayLoadDesc.ImportNameTableRVA, delayLoadDesc.BoundImportAddressTableRVA, delayLoadDesc.UnloadInformationTableRVA, delayLoadDesc.TimeDateStamp) = (reader.ReadUInt32(), reader.ReadUInt32(), reader.ReadUInt32(), reader.ReadUInt32(), reader.ReadUInt32(), reader.ReadUInt32(), reader.ReadUInt32(), reader.ReadUInt32());
+            return delayLoadDesc;
+
         }
     }
 }
