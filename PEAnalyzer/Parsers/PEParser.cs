@@ -101,8 +101,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
         {
             foreach (Action<FileStream, BinaryReader, PEInfo> parse in ContentParsers)
             {
-                // 隔离每个内容目录解析：单步对畸形数据抛出的异常（含 ArgumentOutOfRange/EndOfStream 等）
-                // 不应中断后续目录解析（如 CLR 失败不该让图标解析不再执行）
+                long position = fs.Position;
                 try
                 {
                     parse(fs, reader, peInfo);
@@ -111,6 +110,10 @@ namespace PersonalTools.PEAnalyzer.Parsers
                     or ArgumentOutOfRangeException or EndOfStreamException or InvalidDataException or OverflowException)
                 {
                     PersonalTools.Utils.AppLogger.Log($"内容目录解析错误（已跳过该步）: {ex.Message}");
+                }
+                finally
+                {
+                    fs.Position = position;
                 }
             }
         }

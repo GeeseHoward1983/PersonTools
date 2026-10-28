@@ -117,7 +117,6 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
         private static string ReadStringFromHeapCore(FileStream fs, BinaryReader reader, long targetPosition, long heapEnd)
         {
-            long originalPosition = fs.Position;
             fs.Position = targetPosition;
 
             // #Strings 堆为 UTF-8 编码，按 null 结尾读取并限制最大长度；同时不越过堆结束边界
@@ -128,7 +127,6 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 bytes.Add(b);
             }
 
-            fs.Position = originalPosition;
             return Encoding.UTF8.GetString([.. bytes]);
         }
     }

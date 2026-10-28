@@ -54,7 +54,6 @@ namespace PersonalTools.PEAnalyzer.Parsers
         {
             try
             {
-                long originalPosition = fs.Position;
                 fs.Position = clrHeaderOffset;
 
                 // 检查是否有足够的数据读取IMAGE_COR20_HEADER
@@ -70,7 +69,6 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 // 畸形 cb 视为非法，安全降级（不解析 CLR），避免按错误结构继续推进。
                 if (clrHeader.cb < PEConstants.Cor20HeaderMinSize || clrHeader.cb > fs.Length)
                 {
-                    fs.Position = originalPosition;
                     return;
                 }
 
@@ -82,8 +80,6 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 {
                     ParseMetaData(fs, reader, peInfo, clrHeader.MetaData.VirtualAddress);
                 }
-
-                fs.Position = originalPosition;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {

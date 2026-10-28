@@ -50,7 +50,6 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
         private static void ParseMetaData2(FileStream fs, BinaryReader reader, PEInfo peInfo, long metaDataOffset)
         {
-            long originalPosition = fs.Position;
             fs.Position = metaDataOffset;
 
             // 检查是否有足够数据读取元数据头
@@ -58,7 +57,6 @@ namespace PersonalTools.PEAnalyzer.Parsers
             {
                 ParseMetaData3(fs, reader, peInfo, metaDataOffset);
             }
-            fs.Position = originalPosition;
         }
 
         private static void ParseMetaData3(FileStream fs, BinaryReader reader, PEInfo peInfo, long metaDataOffset)
@@ -170,7 +168,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
         {
             try
             {
-                (long originalPosition, fs.Position, uint _, byte _, byte _, byte heapSizes, byte _, ulong maskValid, ulong _, uint[] rowCounts) = (fs.Position, tablesOffset, reader.ReadUInt32(), reader.ReadByte(), reader.ReadByte(), reader.ReadByte(), reader.ReadByte(), reader.ReadUInt64(), reader.ReadUInt64(), new uint[64]);
+                (fs.Position, uint _, byte _, byte _, byte heapSizes, byte _, ulong maskValid, ulong _, uint[] rowCounts) = (tablesOffset, reader.ReadUInt32(), reader.ReadByte(), reader.ReadByte(), reader.ReadByte(), reader.ReadByte(), reader.ReadUInt64(), reader.ReadUInt64(), new uint[64]);
                 for (int i = 0; i < 64; i++)
                 {
                     if (IsTablePresent(maskValid, i))
@@ -202,7 +200,6 @@ namespace PersonalTools.PEAnalyzer.Parsers
                     ParseTypeDefTable(fs, reader, peInfo, fs.Position, fs.Position, stringHeapSize, heapSizes, maskValid, rowCounts, Math.Min(tablesOffset + size, fs.Length));
                 }
 
-                fs.Position = originalPosition;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {

@@ -77,9 +77,7 @@ namespace PersonalTools.PEAnalyzer.Resources
 
         private static void ParseResourceDirectoryForVersionInfoCore2(FileStream fs, BinaryReader reader, PEInfo peInfo, long resourceOffset, bool[] succeeded)
         {
-            long originalPosition = fs.Position;
             ParseResourceDirectoryForVersionInfoCore3(fs, reader, peInfo, resourceOffset, succeeded);
-            fs.Position = originalPosition;
         }
 
         private static void ParseResourceDirectoryForVersionInfoCore3(FileStream fs, BinaryReader reader, PEInfo peInfo, long resourceOffset, bool[] succeeded)
@@ -122,9 +120,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         private static void ParseVersionResource2(FileStream fs, BinaryReader reader, PEInfo peInfo, long directoryOffset, long resourceBaseOffset, bool[] succeeded)
 
         {
-            long originalPosition = fs.Position;
             ParseVersionResourceCore(fs, reader, peInfo, directoryOffset, resourceBaseOffset, succeeded);
-            fs.Position = originalPosition;
         }
 
         private static void ParseVersionResourceCore(FileStream fs, BinaryReader reader, PEInfo peInfo, long directoryOffset, long resourceBaseOffset, bool[] succeeded)
@@ -157,9 +153,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         private static void ParseVersionDataEntry2(FileStream fs, BinaryReader reader, PEInfo peInfo, long dataEntryOffset, bool[] succeeded)
         {
             // 已成功解析出真实版本：跳过后续兄弟叶子，避免其错误占位串覆盖已得的正确版本
-            long originalPosition = fs.Position;
             ParseVersionDataEntry3(fs, reader, peInfo, dataEntryOffset, succeeded);
-            fs.Position = originalPosition;
         }
 
         private static void ParseVersionDataEntry3(FileStream fs, BinaryReader reader, PEInfo peInfo, long dataEntryOffset, bool[] succeeded)

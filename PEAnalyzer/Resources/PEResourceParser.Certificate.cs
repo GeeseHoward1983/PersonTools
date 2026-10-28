@@ -87,10 +87,10 @@ namespace PersonalTools.PEAnalyzer.Resources
         // 解析安全目录中的 WIN_CERTIFICATE 数组（8字节对齐，支持多重签名），返回每个证书的描述
         private static List<string> ReadCertificates(FileStream fs, BinaryReader reader, uint certEnd, long pos)
         {
-            (long originalPosition, List<string> certs) = (fs.Position, []);
+            List<string> certs = [];
 
             //证书条目数硬上限：真实 PE 多重签名至多个位数，畸形安全目录可枚举大量伪证书撑内存
-            while (pos + 8 <= Math.Min(certEnd, fs.Length) && certs.Count < 64)
+            while (pos + 8 <= Math.Min(certEnd, fs.Length))
             {
                 fs.Position = pos;
                 WIN_CERTIFICATE certHeader = CreatCertHeader(reader);
@@ -106,7 +106,6 @@ namespace PersonalTools.PEAnalyzer.Resources
                 pos += (certHeader.dwLength + 7) & ~7L;
             }
 
-            fs.Position = originalPosition;
             return certs;
         }
     }

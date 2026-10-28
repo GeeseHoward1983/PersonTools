@@ -35,53 +35,45 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
                     if (exportOffset != -1 && exportOffset < fs.Length)
                     {
-                        long originalPosition = fs.Position;
-                        try
+                        fs.Position = exportOffset;
+
+                        if (fs.Position + PEConstants.ExportDirectorySize > fs.Length)
                         {
-                            fs.Position = exportOffset;
-
-                            if (fs.Position + PEConstants.ExportDirectorySize > fs.Length)
-                            {
-                                return;
-                            }
-
-                            IMAGE_EXPORT_DIRECTORY exportDir = new()
-                            {
-                                Characteristics = reader.ReadUInt32(),
-                                TimeDateStamp = reader.ReadUInt32(),
-                                MajorVersion = reader.ReadUInt16(),
-                                MinorVersion = reader.ReadUInt16(),
-                                Name = reader.ReadUInt32(),
-                                Base = reader.ReadUInt32(),
-                                NumberOfFunctions = reader.ReadUInt32(),
-                                NumberOfNames = reader.ReadUInt32(),
-                                AddressOfFunctions = reader.ReadUInt32(),
-                                AddressOfNames = reader.ReadUInt32(),
-                                AddressOfNameOrdinals = reader.ReadUInt32()
-                            };
-
-                            List<uint> functionAddresses = ReadUIntListAtRva<uint>(fs, reader, peInfo.SectionHeaders, exportDir.AddressOfFunctions, exportDir.NumberOfFunctions);
-                            List<uint> functionNameRVAs = ReadUIntListAtRva<uint>(fs, reader, peInfo.SectionHeaders, exportDir.AddressOfNames, exportDir.NumberOfNames);
-                            List<ushort> nameOrdinals = ReadUIntListAtRva<ushort>(fs, reader, peInfo.SectionHeaders, exportDir.AddressOfNameOrdinals, exportDir.NumberOfNames);
-                            Dictionary<int, string> functionNames = BuildExportFunctionNameMap(fs, reader, peInfo.SectionHeaders, functionNameRVAs, nameOrdinals);
-
-                            for (int i = 0; i < functionAddresses.Count; i++)
-                            {
-                                // EAT 中 RVA==0 是未分配序号的空槽（序号空洞），并非真实导出；
-                                // 跳过以免在导出列表产生「Ordinal_N, RVA 0x00000000」幻影项
-                                if (functionAddresses[i] == 0)
-                                {
-                                    continue;
-                                }
-
-                                peInfo.ExportFunctions.Add(BuildExportFunction(
-                                    fs, reader, peInfo.SectionHeaders, i, functionAddresses[i],
-                                    exportDir.Base, functionNames, exportRVA, exportSize));
-                            }
+                            return;
                         }
-                        finally
+
+                        IMAGE_EXPORT_DIRECTORY exportDir = new()
                         {
-                            fs.Position = originalPosition;
+                            Characteristics = reader.ReadUInt32(),
+                            TimeDateStamp = reader.ReadUInt32(),
+                            MajorVersion = reader.ReadUInt16(),
+                            MinorVersion = reader.ReadUInt16(),
+                            Name = reader.ReadUInt32(),
+                            Base = reader.ReadUInt32(),
+                            NumberOfFunctions = reader.ReadUInt32(),
+                            NumberOfNames = reader.ReadUInt32(),
+                            AddressOfFunctions = reader.ReadUInt32(),
+                            AddressOfNames = reader.ReadUInt32(),
+                            AddressOfNameOrdinals = reader.ReadUInt32()
+                        };
+
+                        List<uint> functionAddresses = ReadUIntListAtRva<uint>(fs, reader, peInfo.SectionHeaders, exportDir.AddressOfFunctions, exportDir.NumberOfFunctions);
+                        List<uint> functionNameRVAs = ReadUIntListAtRva<uint>(fs, reader, peInfo.SectionHeaders, exportDir.AddressOfNames, exportDir.NumberOfNames);
+                        List<ushort> nameOrdinals = ReadUIntListAtRva<ushort>(fs, reader, peInfo.SectionHeaders, exportDir.AddressOfNameOrdinals, exportDir.NumberOfNames);
+                        Dictionary<int, string> functionNames = BuildExportFunctionNameMap(fs, reader, peInfo.SectionHeaders, functionNameRVAs, nameOrdinals);
+
+                        for (int i = 0; i < functionAddresses.Count; i++)
+                        {
+                            // EAT 中 RVA==0 是未分配序号的空槽（序号空洞），并非真实导出；
+                            // 跳过以免在导出列表产生「Ordinal_N, RVA 0x00000000」幻影项
+                            if (functionAddresses[i] == 0)
+                            {
+                                continue;
+                            }
+
+                            peInfo.ExportFunctions.Add(BuildExportFunction(
+                                fs, reader, peInfo.SectionHeaders, i, functionAddresses[i],
+                                exportDir.Base, functionNames, exportRVA, exportSize));
                         }
                     }
                 }

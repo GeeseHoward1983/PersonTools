@@ -64,16 +64,8 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
         private static void ParseStandardImportTable2(FileStream fs, BinaryReader reader, PEInfo peInfo)
         {
-            long originalPosition = fs.Position;
-            try
-            {
-                fs.Position = PEParserUtils.RvaToOffset(peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryImport].VirtualAddress, peInfo.SectionHeaders);
-                ParseStandardImportTable3(fs, reader, peInfo);
-            }
-            finally
-            {
-                fs.Position = originalPosition;
-            }
+            fs.Position = PEParserUtils.RvaToOffset(peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryImport].VirtualAddress, peInfo.SectionHeaders);
+            ParseStandardImportTable3(fs, reader, peInfo);
         }
 
         private static void ParseStandardImportTable3(FileStream fs, BinaryReader reader, PEInfo peInfo)
@@ -177,11 +169,11 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
         private static void ParseImportFunctionsCore(long thunkOffset, FileStream fs, BinaryReader reader, PEInfo peInfo, string dllName)
         {
-                if (CheckStartOffset(thunkOffset, fs.Length))
-                {
-                    peInfo.ImportFunctions.AddRange(PEParserUtils.ReadAtOffset(fs, thunkOffset, [],
-                        () => WalkThunkTable(fs, reader, peInfo, thunkOffset, PEParserUtils.Is64Bit(peInfo.OptionalHeader), dllName, false)));
-                }
+            if (CheckStartOffset(thunkOffset, fs.Length))
+            {
+                peInfo.ImportFunctions.AddRange(PEParserUtils.ReadAtOffset(fs, thunkOffset, [],
+                    () => WalkThunkTable(fs, reader, peInfo, thunkOffset, PEParserUtils.Is64Bit(peInfo.OptionalHeader), dllName, false)));
+            }
         }
 
 
