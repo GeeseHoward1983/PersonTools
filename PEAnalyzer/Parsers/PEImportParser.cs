@@ -1,6 +1,5 @@
 using PersonalTools.PEAnalyzer.Models;
 using System.IO;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace PersonalTools.PEAnalyzer.Parsers
 {
@@ -79,9 +78,8 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
         private static void ParseStandardImportTable3(FileStream fs, BinaryReader reader, PEInfo peInfo)
         {
-            IMAGE_IMPORT_DESCRIPTOR importDesc;
-            for (int descriptorCount = 0; fs.Position + PEConstants.ImportDescriptorSize <= fs.Length
-                && descriptorCount < PEConstants.MaxImportDescriptors && (!IsTerminatorDescriptor(importDesc = GetImportDesc(reader))); descriptorCount++)
+            for (IMAGE_IMPORT_DESCRIPTOR importDesc; fs.Position + PEConstants.ImportDescriptorSize <= fs.Length &&
+                (!IsTerminatorDescriptor(importDesc = GetImportDesc(reader)));)
             {
                 ParseStandardImportTable3(fs, reader, peInfo, importDesc, ReadStringAtRva(fs, reader, peInfo, importDesc.Name));
             }
