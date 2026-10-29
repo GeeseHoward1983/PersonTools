@@ -62,31 +62,31 @@ namespace PersonalTools.PEAnalyzer.Resources
 
                 fs.Position = stringsPosition;
 
-                // 逐个解析字符串对，直到表尾或遇到长度为 0 的项
-                long tableEndPosition = Math.Min(startPosition + wLength, endPosition);
-                while (fs.Position < tableEndPosition && fs.Position + 6 <= fs.Length)
-                {
-                    long before = fs.Position;
-                    if (!ParseStringPair(fs, reader, peInfo, tableEndPosition))
-                    {
-                        break;
-                    }
-
-                    // 末项时 AdvanceToSibling 不会前进（下一兄弟落在表尾外），若 fs.Position 停在
-                    // 非对齐处会让下一轮从错位读取；统一对齐前进，无实质前进则结束，避免静默错位解析。
-                    long aligned = PEParserUtils.AlignTo4(fs.Position);
-                    fs.Position = aligned <= fs.Length ? aligned : fs.Length;
-                    if (fs.Position <= before)
-                    {
-                        break;
-                    }
-                }
+                PosAlign(fs, reader, peInfo, Math.Min(startPosition + wLength, endPosition));
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
                 // 仅记录日志，保留已成功解析的字符串字段，不把异常细节追加到展示字段
                 Utils.AppLogger.Log($"StringTable解析错误: {ex.Message}");
             }
+        }
+
+        private static bool CheckPos(FileStream fs, BinaryReader reader, PEInfo peInfo, long tableEndPosition)
+        {
+            return fs?.Position < tableEndPosition && fs?.Position + 6 <= fs?.Length && ParseStringPair(fs, reader, peInfo, tableEndPosition);
+        }
+
+        private static void PosAlign(FileStream fs, BinaryReader reader, PEInfo peInfo, long tableEndPosition)
+        {
+            while (CheckPos(fs, reader, peInfo, tableEndPosition))
+            {
+                SetPos(fs, PEParserUtils.AlignTo4(fs.Position));
+            }
+        }
+
+        private static void SetPos(FileStream fs, long aligned)
+        {
+            fs.Position = aligned <= fs.Length ? aligned : fs.Length;
         }
 
         /// <summary>
