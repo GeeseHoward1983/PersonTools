@@ -20,18 +20,8 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// </summary>
         public static bool TryReadNodeHeader(FileStream fs, BinaryReader reader, out ushort length, out ushort valueLength, out ushort type)
         {
-            length = 0;
-            valueLength = 0;
-            type = 0;
-            if (fs.Position + NodeHeaderSize > fs.Length)
-            {
-                return false;
-            }
-
-            length = reader.ReadUInt16();
-            valueLength = reader.ReadUInt16();
-            type = reader.ReadUInt16();
-            return true;
+            (bool ret, length, valueLength, type) = fs.Position + NodeHeaderSize > fs.Length ? (false, (ushort)0, (ushort)0, (ushort)0) : (true, reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
+            return ret;
         }
 
         /// <summary>
@@ -39,8 +29,12 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// </summary>
         public static string ReadKey(FileStream fs, BinaryReader reader, ushort length)
         {
-            int maxBytes = (int)Math.Min(length, (uint)(fs.Length - fs.Position));
-            return PEParserUtils.ReadUnicodeStringWithMaxBytes(reader, maxBytes);
+            return PEParserUtils.ReadUnicodeStringWithMaxBytes(reader, GetMaxBytes(length, fs.Length - fs.Position));
+        }
+
+        private static int GetMaxBytes(ushort length, long remainLength)
+        {
+            return (int)Math.Min(length, remainLength);
         }
 
         /// <summary>
@@ -62,8 +56,11 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// </summary>
         public static void ParseChildBlock(FileStream fs, long startPosition, ushort length, long endPosition, Action<long> parseChild)
         {
-            long childStart = PEParserUtils.AlignTo4(fs.Position);
-            long childEnd = Math.Min(startPosition + length, endPosition);
+            ParseChildBlock2(fs, PEParserUtils.AlignTo4(fs.Position), Math.Min(startPosition + length, endPosition), parseChild);
+        }
+
+        public static void ParseChildBlock2(FileStream fs, long childStart, long childEnd, Action<long> parseChild)
+        {
             if (childStart < fs.Length && childStart < childEnd)
             {
                 fs.Position = childStart;
