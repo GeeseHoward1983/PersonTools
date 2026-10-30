@@ -136,9 +136,14 @@ namespace PersonalTools.PEAnalyzer.Resources
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
             {
-                PersonalTools.Utils.AppLogger.Log($"StringPair解析错误: {ex.Message}");
+                Utils.AppLogger.Log($"StringPair解析错误: {ex.Message}");
                 return false;
             }
+        }
+
+        private static long GetAvailable(long limit, long fsLength, long fsPos)
+        {
+            return Math.Max(0, Math.Min(limit, fsLength) - fsPos);
         }
 
         /// <summary>
@@ -146,10 +151,17 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// </summary>
         private static string ReadUnicodeWithin(FileStream fs, BinaryReader reader, long limit)
         {
-            // 用 long 计算可读字节数后再夹到 int 范围：>2GB 文件直接 (int) 强转会回绕成负值/巨值
-            long available = Math.Max(0, Math.Min(limit, fs.Length) - fs.Position);
-            int maxBytes = (int)Math.Min(available, int.MaxValue);
+            return ReadUnicodeWithin2(fs, reader, GetAvailable(limit, fs.Length, fs.Position));
+        }
+
+        private static string ReadUnicodeWithin2(FileStream fs, BinaryReader reader, long available)
+        {
+            return ReadUnicodeWithin3(reader, (int)Math.Min(available, int.MaxValue));
+        }
+        private static string ReadUnicodeWithin3(BinaryReader reader, int maxBytes)
+        {
             return PEParserUtils.ReadUnicodeStringWithMaxBytes(reader, maxBytes);
         }
+
     }
 }
