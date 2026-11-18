@@ -106,35 +106,36 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
         private static IMAGE_OPTIONAL_HEADER ParseOptionalHeaderCore(BinaryReader reader, ushort sizeOfOptionalHeader, long optionalHeaderStart)
         {
-            return ParseOptionalHeaderCore2(CreateNomarlOptionalHeader(reader), reader, sizeOfOptionalHeader, optionalHeaderStart);
+            IMAGE_OPTIONAL_HEADER optionalHeader = CreateNomarlOptionalHeader(reader);
+            return ParseOptionalHeaderCore2(ref optionalHeader, reader, sizeOfOptionalHeader, optionalHeaderStart);
         }
 
-        private static IMAGE_OPTIONAL_HEADER ParseOptionalHeaderCore2(IMAGE_OPTIONAL_HEADER optionalHeader, BinaryReader reader, ushort sizeOfOptionalHeader, long optionalHeaderStart)
+        private static IMAGE_OPTIONAL_HEADER ParseOptionalHeaderCore2(ref IMAGE_OPTIONAL_HEADER optionalHeader, BinaryReader reader, ushort sizeOfOptionalHeader, long optionalHeaderStart)
         {
-            ParseOptionalHeaderCore3(optionalHeader, reader, sizeOfOptionalHeader, optionalHeaderStart, ValidateOptionalHeaderMagic(optionalHeader.Magic, sizeOfOptionalHeader)); 
+            ParseOptionalHeaderCore3(ref optionalHeader, reader, sizeOfOptionalHeader, optionalHeaderStart, ValidateOptionalHeaderMagic(optionalHeader.Magic, sizeOfOptionalHeader)); 
             return optionalHeader;
         }
 
-        private static void ParseOptionalHeaderCore3(IMAGE_OPTIONAL_HEADER optionalHeader, BinaryReader reader, ushort sizeOfOptionalHeader, long optionalHeaderStart, bool is64Bit)
+        private static void ParseOptionalHeaderCore3(ref IMAGE_OPTIONAL_HEADER optionalHeader, BinaryReader reader, ushort sizeOfOptionalHeader, long optionalHeaderStart, bool is64Bit)
         {
             ReadImageBaseFields(reader, ref optionalHeader, is64Bit);
-            ParseOptionalHeaderCore4(optionalHeader, reader, sizeOfOptionalHeader, optionalHeaderStart, is64Bit);
+            ParseOptionalHeaderCore4(ref optionalHeader, reader, sizeOfOptionalHeader, optionalHeaderStart, is64Bit);
         }
 
-        private static void ParseOptionalHeaderCore4(IMAGE_OPTIONAL_HEADER optionalHeader, BinaryReader reader, ushort sizeOfOptionalHeader, long optionalHeaderStart, bool is64Bit)
+        private static void ParseOptionalHeaderCore4(ref IMAGE_OPTIONAL_HEADER optionalHeader, BinaryReader reader, ushort sizeOfOptionalHeader, long optionalHeaderStart, bool is64Bit)
         {
             CreateNomarlOptionalHeader2(ref optionalHeader, reader);
-            ParseOptionalHeaderCore5(optionalHeader, reader, sizeOfOptionalHeader, optionalHeaderStart, is64Bit);
+            ParseOptionalHeaderCore5(ref optionalHeader, reader, sizeOfOptionalHeader, optionalHeaderStart, is64Bit);
         }
 
-        private static void ParseOptionalHeaderCore5(IMAGE_OPTIONAL_HEADER optionalHeader, BinaryReader reader, ushort sizeOfOptionalHeader, long optionalHeaderStart, bool is64Bit)
+        private static void ParseOptionalHeaderCore5(ref IMAGE_OPTIONAL_HEADER optionalHeader, BinaryReader reader, ushort sizeOfOptionalHeader, long optionalHeaderStart, bool is64Bit)
         {
             ReadStackHeapFields(reader, ref optionalHeader, is64Bit);
 
-            ParseOptionalHeaderCore6(optionalHeader, reader, sizeOfOptionalHeader, optionalHeaderStart);
+            ParseOptionalHeaderCore6(ref optionalHeader, reader, sizeOfOptionalHeader, optionalHeaderStart);
         }
 
-        private static void ParseOptionalHeaderCore6(IMAGE_OPTIONAL_HEADER optionalHeader, BinaryReader reader, ushort sizeOfOptionalHeader, long optionalHeaderStart)
+        private static void ParseOptionalHeaderCore6(ref IMAGE_OPTIONAL_HEADER optionalHeader, BinaryReader reader, ushort sizeOfOptionalHeader, long optionalHeaderStart)
         {
             (optionalHeader.LoaderFlags, optionalHeader.NumberOfRvaAndSizes, optionalHeader.DataDirectory) = (reader.ReadUInt32(), reader.ReadUInt32(), ReadDataDirectories(reader, reader.ReadUInt32(), optionalHeaderStart + sizeOfOptionalHeader));
         }
@@ -213,10 +214,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 dataDirectory[i] = SetDataDir(virtualAddress, size);
             }
         }
-        private static IMAGE_DATA_DIRECTORY[] SetDataDir(IMAGE_DATA_DIRECTORY[] dataDirectory, uint virtualAddress, uint size)
+        private static void SetDataDir(IMAGE_DATA_DIRECTORY[] dataDirectory, uint virtualAddress, uint size)
         {
             SetDataDirCore(dataDirectory, virtualAddress, size);
-            return dataDirectory;
         }
 
         private static IMAGE_DATA_DIRECTORY SetDataDir(uint virtualAddress, uint size)
@@ -233,8 +233,10 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// 读取数据目录数组（每项 8 字节，最多 16 项；项布局与位数无关）。
         /// </summary>
         private static IMAGE_DATA_DIRECTORY[] ReadDataDirectories(BinaryReader reader, uint numberOfRvaAndSizes, long optionalHeaderEnd)
-        {          
-            return SetDataDir(new IMAGE_DATA_DIRECTORY[GetDataDirCount(reader, numberOfRvaAndSizes, optionalHeaderEnd)], reader.ReadUInt32(), reader.ReadUInt32());
+        {
+            IMAGE_DATA_DIRECTORY[] dataDirectory = new IMAGE_DATA_DIRECTORY[GetDataDirCount(reader, numberOfRvaAndSizes, optionalHeaderEnd)];
+            SetDataDir(dataDirectory, reader.ReadUInt32(), reader.ReadUInt32());
+            return dataDirectory;
         }
 
         private static IMAGE_SECTION_HEADER NewIMAGE_SECTION_HEADER(BinaryReader reader)
