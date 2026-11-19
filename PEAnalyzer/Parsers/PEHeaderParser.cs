@@ -144,15 +144,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
         {
             return sizeOfOptionalHeader > PEConstants.Pe32OptionalHeaderBaseSize;
         }
-        private static bool ValidateOptionalHeaderMagicPe32Magic(ushort sizeOfOptionalHeader)
-        {
 
-            return CheckSizeOfOptionalHeader(sizeOfOptionalHeader) switch
-            {
-                true => false,
-                _ => throw new InvalidDataException("文件不是有效的PE文件: PE32 可选头过短。"),
-            };
-        }
         private static bool ValidateOptionalHeaderMagicPe32PlusMagic(ushort sizeOfOptionalHeader)
         {
 

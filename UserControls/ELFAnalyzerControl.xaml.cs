@@ -98,17 +98,12 @@ namespace PersonalTools.UserControls
         private void ApplyDisplayData(ElfDisplayData data)
         {
             ELFHeaderInfoControl.SetELFHeaderInfo(data.HeaderInfo);
-            if (!string.IsNullOrEmpty(data.Interpreter))
-            {
-                ELFHeaderInfoControl.SetInterpreterInfo(data.Interpreter);
-            }
+            ELFHeaderInfoControl.SetInterpreterInfo(data.Interpreter);
             ELFProgramHeaderControl.SetProgramHeadersData(data.ProgramHeaders);
             ELFSectionHeaderControl.SetSectionHeadersData(data.SectionHeaders);
             ELFSectionToSegmentMappingControl.SetSectionToSegmentInfo(data.SectionToSegment);
-
             ELFSymbolTableControl.SetSymbolTableData(data.SymbolTable);
             ELFSymbolTableTabItem.Visibility = data.SymbolTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-
             ELFDynsymControl.SetDynsymData(data.DynsymTable);
             ELFDynsymTabItem.Visibility = data.DynsymTable.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
