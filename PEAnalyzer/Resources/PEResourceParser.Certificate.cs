@@ -80,26 +80,40 @@ namespace PersonalTools.PEAnalyzer.Resources
         // 解析安全目录中的 WIN_CERTIFICATE 数组（8字节对齐，支持多重签名），返回每个证书的描述
         private static List<string> ReadCertificates(FileStream fs, BinaryReader reader, long certEnd, long pos)
         {
-            List<string> certs = [];
+            List<string> certs = [];        
 
+            return ReadCertificates2(certs, fs, reader, certEnd, pos);
+        }
+
+        private static List<string> ReadCertificates2(List<string> certs, FileStream fs, BinaryReader reader, long certEnd, long pos)
+        {
             //证书条目数硬上限：真实 PE 多重签名至多个位数，畸形安全目录可枚举大量伪证书撑内存
-            while (pos + 8 <= Math.Min(certEnd, fs.Length))
+            while (pos + 8 <= Math.Min(certEnd, fs.Length) && ReadCertificates3(certs, fs, reader, certEnd, ref pos))
             {
-                fs.Position = pos;
-                WIN_CERTIFICATE certHeader = CreatCertHeader(reader);
-
-                if (certHeader.dwLength < 8 || certHeader.dwLength > certEnd - pos)
-                {
-                    break;
-                }
-
-                certs.Add($"类型: {GetCertificateTypeDescription(certHeader.wCertificateType)}, 长度: {certHeader.dwLength} 字节, 修订版: 0x{certHeader.wRevision:X4}");
-
-                // 下一个证书按 8 字节对齐；在 long 上做对齐运算，避免 dwLength 逼近 uint.MaxValue 时 +7 回绕导致 pos 不前进
-                pos += (certHeader.dwLength + 7) & ~7L;
             }
 
             return certs;
         }
+
+        private static bool ReadCertificates3(List<string> certs, FileStream fs, BinaryReader reader, long certEnd, ref long pos)
+        {
+            fs.Position = pos;
+            return ReadCertificates4(certs, CreatCertHeader(reader), certEnd, ref pos);
+        }
+
+        private static bool ReadCertificates4(List<string> certs, WIN_CERTIFICATE certHeader, long certEnd, ref long pos)
+        {
+            if (certHeader.dwLength < 8 || certHeader.dwLength > certEnd - pos)
+            {
+                return false;
+            }
+
+            certs.Add($"类型: {GetCertificateTypeDescription(certHeader.wCertificateType)}, 长度: {certHeader.dwLength} 字节, 修订版: 0x{certHeader.wRevision:X4}");
+
+            // 下一个证书按 8 字节对齐；在 long 上做对齐运算，避免 dwLength 逼近 uint.MaxValue 时 +7 回绕导致 pos 不前进
+            pos += (certHeader.dwLength + 7) & ~7L;
+            return true;
+        }
+
     }
 }
