@@ -1,5 +1,4 @@
 using PersonalTools.PEAnalyzer.Models;
-using System.Data;
 using System.IO;
 
 namespace PersonalTools.PEAnalyzer.Parsers
@@ -112,7 +111,9 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
         private static IMAGE_OPTIONAL_HEADER ParseOptionalHeaderCore2(ref IMAGE_OPTIONAL_HEADER optionalHeader, BinaryReader reader, ushort sizeOfOptionalHeader, long optionalHeaderStart)
         {
-            ParseOptionalHeaderCore3(ref optionalHeader, reader, sizeOfOptionalHeader, optionalHeaderStart, ValidateOptionalHeaderMagic(optionalHeader.Magic, sizeOfOptionalHeader)); 
+            ParseOptionalHeaderCore3(ref optionalHeader, reader, sizeOfOptionalHeader, optionalHeaderStart, ValidateOptionalHeaderMagic(optionalHeader.Magic, sizeOfOptionalHeader));
+            // 数据目录可能少于 16 项，或可选头尾部带有填充；节表始终从声明的可选头结尾开始。
+            reader.BaseStream.Position = optionalHeaderStart + sizeOfOptionalHeader;
             return optionalHeader;
         }
 
@@ -137,23 +138,12 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
         private static void ParseOptionalHeaderCore6(ref IMAGE_OPTIONAL_HEADER optionalHeader, BinaryReader reader, ushort sizeOfOptionalHeader, long optionalHeaderStart)
         {
-            (optionalHeader.LoaderFlags, optionalHeader.NumberOfRvaAndSizes, optionalHeader.DataDirectory) = (reader.ReadUInt32(), reader.ReadUInt32(), ReadDataDirectories(reader, reader.ReadUInt32(), optionalHeaderStart + sizeOfOptionalHeader));
+            optionalHeader.LoaderFlags = reader.ReadUInt32();
+            optionalHeader.NumberOfRvaAndSizes = reader.ReadUInt32();
+            // NumberOfRvaAndSizes 已读取，不可再次 ReadUInt32，否则会吞掉首个目录的 RVA。
+            optionalHeader.DataDirectory = ReadDataDirectories(reader, optionalHeader.NumberOfRvaAndSizes, optionalHeaderStart + sizeOfOptionalHeader);
         }
 
-        private static bool CheckSizeOfOptionalHeader(ushort sizeOfOptionalHeader)
-        {
-            return sizeOfOptionalHeader > PEConstants.Pe32OptionalHeaderBaseSize;
-        }
-
-        private static bool ValidateOptionalHeaderMagicPe32PlusMagic(ushort sizeOfOptionalHeader)
-        {
-
-            return CheckSizeOfOptionalHeader(sizeOfOptionalHeader) switch
-            {
-                true => true,
-                _ => throw new InvalidDataException("文件不是有效的PE文件: PE32 可选头过短。"),
-            };
-        }
         /// <summary>
         /// 校验可选头魔数与最小长度，返回是否为 64 位（PE32+）。
         /// </summary>
@@ -161,8 +151,10 @@ namespace PersonalTools.PEAnalyzer.Parsers
         {
             return magic switch
             {
-                PEConstants.Pe32Magic => ValidateOptionalHeaderMagicPe32PlusMagic(sizeOfOptionalHeader),
-                PEConstants.Pe32PlusMagic => ValidateOptionalHeaderMagicPe32PlusMagic(sizeOfOptionalHeader),
+                PEConstants.Pe32Magic when sizeOfOptionalHeader >= PEConstants.Pe32OptionalHeaderBaseSize => false,
+                PEConstants.Pe32Magic => throw new InvalidDataException("文件不是有效的PE文件: PE32 可选头过短。"),
+                PEConstants.Pe32PlusMagic when sizeOfOptionalHeader >= PEConstants.Pe32PlusOptionalHeaderBaseSize => true,
+                PEConstants.Pe32PlusMagic => throw new InvalidDataException("文件不是有效的PE文件: PE32+ 可选头过短。"),
                 _ => throw new InvalidDataException($"文件不是有效的PE文件: Unsupported optional header magic 0x{magic:X4}.")
             };
         }
@@ -172,7 +164,16 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// </summary>
         private static void ReadImageBaseFields(BinaryReader reader, ref IMAGE_OPTIONAL_HEADER optionalHeader, bool is64Bit)
         {
-            (optionalHeader.BaseOfData, optionalHeader.ImageBase) = (is64Bit ? 0 : optionalHeader.BaseOfData, reader.ReadUInt64());
+            if (is64Bit)
+            {
+                optionalHeader.BaseOfData = 0; // PE32+ 没有 BaseOfData 字段
+                optionalHeader.ImageBase = reader.ReadUInt64();
+            }
+            else
+            {
+                optionalHeader.BaseOfData = reader.ReadUInt32();
+                optionalHeader.ImageBase = reader.ReadUInt32();
+            }
         }
 
         /// <summary>
@@ -197,37 +198,22 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
         private static int GetDataDirCount3(int dataDirCount, long available)
         {
-            return available < dataDirCount ? (int)Math.Min(dataDirCount, available) : dataDirCount;
+            return available < dataDirCount ? (int)Math.Max(0, available) : dataDirCount;
         }
-        private static void SetDataDirCore(IMAGE_DATA_DIRECTORY[] dataDirectory, uint virtualAddress, uint size)
-        {
-            for (int i = 0; i < dataDirectory.Length; i++)
-            {
-                dataDirectory[i] = SetDataDir(virtualAddress, size);
-            }
-        }
-        private static void SetDataDir(IMAGE_DATA_DIRECTORY[] dataDirectory, uint virtualAddress, uint size)
-        {
-            SetDataDirCore(dataDirectory, virtualAddress, size);
-        }
-
-        private static IMAGE_DATA_DIRECTORY SetDataDir(uint virtualAddress, uint size)
-        {
-            return new IMAGE_DATA_DIRECTORY
-            {
-                VirtualAddress = virtualAddress,
-                Size = size
-            };
-        }
-
-
         /// <summary>
         /// 读取数据目录数组（每项 8 字节，最多 16 项；项布局与位数无关）。
         /// </summary>
         private static IMAGE_DATA_DIRECTORY[] ReadDataDirectories(BinaryReader reader, uint numberOfRvaAndSizes, long optionalHeaderEnd)
         {
             IMAGE_DATA_DIRECTORY[] dataDirectory = new IMAGE_DATA_DIRECTORY[GetDataDirCount(reader, numberOfRvaAndSizes, optionalHeaderEnd)];
-            SetDataDir(dataDirectory, reader.ReadUInt32(), reader.ReadUInt32());
+            for (int i = 0; i < dataDirectory.Length; i++)
+            {
+                dataDirectory[i] = new IMAGE_DATA_DIRECTORY
+                {
+                    VirtualAddress = reader.ReadUInt32(),
+                    Size = reader.ReadUInt32()
+                };
+            }
             return dataDirectory;
         }
 

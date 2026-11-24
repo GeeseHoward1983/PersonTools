@@ -1,4 +1,3 @@
-using PersonalTools.ELFAnalyzer.Core;
 using PersonalTools.PEAnalyzer.Models;
 using PersonalTools.PEAnalyzer.Parsers;
 using System.IO;
@@ -17,15 +16,6 @@ namespace PersonalTools.PEAnalyzer.Resources
                    peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryResource].VirtualAddress != 0;
         }
 
-        private static bool ParseVersionInfo2(FileStream fs, BinaryReader reader, PEInfo peInfo)
-        {
-            return PEParserUtils.RvaToOffset(peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryResource].VirtualAddress, peInfo.SectionHeaders) switch
-            {
-                -1 => false,
-                _ when PEParserUtils.RvaToOffset(peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryResource].VirtualAddress, peInfo.SectionHeaders) < fs.Length => false,
-                _ => ParseResourceDirectoryForVersionInfo(fs, reader, peInfo, PEParserUtils.RvaToOffset(peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryResource].VirtualAddress, peInfo.SectionHeaders))
-            };
-        }
         /// <summary>
         /// 解析版本信息
         /// </summary>
@@ -39,15 +29,25 @@ namespace PersonalTools.PEAnalyzer.Resources
             using ResourceDirectoryReader.ScanScope scope = ResourceDirectoryReader.BeginScan();
 
             // 版本信息通常在资源节中，数据目录索引为#2 (IMAGE_DIRECTORY_ENTRY_RESOURCE)
-            peInfo.AdditionalInfo.FileVersion = CheckDataDirectory(peInfo) switch
+            if (!CheckDataDirectory(peInfo))
             {
-                true => ParseVersionInfo2(fs, reader, peInfo) switch
-                {
-                    true => peInfo.AdditionalInfo.FileVersion,
-                    _ => $"无效的资源偏移: 0x{peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryResource].VirtualAddress:X8}"
-                },
-                _ => "文件不包含版本资源"
-            };
+                peInfo.AdditionalInfo.FileVersion = "文件不包含版本资源";
+                return;
+            }
+
+            uint resourceRva = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryResource].VirtualAddress;
+            long resourceOffset = PEParserUtils.RvaToOffset(resourceRva, peInfo.SectionHeaders, ResourceDirectoryReader.DirectoryHeaderSize, fs.Length);
+            if (!ParseResourceDirectoryForVersionInfoCheck(fs.Length, resourceOffset))
+            {
+                peInfo.AdditionalInfo.FileVersion = $"无效的资源偏移: 0x{resourceRva:X8}";
+                return;
+            }
+
+            if (!ParseResourceDirectoryForVersionInfo(fs, reader, peInfo, resourceOffset)
+                && string.IsNullOrEmpty(peInfo.AdditionalInfo.FileVersion))
+            {
+                peInfo.AdditionalInfo.FileVersion = "未找到有效的版本资源";
+            }
         }
 
         /// <summary>
@@ -64,15 +64,16 @@ namespace PersonalTools.PEAnalyzer.Resources
 
             if (ParseResourceDirectoryForVersionInfoCheck(fs.Length, resourceOffset))
             {
-                ParseResourceDirectoryForVersionInfoCore(fs, reader, peInfo, resourceOffset);
+                return ParseResourceDirectoryForVersionInfoCore(fs, reader, peInfo, resourceOffset);
             }
-            return true;
+            return false;
         }
 
-        private static void ParseResourceDirectoryForVersionInfoCore(FileStream fs, BinaryReader reader, PEInfo peInfo, long resourceOffset)
+        private static bool ParseResourceDirectoryForVersionInfoCore(FileStream fs, BinaryReader reader, PEInfo peInfo, long resourceOffset)
         {
             bool[] succeeded = [false];
             ParseResourceDirectoryForVersionInfoCore2(fs, reader, peInfo, resourceOffset, succeeded);
+            return succeeded[0];
         }
 
         private static void ParseResourceDirectoryForVersionInfoCore2(FileStream fs, BinaryReader reader, PEInfo peInfo, long resourceOffset, bool[] succeeded)
@@ -142,7 +143,12 @@ namespace PersonalTools.PEAnalyzer.Resources
         private static void ParseVersionDataEntry(FileStream fs, BinaryReader reader, PEInfo peInfo, long dataEntryOffset, bool[] succeeded)
         {
             // 已成功解析出真实版本：跳过后续兄弟叶子，避免其错误占位串覆盖已得的正确版本
-            if (ParseVersionDataEntryCheck(fs.Length, dataEntryOffset, succeeded))
+            if (succeeded[0])
+            {
+                return;
+            }
+
+            if (ParseVersionDataEntryCheck(fs.Length, dataEntryOffset))
             {
                 ParseVersionDataEntry2(fs, reader, peInfo, dataEntryOffset, succeeded);
             }
@@ -162,9 +168,9 @@ namespace PersonalTools.PEAnalyzer.Resources
             ParseVersionDataEntryCore(fs, reader, peInfo, succeeded);
         }
 
-        private static bool ParseVersionDataEntryCheck(long fsLength, long dataEntryOffset, bool[] succeeded)
+        private static bool ParseVersionDataEntryCheck(long fsLength, long dataEntryOffset)
         {
-            return succeeded[0] || (dataEntryOffset >= 0 && dataEntryOffset + 16 <= fsLength);
+            return dataEntryOffset >= 0 && dataEntryOffset + 16 <= fsLength;
         }
 
         private static void ParseVersionDataEntryCore(FileStream fs, BinaryReader reader, PEInfo peInfo, bool[] succeeded)
@@ -183,7 +189,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             if (ResourceDirectoryReader.IsReadableData(dataOffset, dataEntry.Size, fs))
             {
-                ParseVersionDataEntryCore4(dataOffset, fs, reader, peInfo, succeeded);
+                ParseVersionDataEntryCore4(dataOffset, dataEntry.Size, fs, reader, peInfo, succeeded);
             }
             else
             {
@@ -191,10 +197,10 @@ namespace PersonalTools.PEAnalyzer.Resources
             }
         }
 
-        private static void ParseVersionDataEntryCore4(long dataOffset, FileStream fs, BinaryReader reader, PEInfo peInfo, bool[] succeeded)
+        private static void ParseVersionDataEntryCore4(long dataOffset, uint dataSize, FileStream fs, BinaryReader reader, PEInfo peInfo, bool[] succeeded)
         {
             fs.Position = dataOffset;
-            succeeded[0] = PEResourceParserVersionHelpers.ParseVersionInfoStructure(fs, reader, peInfo);
+            succeeded[0] = PEResourceParserVersionHelpers.ParseVersionInfoStructure(fs, reader, peInfo, dataOffset + dataSize);
         }
     }
 }

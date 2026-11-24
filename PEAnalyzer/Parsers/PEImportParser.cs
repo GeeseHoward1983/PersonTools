@@ -23,23 +23,6 @@ namespace PersonalTools.PEAnalyzer.Parsers
         }
 
 
-        private static bool ParseStandardImportTableCheck(long fslength, int DataDirectoryLength, uint VirtualAddress, long importOffset)
-        {
-            return (DataDirectoryLength <= PEConstants.DirectoryImport) switch
-            {
-                true => false,
-                _ => VirtualAddress switch
-                {
-                    0 => false,
-                    _ => importOffset switch
-                    {
-                        -1 => false,
-                        _ => importOffset < fslength
-                    }
-                }
-            };
-        }
-
         private static IMAGE_IMPORT_DESCRIPTOR GetImportDesc(BinaryReader reader)
         {
             return new()
@@ -56,15 +39,25 @@ namespace PersonalTools.PEAnalyzer.Parsers
         /// </summary>
         private static void ParseStandardImportTable(FileStream fs, BinaryReader reader, PEInfo peInfo)
         {
-            if (ParseStandardImportTableCheck(fs.Length, peInfo.OptionalHeader.DataDirectory.Length, peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryImport].VirtualAddress, PEParserUtils.RvaToOffset(peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryImport].VirtualAddress, peInfo.SectionHeaders)))
+            // 必须先检查数组长度，再访问导入目录；方法实参会提前求值，无法用辅助方法保护索引。
+            if (peInfo.OptionalHeader.DataDirectory.Length <= PEConstants.DirectoryImport)
             {
-                ParseStandardImportTable2(fs, reader, peInfo);
+                return;
             }
-        }
 
-        private static void ParseStandardImportTable2(FileStream fs, BinaryReader reader, PEInfo peInfo)
-        {
-            fs.Position = PEParserUtils.RvaToOffset(peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryImport].VirtualAddress, peInfo.SectionHeaders);
+            uint importRva = peInfo.OptionalHeader.DataDirectory[PEConstants.DirectoryImport].VirtualAddress;
+            if (importRva == 0)
+            {
+                return;
+            }
+
+            long importOffset = PEParserUtils.RvaToOffset(importRva, peInfo.SectionHeaders, PEConstants.ImportDescriptorSize);
+            if (importOffset == -1 || importOffset >= fs.Length)
+            {
+                return;
+            }
+
+            fs.Position = importOffset;
             ParseStandardImportTable3(fs, reader, peInfo);
         }
 
@@ -325,11 +318,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
 
         private static bool CheckStartOffset(long startOffset, long fsLength)
         {
-            return startOffset switch
-            {
-                -1 => false,
-                _ => startOffset >= fsLength
-            };
+            return startOffset >= 0 && startOffset < fsLength;
         }
         /// <summary>
         /// 解析延迟加载导入表（IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT）。

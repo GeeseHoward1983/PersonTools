@@ -1,11 +1,6 @@
-using DocumentFormat.OpenXml.Drawing.Charts;
-using DocumentFormat.OpenXml.ExtendedProperties;
 using PersonalTools.PEAnalyzer.Models;
-using PersonalTools.PEAnalyzer.Resources;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Windows;
 
 namespace PersonalTools.PEAnalyzer.Parsers
 {
@@ -97,35 +92,21 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 RVA = functionRVA
             };
 
-            exportFunc.Name = functionRVA switch
+            // 名称来自导出名称表，而非函数 RVA 指向的代码字节。
+            exportFunc.Name = functionNames.TryGetValue(i, out string? name)
+                ? name
+                : $"Ordinal_{exportFunc.Ordinal}";
+
+            // 仅位于导出目录范围内的 EAT 项才是转发字符串；普通函数 RVA 必须保留上述名称。
+            // 使用 long 计算目录结尾，避免 RVA + Size 在 uint 上溢出。
+            if (functionRVA >= exportRVA && (long)functionRVA < (long)exportRVA + exportSize)
             {
-                >0 or < 0 => (functionRVA >= exportRVA) switch
+                string forwarder = ReadForwarderString(fs, reader, sections, functionRVA);
+                if (!string.IsNullOrEmpty(forwarder))
                 {
-                   true => (functionRVA < exportRVA + exportSize) switch
-                   {
-                       true => string.IsNullOrEmpty(ReadForwarderString(fs, reader, sections, functionRVA)) switch
-                       {
-                           true => $"{exportFunc.Name} (forwarded -> {ReadForwarderString(fs, reader, sections, functionRVA)})",
-                           _ => functionNames.TryGetValue(i, out string? value) switch
-                           {
-                               true => value,
-                               _ => $"Ordinal_{exportFunc.Ordinal}",
-                           },
-                       },
-                       _ => functionNames.TryGetValue(i, out string? value) switch
-                       {
-                           true => value,
-                           _ => $"Ordinal_{exportFunc.Ordinal}",
-                       }
-                   },
-                    _ => ReadForwarderString(fs, reader, sections, functionRVA)
-                },
-                _ => functionNames.TryGetValue(i, out string? value) switch
-                {
-                    true => value,
-                    _ => $"Ordinal_{exportFunc.Ordinal}",
+                    exportFunc.Name += $" (forwarded -> {forwarder})";
                 }
-            };
+            }
 
             return exportFunc;
         }
@@ -160,7 +141,7 @@ namespace PersonalTools.PEAnalyzer.Parsers
                 _ => count switch
                 {
                     0 => [],
-                    _ => PEParserUtils.ReadAtOffset(fs, PEParserUtils.RvaToOffset(rva, sections, Math.Min(count, PEConstants.MaxExportEntries) * (uint)Marshal.SizeOf<T>()), [], () =>
+                    _ => PEParserUtils.ReadAtOffset(fs, PEParserUtils.RvaToOffset(rva, sections, Math.Min(count, PEConstants.MaxExportEntries) * (uint)Marshal.SizeOf<T>(), fs.Length), [], () =>
                     {
                         return ReadFunc<T>(reader, (int)Math.Min(count, PEConstants.MaxExportEntries));
                     })

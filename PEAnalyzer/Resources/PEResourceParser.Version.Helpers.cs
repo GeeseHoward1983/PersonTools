@@ -16,9 +16,9 @@ namespace PersonalTools.PEAnalyzer.Resources
         /// <param name="fs">文件流</param>
         /// <param name="reader">二进制读取器</param>
         /// <param name="peInfo">PE文件信息</param>
-        /// <param name="size">数据大小</param>
+        /// <param name="resourceEnd">当前资源数据的结束位置</param>
         /// <returns>true 表示成功解析出真实的 VS_FIXEDFILEINFO 版本（调用方据此阻止后续畸形兄弟叶子覆盖）。</returns>
-        internal static bool ParseVersionInfoStructure(FileStream fs, BinaryReader reader, PEInfo peInfo)
+        internal static bool ParseVersionInfoStructure(FileStream fs, BinaryReader reader, PEInfo peInfo, long resourceEnd)
         {
             try
             {
@@ -30,7 +30,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     return false;
                 }
 
-                if (wLength < 6 || startPosition + wLength > fs.Length)
+                if (wLength < 6 || startPosition + wLength > Math.Min(resourceEnd, fs.Length))
                 {
                     return false;
                 }
@@ -54,7 +54,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                     return peInfo.AdditionalInfo.FileVersionResolved;
                 }
 
-                if (wValueLength < 52 || alignedPosition + 52 > fs.Length)
+                if (wValueLength < 52 || alignedPosition + wValueLength > startPosition + wLength)
                 {
                     peInfo.AdditionalInfo.FileVersion = $"版本信息数据不完整: wValueLength={wValueLength}, 需要>=52";
                     return false;
@@ -65,7 +65,7 @@ namespace PersonalTools.PEAnalyzer.Resources
                 bool applied = ApplyFixedFileVersions(peInfo, fixedFileInfo);
 
                 // 子项（StringFileInfo / VarFileInfo）紧跟在 VS_FIXEDFILEINFO 之后
-                ParseChildrenIfPresent(fs, reader, peInfo, PEParserUtils.AlignTo4(alignedPosition + 52), startPosition + wLength);
+                ParseChildrenIfPresent(fs, reader, peInfo, PEParserUtils.AlignTo4(alignedPosition + wValueLength), startPosition + wLength);
                 // 即使 FIXEDFILEINFO 签名无效(applied=false)，只要子项已从 StringTable 取得有效版本，
                 // 也应置位覆盖保护，短路后续畸形兄弟叶子（与 wValueLength==0 分支返回 FileVersionResolved 一致）
                 return applied || peInfo.AdditionalInfo.FileVersionResolved;

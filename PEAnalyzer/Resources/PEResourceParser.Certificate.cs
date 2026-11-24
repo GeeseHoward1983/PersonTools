@@ -9,23 +9,16 @@ namespace PersonalTools.PEAnalyzer.Resources
     /// </summary>
     internal static class PEResourceParserCertificate
     {
-        private static bool CheckDataDirectory(PEInfo peInfo)
+        private static bool CheckDataDirectory(IMAGE_DATA_DIRECTORY[] dataDirectory)
         {
-            return peInfo.OptionalHeader.DataDirectory.Length > PEConstants.DirectorySecurity &&
-                   peInfo.OptionalHeader.DataDirectory[PEConstants.DirectorySecurity].VirtualAddress != 0;
+            return dataDirectory.Length > PEConstants.DirectorySecurity &&
+                   dataDirectory[PEConstants.DirectorySecurity].VirtualAddress != 0;
         }
 
-        private static bool CheckDataOffset(FileStream fs, PEInfo peInfo)
+        private static bool CheckDataOffset(FileStream fs, IMAGE_DATA_DIRECTORY directory)
         {
-            return peInfo.OptionalHeader.DataDirectory[PEConstants.DirectorySecurity].VirtualAddress switch
-            {
-                0 => peInfo.OptionalHeader.DataDirectory[PEConstants.DirectorySecurity].VirtualAddress < fs.Length && (long)peInfo.OptionalHeader.DataDirectory[PEConstants.DirectorySecurity].VirtualAddress + peInfo.OptionalHeader.DataDirectory[PEConstants.DirectorySecurity].Size <= fs.Length,
-                _ => peInfo.OptionalHeader.DataDirectory[PEConstants.DirectorySecurity].Size switch
-                {
-                    0 => false,
-                    _ => peInfo.OptionalHeader.DataDirectory[PEConstants.DirectorySecurity].VirtualAddress < fs.Length && (long)peInfo.OptionalHeader.DataDirectory[PEConstants.DirectorySecurity].VirtualAddress + peInfo.OptionalHeader.DataDirectory[PEConstants.DirectorySecurity].Size <= fs.Length
-                }
-            };
+            return directory.VirtualAddress > 0 && directory.Size >= 8
+                && (long)directory.VirtualAddress + directory.Size <= fs.Length;
         }
 
         /// <summary>
@@ -37,18 +30,18 @@ namespace PersonalTools.PEAnalyzer.Resources
         internal static void ParseCertificateInfo(FileStream fs, BinaryReader reader, PEInfo peInfo)
         {
 
-                (peInfo.AdditionalInfo.IsSigned, peInfo.AdditionalInfo.CertificateInfo) = CheckDataDirectory(peInfo) switch
+                (peInfo.AdditionalInfo.IsSigned, peInfo.AdditionalInfo.CertificateInfo) = CheckDataDirectory(peInfo.OptionalHeader.DataDirectory) switch
                 {
                     true => ParseCertificateInfo2(fs, reader, peInfo),
-                    false => (false, "证书信息不完整")
+                    false => (false, "未包含数字签名")
                 };
         }
 
         private static (bool, string) ParseCertificateInfo2(FileStream fs, BinaryReader reader, PEInfo peInfo)
         {
-            return CheckDataOffset(fs, peInfo) switch
+            return CheckDataOffset(fs, peInfo.OptionalHeader.DataDirectory[PEConstants.DirectorySecurity]) switch
             {
-                true => ParseCertificateCore(ReadCertificates(fs, reader, peInfo.OptionalHeader.DataDirectory[PEConstants.DirectorySecurity].VirtualAddress + peInfo.OptionalHeader.DataDirectory[PEConstants.DirectorySecurity].Size, peInfo.OptionalHeader.DataDirectory[PEConstants.DirectorySecurity].Size), peInfo),
+                true => ParseCertificateCore(ReadCertificates(fs, reader, (long)peInfo.OptionalHeader.DataDirectory[PEConstants.DirectorySecurity].VirtualAddress + peInfo.OptionalHeader.DataDirectory[PEConstants.DirectorySecurity].Size, peInfo.OptionalHeader.DataDirectory[PEConstants.DirectorySecurity].VirtualAddress), peInfo),
                 false => (false, "证书信息不完整")
             };
         }
@@ -57,7 +50,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         {
             return certs.Count switch
             {
-                0 => (false, ""),
+                0 => (false, "证书信息不完整"),
                 1 => (true, certs[0]),
                 _ => (true, $"{certs.Count} 个证书 -> {string.Join("; ", certs)}")
             }; 
@@ -85,7 +78,7 @@ namespace PersonalTools.PEAnalyzer.Resources
         }
 
         // 解析安全目录中的 WIN_CERTIFICATE 数组（8字节对齐，支持多重签名），返回每个证书的描述
-        private static List<string> ReadCertificates(FileStream fs, BinaryReader reader, uint certEnd, long pos)
+        private static List<string> ReadCertificates(FileStream fs, BinaryReader reader, long certEnd, long pos)
         {
             List<string> certs = [];
 

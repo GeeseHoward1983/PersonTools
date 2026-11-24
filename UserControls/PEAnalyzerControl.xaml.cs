@@ -71,15 +71,12 @@ namespace PersonalTools.UserControls
                     MessageHelper.ShowWarning($"无法将文件解析为有效的 PE 文件：{filePath}");
                     return;
                 }
+                // 文件自身的解析结果先显示，避免依赖路径解析延迟或失败时其余面板仍为空白。
                 DisplayHeaderInfo();
-                await DisplayDependenciesAsync(token).ConfigureAwait(true);
-                if (token != loadToken)
-                {
-                    return; // 依赖解析（含 await）期间被新加载取代，停止后续步骤
-                }
                 DisplayImportExportFunctions();
                 DisplayAdditionalInfo();
                 DisplayIcons();
+                await DisplayDependenciesAsync(token).ConfigureAwait(true);
             }
             catch (Exception ex) when (ex is FileNotFoundException or UnauthorizedAccessException or IOException
                 or ArgumentException or InvalidDataException or OverflowException or ArgumentOutOfRangeException)
