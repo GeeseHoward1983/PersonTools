@@ -87,12 +87,19 @@ namespace PersonalTools.PEAnalyzer.Resources
 
         private static List<string> ReadCertificates2(List<string> certs, FileStream fs, BinaryReader reader, long certEnd, long pos)
         {
-            //证书条目数硬上限：真实 PE 多重签名至多个位数，畸形安全目录可枚举大量伪证书撑内存
-            while (pos + 8 <= Math.Min(certEnd, fs.Length) && ReadCertificates3(certs, fs, reader, certEnd, ref pos))
+            // 边界或条目校验失败时停止，保留此前已经解析的证书。
+            while (TryReadNextCertificate(certs, fs, reader, certEnd, ref pos))
             {
             }
 
             return certs;
+        }
+
+        private static bool TryReadNextCertificate(List<string> certs, FileStream fs, BinaryReader reader, long certEnd, ref long pos)
+        {
+            // 先检查完整头部的读取边界；越界时短路，不读取头部或推进位置。
+            return pos + 8 <= Math.Min(certEnd, fs.Length) &&
+                   ReadCertificates3(certs, fs, reader, certEnd, ref pos);
         }
 
         private static bool ReadCertificates3(List<string> certs, FileStream fs, BinaryReader reader, long certEnd, ref long pos)
@@ -103,16 +110,37 @@ namespace PersonalTools.PEAnalyzer.Resources
 
         private static bool ReadCertificates4(List<string> certs, WIN_CERTIFICATE certHeader, long certEnd, ref long pos)
         {
-            if (certHeader.dwLength < 8 || certHeader.dwLength > certEnd - pos)
-            {
-                return false;
-            }
+            return IsCertificateLengthValid(certHeader.dwLength, certEnd - pos) &&
+                   AppendCertificate(certs, certHeader, ref pos);
+        }
 
-            certs.Add($"类型: {GetCertificateTypeDescription(certHeader.wCertificateType)}, 长度: {certHeader.dwLength} 字节, 修订版: 0x{certHeader.wRevision:X4}");
+        // 仅在长度校验通过后调用；添加条目并推进位置，返回 true 让遍历继续。
+        private static bool AppendCertificate(List<string> certs, WIN_CERTIFICATE certHeader, ref long pos)
+        {
+            certs.Add(FormatCertificateDescription(certHeader));
+            return AppendCertificate2(ref pos, certHeader.dwLength);
+        }
 
-            // 下一个证书按 8 字节对齐；在 long 上做对齐运算，避免 dwLength 逼近 uint.MaxValue 时 +7 回绕导致 pos 不前进
-            pos += (certHeader.dwLength + 7) & ~7L;
+        private static bool AppendCertificate2(ref long pos, long length)
+        {
+            GetAlignedCertificateLength(ref pos, (uint)length);
             return true;
+        }
+
+        private static bool IsCertificateLengthValid(uint length, long remainingLength)
+        {
+            return length >= 8 && length <= remainingLength;
+        }
+
+        private static string FormatCertificateDescription(WIN_CERTIFICATE certHeader)
+        {
+            return $"类型: {GetCertificateTypeDescription(certHeader.wCertificateType)}, 长度: {certHeader.dwLength} 字节, 修订版: 0x{certHeader.wRevision:X4}";
+        }
+
+        private static void GetAlignedCertificateLength(ref long pos, uint length)
+        {
+            // 下一个证书按 8 字节对齐；加法前转为 long，避免 uint 溢出导致位置不前进。
+            pos += ((long)length + 7) & ~7L;
         }
 
     }
