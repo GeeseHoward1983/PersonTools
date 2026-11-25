@@ -1,95 +1,95 @@
 using PersonalTools.ELFAnalyzer.Core;
-using PersonalTools.Enums;
 using PersonalTools.ELFAnalyzer.Models;
+using PersonalTools.Enums;
 
 namespace PersonalTools.ELFAnalyzer.UIHelper
 {
     internal static class DynamicHelper
     {
-        private static string GetDynamicSectionInfoTableEntryValue(ELFParser _parser, ELFDynamic entry)
+        private static string GetDynamicSectionInfoTableEntryValue(ELFParser parser, ELFDynamic entry)
         {
-            string value = string.Empty;
-            ulong strTabAddr = GetStringValueFromDynamicEntries(_parser, DynamicTag.DT_STRTAB);
-            ulong strTabSize = GetStringValueFromDynamicEntries(_parser, DynamicTag.DT_STRSZ);
-
-            if (strTabAddr != 0 && strTabSize != 0 && _parser.SectionHeaders != null)
-            {
-                // Find the section that contains the string table
-                ELFSectionHeader? stringTableSection = ELFParserUtils.FindSectionByAddress(_parser, strTabAddr);
-                if (stringTableSection != null)
-                {
-                    value = ReadStringFromSection(_parser, stringTableSection, entry.d_val);
-                }
-            }
-            return value;
-
+            return HasDynamicStringTable(parser)
+                ? ReadDynamicString(parser, ELFParserUtils.FindSectionByAddress(parser, GetStringValueFromDynamicEntries(parser, DynamicTag.DT_STRTAB)), entry.d_val)
+                : string.Empty;
         }
-        private static string GetDynamicSectionInfoValue(ELFParser _parser, ELFDynamic entry)
+
+        private static bool HasDynamicStringTable(ELFParser parser)
+        {
+            return parser.SectionHeaders != null
+                && GetStringValueFromDynamicEntries(parser, DynamicTag.DT_STRTAB) != 0
+                && GetStringValueFromDynamicEntries(parser, DynamicTag.DT_STRSZ) != 0;
+        }
+
+        private static string ReadDynamicString(ELFParser parser, ELFSectionHeader? section, ulong offset)
+        {
+            return section.HasValue ? ReadStringFromSection(parser, section.Value, offset) : string.Empty;
+        }
+
+        private static string GetDynamicSectionInfoValue(ELFParser parser, ELFDynamic entry)
         {
             return entry.d_tag switch
             {
-                (long)DynamicTag.DT_NEEDED or (long)DynamicTag.DT_SONAME or (long)DynamicTag.DT_RPATH or (long)DynamicTag.DT_RUNPATH => $"{GetDynamicSectionInfoTableEntryValue(_parser, entry)}",
-                // DT_FLAGS 与 DT_FLAGS_1 位含义完全不同：前者走 DF_* 命名空间，后者走 DF_1_* 命名空间，必须分别解码
-                (long)DynamicTag.DT_FLAGS => $"{ELFDynamicInfo.GetDynamicFlagDescription((uint)entry.d_val)}",
-                (long)DynamicTag.DT_FLAGS_1 => $"{ELFDynamicInfo.GetDynamicFlag1Description((uint)entry.d_val)}",
+                (long)DynamicTag.DT_NEEDED or (long)DynamicTag.DT_SONAME or (long)DynamicTag.DT_RPATH or (long)DynamicTag.DT_RUNPATH => GetDynamicSectionInfoTableEntryValue(parser, entry),
+                // DT_FLAGS 和 DT_FLAGS_1 分别解码 DF_* 与 DF_1_*，不能混用。
+                (long)DynamicTag.DT_FLAGS => ELFDynamicInfo.GetDynamicFlagDescription((uint)entry.d_val),
+                (long)DynamicTag.DT_FLAGS_1 => ELFDynamicInfo.GetDynamicFlag1Description((uint)entry.d_val),
                 _ => entry.d_tag == (long)DynamicTag.DT_PLTREL ? ELFParserUtils.GetTypeName(typeof(DynamicTag), entry.d_val, "") : $"0x{entry.d_val:x}"
             };
         }
 
-        internal static List<ELFDynamicSectionInfo> GetDynamicSectionInfoList(ELFParser Parser)
+        internal static List<ELFDynamicSectionInfo> GetDynamicSectionInfoList(ELFParser parser)
         {
-            List<ELFDynamicSectionInfo> result = [];
-
-            if (Parser.DynamicEntries != null)
-            {
-                foreach (ELFDynamic entry in Parser.DynamicEntries)
-                {
-                    result.Add(new ELFDynamicSectionInfo
-                    {
-                        Tag = Parser.Is64Bit ? $"0x{entry.d_tag:x16}" : $"0x{entry.d_tag:x8}",
-                        Type = ELFDynamicInfo.GetDynamicTagDescription((ulong)entry.d_tag),
-                        Value = GetDynamicSectionInfoValue(Parser, entry)
-                    });
-                    if (entry.d_tag == (long)DynamicTag.DT_NULL)
-                    {
-                        break;
-                    }
-                }
-            }
-
-            return result;
+            return parser.DynamicEntries?.Take(GetDynamicEntryCount(parser.DynamicEntries))
+                .Select(entry => CreateDynamicInfo(parser, entry)).ToList() ?? [];
         }
 
-        private static ulong GetStringValueFromDynamicEntries(ELFParser _parser, DynamicTag tag)
+        private static int GetDynamicEntryCount(List<ELFDynamic> entries)
         {
-            if (_parser.DynamicEntries != null)
-            {
-                ELFDynamic entry = _parser.DynamicEntries.FirstOrDefault(e => e.d_tag == (long)tag);
-                if (entry.d_tag != 0)
-                {
-                    return entry.d_val;
-                }
-            }
-            return 0;
+            return GetCountThroughTerminator(entries, entries.FindIndex(entry => entry.d_tag == (long)DynamicTag.DT_NULL));
         }
 
-        private static string ReadStringFromSection(ELFParser _parser, ELFSectionHeader? section, ulong offset)
+        private static int GetCountThroughTerminator(List<ELFDynamic> entries, int index)
         {
-            // 用减法式校验避免 sh_offset + offset 两个 ulong 相加回绕越过 < Length 检查
-            // （offset 来自不可信 d_val，可被构造为巨值令和回绕到小值绕过边界）
-            if (section != null && _parser.FileData != null
-                && section.Value.sh_offset < (ulong)_parser.FileData.Length
-                && offset < (ulong)_parser.FileData.Length - section.Value.sh_offset)
-            {
-                int start = (int)(section.Value.sh_offset + offset);
-                string value = ELFParserUtils.ExtractStringFromBytes(_parser.FileData, start);
-                if (!string.IsNullOrEmpty(value))
-                {
-                    return value;
-                }
-            }
+            return index >= 0 ? index + 1 : entries.Count;
+        }
 
-            return $"0x{offset:x}";
+        private static ELFDynamicSectionInfo CreateDynamicInfo(ELFParser parser, ELFDynamic entry)
+        {
+            return new ELFDynamicSectionInfo
+            {
+                Tag = ELFDisplayFormatting.DynamicTagValue(entry.d_tag, parser.Is64Bit),
+                Type = ELFDynamicInfo.GetDynamicTagDescription((ulong)entry.d_tag),
+                Value = GetDynamicSectionInfoValue(parser, entry)
+            };
+        }
+
+        private static ulong GetStringValueFromDynamicEntries(ELFParser parser, DynamicTag tag)
+        {
+            return GetDynamicEntryValue(parser.DynamicEntries?.FirstOrDefault(entry => entry.d_tag == (long)tag) ?? default);
+        }
+
+        private static ulong GetDynamicEntryValue(ELFDynamic entry)
+        {
+            return entry.d_tag != 0 ? entry.d_val : 0;
+        }
+
+        private static string ReadStringFromSection(ELFParser parser, ELFSectionHeader section, ulong offset)
+        {
+            return IsReadableStringOffset(parser, section, offset)
+                ? StringOrOffset(ELFParserUtils.ExtractStringFromBytes(parser.FileData, (int)(section.sh_offset + offset)), offset)
+                : $"0x{offset:x}";
+        }
+
+        private static bool IsReadableStringOffset(ELFParser parser, ELFSectionHeader section, ulong offset)
+        {
+            // 减法式边界校验，避免不可信的 sh_offset + d_val 发生 ulong 回绕。
+            return parser.FileData != null && section.sh_offset < (ulong)parser.FileData.Length
+                && offset < (ulong)parser.FileData.Length - section.sh_offset;
+        }
+
+        private static string StringOrOffset(string value, ulong offset)
+        {
+            return string.IsNullOrEmpty(value) ? $"0x{offset:x}" : value;
         }
     }
 }

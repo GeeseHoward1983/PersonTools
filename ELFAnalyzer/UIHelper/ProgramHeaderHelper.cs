@@ -1,154 +1,159 @@
 using PersonalTools.ELFAnalyzer.Core;
-using PersonalTools.Utils;
 using PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.Enums;
 using System.Globalization;
-using System.Text;
 
 namespace PersonalTools.ELFAnalyzer.UIHelper
 {
     internal static class ProgramHeaderHelper
     {
-        internal static List<ProgramHeaderInfo> GetProgramHeaderInfoList(ELFParser Parser)
-        {
-            List<ProgramHeaderInfo> result = [];
-
-            if (Parser.ProgramHeaders != null)
-            {
-                foreach (ELFProgramHeader ph in Parser.ProgramHeaders)
-                {
-                    result.Add(new ProgramHeaderInfo
-                    {
-                        Type = ELFProgramHeaderInfo.GetProgramHeaderType(ph.p_type) ?? "UNKNOWN",
-                        // 十六进制宽度按位宽区分(64位=16位宽/32位=8位宽)，与 SymbolTableHelper 及 readelf 一致
-                        Offset = Parser.Is64Bit ? $"0x{ph.p_offset:x16}" : $"0x{ph.p_offset:x8}",
-                        VirtAddr = Parser.Is64Bit ? $"0x{ph.p_vaddr:x16}" : $"0x{ph.p_vaddr:x8}",
-                        PhysAddr = Parser.Is64Bit ? $"0x{ph.p_paddr:x16}" : $"0x{ph.p_paddr:x8}",
-                        FileSize = $"{ph.p_filesz}",
-                        MemSize = $"{ph.p_memsz}",
-                        Flags = ELFProgramHeaderInfo.GetProgramHeaderFlags(ph.p_flags) ?? "",
-                        Align = $"0x{ph.p_align:x}"
-                    });
-                }
-            }
-
-            return result;
-        }
-
-        // 段×节映射的全局工作量预算：畸形 ELF 段/节各可达 65535，双重循环为 O(n²)≈43 亿次，
-        // 且命中节名无界累积进 StringBuilder；正常文件(数十段×数万节)远低于此值
+        // 全局段×节检查上限，避免畸形 ELF 的 O(n²) 工作量和无界输出。
         private const long MaxMappingChecks = 2_000_000;
+        private static readonly string[] MappingHeaders = [" Section to Segment mapping:", "  段节..."];
 
-        internal static string GetSectionToSegmentMappingInfo(ELFParser Parser)
+        internal static List<ProgramHeaderInfo> GetProgramHeaderInfoList(ELFParser parser)
         {
-            StringBuilder sb = new();
-            sb.AppendLine(" Section to Segment mapping:");
-            sb.AppendLine("  段节...");
-
-            if (Parser.ProgramHeaders != null)
-            {
-                long budget = MaxMappingChecks;
-                for (int i = 0; i < Parser.ProgramHeaders.Count; i++)
-                {
-                    ELFProgramHeader ph = Parser.ProgramHeaders[i];
-                    sb.Append(CultureInfo.InvariantCulture, $"   {i:D2}     ");
-                    List<string> sections = GetSectionsInSegment(Parser, ph, ref budget);
-                    sb.AppendLine(ConvertUtils.EnumerableToString(" ", sections));
-                    if (budget <= 0)
-                    {
-                        sb.AppendLine("  ...(映射计算量超出上限，其余段已省略)");
-                        break;
-                    }
-                }
-            }
-
-            return sb.ToString();
+            return parser.ProgramHeaders?.Select(header => CreateProgramInfo(header, parser.Is64Bit)).ToList() ?? [];
         }
 
-        private static List<string> GetSectionsInSegment(ELFParser _parser, ELFProgramHeader ph, ref long budget)
+        private static ProgramHeaderInfo CreateProgramInfo(ELFProgramHeader header, bool is64Bit)
         {
-            List<string> sections = [];
-            if (_parser.SectionHeaders == null)
+            return new ProgramHeaderInfo
             {
-                return sections;
-            }
-
-            // 段在虚拟内存中的结束地址（防 ulong 相加回绕，溢出时夹紧到 ulong.MaxValue）
-            ulong segEndAddr;
-            if (ph.p_memsz > ulong.MaxValue - ph.p_vaddr)
-            {
-                segEndAddr = ulong.MaxValue;
-            }
-            else
-            {
-                segEndAddr = ph.p_vaddr + ph.p_memsz;
-            }
-            for (int i = 0; i < _parser.SectionHeaders.Count; i++)
-            {
-                if (--budget < 0)
-                {
-                    break; // 全局预算耗尽，调用方负责追加截断标注
-                }
-
-                Models.ELFSectionHeader sh = _parser.SectionHeaders[i];
-                if (sh.sh_size == 0)
-                {
-                    continue;
-                }
-
-                // 仅加载(SHF_ALLOC)节参与段映射：非分配节(.symtab/.strtab/.comment/.debug* 等)的 sh_addr 多为 0，
-                // 在 PIE/共享库(首个 PT_LOAD 的 p_vaddr=0)时会与段地址 0 伪重叠而被错误归入起始段，与 readelf 不符
-                if ((sh.sh_flags & (ulong)SectionAttributes.SHF_ALLOC) == 0)
-                {
-                    continue;
-                }
-
-                string sectionName = ELFSymbolNameResolver.GetSectionName(_parser, i);
-                if (string.IsNullOrEmpty(sectionName))
-                {
-                    continue;
-                }
-
-                if (SectionOverlapsSegment(sh, ph.p_vaddr, segEndAddr))
-                {
-                    sections.Add(sectionName);
-                }
-            }
-            return sections;
+                Type = ELFProgramHeaderInfo.GetProgramHeaderType(header.p_type) ?? "UNKNOWN",
+                Offset = ELFDisplayFormatting.Address(header.p_offset, is64Bit),
+                VirtAddr = ELFDisplayFormatting.Address(header.p_vaddr, is64Bit),
+                PhysAddr = ELFDisplayFormatting.Address(header.p_paddr, is64Bit),
+                FileSize = $"{header.p_filesz}",
+                MemSize = $"{header.p_memsz}",
+                Flags = ELFProgramHeaderInfo.GetProgramHeaderFlags(header.p_flags) ?? "",
+                Align = $"0x{header.p_align:x}"
+            };
         }
 
-        // 节是否与段在虚拟内存空间重叠：起始落入段 / 结束落入段 / 节包含段，三者之一即重叠
-        private static bool SectionOverlapsSegment(Models.ELFSectionHeader sh, ulong segStart, ulong segEnd)
+        internal static string GetSectionToSegmentMappingInfo(ELFParser parser)
         {
-            // 防 ulong 相加回绕（与上方 segEndAddr 对称）：溢出时夹紧到 ulong.MaxValue，
-            // 避免畸形 sh_size 使 secEndAddr 回绕成小值导致重叠三判定错乱、节到段映射错误
-            ulong secEndAddr = sh.sh_size > ulong.MaxValue - sh.sh_addr ? ulong.MaxValue : sh.sh_addr + sh.sh_size;
-            return (sh.sh_addr >= segStart && sh.sh_addr < segEnd) ||
-                   (secEndAddr > segStart && secEndAddr <= segEnd) ||
-                   (sh.sh_addr <= segStart && secEndAddr >= segEnd);
+            return string.Join(Environment.NewLine, GetMappingLines(new MappingState(parser)).Append(string.Empty));
         }
 
-        internal static string GetInterpreterInfo(ELFParser Parser)
+        private sealed class MappingState(ELFParser parser)
         {
-            if (Parser.ProgramHeaders != null)
-            {
-                // Find the PT_INTERP segment in 64-bit headers
-                ELFProgramHeader interpHeader = Parser.ProgramHeaders.FirstOrDefault(ph => ph.p_type == (uint)ProgramHeaderType.PT_INTERP);
-                if (interpHeader.p_type != 0)
-                {
-                    // p_offset/p_filesz 为 ulong，>int.MaxValue 时 (int) 强转会变负，须先做越界夹紧
-                    if (interpHeader.p_offset >= (ulong)Parser.FileData.Length)
-                    {
-                        return string.Empty;
-                    }
-                    int interpOffset = (int)interpHeader.p_offset;
-                    int interpLength = (int)Math.Min(interpHeader.p_filesz, (ulong)Parser.FileData.Length - interpHeader.p_offset);
-                    // 从 PT_INTERP 段按 p_filesz 上限提取解释器路径（ExtractStringFromBytes 自带越界夹紧并去除尾部 NUL）
-                    return ELFParserUtils.ExtractStringFromBytes(Parser.FileData, interpOffset, interpLength);
-                }
-            }
+            internal ELFParser Parser { get; } = parser;
+            internal long Budget { get; set; } = MaxMappingChecks;
+        }
 
-            return string.Empty;
+        private static IEnumerable<string> GetMappingLines(MappingState state)
+        {
+            return MappingHeaders
+                .Concat(GetSegmentLines(state)).Concat(GetMappingNotice(state));
+        }
+
+        private static IEnumerable<string> GetSegmentLines(MappingState state)
+        {
+            // 必须在计算下一段之前检查预算，保留预算耗尽时已经产生的最后一行。
+            return GetSegmentIndices(state).Select(index => FormatSegmentLine(state, index));
+        }
+
+        private static IEnumerable<int> GetSegmentIndices(MappingState state)
+        {
+            return Enumerable.Range(0, state.Parser.ProgramHeaders?.Count ?? 0).TakeWhile(_ => state.Budget > 0);
+        }
+
+        private static IEnumerable<string> GetMappingNotice(MappingState state)
+        {
+            // 延迟到段行枚举完毕后检查，不能在创建序列时提前读取 Budget。
+            if (state.Budget <= 0)
+            {
+                yield return "  ...(映射计算量超出上限，其余段已省略)";
+            }
+        }
+
+        private static string FormatSegmentLine(MappingState state, int index)
+        {
+            return string.Format(CultureInfo.InvariantCulture, "   {0:D2}     {1}", index,
+                string.Join(" ", GetSectionsInSegment(state, state.Parser.ProgramHeaders![index])));
+        }
+
+        private readonly record struct NamedSection(ELFSectionHeader Header, string Name);
+
+        private static IEnumerable<string> GetSectionsInSegment(MappingState state, ELFProgramHeader segment)
+        {
+            return GetNamedAllocatedSections(state)
+                .Where(item => IsNamedOverlappingSection(item.Header, item.Name, segment)).Select(GetSectionName);
+        }
+
+        private static string GetSectionName(NamedSection section)
+        {
+            return section.Name;
+        }
+
+        private static IEnumerable<NamedSection> GetNamedAllocatedSections(MappingState state)
+        {
+            return GetCheckedSections(state).Where(IsAllocatedSection)
+                .Select(item => new NamedSection(item.Header, ELFSymbolNameResolver.GetSectionName(state.Parser, item.Index)));
+        }
+
+        private static bool IsAllocatedSection((ELFSectionHeader Header, int Index) item)
+        {
+            return IsAllocatedNonemptySection(item.Header);
+        }
+
+        private static IEnumerable<(ELFSectionHeader Header, int Index)> GetCheckedSections(MappingState state)
+        {
+            // 预算对每个节计数，包括空节和非分配节；首次不足时预算减为 -1。
+            return GetIndexedSections(state.Parser).TakeWhile(_ => --state.Budget >= 0);
+        }
+
+        private static IEnumerable<(ELFSectionHeader Header, int Index)> GetIndexedSections(ELFParser parser)
+        {
+            return (parser.SectionHeaders ?? []).Select((section, index) => (section, index));
+        }
+
+        private static bool IsAllocatedNonemptySection(ELFSectionHeader section)
+        {
+            // 非分配节（.debug*、.symtab 等）不能因地址为 0 被误映射到首个 LOAD 段。
+            return section.sh_size != 0 && (section.sh_flags & (ulong)SectionAttributes.SHF_ALLOC) != 0;
+        }
+
+        private static bool IsNamedOverlappingSection(ELFSectionHeader section, string name, ELFProgramHeader segment)
+        {
+            return !string.IsNullOrEmpty(name)
+                && SectionOverlapsSegment(section, segment.p_vaddr, SaturatingEnd(segment.p_vaddr, segment.p_memsz));
+        }
+
+        private static ulong SaturatingEnd(ulong start, ulong size)
+        {
+            return size > ulong.MaxValue - start ? ulong.MaxValue : start + size;
+        }
+
+        private static bool SectionOverlapsSegment(ELFSectionHeader section, ulong start, ulong end)
+        {
+            return RangesOverlap(section.sh_addr, SaturatingEnd(section.sh_addr, section.sh_size), start, end);
+        }
+
+        private static bool RangesOverlap(ulong sectionStart, ulong sectionEnd, ulong segmentStart, ulong segmentEnd)
+        {
+            return (sectionStart >= segmentStart && sectionStart < segmentEnd)
+                || (sectionEnd > segmentStart && sectionEnd <= segmentEnd)
+                || (sectionStart <= segmentStart && sectionEnd >= segmentEnd);
+        }
+
+        internal static string GetInterpreterInfo(ELFParser parser)
+        {
+            return ReadInterpreter(parser, parser.ProgramHeaders?.FirstOrDefault(header => header.p_type == (uint)ProgramHeaderType.PT_INTERP) ?? default);
+        }
+
+        private static string ReadInterpreter(ELFParser parser, ELFProgramHeader header)
+        {
+            return header.p_type != 0 && header.p_offset < (ulong)parser.FileData.Length
+                ? ELFParserUtils.ExtractStringFromBytes(parser.FileData, (int)header.p_offset, GetInterpreterLength(parser, header))
+                : string.Empty;
+        }
+
+        private static int GetInterpreterLength(ELFParser parser, ELFProgramHeader header)
+        {
+            // 先夹紧 ulong 范围再转换 int，长度不得超过 PT_INTERP 的声明范围。
+            return (int)Math.Min(header.p_filesz, (ulong)parser.FileData.Length - header.p_offset);
         }
     }
 }

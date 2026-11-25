@@ -1,0 +1,228 @@
+using System.Buffers.Binary;
+using System.Globalization;
+using System.IO;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using PersonalTools.ELFAnalyzer.Core;
+using PersonalTools.ELFAnalyzer.Models;
+using PersonalTools.ELFAnalyzer.UIHelper;
+using PersonalTools.Enums;
+
+// Expected JSON snapshots were captured from the pre-refactor UI helpers; production code is not its own oracle.
+// Compiled into the isolated ELF assembly by Test-ELFHeaderHelper.ps1, not the application.
+internal static class UIHelperRegression
+{
+    private static readonly JsonSerializerOptions Options = new() { IncludeFields = true, WriteIndented = true };
+    private static readonly string[] Names = ["", ".shstrtab", ".text", ".debug", ".bss", ".empty", ".dynstr", ".dynsym",
+        ".got", ".got.plt", ".strtab", ".symtab", ".rela.plt", ".rel.dyn", ".rela.dyn", ".rel.plt", ".overflow", "", ".misnamed"];
+
+    public static void Verify(string expectedPath)
+    {
+        var expected = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(File.ReadAllText(expectedPath))!;
+        var originalCulture = CultureInfo.CurrentCulture;
+        try
+        {
+            foreach (string culture in new[] { "", "en-US", "fr-FR", "ar-SA" })
+            {
+                CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(culture);
+                var actual = CaptureValues();
+                if (actual.Count != expected.Count) throw new InvalidOperationException("UI regression case count changed.");
+                foreach (var item in expected)
+                    if (!actual.TryGetValue(item.Key, out var value) || !JsonElement.DeepEquals(item.Value, value))
+                        throw new InvalidOperationException($"UI output changed: {item.Key}, culture={culture}.\nExpected: {item.Value}\nActual: {value}");
+                Console.WriteLine($"PASS {actual.Count} UI snapshots, culture={culture}");
+            }
+        }
+        finally { CultureInfo.CurrentCulture = originalCulture; }
+    }
+
+    public static string Capture() => JsonSerializer.Serialize(CaptureValues(), Options);
+
+    private static Dictionary<string, JsonElement> CaptureValues()
+    {
+        var result = new Dictionary<string, JsonElement>();
+        foreach (bool is64Bit in new[] { false, true })
+            foreach (bool little in new[] { false, true })
+                CaptureVariant(result, is64Bit, little, is64Bit ? (ushort)62 : (ushort)3);
+        foreach (bool little in new[] { false, true }) CaptureVariant(result, true, little, 8);
+        foreach (int segments in new[] { 1999, 2000, 2001 })
+        {
+            var parser = Fixture(true, true, 62);
+            parser.SectionHeaders = Enumerable.Repeat(default(ELFSectionHeader), 1000).ToList();
+            parser.ProgramHeaders = Enumerable.Repeat(default(ELFProgramHeader), segments).ToList();
+            string text = ProgramHeaderHelper.GetSectionToSegmentMappingInfo(parser);
+            string[] lines = text.Split(Environment.NewLine);
+            Add(result, $"mapping-budget/{segments}", new { Lines = lines.Length, LastLines = lines.TakeLast(3), Hash = Hash(text) });
+        }
+        return result;
+    }
+
+    private static void CaptureVariant(Dictionary<string, JsonElement> values, bool wide, bool little, ushort machine)
+    {
+        string prefix = $"elf{(wide ? 64 : 32)}-{(little ? "le" : "be")}-machine{machine}/";
+        var parser = Fixture(wide, little, machine);
+        Add(values, prefix + "programs", ProgramHeaderHelper.GetProgramHeaderInfoList(parser));
+        Add(values, prefix + "sections", SectionHeaderHelper.GetSectionHeaderInfoList(parser));
+        Add(values, prefix + "dynamic", DynamicHelper.GetDynamicSectionInfoList(parser));
+        Add(values, prefix + "symbols-dynamic", SymbolTableHelper.GetSymbolTableInfoList(parser, SectionType.SHT_DYNSYM));
+        Add(values, prefix + "symbols-static", SymbolTableHelper.GetSymbolTableInfoList(parser, SectionType.SHT_SYMTAB));
+        Add(values, prefix + "mapping", ProgramHeaderHelper.GetSectionToSegmentMappingInfo(parser));
+        Add(values, prefix + "interpreter", ProgramHeaderHelper.GetInterpreterInfo(parser));
+        Add(values, prefix + "attributes", AttributesHelper.GetAttributeInfo(parser));
+        Add(values, prefix + "exidx", ExidxInfoHelper.GetExidxInfo(parser));
+        foreach (string name in new[] { ".rela.plt", ".rel.plt", ".rela.dyn", ".rel.dyn", ".missing" })
+            Add(values, prefix + "relocation" + name, RelocationHelper.GetRelocationInfoForSpecificSection(parser, name));
+        foreach (string name in new[] { ".got", ".got.plt", ".missing" })
+            Add(values, prefix + "got" + name, GotHelper.GetGotInfoList(parser, name));
+        void Case(string name, Action<ELFParser> configure, Func<ELFParser, object> query)
+        {
+            var changed = Fixture(wide, little, machine);
+            configure(changed);
+            Add(values, prefix + name, query(changed));
+        }
+        Case("null-programs", p => p.ProgramHeaders = null, p => new { Rows = ProgramHeaderHelper.GetProgramHeaderInfoList(p), Mapping = ProgramHeaderHelper.GetSectionToSegmentMappingInfo(p), Interpreter = ProgramHeaderHelper.GetInterpreterInfo(p) });
+        Case("null-sections", p => p.SectionHeaders = null!, p => new { Rows = SectionHeaderHelper.GetSectionHeaderInfoList(p), Mapping = ProgramHeaderHelper.GetSectionToSegmentMappingInfo(p), Got = GotHelper.GetGotInfoList(p, ".got"), Rel = RelocationHelper.GetRelocationInfoForSpecificSection(p, ".rela.plt"), Dynamic = DynamicHelper.GetDynamicSectionInfoList(p) });
+        Case("null-symbols", p => p.Symbols = null!, p => SymbolTableHelper.GetSymbolTableInfoList(p, SectionType.SHT_DYNSYM));
+        Case("null-dynamic", p => p.DynamicEntries = null!, p => DynamicHelper.GetDynamicSectionInfoList(p));
+        Case("empty-dynamic", p => p.DynamicEntries = [], p => DynamicHelper.GetDynamicSectionInfoList(p));
+        Case("dynamic-no-terminator", p => p.DynamicEntries.RemoveAll(e => e.d_tag == 0), p => DynamicHelper.GetDynamicSectionInfoList(p));
+        Case("dynamic-zero-string-address", p => ChangeDynamic(p, DynamicTag.DT_STRTAB, 0), p => DynamicHelper.GetDynamicSectionInfoList(p));
+        Case("dynamic-zero-string-size", p => ChangeDynamic(p, DynamicTag.DT_STRSZ, 0), p => DynamicHelper.GetDynamicSectionInfoList(p));
+        Case("dynamic-missing-string-section", p => ChangeDynamic(p, DynamicTag.DT_STRTAB, ulong.MaxValue), p => DynamicHelper.GetDynamicSectionInfoList(p));
+        Case("dynamic-string-offset-overflow", p => ChangeDynamic(p, DynamicTag.DT_NEEDED, ulong.MaxValue), p => DynamicHelper.GetDynamicSectionInfoList(p));
+        Case("dynamic-empty-string", p => ChangeDynamic(p, DynamicTag.DT_NEEDED, 0), p => DynamicHelper.GetDynamicSectionInfoList(p));
+        Case("dynamic-file-offset-overflow", p => ChangeSection(p, 6, s => { s.sh_offset = ulong.MaxValue; return s; }), p => DynamicHelper.GetDynamicSectionInfoList(p));
+        Case("interpreter-file-offset-overflow", p => p.ProgramHeaders = [new() { p_type = 3, p_offset = ulong.MaxValue, p_filesz = 10 }], p => ProgramHeaderHelper.GetInterpreterInfo(p));
+        Case("interpreter-file-length-clamp", p => p.ProgramHeaders = [new() { p_type = 3, p_offset = (ulong)p.FileData.Length - 3, p_filesz = ulong.MaxValue }], p => ProgramHeaderHelper.GetInterpreterInfo(p));
+        Case("interpreter-declared-length", p => p.ProgramHeaders = [new() { p_type = 3, p_offset = 2048, p_filesz = 4 }], p => ProgramHeaderHelper.GetInterpreterInfo(p));
+        Case("relocation-zero-entsize", p => ChangeSection(p, 12, s => { s.sh_entsize = 0; return s; }), p => RelocationHelper.GetRelocationInfoForSpecificSection(p, ".rela.plt"));
+        Case("relocation-small-entsize", p => ChangeSection(p, 12, s => { s.sh_entsize = 1; return s; }), p => RelocationHelper.GetRelocationInfoForSpecificSection(p, ".rela.plt"));
+        Case("relocation-truncated", p => ChangeSection(p, 12, s => { s.sh_size = 1; return s; }), p => RelocationHelper.GetRelocationInfoForSpecificSection(p, ".rela.plt"));
+        Case("relocation-size-overflow", p => ChangeSection(p, 12, s => { s.sh_size = ulong.MaxValue; return s; }), p => RelocationHelper.GetRelocationInfoForSpecificSection(p, ".rela.plt"));
+        Case("relocation-offset-overflow", p => ChangeSection(p, 12, s => { s.sh_offset = ulong.MaxValue; return s; }), p => RelocationHelper.GetRelocationInfoForSpecificSection(p, ".rela.plt"));
+        Case("relocation-invalid-symbol-link", p => ChangeSection(p, 12, s => { s.sh_link = uint.MaxValue; return s; }), p => RelocationHelper.GetRelocationInfoForSpecificSection(p, ".rela.plt"));
+        Case("relocation-name-type-disagree", p => ChangeSection(p, 12, s => { s.sh_type = (uint)SectionType.SHT_REL; return s; }), p => RelocationHelper.GetRelocationInfoForSpecificSection(p, ".rela.plt"));
+        Case("relocation-same-name-nonrel-first", p => { var s = p.SectionHeaders[12]; s.sh_type = (uint)SectionType.SHT_PROGBITS; p.SectionHeaders.Insert(12, s); }, p => RelocationHelper.GetRelocationInfoForSpecificSection(p, ".rela.plt"));
+        Case("got-ignore-entsize", p => ChangeSection(p, 8, s => { s.sh_entsize = 1; return s; }), p => GotHelper.GetGotInfoList(p, ".got"));
+        Case("got-truncated-slot", p => ChangeSection(p, 8, s => { s.sh_size = 1; return s; }), p => GotHelper.GetGotInfoList(p, ".got"));
+        Case("got-offset-overflow", p => ChangeSection(p, 8, s => { s.sh_offset = ulong.MaxValue; return s; }), p => GotHelper.GetGotInfoList(p, ".got"));
+        Case("got-size-clamp", p => ChangeSection(p, 8, s => { s.sh_size = ulong.MaxValue; return s; }), p => SummarizeGot(GotHelper.GetGotInfoList(p, ".got")));
+        Case("got-address-wrap", p => ChangeSection(p, 8, s => { s.sh_addr = ulong.MaxValue - 1; return s; }), p => GotHelper.GetGotInfoList(p, ".got"));
+    }
+
+    private static object SummarizeGot(List<ELFGotInfo> rows) => new { rows.Count, First = rows.FirstOrDefault(), Last = rows.LastOrDefault(), Hash = Hash(JsonSerializer.Serialize(rows)) };
+    private static string Hash(string text) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
+    private static void Add(Dictionary<string, JsonElement> values, string name, object value) => values.Add(name, JsonSerializer.SerializeToElement(value, Options));
+    private static void ChangeSection(ELFParser parser, int index, Func<ELFSectionHeader, ELFSectionHeader> change) => parser.SectionHeaders[index] = change(parser.SectionHeaders[index]);
+    private static void ChangeDynamic(ELFParser parser, DynamicTag tag, ulong value)
+    {
+        int index = parser.DynamicEntries.FindIndex(e => e.d_tag == (long)tag);
+        parser.DynamicEntries[index] = new ELFDynamic { d_tag = (long)tag, d_val = value };
+    }
+
+    private static ELFParser Fixture(bool wide, bool little, ushort machine)
+    {
+        byte[] file = new byte[4096];
+        void Write(int offset, ulong value, int size)
+        {
+            Span<byte> bytes = stackalloc byte[8];
+            if (little) BinaryPrimitives.WriteUInt64LittleEndian(bytes, value);
+            else BinaryPrimitives.WriteUInt64BigEndian(bytes, value);
+            (little ? bytes[..size] : bytes[(8 - size)..]).CopyTo(file.AsSpan(offset, size));
+        }
+        new byte[] { 0x7F, 0x45, 0x4C, 0x46, (byte)(wide ? 2 : 1), (byte)(little ? 1 : 2), 1 }.CopyTo(file, 0);
+        Write(18, machine, 2); Write(20, 1, 4); Write(wide ? 52 : 40, wide ? 64u : 52u, 2); Write(wide ? 62 : 50, 1, 2);
+        var parser = new ELFParser(file);
+        var nameOffsets = new uint[Names.Length];
+        int cursor = 128;
+        for (int i = 0; i < Names.Length; i++)
+        {
+            nameOffsets[i] = (uint)(cursor - 128);
+            byte[] bytes = Encoding.UTF8.GetBytes(Names[i] + "\0");
+            bytes.CopyTo(file, cursor); cursor += bytes.Length;
+        }
+        int width = wide ? 8 : 4;
+        ELFSectionHeader Section(int index, SectionType type, ulong address, ulong offset, ulong size, ulong flags = 0, ulong entrySize = 0, uint link = 0)
+            => new() { sh_name = nameOffsets[index], sh_type = (uint)type, sh_addr = address, sh_offset = offset, sh_size = size, sh_flags = flags, sh_entsize = entrySize, sh_link = link, sh_addralign = 4 };
+        parser.SectionHeaders =
+        [
+            default, Section(1, SectionType.SHT_STRTAB, 0, 128, (ulong)(cursor - 128)),
+            Section(2, SectionType.SHT_PROGBITS, 0x1000, 3000, 0x40, 2),
+            Section(3, SectionType.SHT_PROGBITS, 0, 3064, 0x20),
+            Section(4, SectionType.SHT_NOBITS, 0x1040, 3100, 0x40, 3),
+            Section(5, SectionType.SHT_PROGBITS, 0x1008, 3100, 0, 2),
+            Section(6, SectionType.SHT_STRTAB, 0x3000, 512, 64),
+            Section(7, SectionType.SHT_DYNSYM, 0, 640, (ulong)(6 * (wide ? 24 : 16)), 0, (ulong)(wide ? 24 : 16), 6),
+            Section(8, SectionType.SHT_PROGBITS, 0x2000, 800, (ulong)(5 * width), 3, (ulong)width),
+            Section(9, SectionType.SHT_PROGBITS, 0x2100, 848, (ulong)(5 * width), 3, (ulong)width),
+            Section(10, SectionType.SHT_STRTAB, 0, 896, 64),
+            Section(11, SectionType.SHT_SYMTAB, 0, 960, (ulong)(6 * (wide ? 24 : 16)), 0, (ulong)(wide ? 24 : 16), 10),
+            Section(12, SectionType.SHT_RELA, 0, 1120, (ulong)(3 * (wide ? 24 : 12)), 0, (ulong)(wide ? 24 : 12), 7),
+            Section(13, SectionType.SHT_REL, 0, 1248, (ulong)(3 * (wide ? 16 : 8)), 0, (ulong)(wide ? 16 : 8), 7),
+            Section(14, SectionType.SHT_RELA, 0, 1344, (ulong)(3 * (wide ? 24 : 12)), 0, (ulong)(wide ? 24 : 12), 11),
+            Section(15, SectionType.SHT_REL, 0, 1472, (ulong)(3 * (wide ? 16 : 8)), 0, (ulong)(wide ? 16 : 8), 7),
+            Section(16, SectionType.SHT_PROGBITS, ulong.MaxValue - 8, 3200, 16, 2),
+            new() { sh_name = uint.MaxValue, sh_addr = 0x1008, sh_size = 8, sh_flags = 2 }
+        ];
+        Encoding.UTF8.GetBytes("\0dyn_symbol\0libsample.so\0/path\0").CopyTo(file, 512);
+        Encoding.UTF8.GetBytes("\0static_symbol\0").CopyTo(file, 896);
+        Encoding.UTF8.GetBytes("/lib/ld-sample.so\0IGNORED").CopyTo(file, 2048);
+        file[^3] = (byte)'x'; file[^2] = (byte)'y'; file[^1] = (byte)'z';
+        ushort[] indices = [0, 2, 2, 0, 0xfff1, 0xfff2];
+        byte[] infos = [0, 0x12, 3, 0x11, 2, 0xff];
+        var symbols = new List<ELFSymbol>();
+        for (int i = 0; i < indices.Length; i++)
+        {
+            var symbol = new ELFSymbol { StName = i is 0 or 2 ? 0u : 1u, StInfo = infos[i], StOther = (byte)(i % 4), StShndx = indices[i], StValue = i == 4 ? (wide ? ulong.MaxValue : uint.MaxValue) : (ulong)(0x1000 + i * 8), StSize = (ulong)i };
+            symbols.Add(symbol);
+            foreach (int table in new[] { 640, 960 })
+            {
+                int start = table + i * (wide ? 24 : 16);
+                Write(start, symbol.StName, 4);
+                if (wide) { file[start + 4] = symbol.StInfo; file[start + 5] = symbol.StOther; Write(start + 6, symbol.StShndx, 2); Write(start + 8, symbol.StValue, 8); Write(start + 16, symbol.StSize, 8); }
+                else { Write(start + 4, symbol.StValue, 4); Write(start + 8, symbol.StSize, 4); file[start + 12] = symbol.StInfo; file[start + 13] = symbol.StOther; Write(start + 14, symbol.StShndx, 2); }
+            }
+        }
+        parser.Symbols[SectionType.SHT_DYNSYM] = symbols;
+        parser.Symbols[SectionType.SHT_SYMTAB] = symbols.ToList();
+        parser.LinkedStrTabIdx[SectionType.SHT_DYNSYM] = 6; parser.LinkedStrTabIdx[SectionType.SHT_SYMTAB] = 10;
+        parser.VersionSymbols = [0, 2, 0, 0x8002, 3, 0]; parser.VersionDefinitions[2] = "API_1"; parser.VersionDependencies[3] = "API_2";
+        foreach (int index in new[] { 12, 13, 14, 15 })
+        {
+            var section = parser.SectionHeaders[index];
+            bool rela = section.sh_type == (uint)SectionType.SHT_RELA;
+            for (int i = 0; i < 3; i++)
+            {
+                int start = (int)section.sh_offset + i * (int)section.sh_entsize;
+                uint symbolIndex = i == 2 ? 999u : index == 13 ? 2u : 1u;
+                uint type = (uint)(6 + i);
+                ulong info = !wide ? ((ulong)symbolIndex << 8) | type : machine == 8 && little ? ((ulong)type << 56) | symbolIndex : ((ulong)symbolIndex << 32) | type;
+                Write(start, (index is 12 or 15 ? 0x2100u : 0x2000u) + (uint)(i * width), width);
+                Write(start + width, info, width);
+                if (rela) Write(start + 2 * width, unchecked((ulong)(i == 0 ? -8L : i == 1 ? (wide ? long.MinValue : int.MinValue) : 7L)), width);
+            }
+        }
+        foreach (int start in new[] { 800, 848 })
+            for (int i = 0; i < 5; i++) Write(start + i * width, i == 4 ? (wide ? ulong.MaxValue : uint.MaxValue) : (ulong)(0x3000 + i * 8), width);
+        parser.DynamicEntries =
+        [
+            new() { d_tag = (long)DynamicTag.DT_STRTAB, d_val = 0x3000 }, new() { d_tag = (long)DynamicTag.DT_STRSZ, d_val = 64 },
+            new() { d_tag = (long)DynamicTag.DT_NEEDED, d_val = 12 }, new() { d_tag = (long)DynamicTag.DT_SONAME, d_val = 12 },
+            new() { d_tag = (long)DynamicTag.DT_RPATH, d_val = 25 }, new() { d_tag = (long)DynamicTag.DT_RUNPATH, d_val = 25 },
+            new() { d_tag = (long)DynamicTag.DT_FLAGS, d_val = 0x1f }, new() { d_tag = (long)DynamicTag.DT_FLAGS_1, d_val = 0x8000001 },
+            new() { d_tag = (long)DynamicTag.DT_PLTREL, d_val = (ulong)DynamicTag.DT_RELA }, new() { d_tag = -1, d_val = ulong.MaxValue },
+            new() { d_tag = 0, d_val = 0 }, new() { d_tag = (long)DynamicTag.DT_NEEDED, d_val = 1 }
+        ];
+        parser.ProgramHeaders =
+        [
+            new() { p_type = 1, p_offset = 3000, p_vaddr = 0x1000, p_paddr = 0x1000, p_filesz = 64, p_memsz = 128, p_flags = 7, p_align = 0x1000 },
+            new() { p_type = 1, p_vaddr = 0, p_memsz = 128 },
+            new() { p_type = 1, p_vaddr = ulong.MaxValue - 8, p_memsz = 32 },
+            new() { p_type = 3, p_offset = 2048, p_filesz = 17 },
+            new() { p_type = 3, p_offset = ulong.MaxValue, p_filesz = ulong.MaxValue },
+            new() { p_type = uint.MaxValue, p_offset = ulong.MaxValue, p_memsz = ulong.MaxValue }
+        ];
+        return parser;
+    }
+}

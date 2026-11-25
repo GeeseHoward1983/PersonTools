@@ -7,104 +7,116 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
 {
     internal static class RelocationHelper
     {
-        internal static List<ELFRelocationInfo> GetRelocationInfoForSpecificSection(ELFParser Parser, string sectionName)
+        private sealed record RelocationContext(ELFParser Parser, ELFSectionHeader Section, string Name,
+            byte[] Data, List<ELFSymbol> Symbols, SectionType SymbolType);
+
+        internal static List<ELFRelocationInfo> GetRelocationInfoForSpecificSection(ELFParser parser, string sectionName)
         {
-            List<ELFRelocationInfo> result = [];
-
-            int sectionIndex = FindRelocationSection(Parser, sectionName, out string actualSectionName);
-            if (sectionIndex == -1)
-            {
-                return result;
-            }
-
-            Models.ELFSectionHeader section = Parser.SectionHeaders![sectionIndex];
-            if (section.sh_entsize == 0)
-            {
-                return result; // 防除零：畸形节 sh_entsize 为 0
-            }
-
-            byte[] data = Parser.GetSectionData(sectionIndex);
-            List<ELFSymbol> symbols = ReadRelocationSymbols(Parser, (int)section.sh_link);
-            // 符号名要按 sh_link 指向的符号表类型解析(.dynsym→.dynstr / .symtab→.strtab)，不硬编码 SHT_DYNSYM
-            SectionType symTabType = ResolveSymbolTableType(Parser, (int)section.sh_link);
-
-            // 按真实 sh_type 判定 RELA/REL（条目大小不同），而非依赖节名是否含 "rela"
-            bool isRela = section.sh_type == (uint)SectionType.SHT_RELA;
-            int entrySize = Parser.Is64Bit ? (isRela ? 24 : 16) : (isRela ? 12 : 8);
-
-            // entryCount 同时受声明条目数与实际可读字节约束，避免越界/截断节(data 为空或偏短)时越界读取
-            int entryCount = (int)Math.Min(section.sh_size / section.sh_entsize, (ulong)(data.Length / entrySize));
-            for (int j = 0; j < entryCount; j++)
-            {
-                ReadRelocationEntry(Parser, data, j, isRela, out ulong offset, out ulong info, out long addend);
-                SplitRelocInfo(Parser, info, out uint sym, out uint type);
-                (string symbolName, string symbolValue) = ResolveRelocSymbol(Parser, symbols, sym, symTabType);
-
-                string typeName = ELFRelocation.GetRelocationTypeName(type, Parser.Header.e_machine);
-                result.Add(new ELFRelocationInfo
-                {
-                    Offset = Parser.Is64Bit ? $"{offset:x16}" : $"{offset:x8}",
-                    Info = Parser.Is64Bit ? $"{info:x16}" : $"{info:x8}",
-                    Type = typeName ?? "",
-                    SymbolValue = symbolValue.PadLeft(16),
-                    Symbol = symbolName,
-                    Addend = isRela ? addend.ToString(CultureInfo.InvariantCulture) : "",
-                    SectionName = actualSectionName
-                });
-            }
-
-            return result;
+            return ReadRelocationSection(parser, FindRelocationSection(parser, sectionName), sectionName);
         }
 
-        // 按名称查找 RELA/REL 重定位节，返回其索引（找不到返回 -1）。
-        // 同名但类型非 REL/RELA 的节继续向后查找，不因命中第一个同名非重定位节就提前放弃真正的重定位节。
-        private static int FindRelocationSection(ELFParser Parser, string sectionName, out string actualSectionName)
+        private static int FindRelocationSection(ELFParser parser, string sectionName)
         {
-            actualSectionName = string.Empty;
-            if (Parser.SectionHeaders == null)
-            {
-                return -1;
-            }
-
-            for (int i = 0; i < Parser.SectionHeaders.Count; i++)
-            {
-                string currentSectionName = ELFSymbolNameResolver.GetSectionName(Parser, i) ?? string.Empty;
-                if (currentSectionName != sectionName)
-                {
-                    continue;
-                }
-
-                Models.ELFSectionHeader section = Parser.SectionHeaders[i];
-                if (section.sh_type is ((uint)SectionType.SHT_RELA) or ((uint)SectionType.SHT_REL))
-                {
-                    actualSectionName = currentSectionName;
-                    return i;
-                }
-                // 同名但 sh_type 不符：继续遍历，后面可能还有同名的真正 REL/RELA 节
-                continue;
-            }
-            return -1;
+            // 同名但非 REL/RELA 的节不能遮挡后面的真正重定位节。
+            return ELFDisplayFormatting.FindSectionIndex(parser,
+                index => ELFSymbolNameResolver.GetSectionName(parser, index) == sectionName && IsRelocationSection(parser.SectionHeaders[index]));
         }
 
-        // 读取重定位节关联的符号表（处理 32/64 位与字节序）。结果按 symTabIndex 缓存于 Parser，
-        // 多个重定位/GOT 节共享同一符号表时避免整表重复解析（此前仅缓存了字节、仍重复 new ELFSymbol）
-        private static List<ELFSymbol> ReadRelocationSymbols(ELFParser Parser, int symTabIndex)
+        private static bool IsRelocationSection(ELFSectionHeader section)
         {
-            return Parser.GetOrParseSymbols(symTabIndex, () =>
-            {
-                byte[] symTabData = Parser.GetSectionData(symTabIndex);
-                List<ELFSymbol> symbols = [];
-                bool little = Parser.Header.IsLittleEndian();
-                int symEntrySize = Parser.Is64Bit ? 24 : 16; // 64位符号表项24字节，32位16字节
-                int symCount = symTabData.Length / symEntrySize;
+            return section.sh_type is ((uint)SectionType.SHT_RELA) or ((uint)SectionType.SHT_REL);
+        }
 
-                for (int symIdx = 0; symIdx < symCount; symIdx++)
-                {
-                    int b = symIdx * symEntrySize;
-                    symbols.Add(Parser.Is64Bit ? ReadSymbol64(symTabData, b, little) : ReadSymbol32(symTabData, b, little));
-                }
-                return symbols;
-            });
+        private static List<ELFRelocationInfo> ReadRelocationSection(ELFParser parser, int index, string name)
+        {
+            // 先校验声明步长，保留零 sh_entsize 返回空列表的行为。
+            return index >= 0 && parser.SectionHeaders[index].sh_entsize != 0
+                ? ReadRelocationRows(CreateContext(parser, index, name)) : [];
+        }
+
+        private static RelocationContext CreateContext(ELFParser parser, int index, string name)
+        {
+            return new RelocationContext(parser, parser.SectionHeaders[index], name, parser.GetSectionData(index),
+                ReadRelocationSymbols(parser, (int)parser.SectionHeaders[index].sh_link),
+                ResolveSymbolTableType(parser, (int)parser.SectionHeaders[index].sh_link));
+        }
+
+        private static List<ELFRelocationInfo> ReadRelocationRows(RelocationContext context)
+        {
+            return Enumerable.Range(0, GetRelocationEntryCount(context))
+                .Select(index => CreateRelocationInfo(context, ReadRelocationEntry(context, index))).ToList();
+        }
+
+        private static int GetRelocationEntryCount(RelocationContext context)
+        {
+            // 同时受声明条目数和实际字节数约束，步长按真实 sh_type 决定。
+            return (int)Math.Min(context.Section.sh_size / context.Section.sh_entsize,
+                (ulong)(context.Data.Length / GetRelocationEntrySize(context.Parser.Is64Bit, IsRela(context))));
+        }
+
+        private static bool IsRela(RelocationContext context)
+        {
+            return context.Section.sh_type == (uint)SectionType.SHT_RELA;
+        }
+
+        private static int GetRelocationEntrySize(bool is64Bit, bool isRela)
+        {
+            return is64Bit ? (isRela ? 24 : 16) : (isRela ? 12 : 8);
+        }
+
+        private static ELFRelocationInfo CreateRelocationInfo(RelocationContext context, (ulong Offset, ulong Info, long Addend) entry)
+        {
+            return ResolveRelocationInfo(context, entry, SplitRelocInfo(context.Parser, entry.Info));
+        }
+
+        private static ELFRelocationInfo ResolveRelocationInfo(RelocationContext context,
+            (ulong Offset, ulong Info, long Addend) entry, (uint Symbol, uint Type) info)
+        {
+            return FormatRelocationInfo(context, entry, info.Type,
+                ResolveRelocSymbol(context.Parser, context.Symbols, info.Symbol, context.SymbolType));
+        }
+
+        private static ELFRelocationInfo FormatRelocationInfo(RelocationContext context,
+            (ulong Offset, ulong Info, long Addend) entry, uint type, (string Name, string Value) symbol)
+        {
+            return new ELFRelocationInfo
+            {
+                Offset = ELFDisplayFormatting.Hex(entry.Offset, context.Parser.Is64Bit),
+                Info = ELFDisplayFormatting.Hex(entry.Info, context.Parser.Is64Bit),
+                Type = ELFRelocation.GetRelocationTypeName(type, context.Parser.Header.e_machine) ?? "",
+                SymbolValue = symbol.Value.PadLeft(16),
+                Symbol = symbol.Name,
+                Addend = IsRela(context) ? entry.Addend.ToString(CultureInfo.InvariantCulture) : "",
+                SectionName = context.Name
+            };
+        }
+
+        private static List<ELFSymbol> ReadRelocationSymbols(ELFParser parser, int index)
+        {
+            // 复用 Parser 的符号缓存；GOT 和多个重定位节不重复解析关联符号表。
+            return parser.GetOrParseSymbols(index, () => ParseRelocationSymbols(parser, parser.GetSectionData(index)));
+        }
+
+        private static List<ELFSymbol> ParseRelocationSymbols(ELFParser parser, byte[] data)
+        {
+            return Enumerable.Range(0, data.Length / GetSymbolEntrySize(parser.Is64Bit))
+                .Select(index => ReadSymbolAtIndex(parser, data, index)).ToList();
+        }
+
+        private static ELFSymbol ReadSymbolAtIndex(ELFParser parser, byte[] data, int index)
+        {
+            return ReadSymbol(parser, data, index * GetSymbolEntrySize(parser.Is64Bit));
+        }
+
+        private static int GetSymbolEntrySize(bool is64Bit)
+        {
+            return is64Bit ? 24 : 16;
+        }
+
+        private static ELFSymbol ReadSymbol(ELFParser parser, byte[] data, int offset)
+        {
+            return parser.Is64Bit ? ReadSymbol64(data, offset, parser.Header.IsLittleEndian())
+                : ReadSymbol32(data, offset, parser.Header.IsLittleEndian());
         }
 
         private static ELFSymbol ReadSymbol64(byte[] d, int b, bool little) => new()
@@ -127,102 +139,69 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
             StShndx = ELFParserUtils.ReadUInt16(d, b + 14, little)
         };
 
-        // 读取一个重定位条目（32/64 位 × REL/RELA × 字节序），不修改源缓冲
-        private static void ReadRelocationEntry(ELFParser Parser, byte[] data, int j, bool isRela, out ulong offset, out ulong info, out long addend)
+        private static (ulong Offset, ulong Info, long Addend) ReadRelocationEntry(RelocationContext context, int index)
         {
-            addend = -1;
-            bool little = Parser.Header.IsLittleEndian();
-            if (Parser.Is64Bit)
-            {
-                int b = j * (isRela ? 24 : 16);
-                offset = ELFParserUtils.ReadUInt64(data, b, little);
-                info = ELFParserUtils.ReadUInt64(data, b + 8, little);
-                if (isRela)
-                {
-                    addend = ELFParserUtils.ReadInt64(data, b + 16, little);
-                }
-            }
-            else
-            {
-                int b = j * (isRela ? 12 : 8);
-                offset = ELFParserUtils.ReadUInt32(data, b, little);
-                info = ELFParserUtils.ReadUInt32(data, b + 4, little);
-                if (isRela)
-                {
-                    addend = ELFParserUtils.ReadInt32(data, b + 8, little);
-                }
-            }
+            return ReadRelocationEntryAtOffset(context,
+                index * GetRelocationEntrySize(context.Parser.Is64Bit, IsRela(context)));
         }
 
-        // 拆分 r_info 为符号索引与重定位类型（位数不同分割位不同）
-        private static void SplitRelocInfo(ELFParser parser, ulong info, out uint sym, out uint type)
+        private static (ulong Offset, ulong Info, long Addend) ReadRelocationEntryAtOffset(RelocationContext context, int offset)
         {
-            if (!parser.Is64Bit)
-            {
-                sym = (uint)(info >> 8);
-                type = (uint)(info & 0xff);
-                return;
-            }
-
-            // MIPS64(N64 ABI) 的 r_info 不是单一 64 位整数，而是结构体 { r_sym(32), r_ssym(8), r_type3(8), r_type2(8), r_type(8) }；
-            // 符号索引与主重定位类型的取法随字节序不同（info 已按文件字节序读入）。其余架构用标准 ELF64 拆分。
-            ushort machine = parser.Header.e_machine;
-            if (machine is ((ushort)EMachine.EM_MIPS) or ((ushort)EMachine.EM_MIPS_RS3_LE))
-            {
-                if (parser.Header.IsLittleEndian())
-                {
-                    sym = (uint)(info & 0xffffffff);
-                    type = (uint)((info >> 56) & 0xff);
-                }
-                else
-                {
-                    sym = (uint)(info >> 32);
-                    type = (uint)(info & 0xff);
-                }
-                return;
-            }
-
-            sym = (uint)(info >> 32);
-            type = (uint)(info & 0xffffffff);
+            return context.Parser.Is64Bit ? ReadRelocation64(context, offset) : ReadRelocation32(context, offset);
         }
 
-        // 解析符号名与符号值（越界返回默认零值）
-        private static (string name, string value) ResolveRelocSymbol(ELFParser Parser, List<ELFSymbol> symbols, uint sym, SectionType symTabType)
+        private static (ulong Offset, ulong Info, long Addend) ReadRelocation64(RelocationContext context, int offset)
         {
-            if (sym >= symbols.Count)
-            {
-                // 回退值宽度与正常值一致：64 位 16 位十六进制，32 位 8 位
-                return (string.Empty, Parser.Is64Bit ? "0000000000000000" : "00000000");
-            }
-            ELFSymbol symbol = symbols[(int)sym];
-            string name = ResolveRelocSymbolName(Parser, symbol, (int)sym, symTabType);
-            string value = Parser.Is64Bit ? $"{symbol.StValue:x16}" : $"{symbol.StValue:x8}";
-            return (name, value);
+            return (ELFParserUtils.ReadUInt64(context.Data, offset, context.Parser.Header.IsLittleEndian()),
+                ELFParserUtils.ReadUInt64(context.Data, offset + 8, context.Parser.Header.IsLittleEndian()),
+                IsRela(context) ? ELFParserUtils.ReadInt64(context.Data, offset + 16, context.Parser.Header.IsLittleEndian()) : -1);
         }
 
-        // 由 sh_link 目标节的 sh_type 推导符号表类型：确为 SHT_SYMTAB 时用 .symtab/.strtab 解析名字，
-        // 否则回退 SHT_DYNSYM(.dynsym/.dynstr)。避免硬编码 SHT_DYNSYM 对链接 .symtab 的重定位节取错字符串表偏移。
-        private static SectionType ResolveSymbolTableType(ELFParser Parser, int symTabIndex)
+        private static (ulong Offset, ulong Info, long Addend) ReadRelocation32(RelocationContext context, int offset)
         {
-            if (Parser.SectionHeaders != null && symTabIndex >= 0 && symTabIndex < Parser.SectionHeaders.Count
-                && Parser.SectionHeaders[symTabIndex].sh_type == (uint)SectionType.SHT_SYMTAB)
-            {
-                return SectionType.SHT_SYMTAB;
-            }
-            return SectionType.SHT_DYNSYM;
+            return (ELFParserUtils.ReadUInt32(context.Data, offset, context.Parser.Header.IsLittleEndian()),
+                ELFParserUtils.ReadUInt32(context.Data, offset + 4, context.Parser.Header.IsLittleEndian()),
+                IsRela(context) ? ELFParserUtils.ReadInt32(context.Data, offset + 8, context.Parser.Header.IsLittleEndian()) : -1);
         }
 
-        // 解析重定位符号名：SECTION 类符号 st_name 通常为 0，回退显示其所属节名（与符号表一致）
-        private static string ResolveRelocSymbolName(ELFParser Parser, ELFSymbol symbol, int index, SectionType symTabType)
+        private static (uint Symbol, uint Type) SplitRelocInfo(ELFParser parser, ulong info)
         {
-            string name = ELFSymbolNameResolver.GetSymbolName(Parser, symbol, symTabType, index);
-            if (string.IsNullOrEmpty(name)
-                && (byte)(symbol.StInfo & ELFConstants.ST_TYPE_MASK) == (byte)SymbolType.STT_SECTION
-                && symbol.StShndx > 0 && symbol.StShndx < ELFConstants.SHN_LORESERVE)
-            {
-                name = ELFSymbolNameResolver.GetSectionName(Parser, symbol.StShndx);
-            }
-            return name;
+            return parser.Is64Bit ? SplitRelocInfo64(parser, info) : ((uint)(info >> 8), (uint)(info & 0xff));
+        }
+
+        private static (uint Symbol, uint Type) SplitRelocInfo64(ELFParser parser, ulong info)
+        {
+            return parser.Header.e_machine is ((ushort)EMachine.EM_MIPS) or ((ushort)EMachine.EM_MIPS_RS3_LE)
+                ? SplitMipsRelocInfo(parser.Header.IsLittleEndian(), info) : ((uint)(info >> 32), (uint)(info & 0xffffffff));
+        }
+
+        private static (uint Symbol, uint Type) SplitMipsRelocInfo(bool littleEndian, ulong info)
+        {
+            // N64 r_info 是 {r_sym, r_ssym, r_type3, r_type2, r_type}，主类型随字节序取不同字节。
+            return littleEndian ? ((uint)(info & 0xffffffff), (uint)((info >> 56) & 0xff))
+                : ((uint)(info >> 32), (uint)(info & 0xff));
+        }
+
+        private static (string Name, string Value) ResolveRelocSymbol(ELFParser parser, List<ELFSymbol> symbols, uint index, SectionType type)
+        {
+            return index < symbols.Count ? GetRelocSymbol(parser, symbols[(int)index], (int)index, type)
+                : (string.Empty, ELFDisplayFormatting.Hex(0, parser.Is64Bit));
+        }
+
+        private static (string Name, string Value) GetRelocSymbol(ELFParser parser, ELFSymbol symbol, int index, SectionType type)
+        {
+            return (ELFDisplayFormatting.SymbolName(parser, symbol, type, index), ELFDisplayFormatting.Hex(symbol.StValue, parser.Is64Bit));
+        }
+
+        private static SectionType ResolveSymbolTableType(ELFParser parser, int index)
+        {
+            return IsStaticSymbolTable(parser, index) ? SectionType.SHT_SYMTAB : SectionType.SHT_DYNSYM;
+        }
+
+        private static bool IsStaticSymbolTable(ELFParser parser, int index)
+        {
+            return index >= 0 && index < (parser.SectionHeaders?.Count ?? 0)
+                && parser.SectionHeaders![index].sh_type == (uint)SectionType.SHT_SYMTAB;
         }
     }
 }

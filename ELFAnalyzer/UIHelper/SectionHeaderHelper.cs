@@ -5,34 +5,64 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
 {
     internal static class SectionHeaderHelper
     {
-        internal static List<ELFSectionHeaderInfo> GetSectionHeaderInfoList(ELFParser Parser)
+        private readonly record struct SectionIdentity(int Index, string Name, string Type);
+        private readonly record struct SectionLayout(string Address, string Offset, string Size, string EntrySize, string Alignment);
+        private readonly record struct SectionMetadata(string Flags, string Link, string Info);
+
+        internal static List<ELFSectionHeaderInfo> GetSectionHeaderInfoList(ELFParser parser)
         {
-            List<ELFSectionHeaderInfo> result = [];
+            return GetSectionHeaders(parser).Select((section, index) => CreateSectionInfo(parser, section, index)).ToList();
+        }
 
-            if (Parser.SectionHeaders != null)
+        private static List<ELFSectionHeader> GetSectionHeaders(ELFParser parser) => parser.SectionHeaders ?? [];
+
+        private static ELFSectionHeaderInfo CreateSectionInfo(ELFParser parser, ELFSectionHeader section, int index)
+        {
+            return AssembleSectionInfo(CreateIdentity(parser, section, index),
+                CreateLayout(section, parser.Is64Bit), CreateMetadata(section));
+        }
+
+        private static ELFSectionHeaderInfo AssembleSectionInfo(SectionIdentity identity,
+            SectionLayout layout, SectionMetadata metadata)
+        {
+            // 行组装只映射已格式化字段，不混入布局、标志和数值的转换规则。
+            return new ELFSectionHeaderInfo
             {
-                for (int i = 0; i < Parser.SectionHeaders.Count; i++)
-                {
-                    Models.ELFSectionHeader sh = Parser.SectionHeaders[i];
-                    result.Add(new ELFSectionHeaderInfo
-                    {
-                        Index = i,
-                        Name = ELFSymbolNameResolver.GetSectionName(Parser, i),
-                        Type = Core.ELFSectionHeaderReader.GetSectionType(sh.sh_type),
-                        // 十六进制宽度按位宽区分(64位=16位宽/32位=8位宽)，与 SymbolTableHelper 及 readelf 一致
-                        Address = Parser.Is64Bit ? $"0x{sh.sh_addr:x16}" : $"0x{sh.sh_addr:x8}",
-                        Offset = Parser.Is64Bit ? $"0x{sh.sh_offset:x16}" : $"0x{sh.sh_offset:x8}",
-                        Size = $"{sh.sh_size}",
-                        EntSize = $"{sh.sh_entsize}",
-                        Flags = Core.ELFSectionHeaderReader.GetSectionFlags(sh.sh_flags),
-                        Link = $"{sh.sh_link}",
-                        Info = $"{sh.sh_info}",
-                        Align = $"0x{sh.sh_addralign:x}"
-                    });
-                }
-            }
+                Index = identity.Index,
+                Name = identity.Name,
+                Type = identity.Type,
+                Address = layout.Address,
+                Offset = layout.Offset,
+                Size = layout.Size,
+                EntSize = layout.EntrySize,
+                Flags = metadata.Flags,
+                Link = metadata.Link,
+                Info = metadata.Info,
+                Align = layout.Alignment
+            };
+        }
 
-            return result;
+        private static SectionIdentity CreateIdentity(ELFParser parser, ELFSectionHeader section, int index)
+        {
+            return new SectionIdentity(index, ELFSymbolNameResolver.GetSectionName(parser, index),
+                ELFSectionHeaderReader.GetSectionType(section.sh_type));
+        }
+
+        private static SectionLayout CreateLayout(ELFSectionHeader section, bool is64Bit)
+        {
+            // 地址和偏移保留原有位宽，大小与对齐仍采用原显示格式。
+            return new SectionLayout(
+                ELFDisplayFormatting.Address(section.sh_addr, is64Bit),
+                ELFDisplayFormatting.Address(section.sh_offset, is64Bit),
+                ELFDisplayFormatting.Number(section.sh_size),
+                ELFDisplayFormatting.Number(section.sh_entsize),
+                $"0x{section.sh_addralign:x}");
+        }
+
+        private static SectionMetadata CreateMetadata(ELFSectionHeader section)
+        {
+            return new SectionMetadata(ELFSectionHeaderReader.GetSectionFlags(section.sh_flags),
+                ELFDisplayFormatting.Number(section.sh_link), ELFDisplayFormatting.Number(section.sh_info));
         }
     }
 }

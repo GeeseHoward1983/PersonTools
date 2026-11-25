@@ -1,0 +1,8333 @@
+{
+  "elf32-be-machine3/programs": [
+    {
+      "Type": "PT_LOAD",
+      "Offset": "0x00000bb8",
+      "VirtAddr": "0x00001000",
+      "PhysAddr": "0x00001000",
+      "FileSize": "64",
+      "MemSize": "128",
+      "Flags": "RWE",
+      "Align": "0x1000"
+    },
+    {
+      "Type": "PT_LOAD",
+      "Offset": "0x00000000",
+      "VirtAddr": "0x00000000",
+      "PhysAddr": "0x00000000",
+      "FileSize": "0",
+      "MemSize": "128",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "PT_LOAD",
+      "Offset": "0x00000000",
+      "VirtAddr": "0xfffffffffffffff7",
+      "PhysAddr": "0x00000000",
+      "FileSize": "0",
+      "MemSize": "32",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "PT_INTERP",
+      "Offset": "0x00000800",
+      "VirtAddr": "0x00000000",
+      "PhysAddr": "0x00000000",
+      "FileSize": "17",
+      "MemSize": "0",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "PT_INTERP",
+      "Offset": "0xffffffffffffffff",
+      "VirtAddr": "0x00000000",
+      "PhysAddr": "0x00000000",
+      "FileSize": "18446744073709551615",
+      "MemSize": "0",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "UNKNOWN(4294967295)",
+      "Offset": "0xffffffffffffffff",
+      "VirtAddr": "0x00000000",
+      "PhysAddr": "0x00000000",
+      "FileSize": "0",
+      "MemSize": "18446744073709551615",
+      "Flags": "",
+      "Align": "0x0"
+    }
+  ],
+  "elf32-be-machine3/sections": [
+    {
+      "Index": 0,
+      "Name": "",
+      "Type": "SHT_NULL",
+      "Address": "0x00000000",
+      "Offset": "0x00000000",
+      "Size": "0",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x0"
+    },
+    {
+      "Index": 1,
+      "Name": ".shstrtab",
+      "Type": "SHT_STRTAB",
+      "Address": "0x00000000",
+      "Offset": "0x00000080",
+      "Size": "141",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 2,
+      "Name": ".text",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x00001000",
+      "Offset": "0x00000bb8",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 3,
+      "Name": ".debug",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x00000000",
+      "Offset": "0x00000bf8",
+      "Size": "32",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 4,
+      "Name": ".bss",
+      "Type": "SHT_NOBITS",
+      "Address": "0x00001040",
+      "Offset": "0x00000c1c",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "WA",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 5,
+      "Name": ".empty",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x00001008",
+      "Offset": "0x00000c1c",
+      "Size": "0",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 6,
+      "Name": ".dynstr",
+      "Type": "SHT_STRTAB",
+      "Address": "0x00003000",
+      "Offset": "0x00000200",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 7,
+      "Name": ".dynsym",
+      "Type": "SHT_DYNSYM",
+      "Address": "0x00000000",
+      "Offset": "0x00000280",
+      "Size": "96",
+      "EntSize": "16",
+      "Flags": "",
+      "Link": "6",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 8,
+      "Name": ".got",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x00002000",
+      "Offset": "0x00000320",
+      "Size": "20",
+      "EntSize": "4",
+      "Flags": "WA",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 9,
+      "Name": ".got.plt",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x00002100",
+      "Offset": "0x00000350",
+      "Size": "20",
+      "EntSize": "4",
+      "Flags": "WA",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 10,
+      "Name": ".strtab",
+      "Type": "SHT_STRTAB",
+      "Address": "0x00000000",
+      "Offset": "0x00000380",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 11,
+      "Name": ".symtab",
+      "Type": "SHT_SYMTAB",
+      "Address": "0x00000000",
+      "Offset": "0x000003c0",
+      "Size": "96",
+      "EntSize": "16",
+      "Flags": "",
+      "Link": "10",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 12,
+      "Name": ".rela.plt",
+      "Type": "SHT_RELA",
+      "Address": "0x00000000",
+      "Offset": "0x00000460",
+      "Size": "36",
+      "EntSize": "12",
+      "Flags": "",
+      "Link": "7",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 13,
+      "Name": ".rel.dyn",
+      "Type": "SHT_REL",
+      "Address": "0x00000000",
+      "Offset": "0x000004e0",
+      "Size": "24",
+      "EntSize": "8",
+      "Flags": "",
+      "Link": "7",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 14,
+      "Name": ".rela.dyn",
+      "Type": "SHT_RELA",
+      "Address": "0x00000000",
+      "Offset": "0x00000540",
+      "Size": "36",
+      "EntSize": "12",
+      "Flags": "",
+      "Link": "11",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 15,
+      "Name": ".rel.plt",
+      "Type": "SHT_REL",
+      "Address": "0x00000000",
+      "Offset": "0x000005c0",
+      "Size": "24",
+      "EntSize": "8",
+      "Flags": "",
+      "Link": "7",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 16,
+      "Name": ".overflow",
+      "Type": "SHT_PROGBITS",
+      "Address": "0xfffffffffffffff7",
+      "Offset": "0x00000c80",
+      "Size": "16",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 17,
+      "Name": "",
+      "Type": "SHT_NULL",
+      "Address": "0x00001008",
+      "Offset": "0x00000000",
+      "Size": "8",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x0"
+    }
+  ],
+  "elf32-be-machine3/dynamic": [
+    {
+      "Tag": "0x00000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x0000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x00000001",
+      "Type": "DT_NEEDED",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x0000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x0000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x0000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x0000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x6ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x00000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x00000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf32-be-machine3/symbols-dynamic": [
+    {
+      "Number": 0,
+      "Value": "0x00001000",
+      "Size": "0",
+      "Type": "NOTYPE",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "UND",
+      "Name": ""
+    },
+    {
+      "Number": 1,
+      "Value": "0x00001008",
+      "Size": "1",
+      "Type": "FUNC",
+      "Bind": "GLOBAL",
+      "Vis": "INTERNAL",
+      "Ndx": "2",
+      "Name": "dyn_symbol@@API_1"
+    },
+    {
+      "Number": 2,
+      "Value": "0x00001010",
+      "Size": "2",
+      "Type": "SECTION",
+      "Bind": "LOCAL",
+      "Vis": "HIDDEN",
+      "Ndx": "2",
+      "Name": ".text"
+    },
+    {
+      "Number": 3,
+      "Value": "0x00001018",
+      "Size": "3",
+      "Type": "OBJECT",
+      "Bind": "GLOBAL",
+      "Vis": "PROTECTED",
+      "Ndx": "UND",
+      "Name": "dyn_symbol@API_1"
+    },
+    {
+      "Number": 4,
+      "Value": "0xffffffff",
+      "Size": "4",
+      "Type": "FUNC",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "ABS",
+      "Name": "dyn_symbol@@API_2"
+    },
+    {
+      "Number": 5,
+      "Value": "0x00001028",
+      "Size": "5",
+      "Type": "HIPROC",
+      "Bind": "HIPROC",
+      "Vis": "INTERNAL",
+      "Ndx": "COM",
+      "Name": "dyn_symbol"
+    }
+  ],
+  "elf32-be-machine3/symbols-static": [
+    {
+      "Number": 0,
+      "Value": "0x00001000",
+      "Size": "0",
+      "Type": "NOTYPE",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "UND",
+      "Name": ""
+    },
+    {
+      "Number": 1,
+      "Value": "0x00001008",
+      "Size": "1",
+      "Type": "FUNC",
+      "Bind": "GLOBAL",
+      "Vis": "INTERNAL",
+      "Ndx": "2",
+      "Name": "static_symbol"
+    },
+    {
+      "Number": 2,
+      "Value": "0x00001010",
+      "Size": "2",
+      "Type": "SECTION",
+      "Bind": "LOCAL",
+      "Vis": "HIDDEN",
+      "Ndx": "2",
+      "Name": ".text"
+    },
+    {
+      "Number": 3,
+      "Value": "0x00001018",
+      "Size": "3",
+      "Type": "OBJECT",
+      "Bind": "GLOBAL",
+      "Vis": "PROTECTED",
+      "Ndx": "UND",
+      "Name": "static_symbol"
+    },
+    {
+      "Number": 4,
+      "Value": "0xffffffff",
+      "Size": "4",
+      "Type": "FUNC",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "ABS",
+      "Name": "static_symbol"
+    },
+    {
+      "Number": 5,
+      "Value": "0x00001028",
+      "Size": "5",
+      "Type": "HIPROC",
+      "Bind": "HIPROC",
+      "Vis": "INTERNAL",
+      "Ndx": "COM",
+      "Name": "static_symbol"
+    }
+  ],
+  "elf32-be-machine3/mapping": " Section to Segment mapping:\r\n  \u6BB5\u8282...\r\n   00     .text .bss\r\n   01     \r\n   02     .overflow\r\n   03     \r\n   04     \r\n   05     .text .bss .got .got.plt .overflow\r\n",
+  "elf32-be-machine3/interpreter": "/lib/ld-sample.so",
+  "elf32-be-machine3/attributes": "No attribute sections found.\r\n",
+  "elf32-be-machine3/exidx": "There are no exception index entries in this file.\r\n",
+  "elf32-be-machine3/relocation.rela.plt": [
+    {
+      "Offset": "00002100",
+      "Info": "00000106",
+      "Type": "R_386_GLOB_DAT",
+      "SymbolValue": "        00001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "00002104",
+      "Info": "00000107",
+      "Type": "R_386_JMP_SLOT",
+      "SymbolValue": "        00001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-2147483648",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "00002108",
+      "Info": "0003e708",
+      "Type": "R_386_RELATIVE",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf32-be-machine3/relocation.rel.plt": [
+    {
+      "Offset": "00002100",
+      "Info": "00000106",
+      "Type": "R_386_GLOB_DAT",
+      "SymbolValue": "        00001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "",
+      "SectionName": ".rel.plt"
+    },
+    {
+      "Offset": "00002104",
+      "Info": "00000107",
+      "Type": "R_386_JMP_SLOT",
+      "SymbolValue": "        00001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "",
+      "SectionName": ".rel.plt"
+    },
+    {
+      "Offset": "00002108",
+      "Info": "0003e708",
+      "Type": "R_386_RELATIVE",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rel.plt"
+    }
+  ],
+  "elf32-be-machine3/relocation.rela.dyn": [
+    {
+      "Offset": "00002000",
+      "Info": "00000106",
+      "Type": "R_386_GLOB_DAT",
+      "SymbolValue": "        00001008",
+      "Symbol": "static_symbol",
+      "Addend": "-8",
+      "SectionName": ".rela.dyn"
+    },
+    {
+      "Offset": "00002004",
+      "Info": "00000107",
+      "Type": "R_386_JMP_SLOT",
+      "SymbolValue": "        00001008",
+      "Symbol": "static_symbol",
+      "Addend": "-2147483648",
+      "SectionName": ".rela.dyn"
+    },
+    {
+      "Offset": "00002008",
+      "Info": "0003e708",
+      "Type": "R_386_RELATIVE",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.dyn"
+    }
+  ],
+  "elf32-be-machine3/relocation.rel.dyn": [
+    {
+      "Offset": "00002000",
+      "Info": "00000206",
+      "Type": "R_386_GLOB_DAT",
+      "SymbolValue": "        00001010",
+      "Symbol": ".text",
+      "Addend": "",
+      "SectionName": ".rel.dyn"
+    },
+    {
+      "Offset": "00002004",
+      "Info": "00000207",
+      "Type": "R_386_JMP_SLOT",
+      "SymbolValue": "        00001010",
+      "Symbol": ".text",
+      "Addend": "",
+      "SectionName": ".rel.dyn"
+    },
+    {
+      "Offset": "00002008",
+      "Info": "0003e708",
+      "Type": "R_386_RELATIVE",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rel.dyn"
+    }
+  ],
+  "elf32-be-machine3/relocation.missing": [],
+  "elf32-be-machine3/got.got": [
+    {
+      "Number": "0",
+      "Offset": "0x00002000",
+      "Value": "0x00003000",
+      "Type": "R_386_GLOB_DAT",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x00002004",
+      "Value": "0x00003008",
+      "Type": "R_386_JMP_SLOT",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x00002008",
+      "Value": "0x00003010",
+      "Type": "R_386_RELATIVE",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000200c",
+      "Value": "0x00003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x00002010",
+      "Value": "0xffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    }
+  ],
+  "elf32-be-machine3/got.got.plt": [
+    {
+      "Number": "0",
+      "Offset": "0x00002100",
+      "Value": "0x00003000",
+      "Type": "R_386_GLOB_DAT",
+      "Symbol": "dyn_symbol@@API_1",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x00002104",
+      "Value": "0x00003008",
+      "Type": "R_386_JMP_SLOT",
+      "Symbol": "dyn_symbol@@API_1",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x00002108",
+      "Value": "0x00003010",
+      "Type": "R_386_RELATIVE",
+      "Symbol": "",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000210c",
+      "Value": "0x00003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x00002110",
+      "Value": "0xffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got.plt"
+    }
+  ],
+  "elf32-be-machine3/got.missing": [],
+  "elf32-be-machine3/null-programs": {
+    "Rows": [],
+    "Mapping": " Section to Segment mapping:\r\n  \u6BB5\u8282...\r\n",
+    "Interpreter": ""
+  },
+  "elf32-be-machine3/null-sections": {
+    "Rows": [],
+    "Mapping": " Section to Segment mapping:\r\n  \u6BB5\u8282...\r\n   00     \r\n   01     \r\n   02     \r\n   03     \r\n   04     \r\n   05     \r\n",
+    "Got": [],
+    "Rel": [],
+    "Dynamic": [
+      {
+        "Tag": "0x00000005",
+        "Type": "DT_STRTAB",
+        "Value": "0x3000"
+      },
+      {
+        "Tag": "0x0000000a",
+        "Type": "DT_STRSZ",
+        "Value": "0x40"
+      },
+      {
+        "Tag": "0x00000001",
+        "Type": "DT_NEEDED",
+        "Value": ""
+      },
+      {
+        "Tag": "0x0000000e",
+        "Type": "DT_SONAME",
+        "Value": ""
+      },
+      {
+        "Tag": "0x0000000f",
+        "Type": "DT_RPATH",
+        "Value": ""
+      },
+      {
+        "Tag": "0x0000001d",
+        "Type": "DT_RUNPATH",
+        "Value": ""
+      },
+      {
+        "Tag": "0x0000001e",
+        "Type": "DT_FLAGS",
+        "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+      },
+      {
+        "Tag": "0x6ffffffb",
+        "Type": "DT_FLAGS_1",
+        "Value": "NOW, PIE"
+      },
+      {
+        "Tag": "0x00000014",
+        "Type": "DT_PLTREL",
+        "Value": "DT_RELA"
+      },
+      {
+        "Tag": "0xffffffffffffffff",
+        "Type": "UNKNOWN(18446744073709551615)",
+        "Value": "0xffffffffffffffff"
+      },
+      {
+        "Tag": "0x00000000",
+        "Type": "DT_NULL",
+        "Value": "0x0"
+      }
+    ]
+  },
+  "elf32-be-machine3/null-symbols": [],
+  "elf32-be-machine3/null-dynamic": [],
+  "elf32-be-machine3/empty-dynamic": [],
+  "elf32-be-machine3/dynamic-no-terminator": [
+    {
+      "Tag": "0x00000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x0000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x00000001",
+      "Type": "DT_NEEDED",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x0000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x0000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x0000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x0000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x6ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x00000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x00000001",
+      "Type": "DT_NEEDED",
+      "Value": "dyn_symbol"
+    }
+  ],
+  "elf32-be-machine3/dynamic-zero-string-address": [
+    {
+      "Tag": "0x00000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x0"
+    },
+    {
+      "Tag": "0x0000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x00000001",
+      "Type": "DT_NEEDED",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000000e",
+      "Type": "DT_SONAME",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000000f",
+      "Type": "DT_RPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000001d",
+      "Type": "DT_RUNPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x6ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x00000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x00000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf32-be-machine3/dynamic-zero-string-size": [
+    {
+      "Tag": "0x00000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x0000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x0"
+    },
+    {
+      "Tag": "0x00000001",
+      "Type": "DT_NEEDED",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000000e",
+      "Type": "DT_SONAME",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000000f",
+      "Type": "DT_RPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000001d",
+      "Type": "DT_RUNPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x6ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x00000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x00000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf32-be-machine3/dynamic-missing-string-section": [
+    {
+      "Tag": "0x00000005",
+      "Type": "DT_STRTAB",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x00000001",
+      "Type": "DT_NEEDED",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000000e",
+      "Type": "DT_SONAME",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000000f",
+      "Type": "DT_RPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000001d",
+      "Type": "DT_RUNPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x6ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x00000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x00000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf32-be-machine3/dynamic-string-offset-overflow": [
+    {
+      "Tag": "0x00000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x0000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x00000001",
+      "Type": "DT_NEEDED",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x0000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x0000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x0000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x6ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x00000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x00000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf32-be-machine3/dynamic-empty-string": [
+    {
+      "Tag": "0x00000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x0000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x00000001",
+      "Type": "DT_NEEDED",
+      "Value": "0x0"
+    },
+    {
+      "Tag": "0x0000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x0000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x0000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x0000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x6ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x00000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x00000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf32-be-machine3/dynamic-file-offset-overflow": [
+    {
+      "Tag": "0x00000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x0000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x00000001",
+      "Type": "DT_NEEDED",
+      "Value": "0xc"
+    },
+    {
+      "Tag": "0x0000000e",
+      "Type": "DT_SONAME",
+      "Value": "0xc"
+    },
+    {
+      "Tag": "0x0000000f",
+      "Type": "DT_RPATH",
+      "Value": "0x19"
+    },
+    {
+      "Tag": "0x0000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "0x19"
+    },
+    {
+      "Tag": "0x0000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x6ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x00000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x00000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf32-be-machine3/interpreter-file-offset-overflow": "",
+  "elf32-be-machine3/interpreter-file-length-clamp": "xyz",
+  "elf32-be-machine3/interpreter-declared-length": "/lib",
+  "elf32-be-machine3/relocation-zero-entsize": [],
+  "elf32-be-machine3/relocation-small-entsize": [
+    {
+      "Offset": "00002100",
+      "Info": "00000106",
+      "Type": "R_386_GLOB_DAT",
+      "SymbolValue": "        00001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "00002104",
+      "Info": "00000107",
+      "Type": "R_386_JMP_SLOT",
+      "SymbolValue": "        00001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-2147483648",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "00002108",
+      "Info": "0003e708",
+      "Type": "R_386_RELATIVE",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf32-be-machine3/relocation-truncated": [],
+  "elf32-be-machine3/relocation-size-overflow": [],
+  "elf32-be-machine3/relocation-offset-overflow": [],
+  "elf32-be-machine3/relocation-invalid-symbol-link": [
+    {
+      "Offset": "00002100",
+      "Info": "00000106",
+      "Type": "R_386_GLOB_DAT",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "00002104",
+      "Info": "00000107",
+      "Type": "R_386_JMP_SLOT",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "-2147483648",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "00002108",
+      "Info": "0003e708",
+      "Type": "R_386_RELATIVE",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf32-be-machine3/relocation-name-type-disagree": [
+    {
+      "Offset": "00002100",
+      "Info": "00000106",
+      "Type": "R_386_GLOB_DAT",
+      "SymbolValue": "        00001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "fffffff8",
+      "Info": "00002104",
+      "Type": "R_386_PLT32",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "00000107",
+      "Info": "80000000",
+      "Type": "R_386_NONE",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf32-be-machine3/relocation-same-name-nonrel-first": [
+    {
+      "Offset": "00002100",
+      "Info": "00000106",
+      "Type": "R_386_GLOB_DAT",
+      "SymbolValue": "        00001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "00002104",
+      "Info": "00000107",
+      "Type": "R_386_JMP_SLOT",
+      "SymbolValue": "        00001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-2147483648",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "00002108",
+      "Info": "0003e708",
+      "Type": "R_386_RELATIVE",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf32-be-machine3/got-ignore-entsize": [
+    {
+      "Number": "0",
+      "Offset": "0x00002000",
+      "Value": "0x00003000",
+      "Type": "R_386_GLOB_DAT",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x00002004",
+      "Value": "0x00003008",
+      "Type": "R_386_JMP_SLOT",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x00002008",
+      "Value": "0x00003010",
+      "Type": "R_386_RELATIVE",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000200c",
+      "Value": "0x00003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x00002010",
+      "Value": "0xffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    }
+  ],
+  "elf32-be-machine3/got-truncated-slot": [],
+  "elf32-be-machine3/got-offset-overflow": [],
+  "elf32-be-machine3/got-size-clamp": {
+    "Count": 824,
+    "First": {
+      "Number": "0",
+      "Offset": "0x00002000",
+      "Value": "0x00003000",
+      "Type": "R_386_GLOB_DAT",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    "Last": {
+      "Number": "823",
+      "Offset": "0x00002cdc",
+      "Value": "0x0078797a",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    "Hash": "1E13DE9D9DA0A97483E04D4051649CA42239E47FDC16B78C85C994A87A24A5CC"
+  },
+  "elf32-be-machine3/got-address-wrap": [
+    {
+      "Number": "0",
+      "Offset": "0xfffffffffffffffe",
+      "Value": "0x00003000",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x00000002",
+      "Value": "0x00003008",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x00000006",
+      "Value": "0x00003010",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000000a",
+      "Value": "0x00003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x0000000e",
+      "Value": "0xffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    }
+  ],
+  "elf32-le-machine3/programs": [
+    {
+      "Type": "PT_LOAD",
+      "Offset": "0x00000bb8",
+      "VirtAddr": "0x00001000",
+      "PhysAddr": "0x00001000",
+      "FileSize": "64",
+      "MemSize": "128",
+      "Flags": "RWE",
+      "Align": "0x1000"
+    },
+    {
+      "Type": "PT_LOAD",
+      "Offset": "0x00000000",
+      "VirtAddr": "0x00000000",
+      "PhysAddr": "0x00000000",
+      "FileSize": "0",
+      "MemSize": "128",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "PT_LOAD",
+      "Offset": "0x00000000",
+      "VirtAddr": "0xfffffffffffffff7",
+      "PhysAddr": "0x00000000",
+      "FileSize": "0",
+      "MemSize": "32",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "PT_INTERP",
+      "Offset": "0x00000800",
+      "VirtAddr": "0x00000000",
+      "PhysAddr": "0x00000000",
+      "FileSize": "17",
+      "MemSize": "0",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "PT_INTERP",
+      "Offset": "0xffffffffffffffff",
+      "VirtAddr": "0x00000000",
+      "PhysAddr": "0x00000000",
+      "FileSize": "18446744073709551615",
+      "MemSize": "0",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "UNKNOWN(4294967295)",
+      "Offset": "0xffffffffffffffff",
+      "VirtAddr": "0x00000000",
+      "PhysAddr": "0x00000000",
+      "FileSize": "0",
+      "MemSize": "18446744073709551615",
+      "Flags": "",
+      "Align": "0x0"
+    }
+  ],
+  "elf32-le-machine3/sections": [
+    {
+      "Index": 0,
+      "Name": "",
+      "Type": "SHT_NULL",
+      "Address": "0x00000000",
+      "Offset": "0x00000000",
+      "Size": "0",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x0"
+    },
+    {
+      "Index": 1,
+      "Name": ".shstrtab",
+      "Type": "SHT_STRTAB",
+      "Address": "0x00000000",
+      "Offset": "0x00000080",
+      "Size": "141",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 2,
+      "Name": ".text",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x00001000",
+      "Offset": "0x00000bb8",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 3,
+      "Name": ".debug",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x00000000",
+      "Offset": "0x00000bf8",
+      "Size": "32",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 4,
+      "Name": ".bss",
+      "Type": "SHT_NOBITS",
+      "Address": "0x00001040",
+      "Offset": "0x00000c1c",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "WA",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 5,
+      "Name": ".empty",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x00001008",
+      "Offset": "0x00000c1c",
+      "Size": "0",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 6,
+      "Name": ".dynstr",
+      "Type": "SHT_STRTAB",
+      "Address": "0x00003000",
+      "Offset": "0x00000200",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 7,
+      "Name": ".dynsym",
+      "Type": "SHT_DYNSYM",
+      "Address": "0x00000000",
+      "Offset": "0x00000280",
+      "Size": "96",
+      "EntSize": "16",
+      "Flags": "",
+      "Link": "6",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 8,
+      "Name": ".got",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x00002000",
+      "Offset": "0x00000320",
+      "Size": "20",
+      "EntSize": "4",
+      "Flags": "WA",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 9,
+      "Name": ".got.plt",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x00002100",
+      "Offset": "0x00000350",
+      "Size": "20",
+      "EntSize": "4",
+      "Flags": "WA",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 10,
+      "Name": ".strtab",
+      "Type": "SHT_STRTAB",
+      "Address": "0x00000000",
+      "Offset": "0x00000380",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 11,
+      "Name": ".symtab",
+      "Type": "SHT_SYMTAB",
+      "Address": "0x00000000",
+      "Offset": "0x000003c0",
+      "Size": "96",
+      "EntSize": "16",
+      "Flags": "",
+      "Link": "10",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 12,
+      "Name": ".rela.plt",
+      "Type": "SHT_RELA",
+      "Address": "0x00000000",
+      "Offset": "0x00000460",
+      "Size": "36",
+      "EntSize": "12",
+      "Flags": "",
+      "Link": "7",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 13,
+      "Name": ".rel.dyn",
+      "Type": "SHT_REL",
+      "Address": "0x00000000",
+      "Offset": "0x000004e0",
+      "Size": "24",
+      "EntSize": "8",
+      "Flags": "",
+      "Link": "7",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 14,
+      "Name": ".rela.dyn",
+      "Type": "SHT_RELA",
+      "Address": "0x00000000",
+      "Offset": "0x00000540",
+      "Size": "36",
+      "EntSize": "12",
+      "Flags": "",
+      "Link": "11",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 15,
+      "Name": ".rel.plt",
+      "Type": "SHT_REL",
+      "Address": "0x00000000",
+      "Offset": "0x000005c0",
+      "Size": "24",
+      "EntSize": "8",
+      "Flags": "",
+      "Link": "7",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 16,
+      "Name": ".overflow",
+      "Type": "SHT_PROGBITS",
+      "Address": "0xfffffffffffffff7",
+      "Offset": "0x00000c80",
+      "Size": "16",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 17,
+      "Name": "",
+      "Type": "SHT_NULL",
+      "Address": "0x00001008",
+      "Offset": "0x00000000",
+      "Size": "8",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x0"
+    }
+  ],
+  "elf32-le-machine3/dynamic": [
+    {
+      "Tag": "0x00000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x0000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x00000001",
+      "Type": "DT_NEEDED",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x0000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x0000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x0000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x0000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x6ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x00000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x00000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf32-le-machine3/symbols-dynamic": [
+    {
+      "Number": 0,
+      "Value": "0x00001000",
+      "Size": "0",
+      "Type": "NOTYPE",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "UND",
+      "Name": ""
+    },
+    {
+      "Number": 1,
+      "Value": "0x00001008",
+      "Size": "1",
+      "Type": "FUNC",
+      "Bind": "GLOBAL",
+      "Vis": "INTERNAL",
+      "Ndx": "2",
+      "Name": "dyn_symbol@@API_1"
+    },
+    {
+      "Number": 2,
+      "Value": "0x00001010",
+      "Size": "2",
+      "Type": "SECTION",
+      "Bind": "LOCAL",
+      "Vis": "HIDDEN",
+      "Ndx": "2",
+      "Name": ".text"
+    },
+    {
+      "Number": 3,
+      "Value": "0x00001018",
+      "Size": "3",
+      "Type": "OBJECT",
+      "Bind": "GLOBAL",
+      "Vis": "PROTECTED",
+      "Ndx": "UND",
+      "Name": "dyn_symbol@API_1"
+    },
+    {
+      "Number": 4,
+      "Value": "0xffffffff",
+      "Size": "4",
+      "Type": "FUNC",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "ABS",
+      "Name": "dyn_symbol@@API_2"
+    },
+    {
+      "Number": 5,
+      "Value": "0x00001028",
+      "Size": "5",
+      "Type": "HIPROC",
+      "Bind": "HIPROC",
+      "Vis": "INTERNAL",
+      "Ndx": "COM",
+      "Name": "dyn_symbol"
+    }
+  ],
+  "elf32-le-machine3/symbols-static": [
+    {
+      "Number": 0,
+      "Value": "0x00001000",
+      "Size": "0",
+      "Type": "NOTYPE",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "UND",
+      "Name": ""
+    },
+    {
+      "Number": 1,
+      "Value": "0x00001008",
+      "Size": "1",
+      "Type": "FUNC",
+      "Bind": "GLOBAL",
+      "Vis": "INTERNAL",
+      "Ndx": "2",
+      "Name": "static_symbol"
+    },
+    {
+      "Number": 2,
+      "Value": "0x00001010",
+      "Size": "2",
+      "Type": "SECTION",
+      "Bind": "LOCAL",
+      "Vis": "HIDDEN",
+      "Ndx": "2",
+      "Name": ".text"
+    },
+    {
+      "Number": 3,
+      "Value": "0x00001018",
+      "Size": "3",
+      "Type": "OBJECT",
+      "Bind": "GLOBAL",
+      "Vis": "PROTECTED",
+      "Ndx": "UND",
+      "Name": "static_symbol"
+    },
+    {
+      "Number": 4,
+      "Value": "0xffffffff",
+      "Size": "4",
+      "Type": "FUNC",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "ABS",
+      "Name": "static_symbol"
+    },
+    {
+      "Number": 5,
+      "Value": "0x00001028",
+      "Size": "5",
+      "Type": "HIPROC",
+      "Bind": "HIPROC",
+      "Vis": "INTERNAL",
+      "Ndx": "COM",
+      "Name": "static_symbol"
+    }
+  ],
+  "elf32-le-machine3/mapping": " Section to Segment mapping:\r\n  \u6BB5\u8282...\r\n   00     .text .bss\r\n   01     \r\n   02     .overflow\r\n   03     \r\n   04     \r\n   05     .text .bss .got .got.plt .overflow\r\n",
+  "elf32-le-machine3/interpreter": "/lib/ld-sample.so",
+  "elf32-le-machine3/attributes": "No attribute sections found.\r\n",
+  "elf32-le-machine3/exidx": "There are no exception index entries in this file.\r\n",
+  "elf32-le-machine3/relocation.rela.plt": [
+    {
+      "Offset": "00002100",
+      "Info": "00000106",
+      "Type": "R_386_GLOB_DAT",
+      "SymbolValue": "        00001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "00002104",
+      "Info": "00000107",
+      "Type": "R_386_JMP_SLOT",
+      "SymbolValue": "        00001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-2147483648",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "00002108",
+      "Info": "0003e708",
+      "Type": "R_386_RELATIVE",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf32-le-machine3/relocation.rel.plt": [
+    {
+      "Offset": "00002100",
+      "Info": "00000106",
+      "Type": "R_386_GLOB_DAT",
+      "SymbolValue": "        00001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "",
+      "SectionName": ".rel.plt"
+    },
+    {
+      "Offset": "00002104",
+      "Info": "00000107",
+      "Type": "R_386_JMP_SLOT",
+      "SymbolValue": "        00001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "",
+      "SectionName": ".rel.plt"
+    },
+    {
+      "Offset": "00002108",
+      "Info": "0003e708",
+      "Type": "R_386_RELATIVE",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rel.plt"
+    }
+  ],
+  "elf32-le-machine3/relocation.rela.dyn": [
+    {
+      "Offset": "00002000",
+      "Info": "00000106",
+      "Type": "R_386_GLOB_DAT",
+      "SymbolValue": "        00001008",
+      "Symbol": "static_symbol",
+      "Addend": "-8",
+      "SectionName": ".rela.dyn"
+    },
+    {
+      "Offset": "00002004",
+      "Info": "00000107",
+      "Type": "R_386_JMP_SLOT",
+      "SymbolValue": "        00001008",
+      "Symbol": "static_symbol",
+      "Addend": "-2147483648",
+      "SectionName": ".rela.dyn"
+    },
+    {
+      "Offset": "00002008",
+      "Info": "0003e708",
+      "Type": "R_386_RELATIVE",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.dyn"
+    }
+  ],
+  "elf32-le-machine3/relocation.rel.dyn": [
+    {
+      "Offset": "00002000",
+      "Info": "00000206",
+      "Type": "R_386_GLOB_DAT",
+      "SymbolValue": "        00001010",
+      "Symbol": ".text",
+      "Addend": "",
+      "SectionName": ".rel.dyn"
+    },
+    {
+      "Offset": "00002004",
+      "Info": "00000207",
+      "Type": "R_386_JMP_SLOT",
+      "SymbolValue": "        00001010",
+      "Symbol": ".text",
+      "Addend": "",
+      "SectionName": ".rel.dyn"
+    },
+    {
+      "Offset": "00002008",
+      "Info": "0003e708",
+      "Type": "R_386_RELATIVE",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rel.dyn"
+    }
+  ],
+  "elf32-le-machine3/relocation.missing": [],
+  "elf32-le-machine3/got.got": [
+    {
+      "Number": "0",
+      "Offset": "0x00002000",
+      "Value": "0x00003000",
+      "Type": "R_386_GLOB_DAT",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x00002004",
+      "Value": "0x00003008",
+      "Type": "R_386_JMP_SLOT",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x00002008",
+      "Value": "0x00003010",
+      "Type": "R_386_RELATIVE",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000200c",
+      "Value": "0x00003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x00002010",
+      "Value": "0xffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    }
+  ],
+  "elf32-le-machine3/got.got.plt": [
+    {
+      "Number": "0",
+      "Offset": "0x00002100",
+      "Value": "0x00003000",
+      "Type": "R_386_GLOB_DAT",
+      "Symbol": "dyn_symbol@@API_1",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x00002104",
+      "Value": "0x00003008",
+      "Type": "R_386_JMP_SLOT",
+      "Symbol": "dyn_symbol@@API_1",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x00002108",
+      "Value": "0x00003010",
+      "Type": "R_386_RELATIVE",
+      "Symbol": "",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000210c",
+      "Value": "0x00003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x00002110",
+      "Value": "0xffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got.plt"
+    }
+  ],
+  "elf32-le-machine3/got.missing": [],
+  "elf32-le-machine3/null-programs": {
+    "Rows": [],
+    "Mapping": " Section to Segment mapping:\r\n  \u6BB5\u8282...\r\n",
+    "Interpreter": ""
+  },
+  "elf32-le-machine3/null-sections": {
+    "Rows": [],
+    "Mapping": " Section to Segment mapping:\r\n  \u6BB5\u8282...\r\n   00     \r\n   01     \r\n   02     \r\n   03     \r\n   04     \r\n   05     \r\n",
+    "Got": [],
+    "Rel": [],
+    "Dynamic": [
+      {
+        "Tag": "0x00000005",
+        "Type": "DT_STRTAB",
+        "Value": "0x3000"
+      },
+      {
+        "Tag": "0x0000000a",
+        "Type": "DT_STRSZ",
+        "Value": "0x40"
+      },
+      {
+        "Tag": "0x00000001",
+        "Type": "DT_NEEDED",
+        "Value": ""
+      },
+      {
+        "Tag": "0x0000000e",
+        "Type": "DT_SONAME",
+        "Value": ""
+      },
+      {
+        "Tag": "0x0000000f",
+        "Type": "DT_RPATH",
+        "Value": ""
+      },
+      {
+        "Tag": "0x0000001d",
+        "Type": "DT_RUNPATH",
+        "Value": ""
+      },
+      {
+        "Tag": "0x0000001e",
+        "Type": "DT_FLAGS",
+        "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+      },
+      {
+        "Tag": "0x6ffffffb",
+        "Type": "DT_FLAGS_1",
+        "Value": "NOW, PIE"
+      },
+      {
+        "Tag": "0x00000014",
+        "Type": "DT_PLTREL",
+        "Value": "DT_RELA"
+      },
+      {
+        "Tag": "0xffffffffffffffff",
+        "Type": "UNKNOWN(18446744073709551615)",
+        "Value": "0xffffffffffffffff"
+      },
+      {
+        "Tag": "0x00000000",
+        "Type": "DT_NULL",
+        "Value": "0x0"
+      }
+    ]
+  },
+  "elf32-le-machine3/null-symbols": [],
+  "elf32-le-machine3/null-dynamic": [],
+  "elf32-le-machine3/empty-dynamic": [],
+  "elf32-le-machine3/dynamic-no-terminator": [
+    {
+      "Tag": "0x00000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x0000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x00000001",
+      "Type": "DT_NEEDED",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x0000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x0000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x0000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x0000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x6ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x00000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x00000001",
+      "Type": "DT_NEEDED",
+      "Value": "dyn_symbol"
+    }
+  ],
+  "elf32-le-machine3/dynamic-zero-string-address": [
+    {
+      "Tag": "0x00000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x0"
+    },
+    {
+      "Tag": "0x0000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x00000001",
+      "Type": "DT_NEEDED",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000000e",
+      "Type": "DT_SONAME",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000000f",
+      "Type": "DT_RPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000001d",
+      "Type": "DT_RUNPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x6ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x00000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x00000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf32-le-machine3/dynamic-zero-string-size": [
+    {
+      "Tag": "0x00000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x0000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x0"
+    },
+    {
+      "Tag": "0x00000001",
+      "Type": "DT_NEEDED",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000000e",
+      "Type": "DT_SONAME",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000000f",
+      "Type": "DT_RPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000001d",
+      "Type": "DT_RUNPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x6ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x00000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x00000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf32-le-machine3/dynamic-missing-string-section": [
+    {
+      "Tag": "0x00000005",
+      "Type": "DT_STRTAB",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x00000001",
+      "Type": "DT_NEEDED",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000000e",
+      "Type": "DT_SONAME",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000000f",
+      "Type": "DT_RPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000001d",
+      "Type": "DT_RUNPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x0000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x6ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x00000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x00000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf32-le-machine3/dynamic-string-offset-overflow": [
+    {
+      "Tag": "0x00000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x0000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x00000001",
+      "Type": "DT_NEEDED",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x0000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x0000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x0000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x6ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x00000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x00000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf32-le-machine3/dynamic-empty-string": [
+    {
+      "Tag": "0x00000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x0000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x00000001",
+      "Type": "DT_NEEDED",
+      "Value": "0x0"
+    },
+    {
+      "Tag": "0x0000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x0000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x0000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x0000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x6ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x00000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x00000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf32-le-machine3/dynamic-file-offset-overflow": [
+    {
+      "Tag": "0x00000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x0000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x00000001",
+      "Type": "DT_NEEDED",
+      "Value": "0xc"
+    },
+    {
+      "Tag": "0x0000000e",
+      "Type": "DT_SONAME",
+      "Value": "0xc"
+    },
+    {
+      "Tag": "0x0000000f",
+      "Type": "DT_RPATH",
+      "Value": "0x19"
+    },
+    {
+      "Tag": "0x0000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "0x19"
+    },
+    {
+      "Tag": "0x0000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x6ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x00000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x00000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf32-le-machine3/interpreter-file-offset-overflow": "",
+  "elf32-le-machine3/interpreter-file-length-clamp": "xyz",
+  "elf32-le-machine3/interpreter-declared-length": "/lib",
+  "elf32-le-machine3/relocation-zero-entsize": [],
+  "elf32-le-machine3/relocation-small-entsize": [
+    {
+      "Offset": "00002100",
+      "Info": "00000106",
+      "Type": "R_386_GLOB_DAT",
+      "SymbolValue": "        00001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "00002104",
+      "Info": "00000107",
+      "Type": "R_386_JMP_SLOT",
+      "SymbolValue": "        00001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-2147483648",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "00002108",
+      "Info": "0003e708",
+      "Type": "R_386_RELATIVE",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf32-le-machine3/relocation-truncated": [],
+  "elf32-le-machine3/relocation-size-overflow": [],
+  "elf32-le-machine3/relocation-offset-overflow": [],
+  "elf32-le-machine3/relocation-invalid-symbol-link": [
+    {
+      "Offset": "00002100",
+      "Info": "00000106",
+      "Type": "R_386_GLOB_DAT",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "00002104",
+      "Info": "00000107",
+      "Type": "R_386_JMP_SLOT",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "-2147483648",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "00002108",
+      "Info": "0003e708",
+      "Type": "R_386_RELATIVE",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf32-le-machine3/relocation-name-type-disagree": [
+    {
+      "Offset": "00002100",
+      "Info": "00000106",
+      "Type": "R_386_GLOB_DAT",
+      "SymbolValue": "        00001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "fffffff8",
+      "Info": "00002104",
+      "Type": "R_386_PLT32",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "00000107",
+      "Info": "80000000",
+      "Type": "R_386_NONE",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf32-le-machine3/relocation-same-name-nonrel-first": [
+    {
+      "Offset": "00002100",
+      "Info": "00000106",
+      "Type": "R_386_GLOB_DAT",
+      "SymbolValue": "        00001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "00002104",
+      "Info": "00000107",
+      "Type": "R_386_JMP_SLOT",
+      "SymbolValue": "        00001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-2147483648",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "00002108",
+      "Info": "0003e708",
+      "Type": "R_386_RELATIVE",
+      "SymbolValue": "        00000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf32-le-machine3/got-ignore-entsize": [
+    {
+      "Number": "0",
+      "Offset": "0x00002000",
+      "Value": "0x00003000",
+      "Type": "R_386_GLOB_DAT",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x00002004",
+      "Value": "0x00003008",
+      "Type": "R_386_JMP_SLOT",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x00002008",
+      "Value": "0x00003010",
+      "Type": "R_386_RELATIVE",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000200c",
+      "Value": "0x00003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x00002010",
+      "Value": "0xffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    }
+  ],
+  "elf32-le-machine3/got-truncated-slot": [],
+  "elf32-le-machine3/got-offset-overflow": [],
+  "elf32-le-machine3/got-size-clamp": {
+    "Count": 824,
+    "First": {
+      "Number": "0",
+      "Offset": "0x00002000",
+      "Value": "0x00003000",
+      "Type": "R_386_GLOB_DAT",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    "Last": {
+      "Number": "823",
+      "Offset": "0x00002cdc",
+      "Value": "0x7a797800",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    "Hash": "DFA3B7107D8A5DC1AAE8EE9672945D1B42C076E23D2F817CBA948AC96618E78D"
+  },
+  "elf32-le-machine3/got-address-wrap": [
+    {
+      "Number": "0",
+      "Offset": "0xfffffffffffffffe",
+      "Value": "0x00003000",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x00000002",
+      "Value": "0x00003008",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x00000006",
+      "Value": "0x00003010",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000000a",
+      "Value": "0x00003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x0000000e",
+      "Value": "0xffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    }
+  ],
+  "elf64-be-machine62/programs": [
+    {
+      "Type": "PT_LOAD",
+      "Offset": "0x0000000000000bb8",
+      "VirtAddr": "0x0000000000001000",
+      "PhysAddr": "0x0000000000001000",
+      "FileSize": "64",
+      "MemSize": "128",
+      "Flags": "RWE",
+      "Align": "0x1000"
+    },
+    {
+      "Type": "PT_LOAD",
+      "Offset": "0x0000000000000000",
+      "VirtAddr": "0x0000000000000000",
+      "PhysAddr": "0x0000000000000000",
+      "FileSize": "0",
+      "MemSize": "128",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "PT_LOAD",
+      "Offset": "0x0000000000000000",
+      "VirtAddr": "0xfffffffffffffff7",
+      "PhysAddr": "0x0000000000000000",
+      "FileSize": "0",
+      "MemSize": "32",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "PT_INTERP",
+      "Offset": "0x0000000000000800",
+      "VirtAddr": "0x0000000000000000",
+      "PhysAddr": "0x0000000000000000",
+      "FileSize": "17",
+      "MemSize": "0",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "PT_INTERP",
+      "Offset": "0xffffffffffffffff",
+      "VirtAddr": "0x0000000000000000",
+      "PhysAddr": "0x0000000000000000",
+      "FileSize": "18446744073709551615",
+      "MemSize": "0",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "UNKNOWN(4294967295)",
+      "Offset": "0xffffffffffffffff",
+      "VirtAddr": "0x0000000000000000",
+      "PhysAddr": "0x0000000000000000",
+      "FileSize": "0",
+      "MemSize": "18446744073709551615",
+      "Flags": "",
+      "Align": "0x0"
+    }
+  ],
+  "elf64-be-machine62/sections": [
+    {
+      "Index": 0,
+      "Name": "",
+      "Type": "SHT_NULL",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000000",
+      "Size": "0",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x0"
+    },
+    {
+      "Index": 1,
+      "Name": ".shstrtab",
+      "Type": "SHT_STRTAB",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000080",
+      "Size": "141",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 2,
+      "Name": ".text",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x0000000000001000",
+      "Offset": "0x0000000000000bb8",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 3,
+      "Name": ".debug",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000bf8",
+      "Size": "32",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 4,
+      "Name": ".bss",
+      "Type": "SHT_NOBITS",
+      "Address": "0x0000000000001040",
+      "Offset": "0x0000000000000c1c",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "WA",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 5,
+      "Name": ".empty",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x0000000000001008",
+      "Offset": "0x0000000000000c1c",
+      "Size": "0",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 6,
+      "Name": ".dynstr",
+      "Type": "SHT_STRTAB",
+      "Address": "0x0000000000003000",
+      "Offset": "0x0000000000000200",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 7,
+      "Name": ".dynsym",
+      "Type": "SHT_DYNSYM",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000280",
+      "Size": "144",
+      "EntSize": "24",
+      "Flags": "",
+      "Link": "6",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 8,
+      "Name": ".got",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x0000000000002000",
+      "Offset": "0x0000000000000320",
+      "Size": "40",
+      "EntSize": "8",
+      "Flags": "WA",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 9,
+      "Name": ".got.plt",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x0000000000002100",
+      "Offset": "0x0000000000000350",
+      "Size": "40",
+      "EntSize": "8",
+      "Flags": "WA",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 10,
+      "Name": ".strtab",
+      "Type": "SHT_STRTAB",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000380",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 11,
+      "Name": ".symtab",
+      "Type": "SHT_SYMTAB",
+      "Address": "0x0000000000000000",
+      "Offset": "0x00000000000003c0",
+      "Size": "144",
+      "EntSize": "24",
+      "Flags": "",
+      "Link": "10",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 12,
+      "Name": ".rela.plt",
+      "Type": "SHT_RELA",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000460",
+      "Size": "72",
+      "EntSize": "24",
+      "Flags": "",
+      "Link": "7",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 13,
+      "Name": ".rel.dyn",
+      "Type": "SHT_REL",
+      "Address": "0x0000000000000000",
+      "Offset": "0x00000000000004e0",
+      "Size": "48",
+      "EntSize": "16",
+      "Flags": "",
+      "Link": "7",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 14,
+      "Name": ".rela.dyn",
+      "Type": "SHT_RELA",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000540",
+      "Size": "72",
+      "EntSize": "24",
+      "Flags": "",
+      "Link": "11",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 15,
+      "Name": ".rel.plt",
+      "Type": "SHT_REL",
+      "Address": "0x0000000000000000",
+      "Offset": "0x00000000000005c0",
+      "Size": "48",
+      "EntSize": "16",
+      "Flags": "",
+      "Link": "7",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 16,
+      "Name": ".overflow",
+      "Type": "SHT_PROGBITS",
+      "Address": "0xfffffffffffffff7",
+      "Offset": "0x0000000000000c80",
+      "Size": "16",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 17,
+      "Name": "",
+      "Type": "SHT_NULL",
+      "Address": "0x0000000000001008",
+      "Offset": "0x0000000000000000",
+      "Size": "8",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x0"
+    }
+  ],
+  "elf64-be-machine62/dynamic": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-be-machine62/symbols-dynamic": [
+    {
+      "Number": 0,
+      "Value": "0x0000000000001000",
+      "Size": "0",
+      "Type": "NOTYPE",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "UND",
+      "Name": ""
+    },
+    {
+      "Number": 1,
+      "Value": "0x0000000000001008",
+      "Size": "1",
+      "Type": "FUNC",
+      "Bind": "GLOBAL",
+      "Vis": "INTERNAL",
+      "Ndx": "2",
+      "Name": "dyn_symbol@@API_1"
+    },
+    {
+      "Number": 2,
+      "Value": "0x0000000000001010",
+      "Size": "2",
+      "Type": "SECTION",
+      "Bind": "LOCAL",
+      "Vis": "HIDDEN",
+      "Ndx": "2",
+      "Name": ".text"
+    },
+    {
+      "Number": 3,
+      "Value": "0x0000000000001018",
+      "Size": "3",
+      "Type": "OBJECT",
+      "Bind": "GLOBAL",
+      "Vis": "PROTECTED",
+      "Ndx": "UND",
+      "Name": "dyn_symbol@API_1"
+    },
+    {
+      "Number": 4,
+      "Value": "0xffffffffffffffff",
+      "Size": "4",
+      "Type": "FUNC",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "ABS",
+      "Name": "dyn_symbol@@API_2"
+    },
+    {
+      "Number": 5,
+      "Value": "0x0000000000001028",
+      "Size": "5",
+      "Type": "HIPROC",
+      "Bind": "HIPROC",
+      "Vis": "INTERNAL",
+      "Ndx": "COM",
+      "Name": "dyn_symbol"
+    }
+  ],
+  "elf64-be-machine62/symbols-static": [
+    {
+      "Number": 0,
+      "Value": "0x0000000000001000",
+      "Size": "0",
+      "Type": "NOTYPE",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "UND",
+      "Name": ""
+    },
+    {
+      "Number": 1,
+      "Value": "0x0000000000001008",
+      "Size": "1",
+      "Type": "FUNC",
+      "Bind": "GLOBAL",
+      "Vis": "INTERNAL",
+      "Ndx": "2",
+      "Name": "static_symbol"
+    },
+    {
+      "Number": 2,
+      "Value": "0x0000000000001010",
+      "Size": "2",
+      "Type": "SECTION",
+      "Bind": "LOCAL",
+      "Vis": "HIDDEN",
+      "Ndx": "2",
+      "Name": ".text"
+    },
+    {
+      "Number": 3,
+      "Value": "0x0000000000001018",
+      "Size": "3",
+      "Type": "OBJECT",
+      "Bind": "GLOBAL",
+      "Vis": "PROTECTED",
+      "Ndx": "UND",
+      "Name": "static_symbol"
+    },
+    {
+      "Number": 4,
+      "Value": "0xffffffffffffffff",
+      "Size": "4",
+      "Type": "FUNC",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "ABS",
+      "Name": "static_symbol"
+    },
+    {
+      "Number": 5,
+      "Value": "0x0000000000001028",
+      "Size": "5",
+      "Type": "HIPROC",
+      "Bind": "HIPROC",
+      "Vis": "INTERNAL",
+      "Ndx": "COM",
+      "Name": "static_symbol"
+    }
+  ],
+  "elf64-be-machine62/mapping": " Section to Segment mapping:\r\n  \u6BB5\u8282...\r\n   00     .text .bss\r\n   01     \r\n   02     .overflow\r\n   03     \r\n   04     \r\n   05     .text .bss .got .got.plt .overflow\r\n",
+  "elf64-be-machine62/interpreter": "/lib/ld-sample.so",
+  "elf64-be-machine62/attributes": "No attribute sections found.\r\n",
+  "elf64-be-machine62/exidx": "There are no exception index entries in this file.\r\n",
+  "elf64-be-machine62/relocation.rela.plt": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0000000100000006",
+      "Type": "R_X86_64_GLOB_DAT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002108",
+      "Info": "0000000100000007",
+      "Type": "R_X86_64_JUMP_SLOT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-9223372036854775808",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002110",
+      "Info": "000003e700000008",
+      "Type": "R_X86_64_RELATIVE",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf64-be-machine62/relocation.rel.plt": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0000000100000006",
+      "Type": "R_X86_64_GLOB_DAT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "",
+      "SectionName": ".rel.plt"
+    },
+    {
+      "Offset": "0000000000002108",
+      "Info": "0000000100000007",
+      "Type": "R_X86_64_JUMP_SLOT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "",
+      "SectionName": ".rel.plt"
+    },
+    {
+      "Offset": "0000000000002110",
+      "Info": "000003e700000008",
+      "Type": "R_X86_64_RELATIVE",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rel.plt"
+    }
+  ],
+  "elf64-be-machine62/relocation.rela.dyn": [
+    {
+      "Offset": "0000000000002000",
+      "Info": "0000000100000006",
+      "Type": "R_X86_64_GLOB_DAT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "static_symbol",
+      "Addend": "-8",
+      "SectionName": ".rela.dyn"
+    },
+    {
+      "Offset": "0000000000002008",
+      "Info": "0000000100000007",
+      "Type": "R_X86_64_JUMP_SLOT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "static_symbol",
+      "Addend": "-9223372036854775808",
+      "SectionName": ".rela.dyn"
+    },
+    {
+      "Offset": "0000000000002010",
+      "Info": "000003e700000008",
+      "Type": "R_X86_64_RELATIVE",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.dyn"
+    }
+  ],
+  "elf64-be-machine62/relocation.rel.dyn": [
+    {
+      "Offset": "0000000000002000",
+      "Info": "0000000200000006",
+      "Type": "R_X86_64_GLOB_DAT",
+      "SymbolValue": "0000000000001010",
+      "Symbol": ".text",
+      "Addend": "",
+      "SectionName": ".rel.dyn"
+    },
+    {
+      "Offset": "0000000000002008",
+      "Info": "0000000200000007",
+      "Type": "R_X86_64_JUMP_SLOT",
+      "SymbolValue": "0000000000001010",
+      "Symbol": ".text",
+      "Addend": "",
+      "SectionName": ".rel.dyn"
+    },
+    {
+      "Offset": "0000000000002010",
+      "Info": "000003e700000008",
+      "Type": "R_X86_64_RELATIVE",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rel.dyn"
+    }
+  ],
+  "elf64-be-machine62/relocation.missing": [],
+  "elf64-be-machine62/got.got": [
+    {
+      "Number": "0",
+      "Offset": "0x0000000000002000",
+      "Value": "0x0000000000003000",
+      "Type": "R_X86_64_GLOB_DAT",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x0000000000002008",
+      "Value": "0x0000000000003008",
+      "Type": "R_X86_64_JUMP_SLOT",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x0000000000002010",
+      "Value": "0x0000000000003010",
+      "Type": "R_X86_64_RELATIVE",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000000000002018",
+      "Value": "0x0000000000003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x0000000000002020",
+      "Value": "0xffffffffffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    }
+  ],
+  "elf64-be-machine62/got.got.plt": [
+    {
+      "Number": "0",
+      "Offset": "0x0000000000002100",
+      "Value": "0x0000000000003000",
+      "Type": "R_X86_64_GLOB_DAT",
+      "Symbol": "dyn_symbol@@API_1",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x0000000000002108",
+      "Value": "0x0000000000003008",
+      "Type": "R_X86_64_JUMP_SLOT",
+      "Symbol": "dyn_symbol@@API_1",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x0000000000002110",
+      "Value": "0x0000000000003010",
+      "Type": "R_X86_64_RELATIVE",
+      "Symbol": "",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000000000002118",
+      "Value": "0x0000000000003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x0000000000002120",
+      "Value": "0xffffffffffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got.plt"
+    }
+  ],
+  "elf64-be-machine62/got.missing": [],
+  "elf64-be-machine62/null-programs": {
+    "Rows": [],
+    "Mapping": " Section to Segment mapping:\r\n  \u6BB5\u8282...\r\n",
+    "Interpreter": ""
+  },
+  "elf64-be-machine62/null-sections": {
+    "Rows": [],
+    "Mapping": " Section to Segment mapping:\r\n  \u6BB5\u8282...\r\n   00     \r\n   01     \r\n   02     \r\n   03     \r\n   04     \r\n   05     \r\n",
+    "Got": [],
+    "Rel": [],
+    "Dynamic": [
+      {
+        "Tag": "0x0000000000000005",
+        "Type": "DT_STRTAB",
+        "Value": "0x3000"
+      },
+      {
+        "Tag": "0x000000000000000a",
+        "Type": "DT_STRSZ",
+        "Value": "0x40"
+      },
+      {
+        "Tag": "0x0000000000000001",
+        "Type": "DT_NEEDED",
+        "Value": ""
+      },
+      {
+        "Tag": "0x000000000000000e",
+        "Type": "DT_SONAME",
+        "Value": ""
+      },
+      {
+        "Tag": "0x000000000000000f",
+        "Type": "DT_RPATH",
+        "Value": ""
+      },
+      {
+        "Tag": "0x000000000000001d",
+        "Type": "DT_RUNPATH",
+        "Value": ""
+      },
+      {
+        "Tag": "0x000000000000001e",
+        "Type": "DT_FLAGS",
+        "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+      },
+      {
+        "Tag": "0x000000006ffffffb",
+        "Type": "DT_FLAGS_1",
+        "Value": "NOW, PIE"
+      },
+      {
+        "Tag": "0x0000000000000014",
+        "Type": "DT_PLTREL",
+        "Value": "DT_RELA"
+      },
+      {
+        "Tag": "0xffffffffffffffff",
+        "Type": "UNKNOWN(18446744073709551615)",
+        "Value": "0xffffffffffffffff"
+      },
+      {
+        "Tag": "0x0000000000000000",
+        "Type": "DT_NULL",
+        "Value": "0x0"
+      }
+    ]
+  },
+  "elf64-be-machine62/null-symbols": [],
+  "elf64-be-machine62/null-dynamic": [],
+  "elf64-be-machine62/empty-dynamic": [],
+  "elf64-be-machine62/dynamic-no-terminator": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "dyn_symbol"
+    }
+  ],
+  "elf64-be-machine62/dynamic-zero-string-address": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x0"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-be-machine62/dynamic-zero-string-size": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x0"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-be-machine62/dynamic-missing-string-section": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-be-machine62/dynamic-string-offset-overflow": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-be-machine62/dynamic-empty-string": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "0x0"
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-be-machine62/dynamic-file-offset-overflow": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "0xc"
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": "0xc"
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": "0x19"
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "0x19"
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-be-machine62/interpreter-file-offset-overflow": "",
+  "elf64-be-machine62/interpreter-file-length-clamp": "xyz",
+  "elf64-be-machine62/interpreter-declared-length": "/lib",
+  "elf64-be-machine62/relocation-zero-entsize": [],
+  "elf64-be-machine62/relocation-small-entsize": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0000000100000006",
+      "Type": "R_X86_64_GLOB_DAT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002108",
+      "Info": "0000000100000007",
+      "Type": "R_X86_64_JUMP_SLOT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-9223372036854775808",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002110",
+      "Info": "000003e700000008",
+      "Type": "R_X86_64_RELATIVE",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf64-be-machine62/relocation-truncated": [],
+  "elf64-be-machine62/relocation-size-overflow": [],
+  "elf64-be-machine62/relocation-offset-overflow": [],
+  "elf64-be-machine62/relocation-invalid-symbol-link": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0000000100000006",
+      "Type": "R_X86_64_GLOB_DAT",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002108",
+      "Info": "0000000100000007",
+      "Type": "R_X86_64_JUMP_SLOT",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "-9223372036854775808",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002110",
+      "Info": "000003e700000008",
+      "Type": "R_X86_64_RELATIVE",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf64-be-machine62/relocation-name-type-disagree": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0000000100000006",
+      "Type": "R_X86_64_GLOB_DAT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "fffffffffffffff8",
+      "Info": "0000000000002108",
+      "Type": "R_X86_64_UNKNOWN(8456)",
+      "SymbolValue": "0000000000001000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000100000007",
+      "Info": "8000000000000000",
+      "Type": "R_X86_64_NONE",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf64-be-machine62/relocation-same-name-nonrel-first": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0000000100000006",
+      "Type": "R_X86_64_GLOB_DAT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002108",
+      "Info": "0000000100000007",
+      "Type": "R_X86_64_JUMP_SLOT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-9223372036854775808",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002110",
+      "Info": "000003e700000008",
+      "Type": "R_X86_64_RELATIVE",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf64-be-machine62/got-ignore-entsize": [
+    {
+      "Number": "0",
+      "Offset": "0x0000000000002000",
+      "Value": "0x0000000000003000",
+      "Type": "R_X86_64_GLOB_DAT",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x0000000000002008",
+      "Value": "0x0000000000003008",
+      "Type": "R_X86_64_JUMP_SLOT",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x0000000000002010",
+      "Value": "0x0000000000003010",
+      "Type": "R_X86_64_RELATIVE",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000000000002018",
+      "Value": "0x0000000000003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x0000000000002020",
+      "Value": "0xffffffffffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    }
+  ],
+  "elf64-be-machine62/got-truncated-slot": [],
+  "elf64-be-machine62/got-offset-overflow": [],
+  "elf64-be-machine62/got-size-clamp": {
+    "Count": 412,
+    "First": {
+      "Number": "0",
+      "Offset": "0x0000000000002000",
+      "Value": "0x0000000000003000",
+      "Type": "R_X86_64_GLOB_DAT",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    "Last": {
+      "Number": "411",
+      "Offset": "0x0000000000002cd8",
+      "Value": "0x000000000078797a",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    "Hash": "E543D800F7CBEE7AC36E3B450A495C18E6B11A72478E1C1E27CC6753CABCF31D"
+  },
+  "elf64-be-machine62/got-address-wrap": [
+    {
+      "Number": "0",
+      "Offset": "0xfffffffffffffffe",
+      "Value": "0x0000000000003000",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x0000000000000006",
+      "Value": "0x0000000000003008",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x000000000000000e",
+      "Value": "0x0000000000003010",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000000000000016",
+      "Value": "0x0000000000003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x000000000000001e",
+      "Value": "0xffffffffffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    }
+  ],
+  "elf64-le-machine62/programs": [
+    {
+      "Type": "PT_LOAD",
+      "Offset": "0x0000000000000bb8",
+      "VirtAddr": "0x0000000000001000",
+      "PhysAddr": "0x0000000000001000",
+      "FileSize": "64",
+      "MemSize": "128",
+      "Flags": "RWE",
+      "Align": "0x1000"
+    },
+    {
+      "Type": "PT_LOAD",
+      "Offset": "0x0000000000000000",
+      "VirtAddr": "0x0000000000000000",
+      "PhysAddr": "0x0000000000000000",
+      "FileSize": "0",
+      "MemSize": "128",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "PT_LOAD",
+      "Offset": "0x0000000000000000",
+      "VirtAddr": "0xfffffffffffffff7",
+      "PhysAddr": "0x0000000000000000",
+      "FileSize": "0",
+      "MemSize": "32",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "PT_INTERP",
+      "Offset": "0x0000000000000800",
+      "VirtAddr": "0x0000000000000000",
+      "PhysAddr": "0x0000000000000000",
+      "FileSize": "17",
+      "MemSize": "0",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "PT_INTERP",
+      "Offset": "0xffffffffffffffff",
+      "VirtAddr": "0x0000000000000000",
+      "PhysAddr": "0x0000000000000000",
+      "FileSize": "18446744073709551615",
+      "MemSize": "0",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "UNKNOWN(4294967295)",
+      "Offset": "0xffffffffffffffff",
+      "VirtAddr": "0x0000000000000000",
+      "PhysAddr": "0x0000000000000000",
+      "FileSize": "0",
+      "MemSize": "18446744073709551615",
+      "Flags": "",
+      "Align": "0x0"
+    }
+  ],
+  "elf64-le-machine62/sections": [
+    {
+      "Index": 0,
+      "Name": "",
+      "Type": "SHT_NULL",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000000",
+      "Size": "0",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x0"
+    },
+    {
+      "Index": 1,
+      "Name": ".shstrtab",
+      "Type": "SHT_STRTAB",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000080",
+      "Size": "141",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 2,
+      "Name": ".text",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x0000000000001000",
+      "Offset": "0x0000000000000bb8",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 3,
+      "Name": ".debug",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000bf8",
+      "Size": "32",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 4,
+      "Name": ".bss",
+      "Type": "SHT_NOBITS",
+      "Address": "0x0000000000001040",
+      "Offset": "0x0000000000000c1c",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "WA",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 5,
+      "Name": ".empty",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x0000000000001008",
+      "Offset": "0x0000000000000c1c",
+      "Size": "0",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 6,
+      "Name": ".dynstr",
+      "Type": "SHT_STRTAB",
+      "Address": "0x0000000000003000",
+      "Offset": "0x0000000000000200",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 7,
+      "Name": ".dynsym",
+      "Type": "SHT_DYNSYM",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000280",
+      "Size": "144",
+      "EntSize": "24",
+      "Flags": "",
+      "Link": "6",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 8,
+      "Name": ".got",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x0000000000002000",
+      "Offset": "0x0000000000000320",
+      "Size": "40",
+      "EntSize": "8",
+      "Flags": "WA",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 9,
+      "Name": ".got.plt",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x0000000000002100",
+      "Offset": "0x0000000000000350",
+      "Size": "40",
+      "EntSize": "8",
+      "Flags": "WA",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 10,
+      "Name": ".strtab",
+      "Type": "SHT_STRTAB",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000380",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 11,
+      "Name": ".symtab",
+      "Type": "SHT_SYMTAB",
+      "Address": "0x0000000000000000",
+      "Offset": "0x00000000000003c0",
+      "Size": "144",
+      "EntSize": "24",
+      "Flags": "",
+      "Link": "10",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 12,
+      "Name": ".rela.plt",
+      "Type": "SHT_RELA",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000460",
+      "Size": "72",
+      "EntSize": "24",
+      "Flags": "",
+      "Link": "7",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 13,
+      "Name": ".rel.dyn",
+      "Type": "SHT_REL",
+      "Address": "0x0000000000000000",
+      "Offset": "0x00000000000004e0",
+      "Size": "48",
+      "EntSize": "16",
+      "Flags": "",
+      "Link": "7",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 14,
+      "Name": ".rela.dyn",
+      "Type": "SHT_RELA",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000540",
+      "Size": "72",
+      "EntSize": "24",
+      "Flags": "",
+      "Link": "11",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 15,
+      "Name": ".rel.plt",
+      "Type": "SHT_REL",
+      "Address": "0x0000000000000000",
+      "Offset": "0x00000000000005c0",
+      "Size": "48",
+      "EntSize": "16",
+      "Flags": "",
+      "Link": "7",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 16,
+      "Name": ".overflow",
+      "Type": "SHT_PROGBITS",
+      "Address": "0xfffffffffffffff7",
+      "Offset": "0x0000000000000c80",
+      "Size": "16",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 17,
+      "Name": "",
+      "Type": "SHT_NULL",
+      "Address": "0x0000000000001008",
+      "Offset": "0x0000000000000000",
+      "Size": "8",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x0"
+    }
+  ],
+  "elf64-le-machine62/dynamic": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-le-machine62/symbols-dynamic": [
+    {
+      "Number": 0,
+      "Value": "0x0000000000001000",
+      "Size": "0",
+      "Type": "NOTYPE",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "UND",
+      "Name": ""
+    },
+    {
+      "Number": 1,
+      "Value": "0x0000000000001008",
+      "Size": "1",
+      "Type": "FUNC",
+      "Bind": "GLOBAL",
+      "Vis": "INTERNAL",
+      "Ndx": "2",
+      "Name": "dyn_symbol@@API_1"
+    },
+    {
+      "Number": 2,
+      "Value": "0x0000000000001010",
+      "Size": "2",
+      "Type": "SECTION",
+      "Bind": "LOCAL",
+      "Vis": "HIDDEN",
+      "Ndx": "2",
+      "Name": ".text"
+    },
+    {
+      "Number": 3,
+      "Value": "0x0000000000001018",
+      "Size": "3",
+      "Type": "OBJECT",
+      "Bind": "GLOBAL",
+      "Vis": "PROTECTED",
+      "Ndx": "UND",
+      "Name": "dyn_symbol@API_1"
+    },
+    {
+      "Number": 4,
+      "Value": "0xffffffffffffffff",
+      "Size": "4",
+      "Type": "FUNC",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "ABS",
+      "Name": "dyn_symbol@@API_2"
+    },
+    {
+      "Number": 5,
+      "Value": "0x0000000000001028",
+      "Size": "5",
+      "Type": "HIPROC",
+      "Bind": "HIPROC",
+      "Vis": "INTERNAL",
+      "Ndx": "COM",
+      "Name": "dyn_symbol"
+    }
+  ],
+  "elf64-le-machine62/symbols-static": [
+    {
+      "Number": 0,
+      "Value": "0x0000000000001000",
+      "Size": "0",
+      "Type": "NOTYPE",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "UND",
+      "Name": ""
+    },
+    {
+      "Number": 1,
+      "Value": "0x0000000000001008",
+      "Size": "1",
+      "Type": "FUNC",
+      "Bind": "GLOBAL",
+      "Vis": "INTERNAL",
+      "Ndx": "2",
+      "Name": "static_symbol"
+    },
+    {
+      "Number": 2,
+      "Value": "0x0000000000001010",
+      "Size": "2",
+      "Type": "SECTION",
+      "Bind": "LOCAL",
+      "Vis": "HIDDEN",
+      "Ndx": "2",
+      "Name": ".text"
+    },
+    {
+      "Number": 3,
+      "Value": "0x0000000000001018",
+      "Size": "3",
+      "Type": "OBJECT",
+      "Bind": "GLOBAL",
+      "Vis": "PROTECTED",
+      "Ndx": "UND",
+      "Name": "static_symbol"
+    },
+    {
+      "Number": 4,
+      "Value": "0xffffffffffffffff",
+      "Size": "4",
+      "Type": "FUNC",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "ABS",
+      "Name": "static_symbol"
+    },
+    {
+      "Number": 5,
+      "Value": "0x0000000000001028",
+      "Size": "5",
+      "Type": "HIPROC",
+      "Bind": "HIPROC",
+      "Vis": "INTERNAL",
+      "Ndx": "COM",
+      "Name": "static_symbol"
+    }
+  ],
+  "elf64-le-machine62/mapping": " Section to Segment mapping:\r\n  \u6BB5\u8282...\r\n   00     .text .bss\r\n   01     \r\n   02     .overflow\r\n   03     \r\n   04     \r\n   05     .text .bss .got .got.plt .overflow\r\n",
+  "elf64-le-machine62/interpreter": "/lib/ld-sample.so",
+  "elf64-le-machine62/attributes": "No attribute sections found.\r\n",
+  "elf64-le-machine62/exidx": "There are no exception index entries in this file.\r\n",
+  "elf64-le-machine62/relocation.rela.plt": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0000000100000006",
+      "Type": "R_X86_64_GLOB_DAT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002108",
+      "Info": "0000000100000007",
+      "Type": "R_X86_64_JUMP_SLOT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-9223372036854775808",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002110",
+      "Info": "000003e700000008",
+      "Type": "R_X86_64_RELATIVE",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf64-le-machine62/relocation.rel.plt": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0000000100000006",
+      "Type": "R_X86_64_GLOB_DAT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "",
+      "SectionName": ".rel.plt"
+    },
+    {
+      "Offset": "0000000000002108",
+      "Info": "0000000100000007",
+      "Type": "R_X86_64_JUMP_SLOT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "",
+      "SectionName": ".rel.plt"
+    },
+    {
+      "Offset": "0000000000002110",
+      "Info": "000003e700000008",
+      "Type": "R_X86_64_RELATIVE",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rel.plt"
+    }
+  ],
+  "elf64-le-machine62/relocation.rela.dyn": [
+    {
+      "Offset": "0000000000002000",
+      "Info": "0000000100000006",
+      "Type": "R_X86_64_GLOB_DAT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "static_symbol",
+      "Addend": "-8",
+      "SectionName": ".rela.dyn"
+    },
+    {
+      "Offset": "0000000000002008",
+      "Info": "0000000100000007",
+      "Type": "R_X86_64_JUMP_SLOT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "static_symbol",
+      "Addend": "-9223372036854775808",
+      "SectionName": ".rela.dyn"
+    },
+    {
+      "Offset": "0000000000002010",
+      "Info": "000003e700000008",
+      "Type": "R_X86_64_RELATIVE",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.dyn"
+    }
+  ],
+  "elf64-le-machine62/relocation.rel.dyn": [
+    {
+      "Offset": "0000000000002000",
+      "Info": "0000000200000006",
+      "Type": "R_X86_64_GLOB_DAT",
+      "SymbolValue": "0000000000001010",
+      "Symbol": ".text",
+      "Addend": "",
+      "SectionName": ".rel.dyn"
+    },
+    {
+      "Offset": "0000000000002008",
+      "Info": "0000000200000007",
+      "Type": "R_X86_64_JUMP_SLOT",
+      "SymbolValue": "0000000000001010",
+      "Symbol": ".text",
+      "Addend": "",
+      "SectionName": ".rel.dyn"
+    },
+    {
+      "Offset": "0000000000002010",
+      "Info": "000003e700000008",
+      "Type": "R_X86_64_RELATIVE",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rel.dyn"
+    }
+  ],
+  "elf64-le-machine62/relocation.missing": [],
+  "elf64-le-machine62/got.got": [
+    {
+      "Number": "0",
+      "Offset": "0x0000000000002000",
+      "Value": "0x0000000000003000",
+      "Type": "R_X86_64_GLOB_DAT",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x0000000000002008",
+      "Value": "0x0000000000003008",
+      "Type": "R_X86_64_JUMP_SLOT",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x0000000000002010",
+      "Value": "0x0000000000003010",
+      "Type": "R_X86_64_RELATIVE",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000000000002018",
+      "Value": "0x0000000000003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x0000000000002020",
+      "Value": "0xffffffffffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    }
+  ],
+  "elf64-le-machine62/got.got.plt": [
+    {
+      "Number": "0",
+      "Offset": "0x0000000000002100",
+      "Value": "0x0000000000003000",
+      "Type": "R_X86_64_GLOB_DAT",
+      "Symbol": "dyn_symbol@@API_1",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x0000000000002108",
+      "Value": "0x0000000000003008",
+      "Type": "R_X86_64_JUMP_SLOT",
+      "Symbol": "dyn_symbol@@API_1",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x0000000000002110",
+      "Value": "0x0000000000003010",
+      "Type": "R_X86_64_RELATIVE",
+      "Symbol": "",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000000000002118",
+      "Value": "0x0000000000003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x0000000000002120",
+      "Value": "0xffffffffffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got.plt"
+    }
+  ],
+  "elf64-le-machine62/got.missing": [],
+  "elf64-le-machine62/null-programs": {
+    "Rows": [],
+    "Mapping": " Section to Segment mapping:\r\n  \u6BB5\u8282...\r\n",
+    "Interpreter": ""
+  },
+  "elf64-le-machine62/null-sections": {
+    "Rows": [],
+    "Mapping": " Section to Segment mapping:\r\n  \u6BB5\u8282...\r\n   00     \r\n   01     \r\n   02     \r\n   03     \r\n   04     \r\n   05     \r\n",
+    "Got": [],
+    "Rel": [],
+    "Dynamic": [
+      {
+        "Tag": "0x0000000000000005",
+        "Type": "DT_STRTAB",
+        "Value": "0x3000"
+      },
+      {
+        "Tag": "0x000000000000000a",
+        "Type": "DT_STRSZ",
+        "Value": "0x40"
+      },
+      {
+        "Tag": "0x0000000000000001",
+        "Type": "DT_NEEDED",
+        "Value": ""
+      },
+      {
+        "Tag": "0x000000000000000e",
+        "Type": "DT_SONAME",
+        "Value": ""
+      },
+      {
+        "Tag": "0x000000000000000f",
+        "Type": "DT_RPATH",
+        "Value": ""
+      },
+      {
+        "Tag": "0x000000000000001d",
+        "Type": "DT_RUNPATH",
+        "Value": ""
+      },
+      {
+        "Tag": "0x000000000000001e",
+        "Type": "DT_FLAGS",
+        "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+      },
+      {
+        "Tag": "0x000000006ffffffb",
+        "Type": "DT_FLAGS_1",
+        "Value": "NOW, PIE"
+      },
+      {
+        "Tag": "0x0000000000000014",
+        "Type": "DT_PLTREL",
+        "Value": "DT_RELA"
+      },
+      {
+        "Tag": "0xffffffffffffffff",
+        "Type": "UNKNOWN(18446744073709551615)",
+        "Value": "0xffffffffffffffff"
+      },
+      {
+        "Tag": "0x0000000000000000",
+        "Type": "DT_NULL",
+        "Value": "0x0"
+      }
+    ]
+  },
+  "elf64-le-machine62/null-symbols": [],
+  "elf64-le-machine62/null-dynamic": [],
+  "elf64-le-machine62/empty-dynamic": [],
+  "elf64-le-machine62/dynamic-no-terminator": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "dyn_symbol"
+    }
+  ],
+  "elf64-le-machine62/dynamic-zero-string-address": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x0"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-le-machine62/dynamic-zero-string-size": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x0"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-le-machine62/dynamic-missing-string-section": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-le-machine62/dynamic-string-offset-overflow": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-le-machine62/dynamic-empty-string": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "0x0"
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-le-machine62/dynamic-file-offset-overflow": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "0xc"
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": "0xc"
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": "0x19"
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "0x19"
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-le-machine62/interpreter-file-offset-overflow": "",
+  "elf64-le-machine62/interpreter-file-length-clamp": "xyz",
+  "elf64-le-machine62/interpreter-declared-length": "/lib",
+  "elf64-le-machine62/relocation-zero-entsize": [],
+  "elf64-le-machine62/relocation-small-entsize": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0000000100000006",
+      "Type": "R_X86_64_GLOB_DAT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002108",
+      "Info": "0000000100000007",
+      "Type": "R_X86_64_JUMP_SLOT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-9223372036854775808",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002110",
+      "Info": "000003e700000008",
+      "Type": "R_X86_64_RELATIVE",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf64-le-machine62/relocation-truncated": [],
+  "elf64-le-machine62/relocation-size-overflow": [],
+  "elf64-le-machine62/relocation-offset-overflow": [],
+  "elf64-le-machine62/relocation-invalid-symbol-link": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0000000100000006",
+      "Type": "R_X86_64_GLOB_DAT",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002108",
+      "Info": "0000000100000007",
+      "Type": "R_X86_64_JUMP_SLOT",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "-9223372036854775808",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002110",
+      "Info": "000003e700000008",
+      "Type": "R_X86_64_RELATIVE",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf64-le-machine62/relocation-name-type-disagree": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0000000100000006",
+      "Type": "R_X86_64_GLOB_DAT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "fffffffffffffff8",
+      "Info": "0000000000002108",
+      "Type": "R_X86_64_UNKNOWN(8456)",
+      "SymbolValue": "0000000000001000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000100000007",
+      "Info": "8000000000000000",
+      "Type": "R_X86_64_NONE",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf64-le-machine62/relocation-same-name-nonrel-first": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0000000100000006",
+      "Type": "R_X86_64_GLOB_DAT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002108",
+      "Info": "0000000100000007",
+      "Type": "R_X86_64_JUMP_SLOT",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-9223372036854775808",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002110",
+      "Info": "000003e700000008",
+      "Type": "R_X86_64_RELATIVE",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf64-le-machine62/got-ignore-entsize": [
+    {
+      "Number": "0",
+      "Offset": "0x0000000000002000",
+      "Value": "0x0000000000003000",
+      "Type": "R_X86_64_GLOB_DAT",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x0000000000002008",
+      "Value": "0x0000000000003008",
+      "Type": "R_X86_64_JUMP_SLOT",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x0000000000002010",
+      "Value": "0x0000000000003010",
+      "Type": "R_X86_64_RELATIVE",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000000000002018",
+      "Value": "0x0000000000003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x0000000000002020",
+      "Value": "0xffffffffffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    }
+  ],
+  "elf64-le-machine62/got-truncated-slot": [],
+  "elf64-le-machine62/got-offset-overflow": [],
+  "elf64-le-machine62/got-size-clamp": {
+    "Count": 412,
+    "First": {
+      "Number": "0",
+      "Offset": "0x0000000000002000",
+      "Value": "0x0000000000003000",
+      "Type": "R_X86_64_GLOB_DAT",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    "Last": {
+      "Number": "411",
+      "Offset": "0x0000000000002cd8",
+      "Value": "0x7a79780000000000",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    "Hash": "1E9330A8602A856EFBFCA80008F2996E1BEEE2FAA1388080533030EA7A4636EB"
+  },
+  "elf64-le-machine62/got-address-wrap": [
+    {
+      "Number": "0",
+      "Offset": "0xfffffffffffffffe",
+      "Value": "0x0000000000003000",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x0000000000000006",
+      "Value": "0x0000000000003008",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x000000000000000e",
+      "Value": "0x0000000000003010",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000000000000016",
+      "Value": "0x0000000000003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x000000000000001e",
+      "Value": "0xffffffffffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    }
+  ],
+  "elf64-be-machine8/programs": [
+    {
+      "Type": "PT_LOAD",
+      "Offset": "0x0000000000000bb8",
+      "VirtAddr": "0x0000000000001000",
+      "PhysAddr": "0x0000000000001000",
+      "FileSize": "64",
+      "MemSize": "128",
+      "Flags": "RWE",
+      "Align": "0x1000"
+    },
+    {
+      "Type": "PT_LOAD",
+      "Offset": "0x0000000000000000",
+      "VirtAddr": "0x0000000000000000",
+      "PhysAddr": "0x0000000000000000",
+      "FileSize": "0",
+      "MemSize": "128",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "PT_LOAD",
+      "Offset": "0x0000000000000000",
+      "VirtAddr": "0xfffffffffffffff7",
+      "PhysAddr": "0x0000000000000000",
+      "FileSize": "0",
+      "MemSize": "32",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "PT_INTERP",
+      "Offset": "0x0000000000000800",
+      "VirtAddr": "0x0000000000000000",
+      "PhysAddr": "0x0000000000000000",
+      "FileSize": "17",
+      "MemSize": "0",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "PT_INTERP",
+      "Offset": "0xffffffffffffffff",
+      "VirtAddr": "0x0000000000000000",
+      "PhysAddr": "0x0000000000000000",
+      "FileSize": "18446744073709551615",
+      "MemSize": "0",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "UNKNOWN(4294967295)",
+      "Offset": "0xffffffffffffffff",
+      "VirtAddr": "0x0000000000000000",
+      "PhysAddr": "0x0000000000000000",
+      "FileSize": "0",
+      "MemSize": "18446744073709551615",
+      "Flags": "",
+      "Align": "0x0"
+    }
+  ],
+  "elf64-be-machine8/sections": [
+    {
+      "Index": 0,
+      "Name": "",
+      "Type": "SHT_NULL",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000000",
+      "Size": "0",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x0"
+    },
+    {
+      "Index": 1,
+      "Name": ".shstrtab",
+      "Type": "SHT_STRTAB",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000080",
+      "Size": "141",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 2,
+      "Name": ".text",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x0000000000001000",
+      "Offset": "0x0000000000000bb8",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 3,
+      "Name": ".debug",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000bf8",
+      "Size": "32",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 4,
+      "Name": ".bss",
+      "Type": "SHT_NOBITS",
+      "Address": "0x0000000000001040",
+      "Offset": "0x0000000000000c1c",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "WA",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 5,
+      "Name": ".empty",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x0000000000001008",
+      "Offset": "0x0000000000000c1c",
+      "Size": "0",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 6,
+      "Name": ".dynstr",
+      "Type": "SHT_STRTAB",
+      "Address": "0x0000000000003000",
+      "Offset": "0x0000000000000200",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 7,
+      "Name": ".dynsym",
+      "Type": "SHT_DYNSYM",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000280",
+      "Size": "144",
+      "EntSize": "24",
+      "Flags": "",
+      "Link": "6",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 8,
+      "Name": ".got",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x0000000000002000",
+      "Offset": "0x0000000000000320",
+      "Size": "40",
+      "EntSize": "8",
+      "Flags": "WA",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 9,
+      "Name": ".got.plt",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x0000000000002100",
+      "Offset": "0x0000000000000350",
+      "Size": "40",
+      "EntSize": "8",
+      "Flags": "WA",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 10,
+      "Name": ".strtab",
+      "Type": "SHT_STRTAB",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000380",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 11,
+      "Name": ".symtab",
+      "Type": "SHT_SYMTAB",
+      "Address": "0x0000000000000000",
+      "Offset": "0x00000000000003c0",
+      "Size": "144",
+      "EntSize": "24",
+      "Flags": "",
+      "Link": "10",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 12,
+      "Name": ".rela.plt",
+      "Type": "SHT_RELA",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000460",
+      "Size": "72",
+      "EntSize": "24",
+      "Flags": "",
+      "Link": "7",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 13,
+      "Name": ".rel.dyn",
+      "Type": "SHT_REL",
+      "Address": "0x0000000000000000",
+      "Offset": "0x00000000000004e0",
+      "Size": "48",
+      "EntSize": "16",
+      "Flags": "",
+      "Link": "7",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 14,
+      "Name": ".rela.dyn",
+      "Type": "SHT_RELA",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000540",
+      "Size": "72",
+      "EntSize": "24",
+      "Flags": "",
+      "Link": "11",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 15,
+      "Name": ".rel.plt",
+      "Type": "SHT_REL",
+      "Address": "0x0000000000000000",
+      "Offset": "0x00000000000005c0",
+      "Size": "48",
+      "EntSize": "16",
+      "Flags": "",
+      "Link": "7",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 16,
+      "Name": ".overflow",
+      "Type": "SHT_PROGBITS",
+      "Address": "0xfffffffffffffff7",
+      "Offset": "0x0000000000000c80",
+      "Size": "16",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 17,
+      "Name": "",
+      "Type": "SHT_NULL",
+      "Address": "0x0000000000001008",
+      "Offset": "0x0000000000000000",
+      "Size": "8",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x0"
+    }
+  ],
+  "elf64-be-machine8/dynamic": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-be-machine8/symbols-dynamic": [
+    {
+      "Number": 0,
+      "Value": "0x0000000000001000",
+      "Size": "0",
+      "Type": "NOTYPE",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "UND",
+      "Name": ""
+    },
+    {
+      "Number": 1,
+      "Value": "0x0000000000001008",
+      "Size": "1",
+      "Type": "FUNC",
+      "Bind": "GLOBAL",
+      "Vis": "INTERNAL",
+      "Ndx": "2",
+      "Name": "dyn_symbol@@API_1"
+    },
+    {
+      "Number": 2,
+      "Value": "0x0000000000001010",
+      "Size": "2",
+      "Type": "SECTION",
+      "Bind": "LOCAL",
+      "Vis": "HIDDEN",
+      "Ndx": "2",
+      "Name": ".text"
+    },
+    {
+      "Number": 3,
+      "Value": "0x0000000000001018",
+      "Size": "3",
+      "Type": "OBJECT",
+      "Bind": "GLOBAL",
+      "Vis": "PROTECTED",
+      "Ndx": "UND",
+      "Name": "dyn_symbol@API_1"
+    },
+    {
+      "Number": 4,
+      "Value": "0xffffffffffffffff",
+      "Size": "4",
+      "Type": "FUNC",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "ABS",
+      "Name": "dyn_symbol@@API_2"
+    },
+    {
+      "Number": 5,
+      "Value": "0x0000000000001028",
+      "Size": "5",
+      "Type": "HIPROC",
+      "Bind": "HIPROC",
+      "Vis": "INTERNAL",
+      "Ndx": "COM",
+      "Name": "dyn_symbol"
+    }
+  ],
+  "elf64-be-machine8/symbols-static": [
+    {
+      "Number": 0,
+      "Value": "0x0000000000001000",
+      "Size": "0",
+      "Type": "NOTYPE",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "UND",
+      "Name": ""
+    },
+    {
+      "Number": 1,
+      "Value": "0x0000000000001008",
+      "Size": "1",
+      "Type": "FUNC",
+      "Bind": "GLOBAL",
+      "Vis": "INTERNAL",
+      "Ndx": "2",
+      "Name": "static_symbol"
+    },
+    {
+      "Number": 2,
+      "Value": "0x0000000000001010",
+      "Size": "2",
+      "Type": "SECTION",
+      "Bind": "LOCAL",
+      "Vis": "HIDDEN",
+      "Ndx": "2",
+      "Name": ".text"
+    },
+    {
+      "Number": 3,
+      "Value": "0x0000000000001018",
+      "Size": "3",
+      "Type": "OBJECT",
+      "Bind": "GLOBAL",
+      "Vis": "PROTECTED",
+      "Ndx": "UND",
+      "Name": "static_symbol"
+    },
+    {
+      "Number": 4,
+      "Value": "0xffffffffffffffff",
+      "Size": "4",
+      "Type": "FUNC",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "ABS",
+      "Name": "static_symbol"
+    },
+    {
+      "Number": 5,
+      "Value": "0x0000000000001028",
+      "Size": "5",
+      "Type": "HIPROC",
+      "Bind": "HIPROC",
+      "Vis": "INTERNAL",
+      "Ndx": "COM",
+      "Name": "static_symbol"
+    }
+  ],
+  "elf64-be-machine8/mapping": " Section to Segment mapping:\r\n  \u6BB5\u8282...\r\n   00     .text .bss\r\n   01     \r\n   02     .overflow\r\n   03     \r\n   04     \r\n   05     .text .bss .got .got.plt .overflow\r\n",
+  "elf64-be-machine8/interpreter": "/lib/ld-sample.so",
+  "elf64-be-machine8/attributes": "No attribute sections found.\r\n",
+  "elf64-be-machine8/exidx": "There are no exception index entries in this file.\r\n",
+  "elf64-be-machine8/relocation.rela.plt": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0000000100000006",
+      "Type": "R_MIPS_LO16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002108",
+      "Info": "0000000100000007",
+      "Type": "R_MIPS_GPREL16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-9223372036854775808",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002110",
+      "Info": "000003e700000008",
+      "Type": "R_MIPS_LITERAL",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf64-be-machine8/relocation.rel.plt": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0000000100000006",
+      "Type": "R_MIPS_LO16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "",
+      "SectionName": ".rel.plt"
+    },
+    {
+      "Offset": "0000000000002108",
+      "Info": "0000000100000007",
+      "Type": "R_MIPS_GPREL16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "",
+      "SectionName": ".rel.plt"
+    },
+    {
+      "Offset": "0000000000002110",
+      "Info": "000003e700000008",
+      "Type": "R_MIPS_LITERAL",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rel.plt"
+    }
+  ],
+  "elf64-be-machine8/relocation.rela.dyn": [
+    {
+      "Offset": "0000000000002000",
+      "Info": "0000000100000006",
+      "Type": "R_MIPS_LO16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "static_symbol",
+      "Addend": "-8",
+      "SectionName": ".rela.dyn"
+    },
+    {
+      "Offset": "0000000000002008",
+      "Info": "0000000100000007",
+      "Type": "R_MIPS_GPREL16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "static_symbol",
+      "Addend": "-9223372036854775808",
+      "SectionName": ".rela.dyn"
+    },
+    {
+      "Offset": "0000000000002010",
+      "Info": "000003e700000008",
+      "Type": "R_MIPS_LITERAL",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.dyn"
+    }
+  ],
+  "elf64-be-machine8/relocation.rel.dyn": [
+    {
+      "Offset": "0000000000002000",
+      "Info": "0000000200000006",
+      "Type": "R_MIPS_LO16",
+      "SymbolValue": "0000000000001010",
+      "Symbol": ".text",
+      "Addend": "",
+      "SectionName": ".rel.dyn"
+    },
+    {
+      "Offset": "0000000000002008",
+      "Info": "0000000200000007",
+      "Type": "R_MIPS_GPREL16",
+      "SymbolValue": "0000000000001010",
+      "Symbol": ".text",
+      "Addend": "",
+      "SectionName": ".rel.dyn"
+    },
+    {
+      "Offset": "0000000000002010",
+      "Info": "000003e700000008",
+      "Type": "R_MIPS_LITERAL",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rel.dyn"
+    }
+  ],
+  "elf64-be-machine8/relocation.missing": [],
+  "elf64-be-machine8/got.got": [
+    {
+      "Number": "0",
+      "Offset": "0x0000000000002000",
+      "Value": "0x0000000000003000",
+      "Type": "R_MIPS_LO16",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x0000000000002008",
+      "Value": "0x0000000000003008",
+      "Type": "R_MIPS_GPREL16",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x0000000000002010",
+      "Value": "0x0000000000003010",
+      "Type": "R_MIPS_LITERAL",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000000000002018",
+      "Value": "0x0000000000003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x0000000000002020",
+      "Value": "0xffffffffffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    }
+  ],
+  "elf64-be-machine8/got.got.plt": [
+    {
+      "Number": "0",
+      "Offset": "0x0000000000002100",
+      "Value": "0x0000000000003000",
+      "Type": "R_MIPS_LO16",
+      "Symbol": "dyn_symbol@@API_1",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x0000000000002108",
+      "Value": "0x0000000000003008",
+      "Type": "R_MIPS_GPREL16",
+      "Symbol": "dyn_symbol@@API_1",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x0000000000002110",
+      "Value": "0x0000000000003010",
+      "Type": "R_MIPS_LITERAL",
+      "Symbol": "",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000000000002118",
+      "Value": "0x0000000000003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x0000000000002120",
+      "Value": "0xffffffffffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got.plt"
+    }
+  ],
+  "elf64-be-machine8/got.missing": [],
+  "elf64-be-machine8/null-programs": {
+    "Rows": [],
+    "Mapping": " Section to Segment mapping:\r\n  \u6BB5\u8282...\r\n",
+    "Interpreter": ""
+  },
+  "elf64-be-machine8/null-sections": {
+    "Rows": [],
+    "Mapping": " Section to Segment mapping:\r\n  \u6BB5\u8282...\r\n   00     \r\n   01     \r\n   02     \r\n   03     \r\n   04     \r\n   05     \r\n",
+    "Got": [],
+    "Rel": [],
+    "Dynamic": [
+      {
+        "Tag": "0x0000000000000005",
+        "Type": "DT_STRTAB",
+        "Value": "0x3000"
+      },
+      {
+        "Tag": "0x000000000000000a",
+        "Type": "DT_STRSZ",
+        "Value": "0x40"
+      },
+      {
+        "Tag": "0x0000000000000001",
+        "Type": "DT_NEEDED",
+        "Value": ""
+      },
+      {
+        "Tag": "0x000000000000000e",
+        "Type": "DT_SONAME",
+        "Value": ""
+      },
+      {
+        "Tag": "0x000000000000000f",
+        "Type": "DT_RPATH",
+        "Value": ""
+      },
+      {
+        "Tag": "0x000000000000001d",
+        "Type": "DT_RUNPATH",
+        "Value": ""
+      },
+      {
+        "Tag": "0x000000000000001e",
+        "Type": "DT_FLAGS",
+        "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+      },
+      {
+        "Tag": "0x000000006ffffffb",
+        "Type": "DT_FLAGS_1",
+        "Value": "NOW, PIE"
+      },
+      {
+        "Tag": "0x0000000000000014",
+        "Type": "DT_PLTREL",
+        "Value": "DT_RELA"
+      },
+      {
+        "Tag": "0xffffffffffffffff",
+        "Type": "UNKNOWN(18446744073709551615)",
+        "Value": "0xffffffffffffffff"
+      },
+      {
+        "Tag": "0x0000000000000000",
+        "Type": "DT_NULL",
+        "Value": "0x0"
+      }
+    ]
+  },
+  "elf64-be-machine8/null-symbols": [],
+  "elf64-be-machine8/null-dynamic": [],
+  "elf64-be-machine8/empty-dynamic": [],
+  "elf64-be-machine8/dynamic-no-terminator": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "dyn_symbol"
+    }
+  ],
+  "elf64-be-machine8/dynamic-zero-string-address": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x0"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-be-machine8/dynamic-zero-string-size": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x0"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-be-machine8/dynamic-missing-string-section": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-be-machine8/dynamic-string-offset-overflow": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-be-machine8/dynamic-empty-string": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "0x0"
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-be-machine8/dynamic-file-offset-overflow": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "0xc"
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": "0xc"
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": "0x19"
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "0x19"
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-be-machine8/interpreter-file-offset-overflow": "",
+  "elf64-be-machine8/interpreter-file-length-clamp": "xyz",
+  "elf64-be-machine8/interpreter-declared-length": "/lib",
+  "elf64-be-machine8/relocation-zero-entsize": [],
+  "elf64-be-machine8/relocation-small-entsize": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0000000100000006",
+      "Type": "R_MIPS_LO16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002108",
+      "Info": "0000000100000007",
+      "Type": "R_MIPS_GPREL16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-9223372036854775808",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002110",
+      "Info": "000003e700000008",
+      "Type": "R_MIPS_LITERAL",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf64-be-machine8/relocation-truncated": [],
+  "elf64-be-machine8/relocation-size-overflow": [],
+  "elf64-be-machine8/relocation-offset-overflow": [],
+  "elf64-be-machine8/relocation-invalid-symbol-link": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0000000100000006",
+      "Type": "R_MIPS_LO16",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002108",
+      "Info": "0000000100000007",
+      "Type": "R_MIPS_GPREL16",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "-9223372036854775808",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002110",
+      "Info": "000003e700000008",
+      "Type": "R_MIPS_LITERAL",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf64-be-machine8/relocation-name-type-disagree": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0000000100000006",
+      "Type": "R_MIPS_LO16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "fffffffffffffff8",
+      "Info": "0000000000002108",
+      "Type": "R_MIPS_LITERAL",
+      "SymbolValue": "0000000000001000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000100000007",
+      "Info": "8000000000000000",
+      "Type": "R_MIPS_NONE",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf64-be-machine8/relocation-same-name-nonrel-first": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0000000100000006",
+      "Type": "R_MIPS_LO16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002108",
+      "Info": "0000000100000007",
+      "Type": "R_MIPS_GPREL16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-9223372036854775808",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002110",
+      "Info": "000003e700000008",
+      "Type": "R_MIPS_LITERAL",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf64-be-machine8/got-ignore-entsize": [
+    {
+      "Number": "0",
+      "Offset": "0x0000000000002000",
+      "Value": "0x0000000000003000",
+      "Type": "R_MIPS_LO16",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x0000000000002008",
+      "Value": "0x0000000000003008",
+      "Type": "R_MIPS_GPREL16",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x0000000000002010",
+      "Value": "0x0000000000003010",
+      "Type": "R_MIPS_LITERAL",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000000000002018",
+      "Value": "0x0000000000003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x0000000000002020",
+      "Value": "0xffffffffffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    }
+  ],
+  "elf64-be-machine8/got-truncated-slot": [],
+  "elf64-be-machine8/got-offset-overflow": [],
+  "elf64-be-machine8/got-size-clamp": {
+    "Count": 412,
+    "First": {
+      "Number": "0",
+      "Offset": "0x0000000000002000",
+      "Value": "0x0000000000003000",
+      "Type": "R_MIPS_LO16",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    "Last": {
+      "Number": "411",
+      "Offset": "0x0000000000002cd8",
+      "Value": "0x000000000078797a",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    "Hash": "1031A16CE6F4519058FF9C38BE732AC956A966304A81B70EF98EACA7EAFAD912"
+  },
+  "elf64-be-machine8/got-address-wrap": [
+    {
+      "Number": "0",
+      "Offset": "0xfffffffffffffffe",
+      "Value": "0x0000000000003000",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x0000000000000006",
+      "Value": "0x0000000000003008",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x000000000000000e",
+      "Value": "0x0000000000003010",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000000000000016",
+      "Value": "0x0000000000003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x000000000000001e",
+      "Value": "0xffffffffffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    }
+  ],
+  "elf64-le-machine8/programs": [
+    {
+      "Type": "PT_LOAD",
+      "Offset": "0x0000000000000bb8",
+      "VirtAddr": "0x0000000000001000",
+      "PhysAddr": "0x0000000000001000",
+      "FileSize": "64",
+      "MemSize": "128",
+      "Flags": "RWE",
+      "Align": "0x1000"
+    },
+    {
+      "Type": "PT_LOAD",
+      "Offset": "0x0000000000000000",
+      "VirtAddr": "0x0000000000000000",
+      "PhysAddr": "0x0000000000000000",
+      "FileSize": "0",
+      "MemSize": "128",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "PT_LOAD",
+      "Offset": "0x0000000000000000",
+      "VirtAddr": "0xfffffffffffffff7",
+      "PhysAddr": "0x0000000000000000",
+      "FileSize": "0",
+      "MemSize": "32",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "PT_INTERP",
+      "Offset": "0x0000000000000800",
+      "VirtAddr": "0x0000000000000000",
+      "PhysAddr": "0x0000000000000000",
+      "FileSize": "17",
+      "MemSize": "0",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "PT_INTERP",
+      "Offset": "0xffffffffffffffff",
+      "VirtAddr": "0x0000000000000000",
+      "PhysAddr": "0x0000000000000000",
+      "FileSize": "18446744073709551615",
+      "MemSize": "0",
+      "Flags": "",
+      "Align": "0x0"
+    },
+    {
+      "Type": "UNKNOWN(4294967295)",
+      "Offset": "0xffffffffffffffff",
+      "VirtAddr": "0x0000000000000000",
+      "PhysAddr": "0x0000000000000000",
+      "FileSize": "0",
+      "MemSize": "18446744073709551615",
+      "Flags": "",
+      "Align": "0x0"
+    }
+  ],
+  "elf64-le-machine8/sections": [
+    {
+      "Index": 0,
+      "Name": "",
+      "Type": "SHT_NULL",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000000",
+      "Size": "0",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x0"
+    },
+    {
+      "Index": 1,
+      "Name": ".shstrtab",
+      "Type": "SHT_STRTAB",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000080",
+      "Size": "141",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 2,
+      "Name": ".text",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x0000000000001000",
+      "Offset": "0x0000000000000bb8",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 3,
+      "Name": ".debug",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000bf8",
+      "Size": "32",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 4,
+      "Name": ".bss",
+      "Type": "SHT_NOBITS",
+      "Address": "0x0000000000001040",
+      "Offset": "0x0000000000000c1c",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "WA",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 5,
+      "Name": ".empty",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x0000000000001008",
+      "Offset": "0x0000000000000c1c",
+      "Size": "0",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 6,
+      "Name": ".dynstr",
+      "Type": "SHT_STRTAB",
+      "Address": "0x0000000000003000",
+      "Offset": "0x0000000000000200",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 7,
+      "Name": ".dynsym",
+      "Type": "SHT_DYNSYM",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000280",
+      "Size": "144",
+      "EntSize": "24",
+      "Flags": "",
+      "Link": "6",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 8,
+      "Name": ".got",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x0000000000002000",
+      "Offset": "0x0000000000000320",
+      "Size": "40",
+      "EntSize": "8",
+      "Flags": "WA",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 9,
+      "Name": ".got.plt",
+      "Type": "SHT_PROGBITS",
+      "Address": "0x0000000000002100",
+      "Offset": "0x0000000000000350",
+      "Size": "40",
+      "EntSize": "8",
+      "Flags": "WA",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 10,
+      "Name": ".strtab",
+      "Type": "SHT_STRTAB",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000380",
+      "Size": "64",
+      "EntSize": "0",
+      "Flags": "",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 11,
+      "Name": ".symtab",
+      "Type": "SHT_SYMTAB",
+      "Address": "0x0000000000000000",
+      "Offset": "0x00000000000003c0",
+      "Size": "144",
+      "EntSize": "24",
+      "Flags": "",
+      "Link": "10",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 12,
+      "Name": ".rela.plt",
+      "Type": "SHT_RELA",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000460",
+      "Size": "72",
+      "EntSize": "24",
+      "Flags": "",
+      "Link": "7",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 13,
+      "Name": ".rel.dyn",
+      "Type": "SHT_REL",
+      "Address": "0x0000000000000000",
+      "Offset": "0x00000000000004e0",
+      "Size": "48",
+      "EntSize": "16",
+      "Flags": "",
+      "Link": "7",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 14,
+      "Name": ".rela.dyn",
+      "Type": "SHT_RELA",
+      "Address": "0x0000000000000000",
+      "Offset": "0x0000000000000540",
+      "Size": "72",
+      "EntSize": "24",
+      "Flags": "",
+      "Link": "11",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 15,
+      "Name": ".rel.plt",
+      "Type": "SHT_REL",
+      "Address": "0x0000000000000000",
+      "Offset": "0x00000000000005c0",
+      "Size": "48",
+      "EntSize": "16",
+      "Flags": "",
+      "Link": "7",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 16,
+      "Name": ".overflow",
+      "Type": "SHT_PROGBITS",
+      "Address": "0xfffffffffffffff7",
+      "Offset": "0x0000000000000c80",
+      "Size": "16",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x4"
+    },
+    {
+      "Index": 17,
+      "Name": "",
+      "Type": "SHT_NULL",
+      "Address": "0x0000000000001008",
+      "Offset": "0x0000000000000000",
+      "Size": "8",
+      "EntSize": "0",
+      "Flags": "A",
+      "Link": "0",
+      "Info": "0",
+      "Align": "0x0"
+    }
+  ],
+  "elf64-le-machine8/dynamic": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-le-machine8/symbols-dynamic": [
+    {
+      "Number": 0,
+      "Value": "0x0000000000001000",
+      "Size": "0",
+      "Type": "NOTYPE",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "UND",
+      "Name": ""
+    },
+    {
+      "Number": 1,
+      "Value": "0x0000000000001008",
+      "Size": "1",
+      "Type": "FUNC",
+      "Bind": "GLOBAL",
+      "Vis": "INTERNAL",
+      "Ndx": "2",
+      "Name": "dyn_symbol@@API_1"
+    },
+    {
+      "Number": 2,
+      "Value": "0x0000000000001010",
+      "Size": "2",
+      "Type": "SECTION",
+      "Bind": "LOCAL",
+      "Vis": "HIDDEN",
+      "Ndx": "2",
+      "Name": ".text"
+    },
+    {
+      "Number": 3,
+      "Value": "0x0000000000001018",
+      "Size": "3",
+      "Type": "OBJECT",
+      "Bind": "GLOBAL",
+      "Vis": "PROTECTED",
+      "Ndx": "UND",
+      "Name": "dyn_symbol@API_1"
+    },
+    {
+      "Number": 4,
+      "Value": "0xffffffffffffffff",
+      "Size": "4",
+      "Type": "FUNC",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "ABS",
+      "Name": "dyn_symbol@@API_2"
+    },
+    {
+      "Number": 5,
+      "Value": "0x0000000000001028",
+      "Size": "5",
+      "Type": "HIPROC",
+      "Bind": "HIPROC",
+      "Vis": "INTERNAL",
+      "Ndx": "COM",
+      "Name": "dyn_symbol"
+    }
+  ],
+  "elf64-le-machine8/symbols-static": [
+    {
+      "Number": 0,
+      "Value": "0x0000000000001000",
+      "Size": "0",
+      "Type": "NOTYPE",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "UND",
+      "Name": ""
+    },
+    {
+      "Number": 1,
+      "Value": "0x0000000000001008",
+      "Size": "1",
+      "Type": "FUNC",
+      "Bind": "GLOBAL",
+      "Vis": "INTERNAL",
+      "Ndx": "2",
+      "Name": "static_symbol"
+    },
+    {
+      "Number": 2,
+      "Value": "0x0000000000001010",
+      "Size": "2",
+      "Type": "SECTION",
+      "Bind": "LOCAL",
+      "Vis": "HIDDEN",
+      "Ndx": "2",
+      "Name": ".text"
+    },
+    {
+      "Number": 3,
+      "Value": "0x0000000000001018",
+      "Size": "3",
+      "Type": "OBJECT",
+      "Bind": "GLOBAL",
+      "Vis": "PROTECTED",
+      "Ndx": "UND",
+      "Name": "static_symbol"
+    },
+    {
+      "Number": 4,
+      "Value": "0xffffffffffffffff",
+      "Size": "4",
+      "Type": "FUNC",
+      "Bind": "LOCAL",
+      "Vis": "DEFAULT",
+      "Ndx": "ABS",
+      "Name": "static_symbol"
+    },
+    {
+      "Number": 5,
+      "Value": "0x0000000000001028",
+      "Size": "5",
+      "Type": "HIPROC",
+      "Bind": "HIPROC",
+      "Vis": "INTERNAL",
+      "Ndx": "COM",
+      "Name": "static_symbol"
+    }
+  ],
+  "elf64-le-machine8/mapping": " Section to Segment mapping:\r\n  \u6BB5\u8282...\r\n   00     .text .bss\r\n   01     \r\n   02     .overflow\r\n   03     \r\n   04     \r\n   05     .text .bss .got .got.plt .overflow\r\n",
+  "elf64-le-machine8/interpreter": "/lib/ld-sample.so",
+  "elf64-le-machine8/attributes": "No attribute sections found.\r\n",
+  "elf64-le-machine8/exidx": "There are no exception index entries in this file.\r\n",
+  "elf64-le-machine8/relocation.rela.plt": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0600000000000001",
+      "Type": "R_MIPS_LO16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002108",
+      "Info": "0700000000000001",
+      "Type": "R_MIPS_GPREL16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-9223372036854775808",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002110",
+      "Info": "08000000000003e7",
+      "Type": "R_MIPS_LITERAL",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf64-le-machine8/relocation.rel.plt": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0600000000000001",
+      "Type": "R_MIPS_LO16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "",
+      "SectionName": ".rel.plt"
+    },
+    {
+      "Offset": "0000000000002108",
+      "Info": "0700000000000001",
+      "Type": "R_MIPS_GPREL16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "",
+      "SectionName": ".rel.plt"
+    },
+    {
+      "Offset": "0000000000002110",
+      "Info": "08000000000003e7",
+      "Type": "R_MIPS_LITERAL",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rel.plt"
+    }
+  ],
+  "elf64-le-machine8/relocation.rela.dyn": [
+    {
+      "Offset": "0000000000002000",
+      "Info": "0600000000000001",
+      "Type": "R_MIPS_LO16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "static_symbol",
+      "Addend": "-8",
+      "SectionName": ".rela.dyn"
+    },
+    {
+      "Offset": "0000000000002008",
+      "Info": "0700000000000001",
+      "Type": "R_MIPS_GPREL16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "static_symbol",
+      "Addend": "-9223372036854775808",
+      "SectionName": ".rela.dyn"
+    },
+    {
+      "Offset": "0000000000002010",
+      "Info": "08000000000003e7",
+      "Type": "R_MIPS_LITERAL",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.dyn"
+    }
+  ],
+  "elf64-le-machine8/relocation.rel.dyn": [
+    {
+      "Offset": "0000000000002000",
+      "Info": "0600000000000002",
+      "Type": "R_MIPS_LO16",
+      "SymbolValue": "0000000000001010",
+      "Symbol": ".text",
+      "Addend": "",
+      "SectionName": ".rel.dyn"
+    },
+    {
+      "Offset": "0000000000002008",
+      "Info": "0700000000000002",
+      "Type": "R_MIPS_GPREL16",
+      "SymbolValue": "0000000000001010",
+      "Symbol": ".text",
+      "Addend": "",
+      "SectionName": ".rel.dyn"
+    },
+    {
+      "Offset": "0000000000002010",
+      "Info": "08000000000003e7",
+      "Type": "R_MIPS_LITERAL",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rel.dyn"
+    }
+  ],
+  "elf64-le-machine8/relocation.missing": [],
+  "elf64-le-machine8/got.got": [
+    {
+      "Number": "0",
+      "Offset": "0x0000000000002000",
+      "Value": "0x0000000000003000",
+      "Type": "R_MIPS_LO16",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x0000000000002008",
+      "Value": "0x0000000000003008",
+      "Type": "R_MIPS_GPREL16",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x0000000000002010",
+      "Value": "0x0000000000003010",
+      "Type": "R_MIPS_LITERAL",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000000000002018",
+      "Value": "0x0000000000003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x0000000000002020",
+      "Value": "0xffffffffffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    }
+  ],
+  "elf64-le-machine8/got.got.plt": [
+    {
+      "Number": "0",
+      "Offset": "0x0000000000002100",
+      "Value": "0x0000000000003000",
+      "Type": "R_MIPS_LO16",
+      "Symbol": "dyn_symbol@@API_1",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x0000000000002108",
+      "Value": "0x0000000000003008",
+      "Type": "R_MIPS_GPREL16",
+      "Symbol": "dyn_symbol@@API_1",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x0000000000002110",
+      "Value": "0x0000000000003010",
+      "Type": "R_MIPS_LITERAL",
+      "Symbol": "",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000000000002118",
+      "Value": "0x0000000000003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got.plt"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x0000000000002120",
+      "Value": "0xffffffffffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got.plt"
+    }
+  ],
+  "elf64-le-machine8/got.missing": [],
+  "elf64-le-machine8/null-programs": {
+    "Rows": [],
+    "Mapping": " Section to Segment mapping:\r\n  \u6BB5\u8282...\r\n",
+    "Interpreter": ""
+  },
+  "elf64-le-machine8/null-sections": {
+    "Rows": [],
+    "Mapping": " Section to Segment mapping:\r\n  \u6BB5\u8282...\r\n   00     \r\n   01     \r\n   02     \r\n   03     \r\n   04     \r\n   05     \r\n",
+    "Got": [],
+    "Rel": [],
+    "Dynamic": [
+      {
+        "Tag": "0x0000000000000005",
+        "Type": "DT_STRTAB",
+        "Value": "0x3000"
+      },
+      {
+        "Tag": "0x000000000000000a",
+        "Type": "DT_STRSZ",
+        "Value": "0x40"
+      },
+      {
+        "Tag": "0x0000000000000001",
+        "Type": "DT_NEEDED",
+        "Value": ""
+      },
+      {
+        "Tag": "0x000000000000000e",
+        "Type": "DT_SONAME",
+        "Value": ""
+      },
+      {
+        "Tag": "0x000000000000000f",
+        "Type": "DT_RPATH",
+        "Value": ""
+      },
+      {
+        "Tag": "0x000000000000001d",
+        "Type": "DT_RUNPATH",
+        "Value": ""
+      },
+      {
+        "Tag": "0x000000000000001e",
+        "Type": "DT_FLAGS",
+        "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+      },
+      {
+        "Tag": "0x000000006ffffffb",
+        "Type": "DT_FLAGS_1",
+        "Value": "NOW, PIE"
+      },
+      {
+        "Tag": "0x0000000000000014",
+        "Type": "DT_PLTREL",
+        "Value": "DT_RELA"
+      },
+      {
+        "Tag": "0xffffffffffffffff",
+        "Type": "UNKNOWN(18446744073709551615)",
+        "Value": "0xffffffffffffffff"
+      },
+      {
+        "Tag": "0x0000000000000000",
+        "Type": "DT_NULL",
+        "Value": "0x0"
+      }
+    ]
+  },
+  "elf64-le-machine8/null-symbols": [],
+  "elf64-le-machine8/null-dynamic": [],
+  "elf64-le-machine8/empty-dynamic": [],
+  "elf64-le-machine8/dynamic-no-terminator": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "dyn_symbol"
+    }
+  ],
+  "elf64-le-machine8/dynamic-zero-string-address": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x0"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-le-machine8/dynamic-zero-string-size": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x0"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-le-machine8/dynamic-missing-string-section": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": ""
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-le-machine8/dynamic-string-offset-overflow": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-le-machine8/dynamic-empty-string": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "0x0"
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": "libsample.so"
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "/path"
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-le-machine8/dynamic-file-offset-overflow": [
+    {
+      "Tag": "0x0000000000000005",
+      "Type": "DT_STRTAB",
+      "Value": "0x3000"
+    },
+    {
+      "Tag": "0x000000000000000a",
+      "Type": "DT_STRSZ",
+      "Value": "0x40"
+    },
+    {
+      "Tag": "0x0000000000000001",
+      "Type": "DT_NEEDED",
+      "Value": "0xc"
+    },
+    {
+      "Tag": "0x000000000000000e",
+      "Type": "DT_SONAME",
+      "Value": "0xc"
+    },
+    {
+      "Tag": "0x000000000000000f",
+      "Type": "DT_RPATH",
+      "Value": "0x19"
+    },
+    {
+      "Tag": "0x000000000000001d",
+      "Type": "DT_RUNPATH",
+      "Value": "0x19"
+    },
+    {
+      "Tag": "0x000000000000001e",
+      "Type": "DT_FLAGS",
+      "Value": "ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS"
+    },
+    {
+      "Tag": "0x000000006ffffffb",
+      "Type": "DT_FLAGS_1",
+      "Value": "NOW, PIE"
+    },
+    {
+      "Tag": "0x0000000000000014",
+      "Type": "DT_PLTREL",
+      "Value": "DT_RELA"
+    },
+    {
+      "Tag": "0xffffffffffffffff",
+      "Type": "UNKNOWN(18446744073709551615)",
+      "Value": "0xffffffffffffffff"
+    },
+    {
+      "Tag": "0x0000000000000000",
+      "Type": "DT_NULL",
+      "Value": "0x0"
+    }
+  ],
+  "elf64-le-machine8/interpreter-file-offset-overflow": "",
+  "elf64-le-machine8/interpreter-file-length-clamp": "xyz",
+  "elf64-le-machine8/interpreter-declared-length": "/lib",
+  "elf64-le-machine8/relocation-zero-entsize": [],
+  "elf64-le-machine8/relocation-small-entsize": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0600000000000001",
+      "Type": "R_MIPS_LO16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002108",
+      "Info": "0700000000000001",
+      "Type": "R_MIPS_GPREL16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-9223372036854775808",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002110",
+      "Info": "08000000000003e7",
+      "Type": "R_MIPS_LITERAL",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf64-le-machine8/relocation-truncated": [],
+  "elf64-le-machine8/relocation-size-overflow": [],
+  "elf64-le-machine8/relocation-offset-overflow": [],
+  "elf64-le-machine8/relocation-invalid-symbol-link": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0600000000000001",
+      "Type": "R_MIPS_LO16",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002108",
+      "Info": "0700000000000001",
+      "Type": "R_MIPS_GPREL16",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "-9223372036854775808",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002110",
+      "Info": "08000000000003e7",
+      "Type": "R_MIPS_LITERAL",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf64-le-machine8/relocation-name-type-disagree": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0600000000000001",
+      "Type": "R_MIPS_LO16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "fffffffffffffff8",
+      "Info": "0000000000002108",
+      "Type": "R_MIPS_NONE",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0700000000000001",
+      "Info": "8000000000000000",
+      "Type": "R_MIPS_UNKNOWN(128)",
+      "SymbolValue": "0000000000001000",
+      "Symbol": "",
+      "Addend": "",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf64-le-machine8/relocation-same-name-nonrel-first": [
+    {
+      "Offset": "0000000000002100",
+      "Info": "0600000000000001",
+      "Type": "R_MIPS_LO16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-8",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002108",
+      "Info": "0700000000000001",
+      "Type": "R_MIPS_GPREL16",
+      "SymbolValue": "0000000000001008",
+      "Symbol": "dyn_symbol@@API_1",
+      "Addend": "-9223372036854775808",
+      "SectionName": ".rela.plt"
+    },
+    {
+      "Offset": "0000000000002110",
+      "Info": "08000000000003e7",
+      "Type": "R_MIPS_LITERAL",
+      "SymbolValue": "0000000000000000",
+      "Symbol": "",
+      "Addend": "7",
+      "SectionName": ".rela.plt"
+    }
+  ],
+  "elf64-le-machine8/got-ignore-entsize": [
+    {
+      "Number": "0",
+      "Offset": "0x0000000000002000",
+      "Value": "0x0000000000003000",
+      "Type": "R_MIPS_LO16",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x0000000000002008",
+      "Value": "0x0000000000003008",
+      "Type": "R_MIPS_GPREL16",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x0000000000002010",
+      "Value": "0x0000000000003010",
+      "Type": "R_MIPS_LITERAL",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000000000002018",
+      "Value": "0x0000000000003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x0000000000002020",
+      "Value": "0xffffffffffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    }
+  ],
+  "elf64-le-machine8/got-truncated-slot": [],
+  "elf64-le-machine8/got-offset-overflow": [],
+  "elf64-le-machine8/got-size-clamp": {
+    "Count": 412,
+    "First": {
+      "Number": "0",
+      "Offset": "0x0000000000002000",
+      "Value": "0x0000000000003000",
+      "Type": "R_MIPS_LO16",
+      "Symbol": ".text",
+      "SectionName": ".got"
+    },
+    "Last": {
+      "Number": "411",
+      "Offset": "0x0000000000002cd8",
+      "Value": "0x7a79780000000000",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    "Hash": "89F3580F972C006A6A861125E67F62421B17C02A5C87F20367A1C8C89D64F540"
+  },
+  "elf64-le-machine8/got-address-wrap": [
+    {
+      "Number": "0",
+      "Offset": "0xfffffffffffffffe",
+      "Value": "0x0000000000003000",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "1",
+      "Offset": "0x0000000000000006",
+      "Value": "0x0000000000003008",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "2",
+      "Offset": "0x000000000000000e",
+      "Value": "0x0000000000003010",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "3",
+      "Offset": "0x0000000000000016",
+      "Value": "0x0000000000003018",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    },
+    {
+      "Number": "4",
+      "Offset": "0x000000000000001e",
+      "Value": "0xffffffffffffffff",
+      "Type": "",
+      "Symbol": "",
+      "SectionName": ".got"
+    }
+  ],
+  "mapping-budget/1999": {
+    "Lines": 2002,
+    "LastLines": [
+      "   1997     ",
+      "   1998     ",
+      ""
+    ],
+    "Hash": "E7F5DC073CA537CC4ED975D3C1CB2BE2738F8EBC28CA577765BB5074846D1FE7"
+  },
+  "mapping-budget/2000": {
+    "Lines": 2004,
+    "LastLines": [
+      "   1999     ",
+      "  ...(\u6620\u5C04\u8BA1\u7B97\u91CF\u8D85\u51FA\u4E0A\u9650\uFF0C\u5176\u4F59\u6BB5\u5DF2\u7701\u7565)",
+      ""
+    ],
+    "Hash": "559F33BFD6BDC8F65A537E0EAA6E09A6C6201A8B6337869AAF7F0FB40C4EC8B1"
+  },
+  "mapping-budget/2001": {
+    "Lines": 2004,
+    "LastLines": [
+      "   1999     ",
+      "  ...(\u6620\u5C04\u8BA1\u7B97\u91CF\u8D85\u51FA\u4E0A\u9650\uFF0C\u5176\u4F59\u6BB5\u5DF2\u7701\u7565)",
+      ""
+    ],
+    "Hash": "559F33BFD6BDC8F65A537E0EAA6E09A6C6201A8B6337869AAF7F0FB40C4EC8B1"
+  }
+}

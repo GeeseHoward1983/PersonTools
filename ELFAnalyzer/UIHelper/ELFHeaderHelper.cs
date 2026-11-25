@@ -1,9 +1,7 @@
 using PersonalTools.ELFAnalyzer.Core;
-using PersonalTools.Utils;
 using PersonalTools.ELFAnalyzer.Models;
 using PersonalTools.Enums;
 using System.Globalization;
-using System.Text;
 
 namespace PersonalTools.ELFAnalyzer.UIHelper
 {
@@ -11,56 +9,106 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
     {
         internal static string GetFormattedELFHeaderInfo(ELFParser parser)
         {
-            StringBuilder sb = new();
-            sb.AppendLine("ELF 头:");
-            sb.AppendLine("================================================================================");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  Magic:            {GetMagicString(parser.Header)}");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  类别:             {ELFHeaderDescriptions.GetELFClassName(parser.Header)} ({(parser.Is64Bit ? "64-bit" : "32-bit")})");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  数据:             {ELFHeaderDescriptions.GetELFDataName(parser.Header)} ({parser.Header.EI_DATA switch
+            // 最后的空行保留原输出末尾的换行；所有数值统一使用固定区域性。
+            return string.Join(Environment.NewLine,
+            [
+                "ELF 头:",
+                "================================================================================",
+                .. GetHeaderLines(parser.Header, parser.Is64Bit).Select(FormatLine),
+                string.Empty
+            ]);
+        }
+
+        private static IEnumerable<FormattableString> GetHeaderLines(ELFHeader header, bool is64Bit)
+        {
+            return GetIdentificationLines(header, is64Bit)
+                .Concat(GetFileLines(header))
+                .Concat(GetLayoutLines(header))
+                .Concat(GetSizeAndCountLines(header));
+        }
+
+        private static FormattableString[] GetIdentificationLines(ELFHeader header, bool is64Bit)
+        {
+            return
+            [
+                $"  Magic:            {GetMagicString(header)}",
+                $"  类别:             {ELFHeaderDescriptions.GetELFClassName(header)} ({(is64Bit ? "64-bit" : "32-bit")})",
+                $"  数据:             {ELFHeaderDescriptions.GetELFDataName(header)} ({GetDataDescription(header.EI_DATA)})",
+                $"  版本:             {ELFHeaderDescriptions.GetReadableVersion(header)}",
+                $"  OS/ABI:           {ELFHeaderDescriptions.GetOSABIName(header)} ({header.EI_OSABI})",
+                $"  ABI 版本:         {header.EI_ABIVERSION}"
+            ];
+        }
+
+        private static FormattableString[] GetFileLines(ELFHeader header)
+        {
+            return
+            [
+                $"  类型:             {ELFHeaderDescriptions.GetELFTypeName(header)} ({ELFHeaderDescriptions.GetFileTypeDescription(header)})",
+                $"  系统架构:         {ELFHeaderDescriptions.GetArchitectureName(header)} ({ELFHeaderDescriptions.GetMachineDescription(header)})",
+                $"  版本:             0x{header.e_version:X}",
+                $"  入口点地址:       {ELFHeaderDescriptions.GetEntryPointAddress(header)}"
+            ];
+        }
+
+        private static FormattableString[] GetLayoutLines(ELFHeader header)
+        {
+            return
+            [
+                $"  程序头起点:       {header.e_phoff} (bytes into file)",
+                $"  节头的起点:       {header.e_shoff} (bytes into file)",
+                $"  标志:             0x{header.e_flags:X}  {ELFHeaderDescriptions.GetFormattedELFFlags(header)}"
+            ];
+        }
+
+        private static FormattableString[] GetSizeAndCountLines(ELFHeader header)
+        {
+            return
+            [
+                $"  本头的大小:       {ELFHeaderDescriptions.GetHeaderSize(header)}",
+                $"  程序头的大小:     {header.e_phentsize} (bytes)",
+                $"  程序头数量:       {header.e_phnum}",
+                $"  节头大小:         {header.e_shentsize} (bytes)",
+                $"  节头数量:         {header.e_shnum}",
+                $"  字符串表索引节头: {header.e_shstrndx}"
+            ];
+        }
+
+        private static string FormatLine(FormattableString line)
+        {
+            return line.ToString(CultureInfo.InvariantCulture);
+        }
+
+        private static string GetDataDescription(byte data)
+        {
+            // EI_DATA=0 或非法值与 readelf 一致显示 none，不能误标为 big endian。
+            return data switch
             {
                 (byte)ELFData.LSB => "2's complement, little endian",
                 (byte)ELFData.MSB => "2's complement, big endian",
-                _ => "none" // EI_DATA=0(NONE) 或非法值：与 readelf 一致显示 none，不再一律标 big endian
-            }})");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  版本:             {ELFHeaderDescriptions.GetReadableVersion(parser.Header)}");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  OS/ABI:           {ELFHeaderDescriptions.GetOSABIName(parser.Header)} ({parser.Header.EI_OSABI})");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  ABI 版本:         {parser.Header.EI_ABIVERSION}");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  类型:             {ELFHeaderDescriptions.GetELFTypeName(parser.Header)} ({ELFHeaderDescriptions.GetFileTypeDescription(parser.Header)})");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  系统架构:         {ELFHeaderDescriptions.GetArchitectureName(parser.Header)} ({ELFHeaderDescriptions.GetMachineDescription(parser.Header)})");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  版本:             0x{parser.Header.e_version:X}");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  入口点地址:       {ELFHeaderDescriptions.GetEntryPointAddress(parser.Header)}");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  程序头起点:       {parser.Header.e_phoff} (bytes into file)");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  节头的起点:       {parser.Header.e_shoff} (bytes into file)");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  标志:             0x{parser.Header.e_flags:X}  {ELFHeaderDescriptions.GetFormattedELFFlags(parser.Header)}");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  本头的大小:       {ELFHeaderDescriptions.GetHeaderSize(parser.Header)}");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  程序头的大小:     {parser.Header.e_phentsize} (bytes)");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  程序头数量:       {parser.Header.e_phnum}");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  节头大小:         {parser.Header.e_shentsize} (bytes)");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  节头数量:         {parser.Header.e_shnum}");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  字符串表索引节头: {parser.Header.e_shstrndx}");
-            return sb.ToString();
+                _ => "none"
+            };
         }
 
         private static string GetMagicString(ELFHeader header)
         {
-            StringBuilder magic = new();
-            magic.Append(CultureInfo.InvariantCulture, $"{header.EI_MAG0:X2} ");
-            magic.Append(CultureInfo.InvariantCulture, $"{header.EI_MAG1:X2} ");
-            magic.Append(CultureInfo.InvariantCulture, $"{header.EI_MAG2:X2} ");
-            magic.Append(CultureInfo.InvariantCulture, $"{header.EI_MAG3:X2} ");
-            magic.Append(CultureInfo.InvariantCulture, $"{header.EI_CLASS:X2} ");
-            magic.Append(CultureInfo.InvariantCulture, $"{header.EI_DATA:X2} ");
-            magic.Append(CultureInfo.InvariantCulture, $"{header.EI_VERSION:X2} ");
-            magic.Append(CultureInfo.InvariantCulture, $"{header.EI_OSABI:X2} ");
-            magic.Append(CultureInfo.InvariantCulture, $"{header.EI_ABIVERSION:X2} ");
-
-            // EI_PAD 逐字节按 "XX " 格式追加，与前 9 字节保持一致的空格分隔（避免拼成无分隔的连串，与 readelf 的 16 字节格式一致）
-            foreach (byte pad in header.EI_PAD)
-            {
-                magic.Append(CultureInfo.InvariantCulture, $"{pad:X2} ");
-            }
-            return magic.ToString().Trim();
+            // 包含全部 e_ident 字节，统一以空格分隔，不添加首尾空格。
+            return string.Join(" ", GetIdentificationBytes(header).Select(FormatMagicByte));
         }
 
+        private static IEnumerable<byte> GetIdentificationBytes(ELFHeader header)
+        {
+            return new byte[]
+            {
+                header.EI_MAG0, header.EI_MAG1, header.EI_MAG2, header.EI_MAG3,
+                header.EI_CLASS, header.EI_DATA, header.EI_VERSION,
+                header.EI_OSABI, header.EI_ABIVERSION
+            }.Concat(header.EI_PAD);
+        }
+
+        private static string FormatMagicByte(byte value)
+        {
+            return value.ToString("X2", CultureInfo.InvariantCulture);
+        }
     }
 }

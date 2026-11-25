@@ -6,137 +6,136 @@ namespace PersonalTools.ELFAnalyzer.UIHelper
 {
     internal static class GotHelper
     {
-        // 解析指定 GOT 节(.got 或 .got.plt)，每个槽位通过动态重定位(r_offset==槽位地址)关联符号与类型
-        internal static List<ELFGotInfo> GetGotInfoList(ELFParser Parser, string sectionName)
+        private const int MaxGotEntries = 2_000_000;
+        private static readonly string[] RelocationSections = [".rela.plt", ".rel.plt", ".rela.dyn", ".rel.dyn"];
+        private sealed record GotContext(ELFParser Parser, ELFSectionHeader Section, string Name,
+            Dictionary<ulong, ELFRelocationInfo> Relocations);
+
+        internal static List<ELFGotInfo> GetGotInfoList(ELFParser parser, string sectionName)
         {
-            List<ELFGotInfo> result = [];
-            if (Parser.SectionHeaders == null)
-            {
-                return result;
-            }
-
-            Dictionary<ulong, ELFRelocationInfo> relocByOffset = BuildRelocationMap(Parser);
-
-            AppendGotSection(Parser, sectionName, relocByOffset, result);
-
-            return result;
+            return parser.SectionHeaders == null ? []
+                : ReadGotSection(parser, sectionName, BuildRelocationMap(parser));
         }
 
-        // 收集所有动态重定位，按 r_offset(目标 GOT 槽位地址) 建索引
-        private static Dictionary<ulong, ELFRelocationInfo> BuildRelocationMap(ELFParser Parser)
+        private static Dictionary<ulong, ELFRelocationInfo> BuildRelocationMap(ELFParser parser)
         {
-            Dictionary<ulong, ELFRelocationInfo> map = [];
-            string[] relocSections = [".rela.plt", ".rel.plt", ".rela.dyn", ".rel.dyn"];
-            foreach (string name in relocSections)
-            {
-                foreach (ELFRelocationInfo reloc in RelocationHelper.GetRelocationInfoForSpecificSection(Parser, name))
-                {
-                    if (ulong.TryParse(reloc.Offset.Trim(), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ulong off))
-                    {
-                        map[off] = reloc;
-                    }
-                }
-            }
+            // 顺序不变：重复 r_offset 的最后一个重定位覆盖前面的条目。
+            return RelocationSections.SelectMany(name => RelocationHelper.GetRelocationInfoForSpecificSection(parser, name))
+                .Aggregate(new Dictionary<ulong, ELFRelocationInfo>(), AddRelocation);
+        }
+
+        private static Dictionary<ulong, ELFRelocationInfo> AddRelocation(Dictionary<ulong, ELFRelocationInfo> map, ELFRelocationInfo relocation)
+        {
+            return TryGetRelocationOffset(relocation, out ulong offset) ? StoreRelocation(map, offset, relocation) : map;
+        }
+
+        private static Dictionary<ulong, ELFRelocationInfo> StoreRelocation(Dictionary<ulong, ELFRelocationInfo> map, ulong offset, ELFRelocationInfo relocation)
+        {
+            map[offset] = relocation;
             return map;
         }
 
-        private static void AppendGotSection(ELFParser Parser, string sectionName,
-            Dictionary<ulong, ELFRelocationInfo> relocByOffset, List<ELFGotInfo> result)
+        private static bool TryGetRelocationOffset(ELFRelocationInfo relocation, out ulong offset)
         {
-            int sectionIndex = FindSectionIndex(Parser, sectionName);
-            if (sectionIndex < 0)
-            {
-                return;
-            }
-
-            Models.ELFSectionHeader section = Parser.SectionHeaders[sectionIndex];
-            bool isLittleEndian = Parser.Header.IsLittleEndian();
-
-            // GOT 槽宽在架构上恒为指针大小(64位=8/32位=4)，不采信不可信的 sh_entsize：
-            // 若采信，畸形节可把 sh_entsize 置 1 使 count≈文件长度 → 构造海量对象 OOM；
-            // 或在 64 位下置 4 使步长/读取宽度错误、产出错误的 GOT dump。
-            int entrySize = Parser.Is64Bit ? 8 : 4;
-
-            // 安全：槽位数取自不可信 sh_size，夹紧到文件实际可承载的条目数，避免超大节构造海量对象(OOM)
-            long maxReadable = section.sh_offset >= (ulong)Parser.FileData.Length
-                ? 0
-                : (Parser.FileData.Length - (long)section.sh_offset) / entrySize;
-            // 再设一个合理硬上界：真实 GOT 至多数十万项，2,000,000 远超任何正常文件，纯防御畸形巨型节
-            const int MaxGotEntries = 2_000_000;
-            int count = (int)Math.Min(Math.Min(section.sh_size / (ulong)entrySize, (ulong)Math.Max(maxReadable, 0)), MaxGotEntries);
-            for (int i = 0; i < count; i++)
-            {
-                ulong slotAddr = section.sh_addr + (ulong)((long)i * entrySize);
-                long fileOffset = (long)section.sh_offset + (long)i * entrySize;
-
-                string value = ReadSlotValue(Parser, fileOffset, entrySize, isLittleEndian);
-                (string type, string symbol) = ResolveSlot(relocByOffset, slotAddr, sectionName, i);
-
-                result.Add(new ELFGotInfo
-                {
-                    Number = $"{i}",
-                    Offset = entrySize >= 8 ? $"0x{slotAddr:x16}" : $"0x{slotAddr:x8}",
-                    Value = value,
-                    Type = type,
-                    Symbol = symbol,
-                    SectionName = sectionName
-                });
-            }
+            return ulong.TryParse(relocation.Offset.Trim(), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out offset);
         }
 
-        private static string ReadSlotValue(ELFParser Parser, long fileOffset, int entrySize, bool isLittleEndian)
+        private static List<ELFGotInfo> ReadGotSection(ELFParser parser, string name, Dictionary<ulong, ELFRelocationInfo> relocations)
         {
-            // 按实际读取宽度校验边界，而非不可信 entrySize：entrySize 可被夹为 1..7（<8），
-            // 但下方对 <8 一律 ReadUInt32 固定读 4 字节；若仅按 entrySize(如 3) 校验，
-            // 槽位落在文件末尾时 ReadUInt32 会越界抛异常崩溃。
-            int readWidth = entrySize >= 8 ? 8 : 4;
-            if (fileOffset < 0 || fileOffset + readWidth > Parser.FileData.Length)
-            {
-                return string.Empty;
-            }
-
-            if (entrySize >= 8)
-            {
-                ulong stored = ELFParserUtils.ReadUInt64(Parser.FileData, (int)fileOffset, isLittleEndian);
-                return $"0x{stored:x16}";
-            }
-
-            uint stored32 = ELFParserUtils.ReadUInt32(Parser.FileData, (int)fileOffset, isLittleEndian);
-            return $"0x{stored32:x8}";
+            return ReadGotSectionAtIndex(parser, name, relocations,
+                ELFDisplayFormatting.FindSectionIndex(parser, index => ELFSymbolNameResolver.GetSectionName(parser, index) == name));
         }
 
-        private static (string type, string symbol) ResolveSlot(
-            Dictionary<ulong, ELFRelocationInfo> relocByOffset, ulong slotAddr, string sectionName, int index)
+        private static List<ELFGotInfo> ReadGotSectionAtIndex(ELFParser parser, string name,
+            Dictionary<ulong, ELFRelocationInfo> relocations, int index)
         {
-            ELFRelocationInfo? reloc = relocByOffset.GetValueOrDefault(slotAddr);
-            if (reloc != null)
-            {
-                return (reloc.Type, reloc.Symbol);
-            }
-
-            // .got.plt 前 3 个为保留槽：GOT[0]=.dynamic 地址，GOT[1]/[2]=运行时链接器使用
-            if (sectionName == ".got.plt" && index < 3)
-            {
-                return ("保留", string.Empty);
-            }
-
-            return (string.Empty, string.Empty);
+            return index < 0 ? [] : ReadGotRows(new GotContext(parser, parser.SectionHeaders[index], name, relocations));
         }
 
-        private static int FindSectionIndex(ELFParser Parser, string sectionName)
+        private static List<ELFGotInfo> ReadGotRows(GotContext context)
         {
-            if (Parser.SectionHeaders == null)
+            return Enumerable.Range(0, GetGotEntryCount(context)).Select(index => CreateGotInfo(context, index)).ToList();
+        }
+
+        private static int GetPointerSize(ELFParser parser)
+        {
+            // 槽宽恒为指针大小，不采信不可信的 sh_entsize。
+            return parser.Is64Bit ? 8 : 4;
+        }
+
+        private static int GetGotEntryCount(GotContext context)
+        {
+            // 夹紧到声明条目数、文件实际可读数和硬上限，防止畸形节造成越界或 OOM。
+            return (int)Math.Min(Math.Min(context.Section.sh_size / (ulong)GetPointerSize(context.Parser),
+                GetReadableBytes(context) / (ulong)GetPointerSize(context.Parser)), MaxGotEntries);
+        }
+
+        private static ulong GetReadableBytes(GotContext context)
+        {
+            return context.Section.sh_offset >= (ulong)context.Parser.FileData.Length
+                ? 0 : (ulong)context.Parser.FileData.Length - context.Section.sh_offset;
+        }
+
+        private static GotSlot GetSlot(GotContext context, int index)
+        {
+            return new GotSlot(context.Section.sh_addr + (ulong)((long)index * GetPointerSize(context.Parser)),
+                (long)context.Section.sh_offset + (long)index * GetPointerSize(context.Parser));
+        }
+
+        private readonly record struct GotSlot(ulong Address, long FileOffset);
+
+        private static ELFGotInfo CreateGotInfo(GotContext context, int index)
+        {
+            return ResolveGotInfo(context, index, GetSlot(context, index));
+        }
+
+        private static ELFGotInfo ResolveGotInfo(GotContext context, int index, GotSlot slot)
+        {
+            return FormatGotInfo(context, index, slot, ResolveSlot(context.Relocations, slot.Address, context.Name, index));
+        }
+
+        private static ELFGotInfo FormatGotInfo(GotContext context, int index, GotSlot slot, (string Type, string Symbol) relocation)
+        {
+            return new ELFGotInfo
             {
-                return -1;
-            }
-            for (int i = 0; i < Parser.SectionHeaders.Count; i++)
-            {
-                if (ELFSymbolNameResolver.GetSectionName(Parser, i) == sectionName)
-                {
-                    return i;
-                }
-            }
-            return -1;
+                Number = $"{index}",
+                Offset = ELFDisplayFormatting.Address(slot.Address, context.Parser.Is64Bit),
+                Value = ReadSlotValue(context.Parser, slot.FileOffset, GetPointerSize(context.Parser), context.Parser.Header.IsLittleEndian()),
+                Type = relocation.Type,
+                Symbol = relocation.Symbol,
+                SectionName = context.Name
+            };
+        }
+
+        private static string ReadSlotValue(ELFParser parser, long fileOffset, int entrySize, bool littleEndian)
+        {
+            return IsReadableSlot(parser, fileOffset, entrySize)
+                ? ReadSlotValueAtOffset(parser, (int)fileOffset, entrySize, littleEndian) : string.Empty;
+        }
+
+        private static bool IsReadableSlot(ELFParser parser, long fileOffset, int entrySize)
+        {
+            // 校验实际读取宽度，而不是不可信的 entrySize。
+            return fileOffset >= 0 && fileOffset <= parser.FileData.Length - (entrySize >= 8 ? 8 : 4);
+        }
+
+        private static string ReadSlotValueAtOffset(ELFParser parser, int offset, int entrySize, bool littleEndian)
+        {
+            return entrySize >= 8 ? ELFDisplayFormatting.Address(ELFParserUtils.ReadUInt64(parser.FileData, offset, littleEndian), true)
+                : ELFDisplayFormatting.Address(ELFParserUtils.ReadUInt32(parser.FileData, offset, littleEndian), false);
+        }
+
+        private static (string Type, string Symbol) ResolveSlot(Dictionary<ulong, ELFRelocationInfo> relocations,
+            ulong address, string sectionName, int index)
+        {
+            return relocations.GetValueOrDefault(address) is ELFRelocationInfo relocation
+                ? (relocation.Type, relocation.Symbol) : GetReservedSlot(sectionName, index);
+        }
+
+        private static (string Type, string Symbol) GetReservedSlot(string sectionName, int index)
+        {
+            // .got.plt 前三个槽保留给 .dynamic 和运行时链接器，除非已有重定位覆盖。
+            return (sectionName == ".got.plt" && index < 3 ? "保留" : string.Empty, string.Empty);
         }
     }
 }
