@@ -19,6 +19,7 @@ internal static class UIHelperRegression
 
     public static void Verify(string expectedPath)
     {
+        VerifyRawData();
         var expected = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(File.ReadAllText(expectedPath))!;
         var originalCulture = CultureInfo.CurrentCulture;
         try
@@ -35,6 +36,67 @@ internal static class UIHelperRegression
             }
         }
         finally { CultureInfo.CurrentCulture = originalCulture; }
+    }
+
+    private static void VerifyRawData()
+    {
+        foreach (bool wide in new[] { false, true })
+            foreach (bool little in new[] { false, true })
+                foreach (ushort machine in wide ? new ushort[] { 62, 8, 10 } : new ushort[] { 3 })
+                {
+                    var parser = Fixture(wide, little, machine);
+                    int width = wide ? 8 : 4;
+                    foreach (int sectionIndex in new[] { 12, 13, 14, 15 })
+                    {
+                        var section = parser.SectionHeaders[sectionIndex];
+                        var data = ELFRelocationReader.ReadSection(parser, Names[sectionIndex])!;
+                        Check(data.Entries.Count == 3 && data.Symbols.Count == 6, "raw relocation counts");
+                        Check(data.SymbolType == (sectionIndex == 14 ? SectionType.SHT_SYMTAB : SectionType.SHT_DYNSYM), "raw symbol table type");
+                        for (int i = 0; i < 3; i++)
+                        {
+                            var entry = data.Entries[i];
+                            Check(entry.Offset == (sectionIndex is 12 or 15 ? 0x2100u : 0x2000u) + (uint)(i * width), "raw relocation address");
+                            Check(entry.SymbolIndex == (i == 2 ? 999u : sectionIndex == 13 ? 2u : 1u) && entry.Type == 6 + i, "raw MIPS/standard r_info split");
+                            int infoOffset = (int)section.sh_offset + i * (int)section.sh_entsize + width;
+                            Check(entry.Info == ReadNumber(parser.FileData, infoOffset, wide, little), "raw relocation info endian");
+                            long? expectedAddend = section.sh_type != (uint)SectionType.SHT_RELA ? null : i == 0 ? -8L : i == 1 ? (wide ? long.MinValue : int.MinValue) : 7L;
+                            Check(entry.Addend == expectedAddend, "raw REL/RELA addend");
+                        }
+                    }
+                    foreach (string name in new[] { ".got", ".got.plt" })
+                    {
+                        var entries = ELFGotReader.ReadSection(parser, name);
+                        Check(entries.Count == 5, "raw GOT count");
+                        for (int i = 0; i < entries.Count; i++)
+                        {
+                            var entry = entries[i];
+                            Check(entry.Index == i && entry.Address == (name == ".got" ? 0x2000u : 0x2100u) + (uint)(i * width), "raw GOT address");
+                            Check(entry.Value == (i == 4 ? (wide ? ulong.MaxValue : uint.MaxValue) : (ulong)(0x3000 + i * 8)), "raw GOT value endian");
+                            Check(i < 3 ? entry.Relocation.HasValue && entry.Relocation.Value.Section.Name == (name == ".got" ? ".rel.dyn" : ".rel.plt") : !entry.Relocation.HasValue, "raw GOT relocation precedence");
+                        }
+                    }
+                    var mapping = ELFSegmentMapper.Map(parser);
+                    Check(!mapping.IsTruncated && mapping.Mappings[0].SectionNames.SequenceEqual(new[] { ".text", ".bss" }), "raw allocated section mapping");
+                    Check(mapping.Mappings[2].SectionNames.SequenceEqual(new[] { ".overflow" }), "raw saturating segment mapping");
+                    Check(ELFDynamicTableReader.ReadString(parser, 0) is { HasTable: true, Value.Length: 0 }, "raw empty dynamic string");
+                    Check(ELFDynamicTableReader.ReadString(parser, ulong.MaxValue) is { HasTable: true, Value.Length: 0 }, "raw invalid dynamic string offset");
+                    ChangeDynamic(parser, DynamicTag.DT_STRTAB, 0);
+                    Check(!ELFDynamicTableReader.ReadString(parser, 0).HasTable, "raw missing dynamic string table");
+                    parser.SectionHeaders.RemoveRange(12, parser.SectionHeaders.Count - 12);
+                    var reserved = ELFGotReader.ReadSection(parser, ".got.plt");
+                    Check(reserved.Select(e => e.IsReserved).SequenceEqual(new[] { true, true, true, false, false }), "raw reserved GOT slots");
+                    Check(GotHelper.GetGotInfoList(parser, ".got.plt").Take(3).All(e => e.Type == "保留"), "reserved GOT presentation");
+                }
+        Console.WriteLine("PASS raw Core data contracts: ELF32/64, both endians, MIPS/MIPS_RS3_LE, REL/RELA, GOT precedence/reserved slots, dynamic strings and segment boundaries.");
+    }
+
+    private static ulong ReadNumber(byte[] bytes, int offset, bool wide, bool little)
+        => wide ? (little ? BinaryPrimitives.ReadUInt64LittleEndian(bytes.AsSpan(offset)) : BinaryPrimitives.ReadUInt64BigEndian(bytes.AsSpan(offset)))
+            : (little ? BinaryPrimitives.ReadUInt32LittleEndian(bytes.AsSpan(offset)) : BinaryPrimitives.ReadUInt32BigEndian(bytes.AsSpan(offset)));
+
+    private static void Check(bool condition, string message)
+    {
+        if (!condition) throw new InvalidOperationException(message);
     }
 
     public static string Capture() => JsonSerializer.Serialize(CaptureValues(), Options);
@@ -197,7 +259,7 @@ internal static class UIHelperRegression
                 int start = (int)section.sh_offset + i * (int)section.sh_entsize;
                 uint symbolIndex = i == 2 ? 999u : index == 13 ? 2u : 1u;
                 uint type = (uint)(6 + i);
-                ulong info = !wide ? ((ulong)symbolIndex << 8) | type : machine == 8 && little ? ((ulong)type << 56) | symbolIndex : ((ulong)symbolIndex << 32) | type;
+                ulong info = !wide ? ((ulong)symbolIndex << 8) | type : (machine is 8 or 10) && little ? ((ulong)type << 56) | symbolIndex : ((ulong)symbolIndex << 32) | type;
                 Write(start, (index is 12 or 15 ? 0x2100u : 0x2000u) + (uint)(i * width), width);
                 Write(start + width, info, width);
                 if (rela) Write(start + 2 * width, unchecked((ulong)(i == 0 ? -8L : i == 1 ? (wide ? long.MinValue : int.MinValue) : 7L)), width);

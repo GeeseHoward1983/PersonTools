@@ -1,0 +1,232 @@
+using System.Globalization;
+using System.Reflection.PortableExecutable;
+using PersonalTools.PEAnalyzer;
+
+internal static class PEHeaderDescriptionsRegression
+{
+    private static int checks;
+
+    // Independent expected data, deliberately not read via reflection from production dictionaries.
+    private static readonly Dictionary<ushort, string> Machines = new()
+    {
+        [0x0000] = "Unknown", [0x014C] = "Intel 386 (x86)",
+        [0x0160] = "MIPS R3000 (big-endian)", [0x0162] = "MIPS R3000",
+        [0x0166] = "MIPS R4000", [0x0168] = "MIPS R10000", [0x0169] = "MIPS WCE v2",
+        [0x0184] = "Alpha AXP", [0x01A2] = "SH3", [0x01A3] = "SH3 DSP", [0x01A4] = "SH3E",
+        [0x01A6] = "SH4", [0x01A8] = "SH5", [0x01C0] = "ARM", [0x01C2] = "ARM Thumb",
+        [0x01C4] = "ARM Thumb-2", [0x01D3] = "AM33", [0x01F0] = "PowerPC", [0x01F1] = "PowerPC FP",
+        [0x0200] = "Intel IA64", [0x0266] = "MIPS16",
+        [0x0284] = "Alpha AXP 64-bit", [0x0366] = "MIPS with FPU", [0x0466] = "MIPS16 with FPU",
+        [0x0520] = "TRICORE", [0x0CEF] = "CEF", [0x0EBC] = "EFI Byte Code",
+        [0x5032] = "RISC-V 32-bit", [0x5064] = "RISC-V 64-bit", [0x5128] = "RISC-V 128-bit",
+        [0x6232] = "LoongArch 32-bit", [0x6264] = "LoongArch 64-bit", [0x8664] = "AMD64 (x64)",
+        [0x9041] = "Mitsubishi M32R", [0xA641] = "ARM64EC", [0xA64E] = "ARM64X", [0xAA64] = "ARM64",
+        [0xC0EE] = "CEE",
+    };
+
+    private static readonly Dictionary<ushort, string> Subsystems = new()
+    {
+        [0] = "Unknown", [1] = "Native", [2] = "Windows GUI", [3] = "Windows CUI", [5] = "OS/2 CUI",
+        [7] = "POSIX CUI", [8] = "Native Windows", [9] = "Windows CE GUI", [10] = "EFI Application",
+        [11] = "EFI Boot Service Driver", [12] = "EFI Runtime Driver", [13] = "EFI ROM", [14] = "XBOX",
+        [16] = "Windows Boot Application", [17] = "Xbox Code Catalog",
+    };
+
+    private static readonly Dictionary<(ushort, ushort), string> WindowsVersions = new()
+    {
+        [(3, 10)] = "Windows NT 3.1", [(3, 50)] = "Windows NT 3.5", [(3, 51)] = "Windows NT 3.51",
+        [(4, 0)] = "Windows NT 4.0/Windows 95", [(4, 10)] = "Windows 98", [(4, 90)] = "Windows Me",
+        [(5, 0)] = "Windows 2000", [(5, 1)] = "Windows XP", [(5, 2)] = "Windows XP x64/Server 2003/Server 2003 R2",
+        [(6, 0)] = "Windows Vista/Server 2008", [(6, 1)] = "Windows 7/Server 2008 R2",
+        [(6, 2)] = "Windows 8/Server 2012", [(6, 3)] = "Windows 8.1/Server 2012 R2",
+        [(10, 0)] = "Windows 10/11/Server 2016/2019/2022/2025",
+    };
+
+    public static void Verify()
+    {
+        VerifyCatalogs();
+        var originalCulture = CultureInfo.CurrentCulture;
+        try
+        {
+            foreach (var culture in new[] { "", "en-US", "zh-CN", "ar-SA" })
+            {
+                CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(culture);
+                VerifyCodes();
+                VerifyToolchains();
+                VerifyWindowsVersions();
+                VerifyFileFlags();
+                Console.WriteLine($"PASS all code values, all byte version pairs, all characteristics, culture={culture}");
+            }
+        }
+        finally { CultureInfo.CurrentCulture = originalCulture; }
+        VerifyRealImages();
+        Console.WriteLine($"PASS {checks:N0} PE header assertions");
+    }
+
+    private static void VerifyCatalogs()
+    {
+        VerifyMap(Machines, PEHeaderDescriptionCatalog.CreateMachineTypes());
+        VerifyMap(Subsystems, PEHeaderDescriptionCatalog.CreateSubsystems());
+        VerifyMap(WindowsVersions, PEHeaderDescriptionCatalog.CreateWindowsVersions());
+        (byte, byte)[] versions = [(6, 0), (7, 0), (7, 10), (8, 0), (9, 0), (10, 0), (11, 0), (12, 0)];
+        VerifyMap(versions.ToDictionary(v => v, v => ExpectedToolchain(v.Item1, v.Item2)),
+            PEHeaderDescriptionCatalog.CreateLegacyToolchains());
+        VerifyMap(Enumerable.Range(0, 6).ToDictionary(v => v, v => ExpectedToolchain(14, v * 10)),
+            PEHeaderDescriptionCatalog.CreateMsvc14Families());
+        VerifyMap(new Dictionary<ushort, string>
+        {
+            [0] = "Object File", [2] = "Executable", [0x2000] = "Dynamic Link Library", [0x2002] = "Dynamic Link Library"
+        }, PEHeaderDescriptionCatalog.CreateFileKinds());
+        VerifyMap(new Dictionary<ushort, string> { [11] = "EFI Boot Service Driver", [12] = "EFI Runtime Driver" },
+            PEHeaderDescriptionCatalog.CreateEfiDrivers());
+        Console.WriteLine("PASS catalog exact keys/counts/descriptions, including packed versions and DLL flag combinations");
+    }
+
+    private static void VerifyMap<TKey>(IReadOnlyDictionary<TKey, string> expected, IReadOnlyDictionary<TKey, string> actual)
+        where TKey : notnull
+    {
+        Equal(expected.Count.ToString(CultureInfo.InvariantCulture), actual.Count.ToString(CultureInfo.InvariantCulture));
+        foreach (var pair in expected) Equal(pair.Value, actual[pair.Key]);
+    }
+
+    private static void VerifyCodes()
+    {
+        for (int value = 0; value <= ushort.MaxValue; value++)
+        {
+            ushort code = (ushort)value;
+            Equal(Machines.TryGetValue(code, out var machine) ? machine : $"Unknown (0x{code:X4})",
+                PEHeaderDescriptions.GetMachineTypeDescription(code));
+            string subsystem = Subsystems.GetValueOrDefault(code, "Unknown");
+            Equal($"{subsystem} (0x{code:X4})", PEHeaderDescriptions.GetSubsystemDescription(code));
+            // Unknown subsystems must retain the raw code and never turn into a driver.
+            Equal($"Object File ({subsystem}) (Characteristics: 0x0000, Subsystem: 0x{code:X4})",
+                PEHeaderDescriptions.GetDetailedFileType(0, code));
+            Equal(ExpectedDriver(0, code, 0), PEHeaderDescriptions.GetDriverType(0, code, 0));
+        }
+    }
+
+    private static void VerifyToolchains()
+    {
+        for (int major = 0; major <= byte.MaxValue; major++)
+        for (int minor = 0; minor <= byte.MaxValue; minor++)
+        {
+            var family = ExpectedToolchain(major, minor);
+            string suffix = $" [{major}.{minor}]";
+            Equal($"Linker (可能的工具链: {family})" + suffix,
+                PEHeaderDescriptions.GetLinkerVersionDescription((byte)major, (byte)minor));
+            Equal($"编译器未知（链接器版本线索: {family}）" + suffix,
+                PEHeaderDescriptions.GetCompilerVersionDescription((byte)major, (byte)minor, false));
+            Equal(PEHeaderDescriptions.GetCompilerVersionDescription((byte)major, (byte)minor, false),
+                PEHeaderDescriptions.GetCompilerVersionDescription((byte)major, (byte)minor));
+            Equal(".NET 程序集（无法由链接器版本确定编译器或 .NET 版本）" + suffix,
+                PEHeaderDescriptions.GetCompilerVersionDescription((byte)major, (byte)minor, true));
+        }
+    }
+
+    private static string ExpectedToolchain(int major, int minor)
+    {
+        if (major == 14)
+            return minor switch
+            {
+                <= 9 => "MSVC 14.0x / VS 2015",
+                <= 19 => "MSVC 14.1x / VS 2017",
+                <= 29 => "MSVC 14.2x / VS 2019",
+                <= 39 => "MSVC 14.3x / VS 2022",
+                <= 49 => "MSVC 14.4x / VS 2022",
+                <= 59 => "MSVC 14.5x / VS 2026 起（工具集独立版本）",
+                _ => "未知厂商/工具链",
+            };
+        return (major, minor) switch
+        {
+            (6, 0) => "Microsoft Visual C++ 6.0",
+            (7, 0) => "Microsoft Visual Studio .NET 2002",
+            (7, 10) => "Microsoft Visual Studio .NET 2003",
+            (8, 0) => "Microsoft Visual Studio 2005",
+            (9, 0) => "Microsoft Visual Studio 2008",
+            (10, 0) => "Microsoft Visual Studio 2010",
+            (11, 0) => "Microsoft Visual Studio 2012",
+            (12, 0) => "Microsoft Visual Studio 2013",
+            _ => "未知厂商/工具链",
+        };
+    }
+
+    private static void VerifyWindowsVersions()
+    {
+        ushort[] boundaryMinors = [0, 1, 2, 3, 10, 50, 51, 90, ushort.MaxValue];
+        foreach (var pair in WindowsVersions.Keys) CheckWindowsVersion(pair.Item1, pair.Item2);
+        for (int major = 0; major <= ushort.MaxValue; major++) CheckWindowsVersion((ushort)major, 0);
+        foreach (ushort major in new ushort[] { 0, 3, 4, 5, 6, 10, 11, ushort.MaxValue })
+        foreach (ushort minor in boundaryMinors) CheckWindowsVersion(major, minor);
+    }
+
+    private static void CheckWindowsVersion(ushort major, ushort minor)
+    {
+        string name = WindowsVersions.GetValueOrDefault((major, minor), "Unknown OS");
+        Equal($"所需 OS 版本族: {name} [{major}.{minor}]", PEHeaderDescriptions.GetOperatingSystemVersionDescription(major, minor));
+        Equal($"所需子系统版本族: {name} [{major}.{minor}]", PEHeaderDescriptions.GetSubsystemVersionDescription(major, minor));
+        Equal($"Version {major}.{minor}", PEHeaderDescriptions.GetImageVersionDescription(major, minor));
+    }
+
+    private static void VerifyFileFlags()
+    {
+        ushort[] subsystems = [1, 2, 11, 12, 16, ushort.MaxValue];
+        ushort[] dllFlags = [0, 0x2000, ushort.MaxValue];
+        for (int value = 0; value <= ushort.MaxValue; value++)
+        foreach (ushort subsystem in subsystems)
+        {
+            ushort flags = (ushort)value;
+            string kind = (flags & 0x2000) != 0 ? "Dynamic Link Library" : (flags & 2) != 0 ? "Executable" : "Object File";
+            string system = (flags & 0x1000) != 0 ? " (System File)" : "";
+            Equal($"{kind}{system} ({Subsystems.GetValueOrDefault(subsystem, "Unknown")}) (Characteristics: 0x{flags:X4}, Subsystem: 0x{subsystem:X4})",
+                PEHeaderDescriptions.GetDetailedFileType(flags, subsystem));
+            foreach (ushort dll in dllFlags)
+                Equal(ExpectedDriver(flags, subsystem, dll), PEHeaderDescriptions.GetDriverType(flags, subsystem, dll));
+        }
+        // Every DLL flag value: guard against checking a wrong bit (0x1000 AppContainer vs 0x2000 WDM).
+        for (int dll = 0; dll <= ushort.MaxValue; dll++)
+        foreach (ushort subsystem in subsystems)
+            Equal(ExpectedDriver(0, subsystem, (ushort)dll), PEHeaderDescriptions.GetDriverType(0, subsystem, (ushort)dll));
+    }
+
+    private static string ExpectedDriver(ushort flags, ushort subsystem, ushort dll)
+    {
+        bool wdm = (dll & 0x2000) != 0;
+        if (subsystem == 11 || subsystem == 12)
+        {
+            string name = subsystem == 11 ? "EFI Boot Service Driver" : "EFI Runtime Driver";
+            return wdm ? name + " (WDM 标志与 EFI 子系统不一致)" : name;
+        }
+        if (wdm) return "Windows WDM Driver (WDM)";
+        if (subsystem == 1 && (flags & 0x1000) != 0) return "Native System Image (可能为内核驱动)";
+        return "";
+    }
+
+    private static void VerifyRealImages()
+    {
+        string[] paths = [typeof(PEHeaderDescriptionsRegression).Assembly.Location,
+            Path.Combine(Environment.SystemDirectory, "kernel32.dll")];
+        foreach (string path in paths)
+        {
+            using var stream = File.OpenRead(path);
+            using var reader = new PEReader(stream);
+            var headers = reader.PEHeaders;
+            var pe = headers.PEHeader!;
+            var coff = headers.CoffHeader;
+            Equal(ExpectedDriver((ushort)coff.Characteristics, (ushort)pe.Subsystem, (ushort)pe.DllCharacteristics),
+                PEHeaderDescriptions.GetDriverType((ushort)coff.Characteristics, (ushort)pe.Subsystem, (ushort)pe.DllCharacteristics));
+            string compiler = PEHeaderDescriptions.GetCompilerVersionDescription(pe.MajorLinkerVersion, pe.MinorLinkerVersion, headers.CorHeader != null);
+            if (headers.CorHeader != null && !compiler.StartsWith(".NET 程序集", StringComparison.Ordinal))
+                throw new InvalidOperationException("Managed image was mistaken for MSVC");
+            if (headers.CorHeader == null && !compiler.StartsWith("编译器未知", StringComparison.Ordinal))
+                throw new InvalidOperationException("PE Linker fields were mistaken for a compiler identity");
+            Console.WriteLine($"PASS PEReader real image: {Path.GetFileName(path)}; {compiler}");
+        }
+    }
+
+    private static void Equal(string expected, string actual)
+    {
+        checks++;
+        if (!string.Equals(expected, actual, StringComparison.Ordinal))
+            throw new InvalidOperationException($"Expected: {expected}\nActual: {actual}");
+    }
+}

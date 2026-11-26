@@ -8,7 +8,11 @@ param(
     [ValidateRange(0, 100)]
     [int]$MinimumMaintainability = 80,
     [ValidateRange(0, 100)]
-    [int]$MinimumClassMaintainability = 80,
+    [int]$MinimumClassMaintainability = 90,
+    [ValidateRange(0, 100)]
+    [int]$MinimumPublicMaintainability = 90,
+    [ValidateRange(0, 100)]
+    [int]$MinimumSupportingMaintainability = 80,
     [switch]$IncludeUIHelper
 )
 
@@ -67,6 +71,7 @@ using System.Text.Json;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CodeMetrics;
+using SymbolAccessibility = Microsoft.CodeAnalysis.Accessibility;
 
 internal static class Program
 {
@@ -84,7 +89,7 @@ internal static class Program
                 || p.Contains("\\Utils\\", StringComparison.OrdinalIgnoreCase)
                 || p.EndsWith("GlobalUsings.g.cs", StringComparison.Ordinal));
         var trees = paths.Select(p => CSharpSyntaxTree.ParseText(File.ReadAllText(p), parseOptions, p)).ToList();
-        if (args.Length > 4) trees.Add(CSharpSyntaxTree.ParseText(File.ReadAllText(args[5]), parseOptions, args[5]));
+        if (args.Length > 6) trees.Add(CSharpSyntaxTree.ParseText(File.ReadAllText(args[7]), parseOptions, args[7]));
         var references = items.GetProperty("ReferencePath").EnumerateArray().Select(i => i.GetProperty("FullPath").GetString()!).Distinct()
             .Select(p => MetadataReference.CreateFromFile(p));
         var compilation = CSharpCompilation.Create("PersonalTools.ELFHeaderRegression", trees, references,
@@ -94,33 +99,41 @@ internal static class Program
         if (!emitted.Success)
             throw new InvalidOperationException(string.Join(Environment.NewLine, emitted.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error)));
 
+        VerifyArchitecture(compilation, args.Length > 6);
         var type = compilation.GetTypeByMetadataName("PersonalTools.ELFAnalyzer.UIHelper.ELFHeaderHelper")!;
         int minimum = int.Parse(args[1], CultureInfo.InvariantCulture);
         int classMinimum = int.Parse(args[3], CultureInfo.InvariantCulture);
-        var types = args.Length > 4 ? type.ContainingNamespace.GetTypeMembers().SelectMany(FlattenTypes).ToArray() : new[] { type };
+        int publicMinimum = int.Parse(args[4], CultureInfo.InvariantCulture);
+        int supportingMinimum = int.Parse(args[5], CultureInfo.InvariantCulture);
+        var uiTypes = args.Length > 6 ? type.ContainingNamespace.GetTypeMembers().SelectMany(FlattenTypes) : new[] { type };
+        var types = uiTypes.Concat(GetSupportingTypes(compilation, args.Length > 6)).Distinct(SymbolEqualityComparer.Default).Cast<INamedTypeSymbol>().ToArray();
         var reports = new List<CodeAnalysisMetricData>();
         foreach (var item in types.OrderBy(t => t.Name))
         {
             var report = await CodeAnalysisMetricData.ComputeAsync(item, new CodeMetricsAnalysisContext(compilation, CancellationToken.None));
             reports.Add(report);
             Console.WriteLine($"{item.Name}: MI={report.MaintainabilityIndex}");
-            if (report.MaintainabilityIndex < classMinimum)
-                throw new InvalidOperationException($"{item.ToDisplayString()} has overall MI {report.MaintainabilityIndex} below {classMinimum}.");
+            int requiredClass = IsUIHelper(item) ? classMinimum : supportingMinimum;
+            if (report.MaintainabilityIndex < requiredClass)
+                throw new InvalidOperationException($"{item.ToDisplayString()} has overall MI {report.MaintainabilityIndex} below {requiredClass}.");
         }
         var methods = reports.SelectMany(FlattenMetrics).Where(m => m.Symbol is IMethodSymbol).ToArray();
         if (methods.Length == 0) throw new InvalidOperationException("No methods were analyzed.");
         foreach (var method in methods)
         {
             Console.WriteLine($"{method.Symbol.ContainingType.Name}.{method.Symbol.Name}: MI={method.MaintainabilityIndex}, CC={method.CyclomaticComplexity}, ExecutableLines={method.ExecutableLines}");
-            if (method.MaintainabilityIndex < minimum)
-                throw new InvalidOperationException($"{method.Symbol.ToDisplayString()} has MI below {minimum}.");
+            int required = IsUIHelper(method.Symbol) ? (IsExternalMethod(method.Symbol) ? publicMinimum : minimum) : supportingMinimum;
+            if (method.MaintainabilityIndex < required)
+                throw new InvalidOperationException($"{method.Symbol.ToDisplayString()} has MI {method.MaintainabilityIndex} below {required}.");
         }
         File.WriteAllText(args[2], JsonSerializer.Serialize(new
         {
             MinimumMaintainability = minimum,
             MinimumClassMaintainability = classMinimum,
-            Classes = reports.Select(r => new { Name = r.Symbol.Name, r.MaintainabilityIndex }),
-            Methods = methods.Select(m => new { Name = m.Symbol.ToDisplayString(), m.MaintainabilityIndex, m.CyclomaticComplexity, m.ExecutableLines })
+            MinimumPublicMaintainability = publicMinimum,
+            MinimumSupportingMaintainability = supportingMinimum,
+            Classes = reports.Select(r => new { Name = r.Symbol.ToDisplayString(), Scope = GetScope(r.Symbol), r.MaintainabilityIndex }),
+            Methods = methods.Select(m => new { Name = m.Symbol.ToDisplayString(), Scope = GetScope(m.Symbol), IsExternal = IsExternalMethod(m.Symbol), m.MaintainabilityIndex, m.CyclomaticComplexity, m.ExecutableLines })
         }, new JsonSerializerOptions { WriteIndented = true }));
 
         var assembly = Assembly.Load(stream.ToArray());
@@ -151,10 +164,56 @@ internal static class Program
             }
         }
         finally { CultureInfo.CurrentCulture = originalCulture; }
-        Console.WriteLine($"PASS {cases} output regression cases; all {methods.Length} methods have MI >= {minimum}.");
-        if (args.Length > 4)
-            assembly.GetType("UIHelperRegression")!.GetMethod("Verify", BindingFlags.Static | BindingFlags.Public)!.Invoke(null, [args[4]]);
+        Console.WriteLine($"PASS {cases} header regressions; {methods.Length} methods pass their scope-specific thresholds; UIHelper classes/public methods >= {classMinimum}/{publicMinimum}.");
+        if (args.Length > 6)
+            assembly.GetType("UIHelperRegression")!.GetMethod("Verify", BindingFlags.Static | BindingFlags.Public)!.Invoke(null, [args[6]]);
         return 0;
+    }
+
+    private static void VerifyArchitecture(Compilation compilation, bool all)
+    {
+        foreach (var type in GetSupportingTypes(compilation, all))
+        {
+            string scope = GetScope(type);
+            if (scope is not ("Core" or "Presentation")) continue;
+            foreach (var reference in type.DeclaringSyntaxReferences)
+            {
+                var syntax = reference.GetSyntax();
+                var model = compilation.GetSemanticModel(syntax.SyntaxTree);
+                foreach (var name in syntax.DescendantNodes().OfType<Microsoft.CodeAnalysis.CSharp.Syntax.SimpleNameSyntax>())
+                {
+                    var symbol = model.GetSymbolInfo(name).Symbol;
+                    var target = symbol as INamedTypeSymbol ?? symbol?.ContainingType;
+                    if (target == null) continue;
+                    string dependency = GetScope(target);
+                    bool invalid = dependency == "UIHelper" || scope == "Core" && dependency == "Presentation"
+                        || scope == "Core" && dependency == "Models" && target.Name.EndsWith("Info", StringComparison.Ordinal);
+                    if (invalid) throw new InvalidOperationException($"Layer violation: {type.Name} depends on {target.ToDisplayString()}.");
+                }
+            }
+        }
+        Console.WriteLine("PASS architecture: Presentation does not depend on UIHelper; new Core services use raw models, not presentation/Info rows.");
+    }
+
+    private static bool IsUIHelper(ISymbol symbol) => symbol.ContainingNamespace.ToDisplayString() == "PersonalTools.ELFAnalyzer.UIHelper";
+    private static string GetScope(ISymbol symbol) => symbol.ContainingNamespace.Name;
+    private static bool IsExternalMethod(ISymbol symbol) => symbol.DeclaredAccessibility is SymbolAccessibility.Public or SymbolAccessibility.Internal or SymbolAccessibility.Protected or SymbolAccessibility.ProtectedOrInternal or SymbolAccessibility.ProtectedAndInternal;
+
+    private static IEnumerable<INamedTypeSymbol> GetSupportingTypes(Compilation compilation, bool all)
+    {
+        var header = compilation.GetTypeByMetadataName("PersonalTools.ELFAnalyzer.Presentation.ELFHeaderPresentation")
+            ?? throw new InvalidOperationException("Missing ELF header presentation type.");
+        if (!all) return FlattenTypes(header);
+        string[] supportNames =
+        [
+            "Core.ELFSectionLocator", "Core.ELFSymbolDisplayNameResolver", "Core.ELFRelocationReader", "Core.ELFSegmentMapper",
+            "Core.ELFInterpreterReader", "Core.ELFDynamicTableReader", "Core.ELFGotReader",
+            "Models.ELFRelocationEntryData", "Models.ELFRelocationSectionData", "Models.ELFRelocationReference",
+            "Models.ELFGotEntryData", "Models.ELFSegmentMappingData", "Models.ELFSegmentMappingResult", "Models.ELFDynamicStringData"
+        ];
+        return header.ContainingNamespace.GetTypeMembers().SelectMany(FlattenTypes)
+            .Concat(supportNames.Select(name => compilation.GetTypeByMetadataName("PersonalTools.ELFAnalyzer." + name)
+                ?? throw new InvalidOperationException("Missing supporting type: " + name)).SelectMany(FlattenTypes));
     }
 
     private static IEnumerable<INamedTypeSymbol> FlattenTypes(INamedTypeSymbol type)
@@ -240,7 +299,7 @@ internal static class Program
 $reportName = 'ELFHeaderHelper.metrics.json'
 if ($IncludeUIHelper) { $reportName = 'ELFUIHelper.metrics.json' }
 $reportPath = Join-Path $testDir $reportName
-$validationArgs = @($inputPath, $MinimumMaintainability, $reportPath, $MinimumClassMaintainability)
+$validationArgs = @($inputPath, $MinimumMaintainability, $reportPath, $MinimumClassMaintainability, $MinimumPublicMaintainability, $MinimumSupportingMaintainability)
 if ($IncludeUIHelper) {
     $validationArgs += Join-Path $PSScriptRoot 'fixtures/ELFUIHelper.expected.json'
     $validationArgs += Join-Path $PSScriptRoot 'fixtures/ELFUIHelperRegression.cs.txt'

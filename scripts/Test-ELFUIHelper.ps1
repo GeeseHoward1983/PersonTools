@@ -6,7 +6,11 @@ param(
     [ValidateRange(0, 100)]
     [int]$MinimumMaintainability = 80,
     [ValidateRange(0, 100)]
-    [int]$MinimumClassMaintainability = 80
+    [int]$MinimumClassMaintainability = 90,
+    [ValidateRange(0, 100)]
+    [int]$MinimumPublicMaintainability = 90,
+    [ValidateRange(0, 100)]
+    [int]$MinimumSupportingMaintainability = 80
 )
 $ErrorActionPreference = 'Stop'
 & (Join-Path $PSScriptRoot 'Test-ELFHeaderHelper.ps1') @PSBoundParameters -IncludeUIHelper

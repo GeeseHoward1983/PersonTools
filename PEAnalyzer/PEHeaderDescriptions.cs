@@ -1,234 +1,115 @@
+using System.Collections.Frozen;
+
 namespace PersonalTools.PEAnalyzer
 {
     /// <summary>
-    /// PE 头各字段的人类可读描述（机器类型 / 子系统 / 链接器/编译器/OS 版本 / 文件类型 / 驱动类型）。
-    /// 把展示用描述串从 Utilities（二进制读原语）中分离，降低 Utilities 的类耦合。
+    /// PE 头字段的展示描述。版本号仅能提供工具链/系统版本族线索，不能确认编译器、IDE 或具体 OS。
+    /// 查表数据与格式化逻辑分离，避免将协议常量扩展为长分支。
     /// </summary>
     internal static class PEHeaderDescriptions
     {
-        // 机器类型码 → 描述
-        private static readonly Dictionary<ushort, string> s_machineTypes = new()
-        {
-            [0x014c] = "Intel 386 (x86)",
-            [0x0162] = "MIPS R3000",
-            [0x0166] = "MIPS R4000",
-            [0x0168] = "MIPS R10000",
-            [0x0169] = "MIPS WCE v2", // IMAGE_FILE_MACHINE_WCEMIPSV2 (Windows CE)
-            [0x0184] = "Alpha AXP",
-            [0x01A2] = "SH3",
-            [0x01A3] = "SH3 DSP",
-            [0x01A4] = "SH3E",
-            [0x01A6] = "SH4",
-            [0x01A8] = "SH5",
-            [0x01C0] = "ARM",
-            [0x01C2] = "ARM Thumb/Thumb-2",
-            [0x01C4] = "ARM Thumb-2",
-            [0x01D3] = "AM33",
-            [0x01F0] = "PowerPC",
-            [0x01F1] = "PowerPC FP",
-            [0x0200] = "Intel IA64",
-            [0x0266] = "MIPS16",
-            [0x0268] = "Motorola 68000 series",
-            [0x0284] = "Alpha AXP 64-bit",
-            [0x0366] = "MIPS with FPU",
-            [0x0466] = "MIPS16 with FPU",
-            [0x0520] = "TRICORE",
-            [0x0CEF] = "CEF",
-            [0x0EBC] = "EFI Byte Code",
-            [0x8664] = "AMD64 (x64)",
-            [0x9041] = "Mitsubishi M32R",
-            [0xAA64] = "ARM64",
-            [0xC0EE] = "CEE",
-        };
+        private const ushort ExecutableImage = 0x0002;
+        private const ushort SystemFile = 0x1000;
+        private const ushort DynamicLibrary = 0x2000;
+        private const ushort WdmDriver = 0x2000;
+        private const ushort NativeSubsystem = 1;
+        private const string UnknownToolchain = "未知厂商/工具链";
+
+        // PE/COFF Machine 常量；保留历史架构，补充混合 ARM、RISC-V、LoongArch。
+        private static readonly FrozenDictionary<ushort, string> s_machineTypes = PEHeaderDescriptionCatalog.CreateMachineTypes();
+
+        // 同一份名称表用于子系统字段与文件类型，避免两处映射漂移。
+        private static readonly FrozenDictionary<ushort, string> s_subsystems = PEHeaderDescriptionCatalog.CreateSubsystems();
+
+        // 注意：PE Linker 7.10 对应 VS.NET 2003；MSVC 编译器/工具集的版本名是 7.1。
+        private static readonly FrozenDictionary<(byte Major, byte Minor), string> s_legacyToolchains = PEHeaderDescriptionCatalog.CreateLegacyToolchains();
+
+        // 工具集版本不是 IDE 主版本：14.4x 仍是 VS 2022，14.5x 从 VS 2026 起独立发布。
+        // 这里只给版本族线索，不能据此确定实际使用的 IDE（旧工具集也能用于新 IDE）。
+        private static readonly FrozenDictionary<int, string> s_msvc14Families = PEHeaderDescriptionCatalog.CreateMsvc14Families();
+
+        // 所需版本号的产品族；不能据此判断生成/运行本文件的系统或具体构建号。
+        private static readonly FrozenDictionary<(ushort Major, ushort Minor), string> s_windowsVersions = PEHeaderDescriptionCatalog.CreateWindowsVersions();
+
+        private static readonly FrozenDictionary<ushort, string> s_fileKinds = PEHeaderDescriptionCatalog.CreateFileKinds();
+
+        private static readonly FrozenDictionary<ushort, string> s_efiDrivers = PEHeaderDescriptionCatalog.CreateEfiDrivers();
 
         public static string GetMachineTypeDescription(ushort machine)
-        {
-            return s_machineTypes.TryGetValue(machine, out string? name) ? name : $"Unknown (0x{machine:X4})";
-        }
+            => s_machineTypes.TryGetValue(machine, out string? name) ? name : $"Unknown (0x{machine:X4})";
 
         public static string GetSubsystemDescription(ushort subsystem)
-        {
-            return subsystem switch
-            {
-                0 => "Unknown (0x0000)",
-                1 => "Native (0x0001)",
-                2 => "Windows GUI (0x0002)",
-                3 => "Windows CUI (0x0003)",
-                5 => "OS/2 CUI (0x0005)",
-                7 => "POSIX CUI (0x0007)",
-                8 => "Native Windows (0x0008)",
-                9 => "Windows CE GUI (0x0009)",
-                10 => "EFI Application (0x000A)",
-                11 => "EFI Boot Service Driver (0x000B)",
-                12 => "EFI Runtime Driver (0x000C)",
-                13 => "EFI ROM (0x000D)",
-                14 => "XBOX (0x000E)",
-                16 => "Windows Boot Application (0x0010)",
-                _ => $"Unknown (0x{subsystem:X4})",
-            };
-        }
+            => $"{GetSubsystemName(subsystem)} (0x{subsystem:X4})";
 
         public static string GetLinkerVersionDescription(byte majorVersion, byte minorVersion)
-        {
-            return $"{majorVersion switch
-            {
-                1 or 2 or 3 or 4 or 5 => "Microsoft Linker (早期版本)",
-                6 => "Microsoft Linker 6.x",
-                7 => "Microsoft Linker 7.x (VS.NET 2002)",
-                8 => "Microsoft Linker 8.x (VS 2005)",
-                9 => "Microsoft Linker 9.x (VS 2008)",
-                10 => "Microsoft Linker 10.x (VS 2010)",
-                11 => "Microsoft Linker 11.x (VS 2012)",
-                12 => "Microsoft Linker 12.x (VS 2013)",
-                14 => MsvcVisualStudio(minorVersion) is { } vs
-                    ? $"Microsoft Linker {vs.Range} (VS {vs.Year})"
-                    : "Microsoft Linker 14.x (VS 2015/2017/2019)",
-                15 => "Microsoft Linker 15.x",
-                _ =>
-                    majorVersion > 15 ? $"Microsoft Linker {majorVersion}.{minorVersion} (较新版本)" : $"Microsoft Linker {majorVersion}.{minorVersion} (未知版本)"
+            => FormatVersion($"Linker (可能的工具链: {GetToolchainFamily(majorVersion, minorVersion)})", majorVersion, minorVersion);
 
-            }} [{majorVersion}.{minorVersion}]";
-        }
+        // 显式重载保留原有两参数调用方式，将默认行为与托管/非托管分派分离。
+        public static string GetCompilerVersionDescription(byte majorVersion, byte minorVersion)
+            => GetCompilerVersionDescription(majorVersion, minorVersion, false);
 
-        public static string GetCompilerVersionDescription(byte majorVersion, byte minorVersion, bool isNetAssembly = false)
-        {
-            // .NET 程序集的 MajorLinkerVersion(常见 6/8/11/14 等)并不代表 MSVC 编译器版本，
-            // 必须在按 MSVC 版本号分派前拦截，否则 linker 版本落在 6-15 的 .NET 程序集会被误标为 Visual C++
-            if (isNetAssembly)
-            {
-                return $"Microsoft .NET Compiler [{majorVersion}.{minorVersion}]";
-            }
-
-            return $"{majorVersion switch
-            {
-                6 => "Microsoft Visual C++ 6.0",
-                7 => "Microsoft Visual C++ .NET 2002",
-                8 => "Microsoft Visual C++ 2005",
-                9 => "Microsoft Visual C++ 2008",
-                10 => "Microsoft Visual C++ 2010",
-                11 => "Microsoft Visual C++ 2012",
-                12 => "Microsoft Visual C++ 2013",
-                14 => MsvcVisualStudio(minorVersion) is { } vs
-                    ? $"Microsoft Visual C++ {vs.Year}"
-                    : "Microsoft Visual C++ 2015/2017/2019",
-                15 => "Microsoft Visual C++ (未知版本)",
-                _ =>
-                    majorVersion > 15 ? "Microsoft Visual C++ (较新版本)" : "Microsoft Visual C++ (未知版本)"
-            }} [{majorVersion}.{minorVersion}]";
-        }
-
-        // MSVC 14.x 的次版本 → (Visual Studio 年份, 版本号范围标签)，链接器/编译器描述共用此分类
-        private static (string Year, string Range)? MsvcVisualStudio(byte minorVersion)
-        {
-            // MSVC 工具集 14.x 次版本与 Visual Studio 的对应关系：
-            //   14.0x → VS2015、14.1x → VS2017、14.2x → VS2019、14.3x/14.4x → VS2022
-            return minorVersion switch
-            {
-                < 10 => ("2015", "14.0x"),
-                >= 10 and < 20 => ("2017", "14.1x"),
-                >= 20 and < 30 => ("2019", "14.2x"),
-                _ => ("2022", "14.3x")
-            };
-        }
+        /// <summary>参数是 PE 链接器版本，不是编译器版本；CLR 目录也不能证明使用了微软编译器。</summary>
+        public static string GetCompilerVersionDescription(byte majorVersion, byte minorVersion, bool isNetAssembly)
+            => FormatVersion(GetCompilerIdentity(majorVersion, minorVersion, isNetAssembly), majorVersion, minorVersion);
 
         public static string GetOperatingSystemVersionDescription(ushort majorVersion, ushort minorVersion)
-            => DescribeWindowsVersion(majorVersion, minorVersion, "Windows 10/11/Server 2016/2019/2022");
+            => DescribeWindowsVersion(majorVersion, minorVersion, "所需 OS 版本族");
 
         public static string GetSubsystemVersionDescription(ushort majorVersion, ushort minorVersion)
-            => DescribeWindowsVersion(majorVersion, minorVersion, "Windows 10/11");
-
-        // OS / 子系统版本描述共用核心（仅 Windows 10 主版本的描述串不同）
-        private static string DescribeWindowsVersion(ushort majorVersion, ushort minorVersion, string win10Text)
-        {
-            return $"{majorVersion switch
-            {
-                3 => minorVersion switch
-                {
-                    10 => "Windows NT 3.1",
-                    51 => "Windows NT 3.51",
-                    _ => "Unknown OS"
-                },
-                4 => minorVersion switch
-                {
-                    0 => "Windows NT 4.0",
-                    _ => "Unknown OS"
-                },
-                5 => minorVersion switch
-                {
-                    0 => "Windows 2000",
-                    1 => "Windows XP",
-                    2 => "Windows Server 2003",
-                    _ => "Unknown OS"
-                },
-                6 => minorVersion switch
-                {
-                    0 => "Windows Vista/Server 2008",
-                    1 => "Windows 7/Server 2008 R2",
-                    2 => "Windows 8/Server 2012",
-                    3 => "Windows 8.1/Server 2012 R2",
-                    _ => "Unknown OS"
-                },
-                10 => minorVersion switch
-                {
-                    0 => win10Text,
-                    _ => "Unknown OS"
-                },
-                _ => $"Windows NT {majorVersion}.{minorVersion}"
-            }} [{majorVersion}.{minorVersion}]";
-        }
+            => DescribeWindowsVersion(majorVersion, minorVersion, "所需子系统版本族");
 
         public static string GetImageVersionDescription(ushort majorVersion, ushort minorVersion)
-        {
-            return $"Version {majorVersion}.{minorVersion}";
-        }
+            => $"Version {majorVersion}.{minorVersion}";
 
         public static string GetDetailedFileType(ushort characteristics, ushort subsystem)
-        {
-            string fileType = (characteristics & 0x1000) != 0
-                ? "Driver/System File"
-                : (characteristics & 0x2000) != 0 ? "Dynamic Link Library" : (characteristics & 0x0002) != 0 ? "Executable" : "Object File";
+            => $"{GetFileKind(characteristics)}{GetSystemFileSuffix(characteristics)} ({GetSubsystemName(subsystem)})"
+                + $" (Characteristics: 0x{characteristics:X4}, Subsystem: 0x{subsystem:X4})";
 
-            return $"{fileType}{subsystem switch
-            {
-                1 => fileType == "Driver/System File" ? " (Native Driver)" : " (Native Image)",
-                2 => " (Windows GUI Application)",
-                3 => " (Windows Console Application)",
-                5 => " (OS/2 Console Application)",
-                7 => " (POSIX Console Application)",
-                8 => " (Native Windows)",
-                9 => " (Windows CE GUI Application)",
-                10 => " (EFI Application)",
-                11 => " (EFI Boot Service Driver)",
-                12 => " (EFI Runtime Driver)",
-                13 => " (EFI ROM)",
-                14 => " (Xbox Application)",
-                16 => " (Windows Boot Application)",
-                _ => $" (Unknown Subsystem: {subsystem})"
-            }} (Characteristics: 0x{characteristics:X4}, Subsystem: 0x{subsystem:X4})";
-        }
-
+        /// <summary>识别 WDM/EFI 标志；SYSTEM+NATIVE 仅提示可能的内核驱动，Boot Application 不是驱动。</summary>
         public static string GetDriverType(ushort characteristics, ushort subsystem, ushort dllCharacteristics)
-        {
-            if ((characteristics & 0x1000) == 0)
-            {
-                return string.Empty; // 不是系统文件，不是驱动程序
-            }
+            => s_efiDrivers.TryGetValue(subsystem, out string? name)
+                ? DescribeEfiDriver(name, dllCharacteristics)
+                : DescribeWindowsDriver(characteristics, subsystem, dllCharacteristics);
 
-            string driverType = subsystem switch
-            {
-                1 => "Windows NT Kernel Mode Driver",
-                11 => "EFI Boot Service Driver",
-                12 => "EFI Runtime Driver",
-                16 => "Windows Boot Driver/Application",
-                _ => "Windows Driver",
-            };
+        private static string GetSubsystemName(ushort subsystem)
+            => s_subsystems.GetValueOrDefault(subsystem, "Unknown");
 
-            if ((dllCharacteristics & 0x2000) != 0) // IMAGE_DLLCHARACTERISTICS_WDM_DRIVER (0x2000)
-            {
-                driverType += " (WDM)";
-            }
+        private static string GetToolchainFamily(byte majorVersion, byte minorVersion)
+            => majorVersion == 14 ? s_msvc14Families.GetValueOrDefault(minorVersion / 10, UnknownToolchain)
+                : s_legacyToolchains.GetValueOrDefault((majorVersion, minorVersion), UnknownToolchain);
 
-            return driverType;
-        }
+        private static string GetCompilerIdentity(byte majorVersion, byte minorVersion, bool isNetAssembly)
+            => isNetAssembly ? ".NET 程序集（无法由链接器版本确定编译器或 .NET 版本）"
+                : DescribeNativeCompiler(majorVersion, minorVersion);
+
+        private static string DescribeNativeCompiler(byte majorVersion, byte minorVersion)
+            => $"编译器未知（链接器版本线索: {GetToolchainFamily(majorVersion, minorVersion)}）";
+
+        private static string FormatVersion(string description, ushort majorVersion, ushort minorVersion)
+            => $"{description} [{majorVersion}.{minorVersion}]";
+
+        private static string DescribeWindowsVersion(ushort majorVersion, ushort minorVersion, string fieldName)
+            => FormatVersion($"{fieldName}: {s_windowsVersions.GetValueOrDefault((majorVersion, minorVersion), "Unknown OS")}",
+                majorVersion, minorVersion);
+
+        private static string GetFileKind(ushort characteristics)
+            => s_fileKinds[(ushort)(characteristics & (ExecutableImage | DynamicLibrary))];
+
+        private static string GetSystemFileSuffix(ushort characteristics)
+            => HasFlag(characteristics, SystemFile) ? " (System File)" : string.Empty;
+
+        private static string DescribeEfiDriver(string name, ushort dllCharacteristics)
+            => HasFlag(dllCharacteristics, WdmDriver) ? $"{name} (WDM 标志与 EFI 子系统不一致)" : name;
+
+        private static string DescribeWindowsDriver(ushort characteristics, ushort subsystem, ushort dllCharacteristics)
+            => HasFlag(dllCharacteristics, WdmDriver) ? "Windows WDM Driver (WDM)"
+                : DescribeNativeSystemImage(characteristics, subsystem);
+
+        private static string DescribeNativeSystemImage(ushort characteristics, ushort subsystem)
+            => HasFlag(characteristics, SystemFile) && subsystem == NativeSubsystem
+                ? "Native System Image (可能为内核驱动)" : string.Empty;
+
+        private static bool HasFlag(ushort value, ushort flag)
+            => (value & flag) != 0;
     }
 }
