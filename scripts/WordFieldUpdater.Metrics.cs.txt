@@ -1,0 +1,65 @@
+using System.IO;
+using System.Reflection;
+using System.Text.Json;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CodeMetrics;
+
+using var json = JsonDocument.Parse(File.ReadAllText(args[0]));
+var items = json.RootElement.GetProperty("Items");
+var defines = json.RootElement.GetProperty("Properties").GetProperty("DefineConstants").GetString()!.Split(';');
+var options = new CSharpParseOptions(LanguageVersion.Preview, preprocessorSymbols: defines);
+var paths = items.GetProperty("Compile").EnumerateArray().Select(i => i.GetProperty("FullPath").GetString()!).Distinct()
+    .Where(p => p.EndsWith("GlobalUsings.g.cs", StringComparison.Ordinal) || Path.GetFileName(p) == "AssemblyInfo.cs" || p.EndsWith("\\Utils\\AppLogger.cs", StringComparison.OrdinalIgnoreCase))
+    .Append(args[1]);
+var fileHelper = Path.Combine(Path.GetDirectoryName(args[1])!, "WordFieldFile.cs");
+if (File.Exists(fileHelper)) paths = paths.Append(fileHelper);
+paths = paths.Concat(args.Skip(4));
+var trees = paths.Select(p => CSharpSyntaxTree.ParseText(File.ReadAllText(p), options, p));
+var refs = items.GetProperty("ReferencePath").EnumerateArray().Select(i => i.GetProperty("FullPath").GetString()!).Distinct()
+    .Select(p => MetadataReference.CreateFromFile(p));
+var compilation = CSharpCompilation.Create("WordFieldUpdater.Regression", trees, refs,
+    new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, nullableContextOptions: NullableContextOptions.Enable));
+using var stream = new MemoryStream();
+var emitted = compilation.Emit(stream);
+if (!emitted.Success) throw new InvalidOperationException(string.Join(Environment.NewLine, emitted.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error)));
+var type = compilation.GetTypeByMetadataName("PersonalTools.MarkdownToWord.WordFieldUpdater")!;
+var report = await CodeAnalysisMetricData.ComputeAsync(type, new CodeMetricsAnalysisContext(compilation, CancellationToken.None));
+var reports = new List<CodeAnalysisMetricData> { report };
+foreach (var nested in NestedTypes(type))
+    reports.Add(await CodeAnalysisMetricData.ComputeAsync(nested, new CodeMetricsAnalysisContext(compilation, CancellationToken.None)));
+if (compilation.GetTypeByMetadataName("PersonalTools.MarkdownToWord.WordFieldFile") is { } helper) {
+    foreach (var part in NestedTypes(helper).Prepend(helper))
+        reports.Add(await CodeAnalysisMetricData.ComputeAsync(part, new CodeMetricsAnalysisContext(compilation, CancellationToken.None)));
+}
+var classes = reports.Where(r => r.Symbol.ContainingType is null).ToArray();
+var methods = reports.SelectMany(Flatten).Where(m => m.Symbol is IMethodSymbol).ToArray();
+foreach (var c in classes) Console.WriteLine($"{c.Symbol.Name}: MI={c.MaintainabilityIndex}");
+foreach (var method in methods)
+    Console.WriteLine($"{method.Symbol.Name}: MI={method.MaintainabilityIndex}, CC={method.CyclomaticComplexity}, ExecutableLines={method.ExecutableLines}");
+File.WriteAllText(args[3], JsonSerializer.Serialize(new {
+    ClassMaintainability = report.MaintainabilityIndex,
+    Classes = classes.Select(c => new { Name = c.Symbol.Name, c.MaintainabilityIndex }),
+    Methods = methods.Select(m => new { Name = m.Symbol.ToDisplayString(), m.MaintainabilityIndex, m.CyclomaticComplexity, m.ExecutableLines })
+}, new JsonSerializerOptions { WriteIndented = true }));
+int minimum = int.Parse(args[2]);
+if (methods.Length == 0 || methods.Any(m => m.MaintainabilityIndex < minimum))
+    throw new InvalidOperationException($"所有方法的可维护性指数必须 >= {minimum}。详见 {args[3]}");
+if (classes.Any(c => c.MaintainabilityIndex < 84)) throw new InvalidOperationException("类可维护性指数低于修复前的 84。");
+if (args.Length > 4) {
+    var assembly = Assembly.Load(stream.ToArray());
+    assembly.GetType("WordFieldUpdaterRegression")!.GetMethod("Run")!.Invoke(null, null);
+    if (args.Length > 5) assembly.GetType("WordFieldUpdaterOffice")!.GetMethod("Run")!.Invoke(null, null);
+}
+static IEnumerable<CodeAnalysisMetricData> Flatten(CodeAnalysisMetricData metric) {
+    yield return metric;
+    foreach (var child in metric.Children)
+        foreach (var item in Flatten(child)) yield return item;
+}
+
+static IEnumerable<INamedTypeSymbol> NestedTypes(INamedTypeSymbol type) {
+    foreach (var nested in type.GetTypeMembers()) {
+        yield return nested;
+        foreach (var child in NestedTypes(nested)) yield return child;
+    }
+}

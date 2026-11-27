@@ -371,7 +371,7 @@ namespace PersonalTools.UserControls
                 DocxStyleSettingsStore.Save(settings);
                 string message = updated
                     ? $"导出成功（目录与图表编号已自动更新）：{outputPath}"
-                    : $"导出成功：{outputPath}\n未检测到本机 Word，目录页码请在 Word 中按 Ctrl+A 全选后按 F9 手动更新一次。";
+                    : $"导出成功：{outputPath}\n未能自动更新域（可能未安装 Word，或目标文件已变更、不可写）。请确认文件内容后，在 Word 中按 Ctrl+A 全选，再按 F9 手动更新。";
                 MessageHelper.ShowInfo(message);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or OpenXmlPackageException)

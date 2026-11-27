@@ -1,0 +1,72 @@
+﻿using System.IO;
+using System.IO.Compression;
+using System.Xml.Linq;
+using PersonalTools.MarkdownToWord;
+
+// Optional real-Word integration tests. All inputs and the concurrency writer live in a unique temp directory.
+public static class WordFieldUpdaterOffice
+{
+    public static void Run()
+    {
+        if (Type.GetTypeFromProgID("Word.Application") is null) throw new InvalidOperationException("This test requires Microsoft Word.");
+        var root = Directory.CreateTempSubdirectory("WordFieldOffice-");
+        try
+        {
+            string folder = root.CreateSubdirectory(new string('d', 225 - root.FullName.Length - 1)).FullName;
+            string path = Path.Combine(folder, "test.docx");
+            CreateDocx(path, "before");
+            Check(path.Length == 235 && WordFieldUpdater.TryUpdateFields(path), "Word failed to update a supported 235-character path.");
+            var content = DocumentText(path);
+            Check(content.Contains(Path.GetFileName(path)), "FILENAME contains a staging name.");
+            Check(content.Contains(path, StringComparer.OrdinalIgnoreCase), @"FILENAME \p contains a staging path.");
+            Check(Directory.EnumerateFiles(folder).SequenceEqual([path]), "Successful commit left a working copy.");
+
+            byte[] original = File.ReadAllBytes(path);
+            File.SetAttributes(path, FileAttributes.ReadOnly);
+            try {
+                Check(!WordFieldUpdater.TryUpdateFields(path), "Read-only input was reported updated.");
+                Check(File.ReadAllBytes(path).SequenceEqual(original) && new FileInfo(path).IsReadOnly, "Read-only input changed.");
+                Check(Directory.EnumerateFiles(folder).SequenceEqual([path]), "Read-only input leaked a working copy.");
+            } finally { File.SetAttributes(path, FileAttributes.Normal); }
+
+            // Reservation follows capture of the source version and precedes the Word launch.
+            string newer = Path.Combine(root.FullName, "newer.docx"); CreateDocx(newer, "NEWER");
+            byte[] expected = File.ReadAllBytes(newer);
+            Task<bool> update = Task.Run(() => WordFieldUpdater.TryUpdateFields(path));
+            try {
+                Check(SpinWait.SpinUntil(() => Directory.EnumerateFiles(folder).Any(p => p != path), 10000), "No staging file appeared.");
+                File.Move(newer, path, overwrite: true);
+            } finally { update.Wait(); }
+            Check(!update.Result && File.ReadAllBytes(path).SequenceEqual(expected), "Concurrent replacement was lost.");
+            Check(Directory.EnumerateFiles(folder).SequenceEqual([path]), "Conflict left a working copy.");
+            Console.WriteLine(@"PASS: Word integration (235-character path, FILENAME and FILENAME \p, read-only, concurrent replacement).");
+        } finally { root.Delete(true); }
+    }
+
+    private static void Check(bool ok, string message) { if (!ok) throw new InvalidOperationException(message); }
+    private static string[] DocumentText(string path)
+    {
+        using var zip = ZipFile.OpenRead(path); using var body = zip.GetEntry("word/document.xml")!.Open();
+        XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+        return XDocument.Load(body).Descendants(w + "p").Select(p => string.Concat(p.Descendants(w + "t").Select(t => t.Value))).ToArray();
+    }
+
+    private static void CreateDocx(string path, string marker)
+    {
+        using var zip = ZipFile.Open(path, ZipArchiveMode.Create);
+        void Part(string name, string xml) { using var writer = new StreamWriter(zip.CreateEntry(name).Open()); writer.Write(xml); }
+        Part("[Content_Types].xml", """
+            <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>
+            """);
+        Part("_rels/.rels", """
+            <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>
+            """);
+        Part("word/document.xml", $"""
+            <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>
+              <w:p><w:r><w:t>{marker}</w:t></w:r></w:p>
+              <w:p><w:fldSimple w:instr=" FILENAME "><w:r><w:t>stale</w:t></w:r></w:fldSimple></w:p>
+              <w:p><w:fldSimple w:instr=" FILENAME \p "><w:r><w:t>stale</w:t></w:r></w:fldSimple></w:p>
+            </w:body></w:document>
+            """);
+    }
+}

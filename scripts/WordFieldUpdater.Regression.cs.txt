@@ -1,0 +1,323 @@
+using System.Collections;
+using System.IO;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
+using System.Threading;
+using PersonalTools.MarkdownToWord;
+
+public static class WordFieldUpdaterRegression
+{
+    private static int checks;
+    private static string root = null!;
+
+    public static void Run()
+    {
+        root = Path.Combine(Path.GetTempPath(), "WordFields-Fixtures-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        try
+        {
+            InvalidPaths();
+            SuccessfulUpdate();
+            FailurePaths();
+            Cancellation();
+            WorkingCopies();
+            TransactionBoundary();
+            TimeoutAndThread();
+            LateWorkerCompletion();
+            Console.WriteLine($"PASS: {checks} regression assertions (no Office required).");
+        }
+        finally { Directory.Delete(root, recursive: true); }
+    }
+
+    private static object? Call(string name, params object?[] args)
+    {
+        var method = typeof(WordFieldUpdater).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)
+            ?? throw new InvalidOperationException("Missing method: " + name);
+        try { return method.Invoke(null, args); }
+        catch (TargetInvocationException ex) when (ex.InnerException != null) { throw ex.InnerException; }
+    }
+
+    private static void Check(bool condition, string message)
+    {
+        checks++;
+        if (!condition) throw new InvalidOperationException(message);
+    }
+
+    private static FakePlan Reset()
+    {
+        var plan = new FakePlan();
+        FakeApplication.Plan = plan;
+        return plan;
+    }
+
+    private static string Fixture(string name = "original.docx")
+    {
+        string path = Path.Combine(root, name);
+        File.WriteAllText(path, "original");
+        return path;
+    }
+
+    private static bool RunUpdate(string path) => (bool)Call("TryOperation", new Func<bool>(() =>
+        (bool)Call("UpdateIfWordInstalled", typeof(FakeApplication), path)!))!;
+
+    private static bool TimedUpdate(string path, CancellationTokenSource cts, TimeSpan wait) =>
+        (bool)Call("UpdateWithTimeout", typeof(FakeApplication), path, cts, wait)!;
+
+    private static void InvalidPaths()
+    {
+        foreach (var path in new[] { null, "", "  ", "\0", Path.Combine(root, "missing.docx"), root })
+            Check(!WordFieldUpdater.TryUpdateFields(path!), "Invalid path must return false.");
+        string pathToFile = Fixture();
+        string relative = Path.GetRelativePath(Directory.GetCurrentDirectory(), pathToFile);
+        Check((string)Call("GetDocumentPath", relative)! == pathToFile, "Relative path must become absolute.");
+        Check(!(bool)Call("UpdateIfWordInstalled", null, pathToFile)!, "Uninstalled Word must return false.");
+    }
+
+    private static void SuccessfulUpdate()
+    {
+        var p = Reset();
+        Check(RunUpdate(Fixture()), "Successful update returned false.");
+        Check(p.Created == 1 && p.Closed == 1 && p.Quit == 1 && p.Saved == 1, "Application/document lifecycle mismatch.");
+        Check(p.App!.Visible == false && p.App.DisplayAlerts == 0 && p.App.AutomationSecurity == 3, "Hidden/silent/macro-disabled configuration mismatch.");
+        Check(p.OpenReadOnly && !p.OpenRecent && !p.OpenVisible, "Open must be read-only, hidden, and not enter recent files.");
+        Check(p.Ranges.All(r => r.Fields.Calls == 2), "Every story and NextStoryRange must be updated twice.");
+        Check(p.Tocs.All(t => t.FullUpdates == 1 && t.PageUpdates == 1), "Every TOC must receive full and final page updates.");
+        Check(p.Repaginations == 2, "Must repaginate twice.");
+        Check(p.Log.LastIndexOf("repaginate") < p.Log.IndexOf("toc-pages-1"), "Final TOC pages must follow repagination.");
+        Check(p.Log.IndexOf("save") > p.Log.LastIndexOf("toc-pages-2"), "Save must follow final TOC update.");
+        Check(p.CloseSaveChanges == 0 && p.QuitSaveChanges == 0, "Cleanup must not save partial results.");
+        p = Reset(); p.Empty = true;
+        Check(RunUpdate(Fixture()), "Zero stories/TOCs must work.");
+    }
+
+    private static void FailurePaths()
+    {
+        foreach (var failure in new[] { "create", "configure", "open", "fields", "field-result", "toc", "repaginate", "save" })
+        {
+            var p = Reset(); p.Failure = failure;
+            Check(!RunUpdate(Fixture()), failure + " must return false.");
+            Check(p.Saved == 0, failure + " must not report a completed save.");
+            if (failure != "create") Check(p.Quit == 1, failure + " must still quit Word.");
+            if (failure is not ("create" or "configure" or "open")) Check(p.Closed == 1, failure + " must still close the document.");
+        }
+        var cleanup = Reset(); cleanup.ThrowClose = true; cleanup.ThrowQuit = true;
+        Check(RunUpdate(Fixture()), "Cleanup failures must not escape or invalidate a completed save.");
+        Check(cleanup.Closed == 1 && cleanup.Quit == 1, "Close failure must not skip Quit.");
+        Call("ReleaseComObject", new object());
+        Check(true, "Managed test objects must not be released as COM.");
+    }
+
+    private static void Cancellation()
+    {
+        var p = Reset();
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        Check(!TimedUpdate(Fixture(), cancellation, TimeSpan.FromSeconds(3)), "Pre-cancellation must return false.");
+        Check(p.Created == 0, "Pre-cancellation must not create Word.");
+        p = Reset();
+        using var during = new CancellationTokenSource();
+        p.OnFieldUpdate = () => during.Cancel();
+        Check(!TimedUpdate(Fixture(), during, TimeSpan.FromSeconds(3)), "Mid-update cancellation must return false.");
+        Check(p.Saved == 0 && p.Closed == 1 && p.Quit == 1, "Cancellation must skip save and clean up.");
+    }
+
+    private static void WorkingCopies()
+    {
+        var p = Reset();
+        string source = Fixture();
+        Check(RunUpdate(source), "Commit must succeed.");
+        Check(File.ReadAllText(source) == "updated" && !File.Exists(p.Output), "Commit must replace, truncate and clean up.");
+        Check(p.Path == source && p.Path != p.Output, "FILENAME must be evaluated on the original, never on a working copy.");
+        Check(Path.GetDirectoryName(p.Output) == Path.GetDirectoryName(source), "Preserve relative links.");
+        p = Reset(); p.Failure = "field-result";
+        source = Fixture();
+        Check(!RunUpdate(source) && File.ReadAllText(source) == "original", "Failed field refresh must not touch the source.");
+        p = Reset();
+        using (var held = File.OpenRead(source))
+            Check(!RunUpdate(source), "Locked original must return false on commit.");
+        Check(File.ReadAllText(source) == "original" && !File.Exists(p.Output), "Failed commit must preserve original.");
+
+        foreach (string action in new[] { "modify", "replace", "delete" }) {
+            source = Fixture(); var time = File.GetLastWriteTimeUtc(source); p = Reset();
+            p.OnSave = () => {
+                if (action == "delete") { File.Delete(source); return; }
+                if (action == "replace") { string next = Fixture("next.docx"); File.WriteAllText(next, "NEWERDOC"); File.Move(next, source, true); }
+                else File.WriteAllText(source, "NEWERDOC");
+                File.SetLastWriteTimeUtc(source, time); // Same length and timestamp: metadata-only guards miss this.
+            };
+            Check(!RunUpdate(source), "Concurrent " + action + " must veto commit.");
+            Check(action == "delete" ? !File.Exists(source) : File.ReadAllText(source) == "NEWERDOC", "Concurrent change was lost.");
+            Check(!File.Exists(p.Output), "Conflict must clean up staged output.");
+        }
+        source = Fixture(); p = Reset(); var before = Directory.GetFileSystemEntries(root).Order().ToArray();
+        File.SetAttributes(source, FileAttributes.ReadOnly);
+        try {
+            Check(!RunUpdate(source) && p.Created == 0, "Read-only documents must be rejected before launching Word.");
+            Check(new FileInfo(source).IsReadOnly && File.ReadAllText(source) == "original", "Read-only source was changed.");
+            Check(before.SequenceEqual(Directory.GetFileSystemEntries(root).Order()), "A read-only source must leave no copy.");
+        } finally { File.SetAttributes(source, FileAttributes.Normal); }
+        string deep = Directory.CreateDirectory(Path.Combine(root, new string('x', 225 - root.Length - 1))).FullName;
+        string longPath = Path.Combine(deep, "test.docx"); File.WriteAllText(longPath, "original"); p = Reset();
+        Check(RunUpdate(longPath) && p.Path.Length == 235 && p.Output.Length <= p.Path.Length, "Staging must not lengthen a valid Word path.");
+        Check(Directory.GetFiles(deep).SequenceEqual([longPath]), "Long-path update left an extra file.");
+    }
+
+    private static void TransactionBoundary()
+    {
+        string folder = Directory.CreateDirectory(Path.Combine(root, "transaction")).FullName;
+        string path = Path.Combine(folder, "original.docx"), result = Path.Combine(folder, "output.docx");
+        byte[] original = new byte[180000]; new Random(91).NextBytes(original); File.WriteAllBytes(path, original);
+        var digest = WordFieldFile.Fingerprint(path); File.WriteAllBytes(result, []);
+        Check(!WordFieldFile.Commit(path, result, digest), "Empty output must not truncate the document.");
+        var type = typeof(WordFieldFile); const BindingFlags flags = BindingFlags.Static | BindingFlags.NonPublic;
+        var mode = type.GetField("ExclusiveTransaction", flags)!.GetRawConstantValue();
+        var stream = (IStream)type.GetMethod("OpenShellStream", flags)!.Invoke(null, [path, mode])!;
+        try {
+            stream.SetSize(0); stream.Write([1, 2, 3], 3, IntPtr.Zero);
+            bool blocked = false; try { File.Move(result, path, true); } catch (IOException) { blocked = true; } catch (UnauthorizedAccessException) { blocked = true; }
+            Check(blocked, "The compared target must not be replaceable until the transaction releases it.");
+            blocked = false; try { File.WriteAllBytes(path, [11]); } catch (IOException) { blocked = true; }
+            Check(blocked, "The compared target must not be writable during commit.");
+        } finally { Marshal.ReleaseComObject(stream); } // Abort after partial write without Commit.
+        Check(File.ReadAllBytes(path).SequenceEqual(original), "Aborted transaction left partial bytes.");
+        var updated = original[..86001]; File.WriteAllBytes(result, updated);
+        Check(WordFieldFile.Commit(path, result, digest), "Multi-buffer copy failed.");
+        Check(File.ReadAllBytes(path).SequenceEqual(updated), "Multi-buffer copy or truncation damaged content.");
+    }
+
+    private static void LateWorkerCompletion()
+    {
+        foreach (bool afterSave in new[] { false, true })
+        {
+            var p = Reset(); string source = Fixture();
+            using var entered = new ManualResetEventSlim(); using var resume = new ManualResetEventSlim();
+            using var timeout = new CancellationTokenSource();
+            Action block = () => { entered.Set(); resume.Wait(); };
+            if (afterSave) p.OnSave = block; else p.OnFieldUpdate = block;
+            var task = Task.Run(() => TimedUpdate(source, timeout, TimeSpan.FromMilliseconds(500)));
+            try {
+                Check(entered.Wait(TimeSpan.FromSeconds(3)), "Worker must reach blocked COM operation.");
+                Check(task.Wait(TimeSpan.FromSeconds(3)) && !task.Result && timeout.IsCancellationRequested, "Blocked worker must time out.");
+                timeout.Dispose();
+            } finally { resume.Set(); }
+            Check(SpinWait.SpinUntil(() => Directory.GetFiles(root).All(x => x == source), 3000), "Late completion must clean up stage.");
+            Check(p.Saved == (afterSave ? 1 : 0) && p.Closed == 1 && p.Quit == 1, "Late worker must close and quit without another save.");
+            Check(File.ReadAllText(source) == "original", "Late completion changed target.");
+        }
+
+        using var completedTimeout = new CancellationTokenSource();
+        Check((bool)Call("WaitForUpdate", Task.FromResult(true), completedTimeout, TimeSpan.Zero)!, "Completed successful worker must return true.");
+        Check(!(bool)Call("WaitForUpdate", Task.FromResult(false), completedTimeout, TimeSpan.Zero)!, "Completed failed worker must return false.");
+        Check(!completedTimeout.IsCancellationRequested, "Completed worker must not be canceled.");
+        var faulted = Task.FromException<bool>(new IOException("worker failure"));
+        Check(!(bool)Call("TryOperation", new Func<bool>(() => (bool)Call("WaitForUpdate", faulted, completedTimeout, TimeSpan.Zero)!))!, "Faulted worker must be contained by the public failure boundary.");
+    }
+
+    private static void TimeoutAndThread()
+    {
+        using var cts = new CancellationTokenSource();
+        var never = new Task<bool>(() => true);
+        Check(!(bool)Call("WaitForUpdate", never, cts, TimeSpan.FromMilliseconds(5))!, "Timeout must return false.");
+        Check(cts.IsCancellationRequested, "Timeout must request cancellation.");
+        ApartmentState apartment = ApartmentState.Unknown;
+        var done = new ManualResetEventSlim();
+        Call("StartWorker", new ThreadStart(() => { apartment = Thread.CurrentThread.GetApartmentState(); done.Set(); }));
+        Check(done.Wait(TimeSpan.FromSeconds(5)) && apartment == ApartmentState.STA, "COM worker must use STA.");
+        done.Dispose();
+        Check(!(bool)Call("TryOperation", new Func<bool>(() => throw new IOException("test")))!, "Unexpected exception must return false.");
+    }
+}
+
+public sealed class FakePlan
+{
+    public string Failure = "";
+    public bool ThrowClose, ThrowQuit, Empty;
+    public int Created, Closed, Quit, Saved, Repaginations, CloseSaveChanges, QuitSaveChanges;
+    public bool OpenReadOnly, OpenRecent, OpenVisible;
+    public string Path = "", Output = "";
+    public FakeApplication? App;
+    public Action? OnFieldUpdate, OnSave;
+    public List<string> Log = new();
+    public List<FakeRange> Ranges = new();
+    public List<FakeToc> Tocs = new();
+    public void Fail(string stage) { if (Failure == stage) throw new InvalidOperationException("Failure: " + stage); }
+}
+
+public sealed class FakeApplication
+{
+    public static FakePlan Plan = null!;
+    private readonly FakePlan plan;
+    public FakeApplication() { plan = Plan; plan.Fail("create"); plan.Created++; plan.App = this; }
+    public bool Visible { get; set; }
+    public int DisplayAlerts { get; set; }
+    public int AutomationSecurity { get => 3; set { plan.Fail("configure"); if (value != 3) throw new Exception("Macros enabled"); } }
+    public FakeDocuments Documents => new(plan);
+    public void Quit(int SaveChanges) { plan.Quit++; plan.QuitSaveChanges = SaveChanges; if (plan.ThrowQuit) throw new Exception("Quit failed"); }
+}
+
+public sealed class FakeDocuments(FakePlan plan)
+{
+    public FakeDocument Open(string FileName, bool ReadOnly, bool AddToRecentFiles, bool Visible)
+    {
+        plan.Fail("open"); plan.Path = FileName;
+        plan.OpenReadOnly = ReadOnly; plan.OpenRecent = AddToRecentFiles; plan.OpenVisible = Visible;
+        return new FakeDocument(plan);
+    }
+}
+
+public sealed class FakeDocument
+{
+    private readonly FakePlan plan;
+    public FakeDocument(FakePlan p)
+    {
+        plan = p;
+        if (!plan.Empty)
+        {
+            var body = new FakeRange(plan, "body");
+            var footer = new FakeRange(plan, "footer-1");
+            footer.NextStoryRange = new FakeRange(plan, "footer-2");
+            var header = new FakeRange(plan, "header");
+            plan.Ranges.AddRange([body, footer, footer.NextStoryRange, header]);
+            plan.Tocs.AddRange([new FakeToc(plan, 1), new FakeToc(plan, 2)]);
+            StoryRanges = new FakeStories([body, footer, header]);
+        }
+        else StoryRanges = new FakeStories([]);
+    }
+    public int SaveFormat => 12;
+    public FakeStories StoryRanges { get; }
+    public FakeTocs TablesOfContents => new(plan.Tocs);
+    public void Repaginate() { plan.Fail("repaginate"); plan.Repaginations++; plan.Log.Add("repaginate"); }
+    public void SaveAs2(string FileName, int FileFormat, bool AddToRecentFiles) {
+        plan.Fail("save"); if (FileFormat != SaveFormat || AddToRecentFiles || FileName == plan.Path) throw new Exception("Unsafe SaveAs2.");
+        plan.Output = FileName; File.WriteAllText(FileName, "updated"); plan.Saved++; plan.Log.Add("save"); plan.OnSave?.Invoke();
+    }
+    public void Close(int SaveChanges) { plan.Closed++; plan.CloseSaveChanges = SaveChanges; if (plan.ThrowClose) throw new Exception("Close failed"); }
+}
+
+public sealed class FakeStories(FakeRange[] ranges) : IEnumerable
+{
+    public IEnumerator GetEnumerator() => ranges.GetEnumerator();
+}
+public sealed class FakeRange(FakePlan plan, string name)
+{
+    public FakeFields Fields { get; } = new(plan, name);
+    public FakeRange? NextStoryRange { get; set; }
+}
+public sealed class FakeFields(FakePlan plan, string name)
+{
+    public int Calls { get; private set; }
+    public int Update() { plan.Fail("fields"); Calls++; plan.Log.Add("fields-" + name); plan.OnFieldUpdate?.Invoke(); return plan.Failure == "field-result" ? 2 : 0; }
+}
+public sealed class FakeTocs(List<FakeToc> tocs)
+{
+    public int Count => tocs.Count;
+    public FakeToc Item(int index) => tocs[index - 1];
+}
+public sealed class FakeToc(FakePlan plan, int index)
+{
+    public int FullUpdates { get; private set; }
+    public int PageUpdates { get; private set; }
+    public void Update() { plan.Fail("toc"); FullUpdates++; plan.Log.Add("toc-full-" + index); }
+    public void UpdatePageNumbers() { PageUpdates++; plan.Log.Add("toc-pages-" + index); }
+}

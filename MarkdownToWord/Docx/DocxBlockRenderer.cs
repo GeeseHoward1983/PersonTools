@@ -322,11 +322,10 @@ namespace PersonalTools.MarkdownToWord.Docx
 
         private static void RenderList(ListBlock list, OpenXmlElement container, DocxRenderContext ctx, int indentLevel)
         {
-            long start;
             // 起始序号以源 Markdown 的 OrderedStart 为准（如 "3." 开头则从 3 起），解析失败回退 1
             long fallback = list.IsOrdered switch
             {
-                true when long.TryParse(list.OrderedStart, out start) => start,
+                true when long.TryParse(list.OrderedStart, out long start) => start,
                 _ => 1,
             };
             foreach (Block itemObj in list)
